@@ -33,13 +33,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.aritxonly.deadliner.model.AppColorScheme
 import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.hashColor
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.ui.main.simplified.fadingTopEdge
 import java.time.Duration
 import java.time.LocalDateTime
@@ -53,12 +52,11 @@ fun OverviewStatsScreen(
     completionTimeStats: List<Pair<String, Int>>,
     overdueItems: List<DDLItem>,
     modifier: Modifier,
-    colorScheme: AppColorScheme
 ) {
     val overviewItems = listOf<@Composable () -> Unit>(
-        { ActiveStatsCard(colorScheme, activeStats, overdueItems) },
-        { CompletionTimeCard(colorScheme, completionTimeStats) },
-        { HistoryStatsCard(colorScheme, historyStats) }
+        { ActiveStatsCard(activeStats, overdueItems) },
+        { CompletionTimeCard(completionTimeStats) },
+        { HistoryStatsCard(historyStats) }
     )
 
     LazyColumn(
@@ -77,12 +75,11 @@ fun OverviewStatsScreen(
 
 @Composable
 fun HistoryStatsCard(
-    colorScheme: AppColorScheme,
     historyStats: Map<String, Int>,
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(colorScheme.surfaceContainer)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         modifier = Modifier
             .padding(16.dp, 8.dp)
@@ -98,7 +95,7 @@ fun HistoryStatsCard(
                 text = stringResource(R.string.task_status_summary),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = Color(colorScheme.onSurface)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(
@@ -113,7 +110,7 @@ fun HistoryStatsCard(
                         Text(
                             text = key,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(colorScheme.onSurface),
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Visible,
                             modifier = Modifier.basicMarquee()
@@ -141,12 +138,11 @@ fun HistoryStatsCard(
 
 @Composable
 fun CompletionTimeCard(
-    colorScheme: AppColorScheme,
     completionTimeStats: List<Pair<String, Int>>,
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(colorScheme.surfaceContainer)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         modifier = Modifier
             .padding(16.dp, 8.dp)
@@ -156,19 +152,19 @@ fun CompletionTimeCard(
         Column(
             modifier = Modifier
                 .padding(16.dp)
-                .background(Color(colorScheme.surfaceContainer))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
         ) {
             Text(
                 text = stringResource(R.string.task_complete_time_summary),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = Color(colorScheme.onSurface)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             // 使用条形图展示完成时间段统计
             NewBarChartCompletionTimeStats(
                 data = completionTimeStats,
-                textColor = Color(colorScheme.onSurface)
+                textColor = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -176,13 +172,12 @@ fun CompletionTimeCard(
 
 @Composable
 fun ActiveStatsCard(
-    colorScheme: AppColorScheme,
     activeStats: Map<String, Int>,
     overdueItems: List<DDLItem>
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(colorScheme.surfaceContainer)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         modifier = Modifier
             .padding(16.dp, 8.dp)
@@ -193,13 +188,13 @@ fun ActiveStatsCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .background(Color(colorScheme.surfaceContainer))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
         ) {
             Text(
                 text = stringResource(R.string.today_task_summary),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = Color(colorScheme.onSurface)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(
@@ -214,7 +209,7 @@ fun ActiveStatsCard(
                         Text(
                             text = key,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(colorScheme.onSurface),
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Visible,
                             modifier = Modifier.basicMarquee()

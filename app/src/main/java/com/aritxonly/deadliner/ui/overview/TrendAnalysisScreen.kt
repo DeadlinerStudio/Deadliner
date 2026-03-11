@@ -25,13 +25,12 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.model.AppColorScheme
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.hashColor
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.OverviewUtils
 import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.ui.main.simplified.fadingTopEdge
 import java.time.LocalDate
 
@@ -39,7 +38,6 @@ import java.time.LocalDate
 fun TrendAnalysisScreen(
     items: List<DDLItem>,
     modifier: Modifier = Modifier,
-    colorScheme: AppColorScheme
 ) {
     val context = LocalContext.current
 
@@ -51,9 +49,9 @@ fun TrendAnalysisScreen(
         val weeklyCompleted = OverviewUtils.computeWeeklyCompletedCounts(context, items)
 
         val trendItems = listOf<@Composable () -> Unit>(
-            { DailyCompletedCard(colorScheme, dailyCompleted) },
-            { MonthlyTrendCard(colorScheme, monthlyStat) },
-            { PrevWeeksCard(colorScheme, weeklyCompleted) }
+            { DailyCompletedCard(dailyCompleted) },
+            { MonthlyTrendCard(monthlyStat) },
+            { PrevWeeksCard(weeklyCompleted) }
         )
 
         LazyColumn(
@@ -73,12 +71,11 @@ fun TrendAnalysisScreen(
 
 @Composable
 private fun PrevWeeksCard(
-    colorScheme: AppColorScheme,
     weeklyCompleted: List<Pair<String, Int>>,
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(colorScheme.surfaceContainer)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         modifier = Modifier
             .padding(16.dp, 8.dp)
@@ -89,13 +86,13 @@ private fun PrevWeeksCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .background(Color(colorScheme.surfaceContainer))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
         ) {
             Text(
                 text = stringResource(R.string.prev4weeks),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = Color(colorScheme.onSurface)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.height(8.dp))
             WeeklyBarChart(
@@ -103,7 +100,7 @@ private fun PrevWeeksCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp),
-                barColor = Color(colorScheme.secondary)
+                barColor = MaterialTheme.colorScheme.secondary
             )
         }
     }
@@ -111,12 +108,11 @@ private fun PrevWeeksCard(
 
 @Composable
 private fun MonthlyTrendCard(
-    colorScheme: AppColorScheme,
     monthlyStat: List<OverviewUtils.MonthlyStat>,
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(colorScheme.surfaceContainer)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         modifier = Modifier
             .padding(16.dp, 8.dp)
@@ -127,13 +123,13 @@ private fun MonthlyTrendCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .background(Color(colorScheme.surfaceContainer))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
         ) {
             Text(
                 text = stringResource(R.string.monthly_trend),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = Color(colorScheme.onSurface)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.height(8.dp))
             MonthlyTrendChart(
@@ -151,12 +147,11 @@ private fun MonthlyTrendCard(
 
 @Composable
 private fun DailyCompletedCard(
-    colorScheme: AppColorScheme,
     dailyCompleted: List<Triple<LocalDate, Int, Int>>,
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color(colorScheme.surfaceContainer)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         modifier = Modifier
             .padding(16.dp, 8.dp)
@@ -167,13 +162,13 @@ private fun DailyCompletedCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .background(Color(colorScheme.surfaceContainer))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
         ) {
             Text(
                 text = stringResource(R.string.weekly_completed),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = Color(colorScheme.onSurface)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.height(8.dp))
             DailyBarChart(

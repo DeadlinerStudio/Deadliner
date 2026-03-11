@@ -20,7 +20,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.aritxonly.deadliner.ui.base.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -52,11 +52,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.OverviewActivity
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.AppColorScheme
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.ui.TintedGradientImage
@@ -80,9 +78,8 @@ import kotlin.math.abs
 @Composable
 fun DashboardScreen(
     items: List<DDLItem>,
-    colorScheme: AppColorScheme,
     activity: OverviewActivity,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -168,10 +165,10 @@ fun DashboardScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(colorScheme.surface))
+            .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp, 0.dp)
     ) {
-        SummaryGrid(metrics, colorScheme) {
+        SummaryGrid(metrics) {
             if (!exporting) showExportDialog = true
         }
     }
@@ -299,7 +296,6 @@ private fun formatDuration(duration: Duration, context: Context): String {
 @Composable
 private fun SummaryGrid(
     metrics: List<Metric>,
-    colorScheme: AppColorScheme,
     onShare: () -> Unit,
 ) {
     val visibleState = remember { MutableTransitionState(false) }
@@ -323,7 +319,7 @@ private fun SummaryGrid(
                 ) {
                     TintedGradientImage(
                         R.drawable.dashboard_background,
-                        tintColor = Color(colorScheme.primary),
+                        tintColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.matchParentSize(),
                         contentDescription = stringResource(R.string.background)
                     )
@@ -331,7 +327,7 @@ private fun SummaryGrid(
                         text = stringResource(R.string.last_month_summary),
                         style = MaterialTheme.typography.headlineLargeEmphasized,
                         fontWeight = FontWeight.Black,
-                        color = Color(colorScheme.onPrimary),
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(24.dp)
@@ -342,7 +338,7 @@ private fun SummaryGrid(
 
         itemsIndexed(metrics) { index, metric ->
             AnimatedItem(delayMillis = (index + 1) * 100L) {
-                SummaryCard(metric, colorScheme)
+                SummaryCard(metric)
             }
         }
 
@@ -383,11 +379,10 @@ private fun SummaryGrid(
 @Composable
 private fun SummaryCard(
     metric: Metric,
-    colorScheme: AppColorScheme
 ) {
     Card(
         shape = RoundedCornerShape(dimensionResource(id = R.dimen.item_corner_radius)),
-        colors = CardDefaults.cardColors(containerColor = Color(colorScheme.surfaceContainer)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 100.dp)
@@ -407,7 +402,7 @@ private fun SummaryCard(
                 text = metric.value,
                 style = MaterialTheme.typography.headlineMediumEmphasized,
                 fontWeight = FontWeight.Bold,
-                color = Color(colorScheme.onSurface)
+                color = MaterialTheme.colorScheme.onSurface
             )
             metric.change?.takeIf { it.isNotEmpty() }?.let { change ->
                 val isDown = metric.isDown

@@ -22,7 +22,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -65,13 +64,9 @@ import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
@@ -101,6 +96,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.theme.AppDesignSystem
+import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
+import com.aritxonly.deadliner.ui.base.Scaffold
+import com.aritxonly.deadliner.ui.base.Switch
+import com.aritxonly.deadliner.ui.base.Slider
+import com.aritxonly.deadliner.ui.base.RadioButton
+import com.aritxonly.deadliner.ui.base.OutlinedTextField
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 // region: These codes are referenced from https://github.com/YangDai2003/OpenNote-Compose/
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -209,36 +212,64 @@ fun CollapsingTopBarScaffold(
     snackbarHost: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        rememberTopAppBarState()
-    )
+    when (LocalAppDesignSystem.current) {
+        AppDesignSystem.MATERIAL3 -> {
+            val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+                rememberTopAppBarState()
+            )
 
-    Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            LargeTopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = containerColor,
-                    titleContentColor = titleColor,
-                ),
-                title = {
-                    Text(
-                        text = title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 8.dp)
+            Scaffold(
+                modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                topBar = {
+                    LargeTopAppBar(
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = containerColor,
+                            titleContentColor = titleColor,
+                        ),
+                        title = {
+                            Text(
+                                text = title,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        },
+                        navigationIcon = navigationIcon,
+                        actions = actions,
+                        scrollBehavior = scrollBehavior,
                     )
                 },
-                navigationIcon = navigationIcon,
-                actions = actions,
-                scrollBehavior = scrollBehavior,
+                bottomBar = bottomBar,
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                snackbarHost = snackbarHost,
+                content = content
             )
-        },
-        bottomBar = bottomBar,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = snackbarHost,
-        content = content
-    )
+        }
+
+        AppDesignSystem.MIUIX -> {
+            val scrollBehavior = top.yukonga.miuix.kmp.basic.MiuixScrollBehavior()
+
+            Scaffold(
+                modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                topBar = {
+                    top.yukonga.miuix.kmp.basic.TopAppBar(
+                        title = title,
+                        largeTitle = title,
+                        color = containerColor,
+                        navigationIcon = navigationIcon,
+                        actions = actions,
+                        scrollBehavior = scrollBehavior
+                    )
+                },
+                bottomBar = bottomBar,
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                snackbarHost = snackbarHost,
+                content = { paddingValues ->
+                    content(paddingValues)
+                }
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -431,7 +462,7 @@ fun SettingsDetailSwitchItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsSliderItemWithLabel(
     @StringRes label: Int,
@@ -464,10 +495,24 @@ fun SettingsSliderItemWithLabel(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
-            Text(
-                text = stringResource(label),
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(label),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                if (LocalAppDesignSystem.current == AppDesignSystem.MIUIX) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = sliderPosition.toInt().toString(),
+                        style = MaterialTheme.typography.bodyMediumEmphasized,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
 
             Spacer(Modifier.height(8.dp))
 
@@ -688,6 +733,7 @@ fun RoundedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(hint) },
+        miuixLabel = hint,
         modifier = modifier
             .fillMaxWidth()
             .then(heightModifier)

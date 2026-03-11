@@ -187,7 +187,7 @@ object NotificationUtil {
             val pendingIntent = PendingIntent.getActivity(
                 context,
                 114514,
-                Intent(context, OverviewActivity::class.java),
+                OverviewActivity.newIntent(context),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             setContentIntent(pendingIntent)

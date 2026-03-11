@@ -98,6 +98,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences-android:1.1.7")
     implementation("io.github.rroohit:ImageCropView:3.1.1")
     implementation("com.materialkolor:material-kolor:4.1.1")
+    implementation("top.yukonga.miuix.kmp:miuix-android:0.8.6")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

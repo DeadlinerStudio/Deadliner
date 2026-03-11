@@ -25,9 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -39,14 +37,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
@@ -56,9 +51,9 @@ import com.aritxonly.deadliner.ui.overview.TrendAnalysisScreen
 import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
-import com.aritxonly.deadliner.model.AppColorScheme
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -106,50 +101,8 @@ fun buildTimeBucketOrder(context: Context): Map<String, Int> = mapOf(
 class OverviewActivity : ComponentActivity() {
 
     companion object {
-        const val EXTRA_APP_COLOR_SCHEME = "EXTRA_APP_COLOR_SCHEME"
-        fun newIntent(context: Context, colorScheme: AppColorScheme): Intent {
-            return Intent(context, OverviewActivity::class.java).apply {
-                putExtra(EXTRA_APP_COLOR_SCHEME, colorScheme)
-            }
-        }
-    }
-
-    private class ColorSchemeHelper(val context: Context) {
-        val defaultColorScheme = AppColorScheme(
-            primary = getThemeColor(androidx.appcompat.R.attr.colorPrimary),
-            onPrimary = getMaterialThemeColor(com.google.android.material.R.attr.colorOnPrimary),
-            primaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorPrimaryContainer),
-            surface = getMaterialThemeColor(com.google.android.material.R.attr.colorSurface),
-            onSurface = getMaterialThemeColor(com.google.android.material.R.attr.colorOnSurface),
-            surfaceContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorSurfaceContainer),
-            secondary = getMaterialThemeColor(com.google.android.material.R.attr.colorSecondary),
-            onSecondary = getMaterialThemeColor(com.google.android.material.R.attr.colorOnSecondary),
-            secondaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorSecondaryContainer),
-            onSecondaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorOnSecondaryContainer),
-            tertiary = getMaterialThemeColor(com.google.android.material.R.attr.colorTertiary),
-            onTertiary = getMaterialThemeColor(com.google.android.material.R.attr.colorOnTertiary),
-            tertiaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorTertiaryContainer),
-            onTertiaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorOnTertiaryContainer),
-        )
-
-        /**
-         * 获取主题颜色
-         * @param attributeId 主题属性 ID
-         * @return 颜色值
-         */
-        private fun getThemeColor(attributeId: Int): Int {
-            val typedValue = TypedValue()
-            context.theme.resolveAttribute(attributeId, typedValue, true)
-            Log.d("ThemeColor", "getColor $attributeId: ${typedValue.data.toHexString()}")
-            return typedValue.data
-        }
-
-        private fun getMaterialThemeColor(attributeId: Int): Int {
-            return MaterialColors.getColor(
-                ContextWrapper(context),
-                attributeId,
-                android.graphics.Color.WHITE
-            )
+        fun newIntent(context: Context): Intent {
+            return Intent(context, OverviewActivity::class.java)
         }
     }
 
@@ -160,17 +113,13 @@ class OverviewActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        val appColorScheme = intent.getParcelableExtra<AppColorScheme>("EXTRA_APP_COLOR_SCHEME")
-            ?: ColorSchemeHelper(this).defaultColorScheme
-
         setContent {
             DeadlinerTheme {
                 val items = DDLRepository().getDDLsByType(DeadlineType.TASK)
 
                     OverviewScreen(
                         items = items,
-                        activity = this,
-                        colorScheme = appColorScheme
+                        activity = this
                     ) {
                         finish()
                     }
@@ -205,7 +154,6 @@ fun hashColor(key: String) : Color {
 @Composable
 fun OverviewScreen(
     items: List<DDLItem>,
-    colorScheme: AppColorScheme,
     activity: OverviewActivity,
     onClose: () -> Unit
 ) {
@@ -275,7 +223,7 @@ fun OverviewScreen(
             CenterAlignedTopAppBar(
                 title = { Text(
                     stringResource(R.string.title_activity_overview),
-                    color = Color(colorScheme.onSurface),
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal)
                 ) },
                 navigationIcon = {
@@ -285,7 +233,7 @@ fun OverviewScreen(
                         Icon(
                             painterResource(R.drawable.ic_back),
                             contentDescription = stringResource(R.string.close),
-                            tint = Color(colorScheme.onSurface),
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = expressiveTypeModifier
                         )
                     }
@@ -298,18 +246,18 @@ fun OverviewScreen(
                             Icon(
                                 painterResource(R.drawable.ic_pref),
                                 contentDescription = stringResource(R.string.settings_more),
-                                tint = Color(colorScheme.onSurface),
+                                tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = expressiveTypeModifier
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = Color(colorScheme.surface),
-                    scrolledContainerColor = Color(colorScheme.surface)
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface
                 ),
                 modifier = Modifier
-                    .background(Color(colorScheme.surface))
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 8.dp)
             )
         }
@@ -317,22 +265,20 @@ fun OverviewScreen(
         Column(
             modifier = Modifier
                 .padding(paddingValues)
-                .background(Color(colorScheme.surface))
+                .background(MaterialTheme.colorScheme.surface)
         ) {
-            PrimaryTabRow(
-                selectedTabIndex = selectedTab,
-                divider = { HorizontalDivider(color = Color(colorScheme.surface)) }
-            ) {
-                tabs.forEachIndexed { i, title ->
-                    val icon = mapIcon[title] ?: painterResource(R.drawable.ic_info)
-                    Tab(
-                        selected = i == selectedTab,
-                        onClick = { selectedTab = i },
-                        icon = { Icon(icon, contentDescription = title) },
-                        text = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                    )
-                }
+            val iconsList = tabs.map { title ->
+                mapIcon[title] ?: painterResource(R.drawable.ic_info)
             }
+
+            TabRow(
+                tabs = tabs,
+                selectedTabIndex = selectedTab,
+                onTabSelected = { selectedTab = it },
+                tabIcons = iconsList,
+                divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surface) }
+            )
+
             when (selectedTab) {
                 0 ->
                     OverviewStatsScreen(
@@ -341,23 +287,20 @@ fun OverviewScreen(
                         completionTimeStats,
                         overdueItems,
                         Modifier
-                            .background(Color(colorScheme.surface)),
-                        colorScheme
+                            .background(MaterialTheme.colorScheme.surface),
                     )
                 1 ->
                     TrendAnalysisScreen(
                         items,
                         Modifier
-                            .background(Color(colorScheme.surface)),
-                        colorScheme
+                            .background(MaterialTheme.colorScheme.surface),
                     )
                 2 ->
                     DashboardScreen(
                         items,
-                        colorScheme,
                         activity,
                         Modifier
-                            .background(Color(colorScheme.surface))
+                            .background(MaterialTheme.colorScheme.surface)
                     )
             }
         }

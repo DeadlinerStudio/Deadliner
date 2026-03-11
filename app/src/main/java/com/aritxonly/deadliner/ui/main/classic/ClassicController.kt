@@ -761,7 +761,7 @@ class ClassicController(
             when (menuItem.itemId) {
                 R.id.chart -> {
 
-                    val intent = OverviewActivity.newIntent(activity, materialColorScheme)
+                    val intent = OverviewActivity.newIntent(activity)
 
                     startActivity(intent)
                     true

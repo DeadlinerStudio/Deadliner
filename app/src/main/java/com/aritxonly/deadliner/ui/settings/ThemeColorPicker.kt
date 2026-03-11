@@ -19,6 +19,8 @@ import androidx.core.graphics.toColorInt
 import com.aritxonly.deadliner.ui.iconResource
 
 val M3BaselineColors = listOf(
+    "#365AB0",
+
     // ✨ M3 官方基准色 (经典、沉稳)
     "#6750A4", // Baseline Purple (基准紫)
     "#0061A4", // Baseline Blue (基准蓝)
