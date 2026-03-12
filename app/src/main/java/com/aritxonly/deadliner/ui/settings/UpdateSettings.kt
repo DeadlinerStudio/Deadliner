@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import androidx.core.net.toUri
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.web.UpdateManager
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.Dispatchers
@@ -78,12 +79,6 @@ fun UpdateScreen(
             }
         }
     }
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_check_for_updates),

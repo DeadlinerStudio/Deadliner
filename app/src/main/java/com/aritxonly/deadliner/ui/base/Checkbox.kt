@@ -1,6 +1,7 @@
 package com.aritxonly.deadliner.ui.base
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.RadioButtonColors
 import androidx.compose.material3.RadioButtonDefaults
@@ -11,6 +12,9 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
+import top.yukonga.miuix.kmp.basic.CheckboxDefaults
+import top.yukonga.miuix.kmp.theme.darkColorScheme
+import top.yukonga.miuix.kmp.theme.lightColorScheme
 
 // 为官方和 MIUIX 的组件起别名
 import androidx.compose.material3.RadioButton as Material3RadioButton
@@ -43,13 +47,21 @@ fun RadioButton(
         AppDesignSystem.MIUIX -> {
             // 核心转译：将 Boolean 的选中状态映射为 MIUIX 需要的三态类型
             val toggleState = if (selected) ToggleableState.On else ToggleableState.Off
+            val scheme = if (isSystemInDarkTheme()) {
+                darkColorScheme()
+            } else {
+                lightColorScheme()
+            }
 
             MiuixCheckbox(
                 state = toggleState,
                 onClick = onClick,
                 modifier = modifier.padding(vertical = 4.dp),
-                enabled = enabled
-                // M3 的 colors 和 interactionSource 在此丢弃，使用 MIUIX 原生主题色
+                enabled = enabled,
+                colors = CheckboxDefaults.checkboxColors(
+                    uncheckedForegroundColor = scheme.secondary,
+                    uncheckedBackgroundColor = scheme.secondary
+                )
             )
         }
     }

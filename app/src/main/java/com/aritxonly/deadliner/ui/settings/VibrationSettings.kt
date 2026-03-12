@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 
 @Composable
 fun VibrationSettingsScreen(
@@ -61,12 +62,6 @@ fun VibrationSettingsScreen(
         vibrationRealAmplitude = it.toInt()
         GlobalUtils.vibrationAmplitude = it.toInt()
     }
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     LaunchedEffect(vibrationModeSelected) {
         if (vibrationModeSelected == "custom") {

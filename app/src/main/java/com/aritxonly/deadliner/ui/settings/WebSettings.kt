@@ -55,6 +55,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.sync.SyncScheduler
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -183,12 +184,6 @@ fun WebSettingsScreen(
             SyncScheduler.cancelAll(context)
         }
     }
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_webdav),

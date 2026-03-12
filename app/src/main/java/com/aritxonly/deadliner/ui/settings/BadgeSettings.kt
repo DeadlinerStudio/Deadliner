@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.PreviewCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 
 @Composable
 fun BadgeSettingsScreen(
@@ -52,12 +53,6 @@ fun BadgeSettingsScreen(
     )
     val badgeRightNow = if (GlobalUtils.nearbyDetailedBadge) "number" else "dot"
     var badgeModeSelected by remember { mutableStateOf(badgeRightNow) }
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
     
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_tasks_badge_title),

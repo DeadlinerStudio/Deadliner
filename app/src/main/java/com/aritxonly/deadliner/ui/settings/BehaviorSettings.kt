@@ -38,6 +38,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -77,12 +78,6 @@ fun BehaviorSettingsScreen(
         GlobalUtils.dynamicSplit = it
         handleRestart()
     }
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_behavior),

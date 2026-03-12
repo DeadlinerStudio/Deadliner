@@ -25,6 +25,9 @@ import com.materialkolor.rememberDynamicColorScheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamiccolor.ColorSpec
+import com.materialkolor.scheme.DynamicScheme
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.ThemeController
@@ -60,12 +63,14 @@ private val LightColorScheme = lightColorScheme(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeadlinerTheme(
-    designSystem: AppDesignSystem = AppDesignSystem.MIUIX,
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val seed by GlobalUtils.seedColorFlow.collectAsState()
+    val miuixMode by GlobalUtils.miuixModeFlow.collectAsState()
+
+    val designSystem = if (miuixMode) AppDesignSystem.MIUIX else AppDesignSystem.MATERIAL3
 
     val parsedSeedColor: Color? = seed?.takeIf { it.isNotBlank() }?.let { hexString ->
         runCatching { Color(hexString.toColorInt()) }.getOrNull()
@@ -76,7 +81,10 @@ fun DeadlinerTheme(
             rememberDynamicColorScheme(
                 seedColor = parsedSeedColor,
                 isDark = darkTheme,
-                isAmoled = false
+                isAmoled = false,
+                style = PaletteStyle.TonalSpot,
+                specVersion = ColorSpec.SpecVersion.SPEC_2025,
+                platform = DynamicScheme.Platform.PHONE
             )
         }
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -87,7 +95,6 @@ fun DeadlinerTheme(
         else -> LightColorScheme
     }
 
-    // 2. 将设计系统状态广播下去
     CompositionLocalProvider(LocalAppDesignSystem provides designSystem) {
 
         when (designSystem) {
@@ -101,138 +108,154 @@ fun DeadlinerTheme(
                 }
             }
             AppDesignSystem.MIUIX -> {
-                if (dynamicColor) {
-                    val controller = remember {
-                        ThemeController(
-                            ColorSchemeMode.MonetSystem,
-                            keyColor = parsedSeedColor
-                        )
-                    }
+                val miuixHybridColors = remember(m3ColorScheme, darkTheme) {
+                    if (darkTheme) {
+                        top.yukonga.miuix.kmp.theme.darkColorScheme(
+                            primary = m3ColorScheme.primary,
+                            onPrimary = m3ColorScheme.onPrimary,
+                            primaryContainer = m3ColorScheme.primaryContainer,
+                            onPrimaryContainer = m3ColorScheme.onPrimaryContainer,
+                            primaryVariant = m3ColorScheme.inversePrimary, // M3 的 inversePrimary 对应 MIUIX 的 Variant
 
-                    // MIUIX 模式：外层包裹 MiuixTheme 保证 MIUIX 组件正常工作
-                    MiuixTheme(controller) {
-                        MaterialExpressiveTheme(
-                            colorScheme = m3ColorScheme,
-                            typography = Typography,
-                        ) {
-                            content()
-                        }
-                    }
-                } else {
-                    val controller = remember { ThemeController(ColorSchemeMode.System) }
+                            secondary = m3ColorScheme.secondary,
+                            onSecondary = m3ColorScheme.onSecondary,
+                            secondaryContainer = m3ColorScheme.secondaryContainer,
+                            onSecondaryContainer = m3ColorScheme.onSecondaryContainer,
 
-                    val mappedColorScheme = if (darkTheme) {
-                        val miuixColors = controller.darkColors
-                        darkColorScheme(
-                            primary = miuixColors.primary,
-                            onPrimary = miuixColors.onPrimary,
-                            primaryContainer = miuixColors.primaryContainer,
-                            onPrimaryContainer = miuixColors.onPrimaryContainer,
-                            inversePrimary = miuixColors.primaryVariant, // MIUIX 无对应，用 primaryVariant 替代
-
-                            secondary = miuixColors.secondary,
-                            onSecondary = miuixColors.onSecondary,
-                            secondaryContainer = miuixColors.secondaryContainer,
-                            onSecondaryContainer = miuixColors.onSecondaryContainer,
-
-                            // MIUIX 只有 tertiaryContainer，没有基础 tertiary。这里用 secondaryVariant 兜底
-                            tertiary = miuixColors.secondaryVariant,
-                            onTertiary = miuixColors.onSecondaryVariant,
-                            tertiaryContainer = miuixColors.tertiaryContainer,
-                            onTertiaryContainer = miuixColors.onTertiaryContainer,
-
-                            background = miuixColors.background,
-                            onBackground = miuixColors.onBackground,
-
-                            surface = miuixColors.surface,
-                            onSurface = miuixColors.onSurface,
-                            surfaceVariant = miuixColors.surfaceVariant,
-
-                            // MIUIX 拆分得很细，用 onSurfaceVariantSummary 最贴合 M3 的次要文本语义
-                            onSurfaceVariant = miuixColors.onSurfaceVariantSummary,
-                            surfaceTint = miuixColors.primary,
-
-                            // M3 反转色：将 surface 和 onSurface 对调即可
-                            inverseSurface = miuixColors.onSurface,
-                            inverseOnSurface = miuixColors.surface,
-
-                            error = miuixColors.error,
-                            onError = miuixColors.onError,
-                            errorContainer = miuixColors.errorContainer,
-                            onErrorContainer = miuixColors.onErrorContainer,
-
-                            outline = miuixColors.outline,
-                            // M3 的 outlineVariant 常用于分割线，完美对应 MIUIX 的 dividerLine
-                            outlineVariant = miuixColors.dividerLine,
-                            // M3 的 scrim 用于弹窗遮罩，完美对应 MIUIX 的 windowDimming
-                            scrim = miuixColors.windowDimming,
-
-                            // Expressive API 容器层级色
-                            surfaceContainer = miuixColors.surfaceContainer,
-                            surfaceContainerHigh = miuixColors.surfaceContainerHigh,
-                            surfaceContainerHighest = miuixColors.surfaceContainerHighest,
-
-                            // MIUIX 没有 Low 和 Lowest，根据 M3 规范向下平替
-                            surfaceContainerLow = miuixColors.surface,
-                            surfaceContainerLowest = miuixColors.background,
-                            surfaceBright = miuixColors.surfaceVariant,
-                            surfaceDim = miuixColors.surfaceContainerHigh
+                            secondaryVariant = m3ColorScheme.tertiary, // 将 M3 的 Tertiary 渗透给 MIUIX 的 SecondaryVariant
+                            onSecondaryVariant = m3ColorScheme.onTertiary,
+                            tertiaryContainer = m3ColorScheme.tertiaryContainer,
+                            onTertiaryContainer = m3ColorScheme.onTertiaryContainer
                         )
                     } else {
-                        val miuixColors = controller.lightColors
-                        lightColorScheme(
-                            primary = miuixColors.primary,
-                            onPrimary = miuixColors.onPrimary,
-                            primaryContainer = miuixColors.primaryContainer,
-                            onPrimaryContainer = miuixColors.onPrimaryContainer,
-                            inversePrimary = miuixColors.primaryVariant,
+                        top.yukonga.miuix.kmp.theme.lightColorScheme(
+                            primary = m3ColorScheme.primary,
+                            onPrimary = m3ColorScheme.onPrimary,
+                            primaryContainer = m3ColorScheme.primaryContainer,
+                            onPrimaryContainer = m3ColorScheme.onPrimaryContainer,
+                            primaryVariant = m3ColorScheme.inversePrimary,
 
-                            secondary = miuixColors.secondary,
-                            onSecondary = miuixColors.onSecondary,
-                            secondaryContainer = miuixColors.secondaryContainer,
-                            onSecondaryContainer = miuixColors.onSecondaryContainer,
+                            secondary = m3ColorScheme.secondary,
+                            onSecondary = m3ColorScheme.onSecondary,
+                            secondaryContainer = m3ColorScheme.secondaryContainer,
+                            onSecondaryContainer = m3ColorScheme.onSecondaryContainer,
 
-                            tertiary = miuixColors.secondaryVariant,
-                            onTertiary = miuixColors.onSecondaryVariant,
-                            tertiaryContainer = miuixColors.tertiaryContainer,
-                            onTertiaryContainer = miuixColors.onTertiaryContainer,
-
-                            background = miuixColors.background,
-                            onBackground = miuixColors.onBackground,
-
-                            surface = miuixColors.surface,
-                            onSurface = miuixColors.onSurface,
-                            surfaceVariant = miuixColors.surfaceVariant,
-                            onSurfaceVariant = miuixColors.onSurfaceVariantSummary,
-                            surfaceTint = miuixColors.primary,
-                            inverseSurface = miuixColors.onSurface,
-                            inverseOnSurface = miuixColors.surface,
-
-                            error = miuixColors.error,
-                            onError = miuixColors.onError,
-                            errorContainer = miuixColors.errorContainer,
-                            onErrorContainer = miuixColors.onErrorContainer,
-
-                            outline = miuixColors.outline,
-                            outlineVariant = miuixColors.dividerLine,
-                            scrim = miuixColors.windowDimming,
-
-                            surfaceContainer = miuixColors.surfaceContainer,
-                            surfaceContainerHigh = miuixColors.surfaceContainerHigh,
-                            surfaceContainerHighest = miuixColors.surfaceContainerHighest,
-                            surfaceContainerLow = miuixColors.surface,
-                            surfaceContainerLowest = miuixColors.background,
-                            surfaceBright = miuixColors.surfaceVariant,
-                            surfaceDim = miuixColors.surfaceContainerHigh
+                            secondaryVariant = m3ColorScheme.tertiary,
+                            onSecondaryVariant = m3ColorScheme.onTertiary,
+                            tertiaryContainer = m3ColorScheme.tertiaryContainer,
+                            onTertiaryContainer = m3ColorScheme.onTertiaryContainer
                         )
                     }
-                    MiuixTheme(controller) {
-                        MaterialExpressiveTheme(
-                            colorScheme = mappedColorScheme,
-                            typography = Typography,
-                        ) {
-                            content()
+                }
+
+               MiuixTheme(colors = miuixHybridColors) {
+                    val finalM3ColorScheme = remember(miuixHybridColors, darkTheme) {
+                        if (darkTheme) {
+                            androidx.compose.material3.darkColorScheme(
+                                primary = miuixHybridColors.primary,
+                                onPrimary = miuixHybridColors.onPrimary,
+                                primaryContainer = miuixHybridColors.primaryContainer,
+                                onPrimaryContainer = miuixHybridColors.onPrimaryContainer,
+                                inversePrimary = miuixHybridColors.primaryVariant,
+
+                                secondary = miuixHybridColors.secondary,
+                                onSecondary = miuixHybridColors.onSecondary,
+                                secondaryContainer = miuixHybridColors.secondaryContainer,
+                                onSecondaryContainer = miuixHybridColors.onSecondaryContainer,
+
+                                tertiary = miuixHybridColors.secondaryVariant,
+                                onTertiary = miuixHybridColors.onSecondaryVariant,
+                                tertiaryContainer = miuixHybridColors.tertiaryContainer,
+                                onTertiaryContainer = miuixHybridColors.onTertiaryContainer,
+
+                                // ===== 这里已经被替换成了最纯净的 MIUIX 灰阶底色 =====
+                                background = miuixHybridColors.background,
+                                onBackground = miuixHybridColors.onBackground,
+
+                                surface = miuixHybridColors.surface,
+                                onSurface = miuixHybridColors.onSurface,
+                                surfaceVariant = miuixHybridColors.surfaceVariant,
+                                onSurfaceVariant = miuixHybridColors.onSurfaceVariantSummary, // 次要文本语义贴合
+                                surfaceTint = miuixHybridColors.primary,
+
+                                inverseSurface = miuixHybridColors.onSurface,
+                                inverseOnSurface = miuixHybridColors.surface,
+
+                                error = miuixHybridColors.error,
+                                onError = miuixHybridColors.onError,
+                                errorContainer = miuixHybridColors.errorContainer,
+                                onErrorContainer = miuixHybridColors.onErrorContainer,
+
+                                outline = miuixHybridColors.outline,
+                                outlineVariant = miuixHybridColors.dividerLine,
+                                scrim = miuixHybridColors.windowDimming,
+
+                                // Expressive API 容器层级色
+                                surfaceContainer = miuixHybridColors.surfaceContainer,
+                                surfaceContainerHigh = miuixHybridColors.surfaceContainerHigh,
+                                surfaceContainerHighest = miuixHybridColors.surfaceContainerHighest,
+                                surfaceContainerLow = miuixHybridColors.surface,
+                                surfaceContainerLowest = miuixHybridColors.background,
+                                surfaceBright = miuixHybridColors.surfaceVariant,
+                                surfaceDim = miuixHybridColors.surfaceContainerHigh
+                            )
+                        } else {
+                            androidx.compose.material3.lightColorScheme(
+                                primary = miuixHybridColors.primary,
+                                onPrimary = miuixHybridColors.onPrimary,
+                                primaryContainer = miuixHybridColors.primaryContainer,
+                                onPrimaryContainer = miuixHybridColors.onPrimaryContainer,
+                                inversePrimary = miuixHybridColors.primaryVariant,
+
+                                secondary = miuixHybridColors.secondary,
+                                onSecondary = miuixHybridColors.onSecondary,
+                                secondaryContainer = miuixHybridColors.secondaryContainer,
+                                onSecondaryContainer = miuixHybridColors.onSecondaryContainer,
+
+                                tertiary = miuixHybridColors.secondaryVariant,
+                                onTertiary = miuixHybridColors.onSecondaryVariant,
+                                tertiaryContainer = miuixHybridColors.tertiaryContainer,
+                                onTertiaryContainer = miuixHybridColors.onTertiaryContainer,
+
+                                // ===== 纯净底色 =====
+                                background = miuixHybridColors.background,
+                                onBackground = miuixHybridColors.onBackground,
+
+                                surface = miuixHybridColors.surface,
+                                onSurface = miuixHybridColors.onSurface,
+                                surfaceVariant = miuixHybridColors.surfaceVariant,
+                                onSurfaceVariant = miuixHybridColors.onSurfaceVariantSummary,
+                                surfaceTint = miuixHybridColors.primary,
+
+                                inverseSurface = miuixHybridColors.onSurface,
+                                inverseOnSurface = miuixHybridColors.surface,
+
+                                error = miuixHybridColors.error,
+                                onError = miuixHybridColors.onError,
+                                errorContainer = miuixHybridColors.errorContainer,
+                                onErrorContainer = miuixHybridColors.onErrorContainer,
+
+                                outline = miuixHybridColors.outline,
+                                outlineVariant = miuixHybridColors.dividerLine,
+                                scrim = miuixHybridColors.windowDimming,
+
+                                surfaceContainer = miuixHybridColors.surfaceContainer,
+                                surfaceContainerHigh = miuixHybridColors.surfaceContainerHigh,
+                                surfaceContainerHighest = miuixHybridColors.surfaceContainerHighest,
+                                surfaceContainerLow = miuixHybridColors.surface,
+                                surfaceContainerLowest = miuixHybridColors.background,
+                                surfaceBright = miuixHybridColors.surfaceVariant,
+                                surfaceDim = miuixHybridColors.surfaceContainerHigh
+                            )
                         }
+                    }
+
+                    // 4. 将终极形态的色盘提供给 Material 3
+                    MaterialExpressiveTheme(
+                        colorScheme = finalM3ColorScheme,
+                        typography = Typography,
+                    ) {
+                        content()
                     }
                 }
             }

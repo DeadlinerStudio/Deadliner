@@ -1,9 +1,11 @@
 package com.aritxonly.deadliner.ui.base
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
@@ -16,6 +18,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.theme.darkColorScheme
+import top.yukonga.miuix.kmp.theme.lightColorScheme
 
 // 别名防止冲突
 import androidx.compose.material3.OutlinedTextField as Material3OutlinedTextField
@@ -47,9 +52,6 @@ fun OutlinedTextField(
     shape: Shape = OutlinedTextFieldDefaults.shape,
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
 
-    // ==========================================
-    // MIUIX 专属辅助参数 (赋予默认值，不破坏外部调用)
-    // ==========================================
     miuixLabel: String = "",
 ) {
     when (LocalAppDesignSystem.current) {
@@ -99,9 +101,12 @@ fun OutlinedTextField(
                 singleLine = singleLine,
                 maxLines = maxLines,
                 minLines = minLines,
-                interactionSource = interactionSource
-
-                // 同样丢弃 colors 等深度定制参数，使用 MIUIX 的默认主题色
+                interactionSource = interactionSource,
+                backgroundColor = if (isSystemInDarkTheme()) {
+                    darkColorScheme().secondaryContainer
+                } else {
+                    lightColorScheme().secondaryContainer
+                }
             )
         }
     }

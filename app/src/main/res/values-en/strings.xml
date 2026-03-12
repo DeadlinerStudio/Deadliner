@@ -682,4 +682,8 @@
 
     <string name="wizard_header_title">Tutorial · Step %1$d of 3</string>
     <string name="wizard_header_skip">Skip Tutorial</string>
+
+    <string name="theme">Accent color</string>
+    <string name="settings_miuix_mode">MIUIX theme mode</string>
+    <string name="settings_support_miuix_mode">Enable HyperOS style themes and components.（Experimental）</string>
 </resources>

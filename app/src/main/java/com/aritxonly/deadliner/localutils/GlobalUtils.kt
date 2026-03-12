@@ -205,6 +205,26 @@ object GlobalUtils {
             sharedPreferences.edit { putBoolean("dynamic_colors", value) }
         }
 
+    var miuixMode: Boolean
+        get() = if (::sharedPreferences.isInitialized) sharedPreferences.getBoolean("miuix_mode", false) else false
+        set(value) {
+            if (::sharedPreferences.isInitialized) {
+                sharedPreferences.edit { putBoolean("miuix_mode", value) }
+            }
+            if (_miuixModeFlow == null) {
+                _miuixModeFlow = MutableStateFlow(value)
+            } else {
+                _miuixModeFlow!!.value = value
+            }
+        }
+
+    private var _miuixModeFlow: MutableStateFlow<Boolean>? = null
+
+    val miuixModeFlow: StateFlow<Boolean>
+        get() = _miuixModeFlow ?: MutableStateFlow(
+            if (::sharedPreferences.isInitialized) sharedPreferences.getBoolean("miuix_mode", false) else false
+        ).also { _miuixModeFlow = it }
+
 //    var customColorScheme:
 
     var hideFromRecent: Boolean
@@ -491,6 +511,13 @@ object GlobalUtils {
             _seedColorFlow = MutableStateFlow(currentSeedColor)
         } else {
             _seedColorFlow!!.value = currentSeedColor
+        }
+
+        val currentMiuixMode = sharedPreferences.getBoolean("miuix_mode", false)
+        if (_miuixModeFlow == null) {
+            _miuixModeFlow = MutableStateFlow(currentMiuixMode)
+        } else {
+            _miuixModeFlow!!.value = currentMiuixMode
         }
     }
 

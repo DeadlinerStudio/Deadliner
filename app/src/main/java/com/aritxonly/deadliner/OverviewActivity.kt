@@ -276,7 +276,8 @@ fun OverviewScreen(
                 selectedTabIndex = selectedTab,
                 onTabSelected = { selectedTab = it },
                 tabIcons = iconsList,
-                divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surface) }
+                divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surface) },
+                modifier = Modifier.padding(16.dp)
             )
 
             when (selectedTab) {

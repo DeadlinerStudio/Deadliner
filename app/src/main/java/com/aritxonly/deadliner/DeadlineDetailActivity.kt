@@ -26,10 +26,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -87,7 +89,6 @@ import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
-import com.aritxonly.deadliner.model.AppColorScheme
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
@@ -103,8 +104,6 @@ import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.sin
 
-private lateinit var colorScheme: AppColorScheme
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 class DeadlineDetailActivity : AppCompatActivity() {
 
@@ -118,45 +117,6 @@ class DeadlineDetailActivity : AppCompatActivity() {
         }
     }
 
-    private class ColorSchemeHelper(val context: Context) {
-        val defaultColorScheme = AppColorScheme(
-            primary = getThemeColor(androidx.appcompat.R.attr.colorPrimary),
-            onPrimary = getMaterialThemeColor(com.google.android.material.R.attr.colorOnPrimary),
-            primaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorPrimaryContainer),
-            surface = getMaterialThemeColor(com.google.android.material.R.attr.colorSurface),
-            onSurface = getMaterialThemeColor(com.google.android.material.R.attr.colorOnSurface),
-            surfaceContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorSurfaceContainer),
-            secondary = getMaterialThemeColor(com.google.android.material.R.attr.colorSecondary),
-            onSecondary = getMaterialThemeColor(com.google.android.material.R.attr.colorOnSecondary),
-            secondaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorSecondaryContainer),
-            onSecondaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorOnSecondaryContainer),
-            tertiary = getMaterialThemeColor(com.google.android.material.R.attr.colorTertiary),
-            onTertiary = getMaterialThemeColor(com.google.android.material.R.attr.colorOnTertiary),
-            tertiaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorTertiaryContainer),
-            onTertiaryContainer = getMaterialThemeColor(com.google.android.material.R.attr.colorOnTertiaryContainer),
-        )
-
-        /**
-         * 获取主题颜色
-         * @param attributeId 主题属性 ID
-         * @return 颜色值
-         */
-        private fun getThemeColor(attributeId: Int): Int {
-            val typedValue = TypedValue()
-            context.theme.resolveAttribute(attributeId, typedValue, true)
-            Log.d("ThemeColor", "getColor $attributeId: ${typedValue.data.toHexString()}")
-            return typedValue.data
-        }
-
-        private fun getMaterialThemeColor(attributeId: Int): Int {
-            return MaterialColors.getColor(
-                ContextWrapper(context),
-                attributeId,
-                android.graphics.Color.WHITE
-            )
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdgeForAllDevices()
 
@@ -164,11 +124,6 @@ class DeadlineDetailActivity : AppCompatActivity() {
 
         val initialDeadline = intent.getParcelableExtra<DDLItem>(EXTRA_DEADLINE)
         ?: throw IllegalArgumentException("Missing Deadline parameter")
-
-        val appColorScheme = intent.getParcelableExtra<AppColorScheme>("EXTRA_APP_COLOR_SCHEME")
-            ?: ColorSchemeHelper(this).defaultColorScheme
-
-        colorScheme = appColorScheme
 
         val latestDeadline = DDLRepository().getDDLById(initialDeadline.id) ?: initialDeadline
 
@@ -179,7 +134,8 @@ class DeadlineDetailActivity : AppCompatActivity() {
                 Scaffold(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(color = Color(colorScheme.surface))
+                        .background(color = MaterialTheme.colorScheme.surface),
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0)
                 ) { innerPadding ->
                     DeadlineDetailScreen(
                         applicationContext = applicationContext,
@@ -246,13 +202,14 @@ fun DeadlineDetailScreen(
     val saveToCalendarText = stringResource(R.string.save_and_add_to_calendar)
 
     Scaffold(
-        modifier = Modifier.background(Color(colorScheme.surface)),
+        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         text = deadline.name,
-                        color = Color(colorScheme.onSurface),
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -262,7 +219,7 @@ fun DeadlineDetailScreen(
                         Icon(
                             ImageVector.vectorResource(R.drawable.ic_close),
                             contentDescription = stringResource(R.string.close),
-                            tint = Color(colorScheme.onSurface),
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = expressiveTypeModifier
                         )
                     }
@@ -286,7 +243,7 @@ fun DeadlineDetailScreen(
                             Icon(
                                 iconResource(R.drawable.ic_share_alt),
                                 contentDescription = stringResource(R.string.share),
-                                tint = Color(colorScheme.onSurface),
+                                tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = expressiveTypeModifier
                             )
                         }
@@ -301,7 +258,7 @@ fun DeadlineDetailScreen(
                             )
                             val tintColor = if (isStared)
                                 Color("ffffe819".hexToInt())
-                            else Color(colorScheme.onSurface)
+                            else MaterialTheme.colorScheme.onSurface
                             Icon(
                                 iconStar,
                                 contentDescription = stringResource(R.string.star),
@@ -312,7 +269,7 @@ fun DeadlineDetailScreen(
                     }
                 },
                 modifier = Modifier
-                    .background(Color(colorScheme.surface))
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 8.dp)
             )
         }
@@ -322,7 +279,7 @@ fun DeadlineDetailScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .background(Color(colorScheme.surface)),
+                .background(MaterialTheme.colorScheme.surface),
             contentAlignment = Alignment.Center
         ) {
             // 模拟一个水杯容器
@@ -339,6 +296,7 @@ fun DeadlineDetailScreen(
             DeadlineEditFABMenu(
                 isCompleted = isCompleted,
                 modifier = Modifier.align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
             ) { desc ->
                 Log.d("Desc", desc)
                 when (desc) {
@@ -406,6 +364,11 @@ fun DeadlineEditFABMenu(
 ) {
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
+    val tertiary = MaterialTheme.colorScheme.tertiary
+    val tertiaryContainer = MaterialTheme.colorScheme.tertiaryContainer
+    val onTertiary = MaterialTheme.colorScheme.onTertiary
+    val onTertiaryContainer = MaterialTheme.colorScheme.onTertiaryContainer
+
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
     var items = listOf(
@@ -436,10 +399,7 @@ fun DeadlineEditFABMenu(
                         alignment = Alignment.BottomEnd
                     ),
                 containerColor = { x: Float ->
-                    if (x > 0.5f)
-                        Color(colorScheme.tertiary)
-                    else
-                        Color(colorScheme.tertiaryContainer!!)
+                    if (x > 0.5f) tertiary else tertiaryContainer
                 },
                 checked = fabMenuExpanded,
                 onCheckedChange = { fabMenuExpanded = !fabMenuExpanded }
@@ -457,10 +417,7 @@ fun DeadlineEditFABMenu(
                     painter = rememberVectorPainter(imageVector),
                     contentDescription = null,
                     modifier = Modifier.animateIcon({ checkedProgress }, color = { progress ->
-                        if (progress > 0.5f)
-                            Color(colorScheme.onTertiary!!)
-                        else
-                            Color(colorScheme.onTertiaryContainer!!)
+                        if (progress > 0.5f) onTertiary else onTertiaryContainer
                     }),
                 )
             }
@@ -489,8 +446,8 @@ fun DeadlineEditFABMenu(
                 },
                 icon = { Icon(item.first, contentDescription = null) },
                 text = { Text(text = item.second) },
-                containerColor = Color(colorScheme.tertiaryContainer),
-                contentColor = Color(colorScheme.onTertiaryContainer)
+                containerColor = tertiaryContainer,
+                contentColor = onTertiaryContainer
             )
         }
     }
@@ -525,12 +482,12 @@ fun WaterCupAnimation(deadline: DDLItem,
         ), label = ""
     )
 
-    val color = if (deadline.isCompleted) Color(colorScheme.secondary!!)
-        else Color(colorScheme.primary)
+    val color = if (deadline.isCompleted) MaterialTheme.colorScheme.secondary
+        else MaterialTheme.colorScheme.primary
     val waveAmplitude = with(LocalDensity.current) { 8.dp.toPx() }
 
-    val containerColor = if (deadline.isCompleted) Color(colorScheme.secondaryContainer!!)
-        else Color(colorScheme.primaryContainer)
+    val containerColor = if (deadline.isCompleted) MaterialTheme.colorScheme.secondaryContainer
+        else MaterialTheme.colorScheme.primaryContainer
 
     Box(
         modifier = modifier
@@ -603,17 +560,20 @@ fun DeadlineDetailInfo(deadline: DDLItem, waterLevel: Float) {
     /**
      * 使用插值法计算背景情况
      */
-    val waterColor = if (deadline.isCompleted) Color(colorScheme.secondary!!)
-        else Color(colorScheme.primary)
-    val containerColor = if (deadline.isCompleted) Color(colorScheme.secondaryContainer!!)
-        else Color(colorScheme.primaryContainer)
+    val waterColor = if (deadline.isCompleted) MaterialTheme.colorScheme.secondary
+        else MaterialTheme.colorScheme.primary
+    val containerColor = if (deadline.isCompleted) MaterialTheme.colorScheme.secondaryContainer
+        else MaterialTheme.colorScheme.primaryContainer
     val currentBackground = lerp(containerColor, waterColor, waterLevel.coerceIn(0f, 1f))
+
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
+    val onSurface = MaterialTheme.colorScheme.onSurface
 
     val textColor = remember(currentBackground) {
         selectOptimalTextColor(
             backgroundColor = currentBackground,
-            lightColor = Color(colorScheme.onPrimary),
-            darkColor = Color(colorScheme.onSurface)
+            lightColor = onPrimary,
+            darkColor = onSurface
         )
     }
 
@@ -679,24 +639,4 @@ fun calculateContrastRatio(backgroundLuminance: Float, textLuminance: Float): Fl
     val l1 = maxOf(backgroundLuminance, textLuminance) + 0.05f
     val l2 = minOf(backgroundLuminance, textLuminance) + 0.05f
     return l1 / l2
-}
-
-@Composable
-fun CustomDeadlinerTheme(
-    appColorScheme: AppColorScheme,
-    content: @Composable () -> Unit
-) {
-    val customColors = lightColorScheme(
-        primary = Color(appColorScheme.primary),
-        onPrimary = Color(appColorScheme.onPrimary),
-        primaryContainer = Color(appColorScheme.primaryContainer),
-        surface = Color(appColorScheme.surface),
-        onSurface = Color(appColorScheme.onSurface),
-        surfaceContainer = Color(appColorScheme.surfaceContainer)
-    )
-    MaterialTheme(
-        colorScheme = customColors,
-        typography = com.aritxonly.deadliner.ui.theme.Typography,
-        content = content
-    )
 }

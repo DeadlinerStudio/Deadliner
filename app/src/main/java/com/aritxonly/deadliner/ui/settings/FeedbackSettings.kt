@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -40,12 +41,6 @@ fun FeedbackScreen(
     navigateUp: () -> Unit
 ) {
     var isLoading by remember { mutableStateOf(true) }
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     Scaffold(
         topBar = {

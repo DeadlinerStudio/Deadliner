@@ -33,6 +33,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.ui.theme.AppDesignSystem
+import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -125,11 +127,21 @@ fun AnimatedItem(
 }
 
 val expressiveTypeModifier: Modifier
-    @Composable get() = Modifier.Companion
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
+    @Composable get() {
+        val isMaterial3 = LocalAppDesignSystem.current == AppDesignSystem.MATERIAL3
+
+        return Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .let { modifier ->
+                if (isMaterial3) {
+                    modifier.background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
+                } else {
+                    modifier
+                }
+            }
+            .padding(8.dp)
+    }
 
 @SuppressLint("ComposableNaming")
 @Composable

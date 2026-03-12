@@ -115,7 +115,13 @@ fun SettingItem(
     expressiveTypeModifier: Modifier = Modifier
         .size(24.dp)
         .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+        .let { baseModifier ->
+            if (LocalAppDesignSystem.current == AppDesignSystem.MATERIAL3) {
+                baseModifier.background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+            } else {
+                baseModifier // MIUIX 模式下，保持纯净透明
+            }
+        },
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = {
         Icon(
@@ -183,7 +189,8 @@ fun SettingsSection(
         }
         Surface(
             shape = MaterialTheme.shapes.large.copy(CornerSize(radiusDimen)),
-            color = containerColor.copy(alpha = 0.6f)
+            color = containerColor
+//                .copy(alpha = 0.6f)
         ) {
             Column(content = content)
         }

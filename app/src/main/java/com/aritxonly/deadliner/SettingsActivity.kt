@@ -19,7 +19,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -177,131 +181,170 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 }
 
-                NavHost(
-                    navController,
-                    startDestination = SettingsRoute.Main.route,
-                    enterTransition = defaultEnter,
-                    exitTransition = defaultExit,
-                    popEnterTransition = defaultPopEnter,
-                    popExitTransition = defaultPopExit
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.surface
                 ) {
-                    composable(SettingsRoute.Main.route) {
-                        MainSettingsScreen(navController, onClose = { finishAfterTransition() })
-                    }
+                    NavHost(
+                        navController,
+                        startDestination = SettingsRoute.Main.route,
+                        enterTransition = defaultEnter,
+                        exitTransition = defaultExit,
+                        popEnterTransition = defaultPopEnter,
+                        popExitTransition = defaultPopExit
+                    ) {
+                        composable(SettingsRoute.Main.route) {
+                            MainSettingsScreen(navController, onClose = { finishAfterTransition() })
+                        }
 
-                    composable(SettingsRoute.Appearance.route) { AppearanceSettingsScreen(navController) { navController.navigateUp() } }
-                    composable(SettingsRoute.Behavior.route) { BehaviorSettingsScreen(
-                        navController, handleRestart = { showDialogRestartAppTablet() }
-                    ) { navController.navigateUp() } }
-                    composable(SettingsRoute.Notification.route) { NotificationSettingsScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.Backup.route) {
-                        BackupSettingsScreen(
-                            handleExport = { createBackup() },
-                            handleImport = {
-                                DeadlineAlarmScheduler.cancelAllAlarms(applicationContext)
-                                GlobalUtils.NotificationStatusManager.clearAllNotified()
-                                Toast.makeText(this@SettingsActivity, getString(R.string.destroy_alarms), Toast.LENGTH_SHORT).show()
-                                openBackup()
-                            },
-                            handleWebSettings = { navController.navigate(SettingsRoute.WebDAV.route) }
-                        ) { navController.navigateUp() }
-                    }
+                        composable(SettingsRoute.Appearance.route) {
+                            AppearanceSettingsScreen(
+                                navController
+                            ) { navController.navigateUp() }
+                        }
+                        composable(SettingsRoute.Behavior.route) {
+                            BehaviorSettingsScreen(
+                                navController, handleRestart = { showDialogRestartAppTablet() }
+                            ) { navController.navigateUp() }
+                        }
+                        composable(SettingsRoute.Notification.route) { NotificationSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Backup.route) {
+                            BackupSettingsScreen(
+                                handleExport = { createBackup() },
+                                handleImport = {
+                                    DeadlineAlarmScheduler.cancelAllAlarms(applicationContext)
+                                    GlobalUtils.NotificationStatusManager.clearAllNotified()
+                                    Toast.makeText(
+                                        this@SettingsActivity,
+                                        getString(R.string.destroy_alarms),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    openBackup()
+                                },
+                                handleWebSettings = { navController.navigate(SettingsRoute.WebDAV.route) }
+                            ) { navController.navigateUp() }
+                        }
 
-                    composable(SettingsRoute.Widget.route) { WidgetSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Widget.route) { WidgetSettingsScreen { navController.navigateUp() } }
 
-                    composable(SettingsRoute.AI.route) { AISettingsScreen(navController) { navController.navigateUp() } }
-                    composable(SettingsRoute.WebDAV.route) { WebSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.AI.route) { AISettingsScreen(navController) { navController.navigateUp() } }
+                        composable(SettingsRoute.WebDAV.route) { WebSettingsScreen { navController.navigateUp() } }
 
-                    composable(SettingsRoute.Lab.route) {
-                        LabSettingsScreen(
-                            onClickCustomFilter = {
-                                // 原始数据源
-                                val allItems = GlobalUtils.customCalendarFilterList?.filterNotNull()?.toMutableList() ?: mutableListOf()
-                                // 用户当前选中的
-                                val selectedItems = GlobalUtils.customCalendarFilterListSelected?.filterNotNull()?.toMutableSet() ?: allItems.toMutableSet()
+                        composable(SettingsRoute.Lab.route) {
+                            LabSettingsScreen(
+                                onClickCustomFilter = {
+                                    // 原始数据源
+                                    val allItems =
+                                        GlobalUtils.customCalendarFilterList?.filterNotNull()
+                                            ?.toMutableList() ?: mutableListOf()
+                                    // 用户当前选中的
+                                    val selectedItems =
+                                        GlobalUtils.customCalendarFilterListSelected?.filterNotNull()
+                                            ?.toMutableSet() ?: allItems.toMutableSet()
 
-                                fun showFilterDialog() {
-                                    val itemsArray = allItems.toTypedArray()
-                                    val checkedArray = BooleanArray(itemsArray.size) { index ->
-                                        // 默认已选中 current selection（如果第一次打开且 selectedItems 为空，则默认全选）
-                                        if (selectedItems.isEmpty()) true
-                                        else selectedItems.contains(itemsArray[index])
+                                    fun showFilterDialog() {
+                                        val itemsArray = allItems.toTypedArray()
+                                        val checkedArray = BooleanArray(itemsArray.size) { index ->
+                                            // 默认已选中 current selection（如果第一次打开且 selectedItems 为空，则默认全选）
+                                            if (selectedItems.isEmpty()) true
+                                            else selectedItems.contains(itemsArray[index])
+                                        }
+
+                                        MaterialAlertDialogBuilder(this@SettingsActivity)
+                                            .setTitle(R.string.select_filter_calendar)
+                                            .setMultiChoiceItems(
+                                                itemsArray,
+                                                checkedArray
+                                            ) { _, which, isChecked ->
+                                                val item = itemsArray[which]
+                                                if (isChecked) selectedItems.add(item)
+                                                else selectedItems.remove(item)
+                                            }
+                                            .setNeutralButton(R.string.filter_add_one) { dialog, _ ->
+                                                dialog.dismiss()
+                                                // 弹出输入框，添加新选项
+                                                val inputLayout =
+                                                    TextInputLayout(this@SettingsActivity).apply {
+                                                        hint = getString(R.string.new_filter_name)
+                                                        setPadding(32, 0, 32, 0)
+                                                    }
+                                                val editText =
+                                                    TextInputEditText(inputLayout.context)
+                                                inputLayout.addView(editText)
+
+                                                MaterialAlertDialogBuilder(this@SettingsActivity)
+                                                    .setTitle(R.string.new_filter_title)
+                                                    .setView(inputLayout)
+                                                    .setPositiveButton(R.string.accept) { subDialog, _ ->
+                                                        val newItem =
+                                                            editText.text?.toString()?.trim()
+                                                        if (!newItem.isNullOrEmpty() && !allItems.contains(
+                                                                newItem
+                                                            )
+                                                        ) {
+                                                            // 更新数据源和选中集
+                                                            allItems.add(newItem)
+                                                            selectedItems.add(newItem)
+                                                            GlobalUtils.customCalendarFilterList =
+                                                                allItems.toSet()
+                                                            GlobalUtils.customCalendarFilterListSelected =
+                                                                selectedItems.toSet()
+                                                        }
+                                                        subDialog.dismiss()
+                                                        // 重新打开主多选框
+                                                        showFilterDialog()
+                                                    }
+                                                    .setNegativeButton(R.string.cancel, null)
+                                                    .show()
+                                            }
+                                            .setPositiveButton(R.string.accept) { dialog, _ ->
+                                                GlobalUtils.customCalendarFilterListSelected =
+                                                    selectedItems.toSet()
+                                                dialog.dismiss()
+                                            }
+                                            .setNegativeButton(R.string.cancel, null)
+                                            .show()
                                     }
 
-                                    MaterialAlertDialogBuilder(this@SettingsActivity)
-                                        .setTitle(R.string.select_filter_calendar)
-                                        .setMultiChoiceItems(itemsArray, checkedArray) { _, which, isChecked ->
-                                            val item = itemsArray[which]
-                                            if (isChecked) selectedItems.add(item)
-                                            else selectedItems.remove(item)
-                                        }
-                                        .setNeutralButton(R.string.filter_add_one) { dialog, _ ->
-                                            dialog.dismiss()
-                                            // 弹出输入框，添加新选项
-                                            val inputLayout = TextInputLayout(this@SettingsActivity).apply {
-                                                hint = getString(R.string.new_filter_name)
-                                                setPadding(32, 0, 32, 0)
-                                            }
-                                            val editText = TextInputEditText(inputLayout.context)
-                                            inputLayout.addView(editText)
+                                    // 首次打开
+                                    showFilterDialog()
+                                },
+                                onClickCancelAll = {
+                                    DeadlineAlarmScheduler.cancelAllAlarms(applicationContext)
+                                    GlobalUtils.NotificationStatusManager.clearAllNotified()
+                                    Toast.makeText(
+                                        this@SettingsActivity,
+                                        getString(R.string.destroy_alarms),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                },
+                                onClickShowIntro = {
+                                    GlobalUtils.showIntroPage = true
+                                    Toast.makeText(
+                                        this@SettingsActivity,
+                                        getString(R.string.show_intro_next_time),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                },
+                            ) { navController.navigateUp() }
+                        }
 
-                                            MaterialAlertDialogBuilder(this@SettingsActivity)
-                                                .setTitle(R.string.new_filter_title)
-                                                .setView(inputLayout)
-                                                .setPositiveButton(R.string.accept) { subDialog, _ ->
-                                                    val newItem = editText.text?.toString()?.trim()
-                                                    if (!newItem.isNullOrEmpty() && !allItems.contains(newItem)) {
-                                                        // 更新数据源和选中集
-                                                        allItems.add(newItem)
-                                                        selectedItems.add(newItem)
-                                                        GlobalUtils.customCalendarFilterList = allItems.toSet()
-                                                        GlobalUtils.customCalendarFilterListSelected = selectedItems.toSet()
-                                                    }
-                                                    subDialog.dismiss()
-                                                    // 重新打开主多选框
-                                                    showFilterDialog()
-                                                }
-                                                .setNegativeButton(R.string.cancel, null)
-                                                .show()
-                                        }
-                                        .setPositiveButton(R.string.accept) { dialog, _ ->
-                                            GlobalUtils.customCalendarFilterListSelected = selectedItems.toSet()
-                                            dialog.dismiss()
-                                        }
-                                        .setNegativeButton(R.string.cancel, null)
-                                        .show()
-                                }
+                        composable(SettingsRoute.Wiki.route) { WikiScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Feedback.route) { FeedbackScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.About.route) { AboutSettingsScreen(navController) { navController.navigateUp() } }
 
-                                // 首次打开
-                                showFilterDialog()
-                            },
-                            onClickCancelAll = {
-                                DeadlineAlarmScheduler.cancelAllAlarms(applicationContext)
-                                GlobalUtils.NotificationStatusManager.clearAllNotified()
-                                Toast.makeText(this@SettingsActivity, getString(R.string.destroy_alarms), Toast.LENGTH_SHORT).show()
-                            },
-                            onClickShowIntro = {
-                                GlobalUtils.showIntroPage = true
-                                Toast.makeText(this@SettingsActivity, getString(R.string.show_intro_next_time), Toast.LENGTH_SHORT).show()
-                            },
-                        ) { navController.navigateUp() }
+                        composable(SettingsRoute.Vibration.route) { VibrationSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Archive.route) { ArchiveSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Badge.route) { BadgeSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.UI.route) { UiSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Model.route) { ModelSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Prompt.route) { PromptSettingsScreen { navController.navigateUp() } }
+
+                        composable(SettingsRoute.Update.route) { UpdateScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.License.route) { LicenseScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Policy.route) { PolicyScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Donate.route) { DonateScreen { navController.navigateUp() } }
                     }
-
-                    composable(SettingsRoute.Wiki.route) { WikiScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.Feedback.route) { FeedbackScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.About.route) { AboutSettingsScreen(navController) { navController.navigateUp() } }
-
-                    composable(SettingsRoute.Vibration.route) { VibrationSettingsScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.Archive.route) { ArchiveSettingsScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.Badge.route) { BadgeSettingsScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.UI.route) { UiSettingsScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.Model.route) { ModelSettingsScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.Prompt.route) { PromptSettingsScreen { navController.navigateUp() } }
-
-                    composable(SettingsRoute.Update.route) { UpdateScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.License.route) { LicenseScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.Policy.route) { PolicyScreen { navController.navigateUp() } }
-                    composable(SettingsRoute.Donate.route) { DonateScreen { navController.navigateUp() } }
                 }
             }
         }

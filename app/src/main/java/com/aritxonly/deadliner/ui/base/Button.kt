@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -60,8 +61,10 @@ fun Button(
                 onClick = onClick,
                 modifier = modifier.padding(vertical = 8.dp),
                 enabled = enabled,
-
-                cornerRadius = dimensionResource(com.aritxonly.deadliner.R.dimen.item_corner_radius),
+                insideMargin = PaddingValues(12.dp),
+                colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.buttonColors(
+                    color = colors.containerColor,
+                ),
                 content = content
             )
         }

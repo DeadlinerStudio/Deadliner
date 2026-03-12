@@ -32,6 +32,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import com.aritxonly.deadliner.R
 import androidx.compose.foundation.layout.*
@@ -487,7 +488,8 @@ fun SimplifiedHost(
                                     modifier = expressiveTypeModifier)
                             }
                         },
-                        title = { Text(stringResource(R.string.selected_items, selectedIds.size)) }
+                        title = { Text(stringResource(R.string.selected_items, selectedIds.size)) },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     )
                 } else {
                     MainSearchBar(
@@ -505,7 +507,8 @@ fun SimplifiedHost(
                         activity = activity,
                         expanded = searchActive,
                         onExpandedChangeExternal = onSearchActiveChange,
-                        selectedPage = selectedPage
+                        selectedPage = selectedPage,
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     )
                 }
             }
@@ -515,6 +518,7 @@ fun SimplifiedHost(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.surface)
         ) {
             MainDisplay(
                 ddlList = ddlList,

@@ -31,6 +31,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -44,6 +45,7 @@ fun AppearanceSettingsScreen(
     var fireworksOnFinishEnabled by remember { mutableStateOf(GlobalUtils.fireworksOnFinish) }
     var detailDisplayEnabled by remember { mutableStateOf(GlobalUtils.detailDisplayMode) }
     var hideDividerEnabled by remember { mutableStateOf(GlobalUtils.hideDivider) }
+    var miuixModeEnabled by remember { mutableStateOf(GlobalUtils.miuixMode) }
     var selectedColorState by remember { mutableStateOf(GlobalUtils.seedColor) }
 
     val onProgressDirChange: (Boolean) -> Unit = {
@@ -66,16 +68,14 @@ fun AppearanceSettingsScreen(
         GlobalUtils.hideDivider = it
         hideDividerEnabled = it
     }
+    val onMiuixModeChange: (Boolean) -> Unit = {
+        GlobalUtils.miuixMode = it
+        miuixModeEnabled = it
+    }
     val onThemeChange: (String?) -> Unit = {
         GlobalUtils.seedColor = it
         selectedColorState = it
     }
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_interface_display),
@@ -131,6 +131,14 @@ fun AppearanceSettingsScreen(
                     supportingText = R.string.settings_support_hide_divider,
                     checked = hideDividerEnabled,
                     onCheckedChange = onHideDividerChange
+                )
+                SettingsSectionDivider()
+
+                SettingsDetailSwitchItem(
+                    headline = R.string.settings_miuix_mode,
+                    supportingText = R.string.settings_support_miuix_mode,
+                    checked = miuixModeEnabled,
+                    onCheckedChange = onMiuixModeChange
                 )
             }
 

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 
 @Composable
 fun ArchiveSettingsScreen(
@@ -42,12 +43,6 @@ fun ArchiveSettingsScreen(
         GlobalUtils.autoArchiveTime = it
         archiveDays = it
     }
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_auto_archive_title),

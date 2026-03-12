@@ -37,6 +37,7 @@ import com.aritxonly.deadliner.BuildConfig
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.PreviewCard
 import androidx.core.net.toUri
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -45,12 +46,6 @@ fun AboutSettingsScreen(
     navigateUp: () -> Unit,
 ) {
     val context = LocalContext.current
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_about),

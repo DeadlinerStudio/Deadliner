@@ -196,7 +196,9 @@ fun UiModeOptionCard(
             .clickable(onClick = onClick),
         shape = shape,
         border = BorderStroke(2.dp, borderColor),
-        colors = CardDefaults.cardColors()
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
         Column(
             modifier = Modifier.padding(12.dp),

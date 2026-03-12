@@ -28,6 +28,7 @@ import androidx.navigation.NavController
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,12 +38,6 @@ fun MainSettingsScreen(
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_title),

@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 
 @Composable
 fun PromptSettingsScreen(
@@ -47,12 +48,6 @@ fun PromptSettingsScreen(
         GlobalUtils.customPrompt = customPrompt
         Toast.makeText(context, successText, Toast.LENGTH_SHORT).show()
     }
-
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_ai_custom_prompt),

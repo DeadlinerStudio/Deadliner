@@ -22,6 +22,7 @@ import com.aritxonly.deadliner.AppSingletons
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import kotlinx.coroutines.launch
 
 @Composable
@@ -31,11 +32,6 @@ fun BackupSettingsScreen(
     handleWebSettings: () -> Unit,
     navigateUp: () -> Unit,
 ) {
-    val expressiveTypeModifier = Modifier
-        .size(40.dp)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-        .padding(8.dp)
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
