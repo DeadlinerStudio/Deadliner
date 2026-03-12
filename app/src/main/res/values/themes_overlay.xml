@@ -12,4 +12,11 @@
         <item name="colorOnSurfaceVariant">#99000000</item>
         <item name="colorOutlineVariant">#FFE0E0E0</item>
     </style>
+
+    <style name="ThemeOverlay.Deadliner.MiuixDefaults" parent="">
+        <item name="colorPrimary">#3481FF</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#E5EFFF</item>
+        <item name="colorOnPrimaryContainer">#0044B3</item>
+    </style>
 </resources>

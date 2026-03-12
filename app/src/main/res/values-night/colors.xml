@@ -18,4 +18,16 @@
     <color name="chart_blue">#FFB3CAD8</color>
 
     <color name="widget_icon_tint">#FFFFFF</color>
+
+    <color name="indicator_morandi_undergo">#FF70ACFA</color>
+    <color name="bg_morandi_undergo">#FF1C2838</color>
+
+    <color name="indicator_morandi_near">#FFFA9D50</color>
+    <color name="bg_morandi_near">#FF4A3620</color>
+
+    <color name="indicator_morandi_passed">#FFFF7D7D</color>
+    <color name="bg_morandi_passed">#FF3F2121</color>
+
+    <color name="indicator_morandi_completed">#FF4ADBA3</color>
+    <color name="bg_morandi_completed">#FF163D33</color>
 </resources>

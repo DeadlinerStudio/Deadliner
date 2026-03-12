@@ -199,12 +199,6 @@ object GlobalUtils {
             sharedPreferences.edit { putBoolean("developer_mode", value) }
         }
 
-    var dynamicColors: Boolean
-        get() = sharedPreferences.getBoolean("dynamic_colors", true)
-        set(value) {
-            sharedPreferences.edit { putBoolean("dynamic_colors", value) }
-        }
-
     var miuixMode: Boolean
         get() = if (::sharedPreferences.isInitialized) sharedPreferences.getBoolean("miuix_mode", false) else false
         set(value) {
@@ -225,7 +219,31 @@ object GlobalUtils {
             if (::sharedPreferences.isInitialized) sharedPreferences.getBoolean("miuix_mode", false) else false
         ).also { _miuixModeFlow = it }
 
-//    var customColorScheme:
+    var miuixColor: Boolean
+        get() = if (::sharedPreferences.isInitialized) sharedPreferences.getBoolean("miuix_color", false) else false
+        set(value) {
+            if (::sharedPreferences.isInitialized) {
+                sharedPreferences.edit { putBoolean("miuix_color", value) }
+            }
+            if (_miuixColorFlow == null) {
+                _miuixColorFlow = MutableStateFlow(value)
+            } else {
+                _miuixColorFlow!!.value = value
+            }
+        }
+
+    private var _miuixColorFlow: MutableStateFlow<Boolean>? = null
+
+    val miuixColorFlow: StateFlow<Boolean>
+        get() = _miuixColorFlow ?: MutableStateFlow(
+            if (::sharedPreferences.isInitialized) sharedPreferences.getBoolean("miuix_color", false) else false
+        ).also { _miuixColorFlow = it }
+
+    var presetIndicatorColor: Boolean
+        get() = sharedPreferences.getBoolean("preset_indicator", false)
+        set(value) {
+            sharedPreferences.edit { putBoolean("preset_indicator", value) }
+        }
 
     var hideFromRecent: Boolean
         get() = sharedPreferences.getBoolean("hide_from_recent", false)

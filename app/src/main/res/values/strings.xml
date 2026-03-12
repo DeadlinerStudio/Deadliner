@@ -666,8 +666,10 @@
     <string name="settings_support_ui_mode">调整 Deadliner 的布局与显示风格</string>
     <string name="ui_style_classic">经典模式</string>
     <string name="ui_style_simplified">简洁模式</string>
+    <string name="ui_style_miuix">现代模式</string>
     <string name="ui_style_simplified_support">聚焦核心任务与习惯管理，提供更清爽、直观的界面布局。</string>
     <string name="ui_style_classic_support">沿用自 v2 的完整布局，呈现更全面、一触即达的任务管理体验。</string>
+    <string name="ui_style_miuix_support">来自 HyperOS 的现代化设计理念，更原生，更可靠。</string>
 
     <string name="intro_cover_title">重塑任务管理体验</string>
     <string name="intro_cover_desc">Deadliner v4 · 你的智能任务助手</string>
@@ -725,4 +727,8 @@
     <string name="theme">强调色</string>
     <string name="settings_miuix_mode">MIUIX 主题模式</string>
     <string name="settings_support_miuix_mode">开启 HyperOS 风格的主题与组件库（实验性）</string>
+    <string name="settings_miuix_color">MIUIX 颜色</string>
+    <string name="settings_support_miuix_color">使用 HyperOS 的默认颜色（需要在主界面风格中开启 现代模式 以避免界面显示问题）</string>
+    <string name="settings_preset_indicator">多彩任务指示标</string>
+    <string name="settings_support_preset_indicator">替换来自鸿蒙版本的多彩任务进度指示标</string>
 </resources>

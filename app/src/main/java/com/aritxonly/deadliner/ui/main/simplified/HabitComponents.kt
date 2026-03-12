@@ -56,6 +56,9 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
+import androidx.compose.ui.res.colorResource
+import com.aritxonly.deadliner.localutils.GlobalUtils
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HabitCircleProgress(
@@ -174,6 +177,7 @@ fun WeekRow(
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HabitRow(
     data: HabitWithDailyStatus,
@@ -188,25 +192,37 @@ fun HabitRow(
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
     val progress = (data.doneCount.toFloat() / data.targetCount.coerceAtLeast(1)).coerceIn(0f, 1f)
 
-    // 颜色按 DDLStatus 来
+    // 🌟 1. 获取全局鸿蒙莫兰迪色开关
+    val usePreset = GlobalUtils.presetIndicatorColor
+
+    // 🌟 2. 颜色按 DDLStatus 和开关状态来分配
     val indicatorColor: Color
     val bgColor: Color
     when (status) {
         DDLStatus.UNDERGO -> {
-            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
-            bgColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_undergo).copy(alpha = 0.55f)
+            else MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+            bgColor = if (usePreset) colorResource(R.color.bg_morandi_undergo).copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
         }
         DDLStatus.NEAR -> {
-            indicatorColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.55f)
-            bgColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_near).copy(alpha = 0.55f)
+            else MaterialTheme.colorScheme.tertiary.copy(alpha = 0.55f)
+            bgColor = if (usePreset) colorResource(R.color.bg_morandi_near).copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
         }
         DDLStatus.PASSED -> {
-            indicatorColor = MaterialTheme.colorScheme.error.copy(alpha = 0.55f)
-            bgColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_passed).copy(alpha = 0.55f)
+            else MaterialTheme.colorScheme.error.copy(alpha = 0.55f)
+            // 列表中缺少 bg_morandi_passed，统一用 indicator 降低透明度代替
+            bgColor = if (usePreset) colorResource(R.color.indicator_morandi_passed).copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
         }
         DDLStatus.COMPLETED -> {
-            indicatorColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f)
-            bgColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_completed).copy(alpha = 0.55f)
+            else MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f)
+            bgColor = if (usePreset) colorResource(R.color.bg_morandi_completed).copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
         }
     }
 
@@ -224,7 +240,6 @@ fun HabitRow(
             val totalTargetText = data.habit.totalTarget?.toString() ?: "∞"
             val progressText = "${data.doneCount}/$totalTargetText"
             if (!remainingText.isNullOrBlank()) {
-                // e.g. “还有 12 天 · 7/30”
                 "$remainingText · $progressText"
             } else {
                 progressText
@@ -256,7 +271,7 @@ fun HabitRow(
     ) {
         Box(
             modifier = Modifier
-                .background(bgColor)
+                .background(bgColor) // 👈 背景色应用
                 .fillMaxWidth()
                 .height(72.dp)
         ) {
@@ -269,7 +284,7 @@ fun HabitRow(
                         .background(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
-                                    indicatorColor.copy(alpha = 0.4f),
+                                    indicatorColor.copy(alpha = 0.4f), // 👈 进度条渐变应用
                                     indicatorColor
                                 )
                             )
@@ -318,7 +333,7 @@ fun HabitRow(
                 )
             }
 
-            // 👇 多选叠加层：有点类似 DDLItemCard 那种选中效果
+            // 👇 多选叠加层：保持使用 primary 作为统一的选中高亮色
             if (isSelected) {
                 Box(
                     modifier = Modifier

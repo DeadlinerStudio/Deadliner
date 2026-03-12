@@ -83,6 +83,7 @@ import androidx.core.graphics.toColor
 import androidx.core.graphics.toColorInt
 import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
@@ -246,24 +247,38 @@ fun DDLItemCardSimplified(
 ) {
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
     val progressClamped = progress.coerceIn(0f, 1f)
+
+    // 🌟 获取全局鸿蒙莫兰迪色开关
+    val usePreset = GlobalUtils.presetIndicatorColor
+
     val indicatorColor: Color
     val bgColor: Color
+
     when (status) {
         DDLStatus.UNDERGO -> {
-            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
-            bgColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_undergo).copy(alpha = 0.55f)
+            else MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+            bgColor = if (usePreset) colorResource(R.color.bg_morandi_undergo).copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
         }
         DDLStatus.NEAR -> {
-            indicatorColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.55f)
-            bgColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_near).copy(alpha = 0.55f)
+            else MaterialTheme.colorScheme.tertiary.copy(alpha = 0.55f)
+            bgColor = if (usePreset) colorResource(R.color.bg_morandi_near).copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
         }
         DDLStatus.PASSED -> {
-            indicatorColor = MaterialTheme.colorScheme.error.copy(alpha = 0.55f)
-            bgColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_passed).copy(alpha = 0.55f)
+            else MaterialTheme.colorScheme.error.copy(alpha = 0.55f)
+            // 列表中没有 bg_morandi_passed，用 indicator 降低透明度代替
+            bgColor = if (usePreset) colorResource(R.color.indicator_morandi_passed).copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
         }
         DDLStatus.COMPLETED -> {
-            indicatorColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f)
-            bgColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_completed).copy(alpha = 0.55f)
+            else MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f)
+            bgColor = if (usePreset) colorResource(R.color.bg_morandi_completed).copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
         }
     }
 
@@ -280,6 +295,7 @@ fun DDLItemCardSimplified(
                 .fillMaxWidth()
                 .height(76.dp)
         ) {
+            // 进度条渲染保持不变，它会自动使用全新的 indicatorColor 进行渐变
             if (progressClamped > 0f) {
                 Box(
                     modifier = Modifier
@@ -329,12 +345,12 @@ fun DDLItemCardSimplified(
                         Icon(
                             ImageVector.vectorResource(R.drawable.ic_star_filled),
                             contentDescription = null,
-                            tint = indicatorColor.copy(alpha = 1f)
+                            tint = indicatorColor.copy(alpha = 1f) // 星标颜色自动同步莫兰迪色
                         )
                     }
                 }
 
-                // 第二行：备注（可空），如果没有就占位 Spacer 保持底部留白
+                // 第二行：备注（可空）
                 if (note.isNotEmpty()) {
                     Text(
                         text = note,
@@ -345,7 +361,7 @@ fun DDLItemCardSimplified(
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
-                    Spacer(modifier = Modifier.height(0.dp)) // 👈 不显示文字，但保持布局干净
+                    Spacer(modifier = Modifier.height(0.dp))
                 }
             }
         }

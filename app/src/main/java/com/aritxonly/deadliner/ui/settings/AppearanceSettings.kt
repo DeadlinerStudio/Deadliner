@@ -31,6 +31,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -45,7 +46,9 @@ fun AppearanceSettingsScreen(
     var fireworksOnFinishEnabled by remember { mutableStateOf(GlobalUtils.fireworksOnFinish) }
     var detailDisplayEnabled by remember { mutableStateOf(GlobalUtils.detailDisplayMode) }
     var hideDividerEnabled by remember { mutableStateOf(GlobalUtils.hideDivider) }
+    var presetIndicatorEnabled by remember { mutableStateOf(GlobalUtils.presetIndicatorColor) }
     var miuixModeEnabled by remember { mutableStateOf(GlobalUtils.miuixMode) }
+    var miuixColorEnabled by remember { mutableStateOf(GlobalUtils.miuixColor) }
     var selectedColorState by remember { mutableStateOf(GlobalUtils.seedColor) }
 
     val onProgressDirChange: (Boolean) -> Unit = {
@@ -68,9 +71,23 @@ fun AppearanceSettingsScreen(
         GlobalUtils.hideDivider = it
         hideDividerEnabled = it
     }
+    val onPresetIndicatorChange: (Boolean) -> Unit = {
+        GlobalUtils.presetIndicatorColor = it
+        presetIndicatorEnabled = it
+    }
     val onMiuixModeChange: (Boolean) -> Unit = {
         GlobalUtils.miuixMode = it
         miuixModeEnabled = it
+        if (!it) {
+            GlobalUtils.style = UiStyle.Simplified.key
+        }
+    }
+    val onMiuixColorChange: (Boolean) -> Unit = {
+        GlobalUtils.miuixColor = it
+        miuixColorEnabled = it
+        if (it) {
+            onPresetIndicatorChange(true)
+        }
     }
     val onThemeChange: (String?) -> Unit = {
         GlobalUtils.seedColor = it
@@ -118,11 +135,13 @@ fun AppearanceSettingsScreen(
                 }
             }
 
-            SettingsSection(topLabel = stringResource(R.string.theme)) {
-                ThemeColorPicker(
-                    currentSeed = selectedColorState,
-                    onColorSelected = onThemeChange
-                )
+            if (!miuixColorEnabled) {
+                SettingsSection(topLabel = stringResource(R.string.theme)) {
+                    ThemeColorPicker(
+                        currentSeed = selectedColorState,
+                        onColorSelected = onThemeChange
+                    )
+                }
             }
 
             SettingsSection(topLabel = stringResource(R.string.settings_interface_design)) {
@@ -135,11 +154,31 @@ fun AppearanceSettingsScreen(
                 SettingsSectionDivider()
 
                 SettingsDetailSwitchItem(
+                    headline = R.string.settings_preset_indicator,
+                    supportingText = R.string.settings_support_preset_indicator,
+                    checked = presetIndicatorEnabled,
+                    onCheckedChange = onPresetIndicatorChange
+                )
+
+                SettingsSectionDivider()
+
+                SettingsDetailSwitchItem(
                     headline = R.string.settings_miuix_mode,
                     supportingText = R.string.settings_support_miuix_mode,
                     checked = miuixModeEnabled,
                     onCheckedChange = onMiuixModeChange
                 )
+
+                if (miuixModeEnabled) {
+                    SettingsSectionDivider()
+
+                    SettingsDetailSwitchItem(
+                        headline = R.string.settings_miuix_color,
+                        supportingText = R.string.settings_support_miuix_color,
+                        checked = miuixColorEnabled,
+                        onCheckedChange = onMiuixColorChange
+                    )
+                }
             }
 
             SettingsSection(topLabel = stringResource(R.string.settings_interface_display)) {

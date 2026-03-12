@@ -36,4 +36,16 @@
     <color name="widget_container_bg">?attr/colorPrimaryContainer</color>
     <color name="widget_container_fg">?attr/colorOnPrimaryContainer</color>
     <color name="widget_accent_fg">?attr/colorOnPrimary</color>
+
+    <color name="indicator_morandi_undergo">#FF6096F0</color>
+    <color name="bg_morandi_undergo">#FFB8C4E0</color>
+
+    <color name="indicator_morandi_near">#FFFA9D50</color>
+    <color name="bg_morandi_near">#FFE0D6C9</color>
+
+    <color name="indicator_morandi_passed">#FFF87171</color>
+    <color name="bg_morandi_passed">#FFD9C0C0</color>
+
+    <color name="indicator_morandi_completed">#FF2E9E78</color>
+    <color name="bg_morandi_completed">#FFB4D6CC</color>
 </resources>

@@ -1,15 +1,11 @@
 package com.aritxonly.deadliner.ui.settings
 
-import android.widget.Space
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,13 +13,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -42,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -61,7 +55,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.ui.PreviewCard
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.base.RadioButton
 
@@ -69,11 +62,12 @@ import com.aritxonly.deadliner.ui.base.RadioButton
 fun UiSettingsScreen(
     navigateUp: () -> Unit
 ) {
-    var simplifiedEnabled by remember { mutableStateOf(GlobalUtils.style == "simplified") }
+    // 1. 将 Boolean 状态升级为 String 状态，记录当前的具体样式
+    var currentStyle by remember { mutableStateOf(GlobalUtils.style) }
 
-    val onSimplifiedChange: (Boolean) -> Unit = {
-        GlobalUtils.style = if (it) "simplified" else "classic"
-        simplifiedEnabled = it
+    val onStyleChange: (String) -> Unit = {
+        GlobalUtils.style = it
+        currentStyle = it
     }
 
     val darkTheme = isSystemInDarkTheme()
@@ -114,7 +108,12 @@ fun UiSettingsScreen(
                 .padding(vertical = 8.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            UiModeSelectionRow(simplifiedEnabled, onSimplifiedChange, invertColorFilter)
+            UiModeSelectionRow(
+                currentStyle = currentStyle,
+                onStyleChange = onStyleChange,
+                invertColorFilter = invertColorFilter,
+                isMiuixModeEnabled = GlobalUtils.miuixMode // 传入当前的 MIUIX 引擎开关状态
+            )
 
             Spacer(modifier = Modifier.navigationBarsPadding())
         }
@@ -123,15 +122,21 @@ fun UiSettingsScreen(
 
 @Composable
 fun UiModeSelectionRow(
-    simplifiedEnabled: Boolean,
-    onSimplifiedChange: (Boolean) -> Unit,
+    currentStyle: String,
+    onStyleChange: (String) -> Unit,
     invertColorFilter: ColorFilter?,
+    isMiuixModeEnabled: Boolean,
     inIntroPage: Boolean = false
 ) {
     val listState = rememberLazyListState()
 
-    LaunchedEffect(simplifiedEnabled) {
-        val index = if (simplifiedEnabled) 0 else 1
+    // 2. 动画滚动逻辑更新：根据不同的 Style 滚动到对应的卡片
+    LaunchedEffect(currentStyle) {
+        val index = when (currentStyle) {
+            "simplified" -> 0
+            "miuix" -> 1
+            else -> 2 // classic
+        }
         listState.animateScrollToItem(index)
     }
 
@@ -145,26 +150,44 @@ fun UiModeSelectionRow(
         state = listState,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // 卡片 1：极简模式 (Simplified)
         item {
             UiModeOptionCard(
                 label = stringResource(R.string.ui_style_simplified),
                 supporting = stringResource(R.string.ui_style_simplified_support),
                 imageRes = R.drawable.preview_simplified,
-                selected = simplifiedEnabled,
+                selected = currentStyle == "simplified",
+                enabled = true,
                 colorFilter = invertColorFilter,
-                onClick = { onSimplifiedChange(true) },
+                onClick = { onStyleChange("simplified") },
                 modifier = Modifier.fillParentMaxWidth(0.66f).padding(start = edgePadding)
             )
         }
 
+        // 🌟 卡片 2：澎湃模式 (MIUIX)
+        item {
+            UiModeOptionCard(
+                label = stringResource(R.string.ui_style_miuix),
+                supporting = stringResource(R.string.ui_style_miuix_support),
+                imageRes = R.drawable.preview_classic,
+                selected = currentStyle == "miuix",
+                enabled = isMiuixModeEnabled,
+                colorFilter = invertColorFilter,
+                onClick = { if (isMiuixModeEnabled) onStyleChange("miuix") },
+                modifier = Modifier.fillParentMaxWidth(0.66f)
+            )
+        }
+
+        // 卡片 3：经典模式 (Classic)
         item {
             UiModeOptionCard(
                 label = stringResource(R.string.ui_style_classic),
                 supporting = stringResource(R.string.ui_style_classic_support),
                 imageRes = R.drawable.preview_classic,
-                selected = !simplifiedEnabled,
+                selected = currentStyle == "classic",
+                enabled = true,
                 colorFilter = invertColorFilter,
-                onClick = { onSimplifiedChange(false) },
+                onClick = { onStyleChange("classic") },
                 modifier = Modifier.fillParentMaxWidth(0.66f).padding(end = edgePadding)
             )
         }
@@ -178,6 +201,7 @@ fun UiModeOptionCard(
     supporting: String,
     @DrawableRes imageRes: Int,
     selected: Boolean,
+    enabled: Boolean, // 新增 enabled 参数
     colorFilter: ColorFilter?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -190,10 +214,15 @@ fun UiModeOptionCard(
 
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
 
+    // 3. 视觉反馈：不可选时降低整体透明度
+    val cardAlpha = if (enabled) 1f else 0.4f
+
     Card(
         modifier = modifier
             .wrapContentHeight()
-            .clickable(onClick = onClick),
+            .alpha(cardAlpha) // 改变透明度实现置灰效果
+            .clip(shape) // 确保涟漪效果不会超出圆角
+            .clickable(enabled = enabled, onClick = onClick), // 彻底禁用点击事件
         shape = shape,
         border = BorderStroke(2.dp, borderColor),
         colors = CardDefaults.cardColors(
@@ -222,7 +251,8 @@ fun UiModeOptionCard(
             ) {
                 RadioButton(
                     selected = selected,
-                    onClick = onClick
+                    onClick = onClick,
+                     enabled = enabled
                 )
                 Column(
                     modifier = Modifier
@@ -250,27 +280,18 @@ fun UiModeOptionCard(
     }
 }
 
-/**
- * 给可滚动容器的「可视区域水平方向」添加原生式渐隐（fading edge）。
- * 无覆盖层、无 RenderEffect，仅对自身内容做 Alpha 遮罩。
- *
- * @param width 渐隐宽度（像素越大，过渡越长）
- * @param inverted 当需要做「右侧渐隐」时设为 true；默认做「左侧渐隐」
- */
+// FadingEdge 的扩展函数保持不变
 fun Modifier.fadingHorizontalEdge(
     width: Dp = 32.dp,
     inverted: Boolean = false
 ): Modifier = this
-    // 关键：开启离屏合成，才能让后续的 DstIn 作为整块内容的 Alpha 遮罩生效
     .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
     .drawWithContent {
-        // 先正常画内容
         drawContent()
 
         val w = width.toPx().coerceAtLeast(1f)
 
         if (!inverted) {
-            // 左侧渐隐：左边 w 区域做渐变，其余保持不透明
             drawRect(
                 brush = Brush.horizontalGradient(
                     colors = listOf(Color.Transparent, Color.Black),
@@ -280,7 +301,6 @@ fun Modifier.fadingHorizontalEdge(
                 size = size.copy(width = w),
                 blendMode = BlendMode.DstIn
             )
-
             drawRect(
                 color = Color.Black,
                 topLeft = Offset(w, 0f),
@@ -288,9 +308,7 @@ fun Modifier.fadingHorizontalEdge(
                 blendMode = BlendMode.DstIn
             )
         } else {
-            // 右侧渐隐：右边 w 区域做渐变，其余保持不透明
             val startX = size.width - w
-
             drawRect(
                 brush = Brush.horizontalGradient(
                     colors = listOf(Color.Black, Color.Transparent),
@@ -301,7 +319,6 @@ fun Modifier.fadingHorizontalEdge(
                 size = size.copy(width = w),
                 blendMode = BlendMode.DstIn
             )
-
             drawRect(
                 color = Color.Black,
                 topLeft = Offset(0f, 0f),

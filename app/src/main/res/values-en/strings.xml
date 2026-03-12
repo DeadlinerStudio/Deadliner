@@ -620,6 +620,8 @@
     <string name="settings_ui_mode_title">Main screen layout</string>
     <string name="ui_style_simplified_support">Focuses on core task and habit management with a cleaner, more straightforward layout.</string>
     <string name="ui_style_classic_support">Retains the classic v2 layout for a more comprehensive, at-a-glance task management experience.</string>
+    <string name="ui_style_miuix">Modern Mode</string>
+    <string name="ui_style_miuix_support">Inspired by HyperOS’s modern design language—more native, more reliable.</string>
 
     <string name="intro_cover_title">Reinvent Your Task Management</string>
     <string name="intro_cover_desc">Deadliner v4 · Your Intelligent Task Assistant</string>
@@ -686,4 +688,9 @@
     <string name="theme">Accent color</string>
     <string name="settings_miuix_mode">MIUIX theme mode</string>
     <string name="settings_support_miuix_mode">Enable HyperOS style themes and components.（Experimental）</string>
+    <string name="settings_miuix_color">MIUIX color</string>
+    <string name="settings_support_miuix_color">Use HyperOS’s default color palette (requires enabling Modern Mode in the main screen layout to avoid display issues).</string>
+    <string name="settings_preset_indicator">Colorful Task Indicator</string>
+    <string name="settings_support_preset_indicator">Replaces the colorful task progress indicator from the HarmonyOS version.</string>
+
 </resources>

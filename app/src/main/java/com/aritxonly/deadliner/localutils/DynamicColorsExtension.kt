@@ -10,12 +10,20 @@ import com.google.android.material.color.DynamicColorsOptions
 
 object DynamicColorsExtension {
 
-    fun apply(activity: Activity, seed: String? = null, isMiuixMode: Boolean = GlobalUtils.miuixMode) {
+    fun apply(
+        activity: Activity,
+        seed: String? = null,
+        isMiuixMode: Boolean = GlobalUtils.miuixMode,
+        isMiuixColor: Boolean = GlobalUtils.miuixColor // 新增状态获取
+    ) {
         val builder = DynamicColorsOptions.Builder()
 
-        if (!seed.isNullOrBlank()) {
+        // 🌟 魔法 1：如果开启了纯正澎湃色，强行把种子色替换为澎湃蓝，用来生成协调的容器辅色
+        val effectiveSeed = if (isMiuixMode && isMiuixColor) "#3481FF" else seed
+
+        if (!effectiveSeed.isNullOrBlank()) {
             try {
-                builder.setContentBasedSource(seed.toColorInt())
+                builder.setContentBasedSource(effectiveSeed.toColorInt())
             } catch (e: IllegalArgumentException) {
                 e.printStackTrace()
             }
@@ -25,15 +33,27 @@ object DynamicColorsExtension {
 
         if (isMiuixMode) {
             activity.theme.applyStyle(R.style.ThemeOverlay_Deadliner_MiuixBackground, true)
+
+            if (isMiuixColor) {
+                activity.theme.applyStyle(R.style.ThemeOverlay_Deadliner_MiuixDefaults, true)
+            }
         }
     }
 
-    fun applyApp(app: Application, seed: String? = null, isMiuixMode: Boolean = GlobalUtils.miuixMode) {
+    fun applyApp(
+        app: Application,
+        seed: String? = null,
+        isMiuixMode: Boolean = GlobalUtils.miuixMode,
+        isMiuixColor: Boolean = GlobalUtils.miuixColor
+    ) {
         val builder = DynamicColorsOptions.Builder()
 
-        if (!seed.isNullOrBlank()) {
+        // 同理，替换全局 Application 级别的种子
+        val effectiveSeed = if (isMiuixMode && isMiuixColor) "#3481FF" else seed
+
+        if (!effectiveSeed.isNullOrBlank()) {
             try {
-                builder.setContentBasedSource(seed.toColorInt())
+                builder.setContentBasedSource(effectiveSeed.toColorInt())
             } catch (e: IllegalArgumentException) {
                 e.printStackTrace()
             }
@@ -45,7 +65,13 @@ object DynamicColorsExtension {
             app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
                 override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
                     super.onActivityPreCreated(activity, savedInstanceState)
+
+                    // 在每一个 Activity 创建前，打上双重补丁
                     activity.theme.applyStyle(R.style.ThemeOverlay_Deadliner_MiuixBackground, true)
+
+                    if (isMiuixColor) {
+                        activity.theme.applyStyle(R.style.ThemeOverlay_Deadliner_MiuixDefaults, true)
+                    }
                 }
 
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ThemeOverlay.Deadliner.MiuixBackground" parent="">
+        <item name="android:colorBackground">#242424</item>
+        <item name="colorSurface">#000000</item>
+        <item name="colorSurfaceVariant">#242424</item>
+        <item name="colorSurfaceContainer">#242424</item>
+        <item name="colorSurfaceContainerHigh">#242424</item>
+        <item name="colorSurfaceContainerHighest">#2D2D2D</item>
+        <item name="colorSurfaceContainerLow">#000000</item>
+        <item name="colorSurfaceContainerLowest">#242424</item>
+        <item name="colorOnSurfaceVariant">#80FFFFFF</item>
+        <item name="colorOutlineVariant">#FF393939</item>
+    </style>
+
+    <style name="ThemeOverlay.Deadliner.MiuixDefaults" parent="">
+        <item name="colorPrimary">#0472DC</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#003366</item>
+        <item name="colorOnPrimaryContainer">#CCE0FF</item>
+    </style>
+</resources>
