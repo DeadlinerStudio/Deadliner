@@ -3,7 +3,10 @@ package com.aritxonly.deadliner.data
 import com.aritxonly.deadliner.AppSingletons
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.model.TaskStateAction
+import com.aritxonly.deadliner.model.transition
 import com.aritxonly.deadliner.sync.SyncService
+import java.time.LocalDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -47,6 +50,21 @@ class DDLRepository(
         db.updateDDL(item)
         sync.onLocalUpdated(item.id)
         scheduleSync()
+    }
+
+    fun applyTaskAction(
+        itemId: Long,
+        action: TaskStateAction,
+        confirmed: Boolean = false,
+        now: LocalDateTime = LocalDateTime.now()
+    ): DDLItem {
+        val latest = db.getDDLById(itemId)
+            ?: throw IllegalArgumentException("DDL not found for id=$itemId")
+        val updated = latest.transition(using = action, confirmed = confirmed, now = now)
+        db.updateDDL(updated)
+        sync.onLocalUpdated(updated.id)
+        scheduleSync()
+        return updated
     }
 
     fun deleteDDL(id: Long) {

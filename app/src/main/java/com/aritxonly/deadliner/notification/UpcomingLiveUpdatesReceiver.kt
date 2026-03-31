@@ -18,7 +18,7 @@ class UpcomingLiveUpdatesReceiver: BroadcastReceiver() {
 
         val ddl = DatabaseHelper.getInstance(context).getDDLById(ddlId) ?: return
 
-        if (ddl.isCompleted || ddl.isArchived) return
+        if (!ddl.state.isActionable()) return
 
         UpcomingLiveUpdateService.start(context, ddl)
     }

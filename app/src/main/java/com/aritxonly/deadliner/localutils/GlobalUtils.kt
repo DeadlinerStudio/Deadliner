@@ -738,7 +738,7 @@ object GlobalUtils {
 
         val pendingTasks = databaseHelper.getDDLsByType(DeadlineType.TASK)
             .filter {
-                if (it.isCompleted || it.isArchived) {
+                if (!it.state.isActionable()) {
                     return@filter false
                 }
 

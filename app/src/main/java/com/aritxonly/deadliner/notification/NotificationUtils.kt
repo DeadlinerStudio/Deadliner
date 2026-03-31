@@ -143,7 +143,7 @@ object NotificationUtil {
         var dueTodayCount = 0
 
         for (ddl in allDdls) {
-            if (ddl.isCompleted || ddl.isArchived) continue
+            if (!ddl.state.isActionable()) continue
 
             val endTime = GlobalUtils.safeParseDateTime(ddl.endTime)
 

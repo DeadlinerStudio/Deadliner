@@ -41,7 +41,7 @@ data class SearchFilter(
     }
 
     fun matches(ddlItem: DDLItem): Boolean {
-        if (ddlItem.isArchived) return false
+        if (!ddlItem.state.isMainListVisible()) return false
 
         // 文本
         val matchesText = ddlItem.name.contains(query, ignoreCase = true) ||

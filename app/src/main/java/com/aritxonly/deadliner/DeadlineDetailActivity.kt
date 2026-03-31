@@ -89,7 +89,9 @@ import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
+import com.aritxonly.deadliner.model.DDLState
 import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.google.android.material.color.MaterialColors
@@ -187,7 +189,6 @@ fun DeadlineDetailScreen(
 ) {
     var waterLevel by remember { mutableFloatStateOf(0f) }
     var isStared by remember { mutableStateOf(deadline.isStared) }
-    var isCompleted by remember { mutableStateOf(deadline.isCompleted) }
 
     Log.d("DetailPage", "DeadlineDetailScreen: $isStared")
 
@@ -196,8 +197,10 @@ fun DeadlineDetailScreen(
     val editText = stringResource(R.string.edit)
     val completeText = stringResource(R.string.complete)
     val markCompleteText = stringResource(R.string.mark_complete)
-    val undoCompleteText = stringResource(R.string.undo_complete)
     val archiveText = stringResource(R.string.archive)
+    val unarchiveText = stringResource(R.string.unarchive)
+    val giveUpText = stringResource(R.string.give_up_task)
+    val restoreActiveText = stringResource(R.string.restore_active)
     val deleteText = stringResource(R.string.delete)
     val saveToCalendarText = stringResource(R.string.save_and_add_to_calendar)
 
@@ -294,29 +297,45 @@ fun DeadlineDetailScreen(
             DeadlineDetailInfo(deadline, waterLevel)
 
             DeadlineEditFABMenu(
-                isCompleted = isCompleted,
+                deadline = deadline,
                 modifier = Modifier.align(Alignment.BottomEnd)
                     .navigationBarsPadding()
             ) { desc ->
                 Log.d("Desc", desc)
                 when (desc) {
                     editText -> onEdit()
-                    completeText, markCompleteText, undoCompleteText -> {
-                        deadline.isCompleted = !deadline.isCompleted
-                        if (deadline.isCompleted) {
-                            Toast.makeText(context, R.string.toast_finished, Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, R.string.toast_definished, Toast.LENGTH_SHORT).show()
+                    completeText, markCompleteText -> {
+                        DDLRepository().applyTaskAction(deadline.id, TaskStateAction.MARK_COMPLETE, confirmed = true)
+                        Toast.makeText(context, R.string.toast_finished, Toast.LENGTH_SHORT).show()
+                        finishActivity()
+                    }
+                    giveUpText -> MaterialAlertDialogBuilder(context)
+                        .setTitle(R.string.confirm_give_up_title)
+                        .setMessage(R.string.confirm_give_up_message)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.accept) { _, _ ->
+                            DDLRepository().applyTaskAction(deadline.id, TaskStateAction.MARK_GIVE_UP, confirmed = true)
+                            Toast.makeText(context, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
+                            finishActivity()
                         }
-                        DDLRepository().updateDDL(deadline)
+                        .show()
+                    restoreActiveText -> {
+                        DDLRepository().applyTaskAction(deadline.id, TaskStateAction.RESTORE_ACTIVE, confirmed = true)
+                        Toast.makeText(context, R.string.toast_restored_active, Toast.LENGTH_SHORT).show()
+                        finishActivity()
                     }
                     archiveText -> {
-                        deadline.isArchived = true
+                        DDLRepository().applyTaskAction(deadline.id, TaskStateAction.MARK_ARCHIVE, confirmed = true)
                         Toast.makeText(
                             context,
-                            R.string.toast_archived,
+                            context.getString(R.string.toast_archived, 1),
                             Toast.LENGTH_SHORT
                         ).show()
+                        finishActivity()
+                    }
+                    unarchiveText -> {
+                        DDLRepository().applyTaskAction(deadline.id, TaskStateAction.UNARCHIVE, confirmed = true)
+                        Toast.makeText(context, R.string.toast_unarchived, Toast.LENGTH_SHORT).show()
                         finishActivity()
                     }
                     deleteText -> {
@@ -358,7 +377,7 @@ fun DeadlineDetailScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeadlineEditFABMenu(
-    isCompleted: Boolean,
+    deadline: DDLItem,
     modifier: Modifier,
     callback: (desc: String) -> Unit
 ) {
@@ -371,13 +390,29 @@ fun DeadlineEditFABMenu(
 
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
-    var items = listOf(
-        painterResource(R.drawable.ic_edit) to stringResource(R.string.edit),
-        painterResource(R.drawable.ic_done) to stringResource(R.string.mark_complete),
-        painterResource(R.drawable.ic_archiving) to stringResource(R.string.archive),
-        painterResource(R.drawable.ic_delete) to stringResource(R.string.delete),
-        painterResource(R.drawable.ic_event) to stringResource(R.string.save_and_add_to_calendar)
-    )
+    val items = buildList {
+        add(painterResource(R.drawable.ic_edit) to stringResource(R.string.edit))
+        when (deadline.state) {
+            DDLState.ACTIVE -> {
+                add(painterResource(R.drawable.ic_done) to stringResource(R.string.mark_complete))
+                add(painterResource(R.drawable.ic_close) to stringResource(R.string.give_up_task))
+            }
+            DDLState.COMPLETED -> {
+                add(painterResource(R.drawable.ic_back) to stringResource(R.string.restore_active))
+                add(painterResource(R.drawable.ic_archiving) to stringResource(R.string.archive))
+            }
+            DDLState.ABANDONED -> {
+                add(painterResource(R.drawable.ic_back) to stringResource(R.string.restore_active))
+                add(painterResource(R.drawable.ic_archiving) to stringResource(R.string.archive))
+            }
+            DDLState.ARCHIVED,
+            DDLState.ABANDONED_ARCHIVED -> {
+                add(painterResource(R.drawable.ic_back) to stringResource(R.string.unarchive))
+            }
+        }
+        add(painterResource(R.drawable.ic_delete) to stringResource(R.string.delete))
+        add(painterResource(R.drawable.ic_event) to stringResource(R.string.save_and_add_to_calendar))
+    }
 
     val expandText = stringResource(R.string.expand)
     val retractText = stringResource(R.string.retract)
@@ -482,12 +517,18 @@ fun WaterCupAnimation(deadline: DDLItem,
         ), label = ""
     )
 
-    val color = if (deadline.isCompleted) MaterialTheme.colorScheme.secondary
-        else MaterialTheme.colorScheme.primary
+    val color = when {
+        deadline.state.isAbandonedFamily() -> MaterialTheme.colorScheme.outline
+        deadline.state.isCompletedFamily() -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.primary
+    }
     val waveAmplitude = with(LocalDensity.current) { 8.dp.toPx() }
 
-    val containerColor = if (deadline.isCompleted) MaterialTheme.colorScheme.secondaryContainer
-        else MaterialTheme.colorScheme.primaryContainer
+    val containerColor = when {
+        deadline.state.isAbandonedFamily() -> MaterialTheme.colorScheme.surfaceVariant
+        deadline.state.isCompletedFamily() -> MaterialTheme.colorScheme.secondaryContainer
+        else -> MaterialTheme.colorScheme.primaryContainer
+    }
 
     Box(
         modifier = modifier
@@ -560,10 +601,16 @@ fun DeadlineDetailInfo(deadline: DDLItem, waterLevel: Float) {
     /**
      * 使用插值法计算背景情况
      */
-    val waterColor = if (deadline.isCompleted) MaterialTheme.colorScheme.secondary
-        else MaterialTheme.colorScheme.primary
-    val containerColor = if (deadline.isCompleted) MaterialTheme.colorScheme.secondaryContainer
-        else MaterialTheme.colorScheme.primaryContainer
+    val waterColor = when {
+        deadline.state.isAbandonedFamily() -> MaterialTheme.colorScheme.outline
+        deadline.state.isCompletedFamily() -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.primary
+    }
+    val containerColor = when {
+        deadline.state.isAbandonedFamily() -> MaterialTheme.colorScheme.surfaceVariant
+        deadline.state.isCompletedFamily() -> MaterialTheme.colorScheme.secondaryContainer
+        else -> MaterialTheme.colorScheme.primaryContainer
+    }
     val currentBackground = lerp(containerColor, waterColor, waterLevel.coerceIn(0f, 1f))
 
     val onPrimary = MaterialTheme.colorScheme.onPrimary

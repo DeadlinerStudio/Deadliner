@@ -12,6 +12,7 @@ import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.model.TaskStateAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +50,7 @@ class MainViewModel(
         val now = LocalDateTime.now()
         return repo.getDDLsByType(type)
             .count { item ->
-                if (item.isCompleted || item.isArchived || item.endTime.isEmpty()) return@count false
+                if (!item.state.isActionable() || item.endTime.isEmpty()) return@count false
                 val end = try {
                     GlobalUtils.parseDateTime(item.endTime)
                 } catch (e: Exception) {
@@ -67,20 +68,24 @@ class MainViewModel(
     fun dueSoonCount(type: DeadlineType): Int = computeDueSoonCount(type)
 
     private fun filterDataByList(ddlList: List<DDLItem>): List<DDLItem> {
-        val filteredList = ddlList.filter { item ->
-            Log.d("updateData", "item ${item.id}, " +
-                    "name ${item.name}, " +
-                    "completeTime ${item.completeTime}," +
-                    "isArchived ${item.isArchived}")
-            if (item.completeTime.isNotEmpty()) {
-                item.isArchived = (!GlobalUtils.filterArchived(item)) || item.isArchived
-                repo.updateDDL(item)
-                !item.isArchived
-            } else {
-                true
+        var changed = false
+        ddlList.forEach { item ->
+            Log.d("updateData", "item ${item.id}, name ${item.name}, completeTime ${item.completeTime}, state ${item.state}")
+            if (
+                item.completeTime.isNotEmpty() &&
+                item.state.canManualArchive() &&
+                !GlobalUtils.filterArchived(item)
+            ) {
+                repo.applyTaskAction(item.id, TaskStateAction.MARK_ARCHIVE, confirmed = true)
+                changed = true
             }
-        }.sortedWith(
-            compareBy<DDLItem> { it.isCompleted }
+        }
+
+        val source = if (changed) repo.getDDLsByType(currentType) else ddlList
+        return source
+            .filter { it.state.isMainListVisible() }
+            .sortedWith(
+            compareBy<DDLItem> { !it.state.isActionable() }
                 .thenBy { !it.isStared }
                 .thenBy {
                     when (GlobalUtils.filterSelection) {
@@ -108,8 +113,7 @@ class MainViewModel(
                         }
                     }
                 }
-        )
-        return filteredList
+            )
     }
 
     /**

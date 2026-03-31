@@ -6,16 +6,29 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import com.aritxonly.deadliner.model.ChangeLine
 import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.model.DDLState
 import com.aritxonly.deadliner.model.DeadlineType
-import com.aritxonly.deadliner.model.SyncState
+import com.aritxonly.deadliner.model.SubTask
 import com.aritxonly.deadliner.model.Ver
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import androidx.core.database.sqlite.transaction
+
+data class HabitCarrierSyncRow(
+    val ddlId: Long,
+    val uid: String,
+    val deleted: Boolean,
+    val ver: Ver
+)
 
 class DatabaseHelper private constructor(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+
+    private val gson = Gson()
 
     companion object {
         @Volatile
@@ -35,7 +48,7 @@ class DatabaseHelper private constructor(context: Context) :
         }
 
         const val DATABASE_NAME = "deadliner.db"
-        private const val DATABASE_VERSION = 13
+        private const val DATABASE_VERSION = 15
         private const val TABLE_NAME = "ddl_items"
         private const val COLUMN_ID = "id"
         private const val COLUMN_NAME = "name"
@@ -45,18 +58,23 @@ class DatabaseHelper private constructor(context: Context) :
         private const val COLUMN_COMPLETE_TIME = "complete_time"
         private const val COLUMN_NOTE = "note"
         private const val COLUMN_IS_ARCHIVED = "is_archived"
+        private const val COLUMN_STATE = "state"
         private const val COLUMN_IS_STARED = "is_stared"
         private const val COLUMN_TYPE = "type"
         private const val COLUMN_HABIT_COUNT = "habit_count"
         private const val COLUMN_HABIT_TOTAL_COUNT = "habit_total_count"
         private const val COLUMN_CALENDAR_EVENT_ID = "calendar_event"
         private const val COLUMN_TIMESTAMP = "timestamp"
+        private const val COLUMN_SUB_TASKS_JSON = "sub_tasks_json"
 
         private const val COLUMN_UID = "uid"               // 跨端稳定ID，例如 "a83f05:24"
         private const val COLUMN_DELETED = "deleted"       // 0/1，软删墓碑
         private const val COLUMN_VER_TS = "ver_ts"         // 版本时间（UTC ISO8601）
         private const val COLUMN_VER_CTR = "ver_ctr"       // 版本计数（HLC counter）
         private const val COLUMN_VER_DEV = "ver_dev"       // 版本设备ID
+        private const val COLUMN_HABIT_APPLIED_VER_TS = "habit_applied_ver_ts"
+        private const val COLUMN_HABIT_APPLIED_VER_CTR = "habit_applied_ver_ctr"
+        private const val COLUMN_HABIT_APPLIED_VER_DEV = "habit_applied_ver_dev"
 
         // —— 新增 habits / habit_records —— //
         private const val TABLE_HABIT = "habits"
@@ -99,17 +117,22 @@ class DatabaseHelper private constructor(context: Context) :
                 $COLUMN_COMPLETE_TIME TEXT NOT NULL,
                 $COLUMN_NOTE TEXT NOT NULL,
                 $COLUMN_IS_ARCHIVED INTEGER,
+                $COLUMN_STATE TEXT NOT NULL DEFAULT 'active',
                 $COLUMN_IS_STARED INTEGER,
                 $COLUMN_TYPE TEXT NOT NULL,
                 $COLUMN_HABIT_COUNT INTEGER,
                 $COLUMN_HABIT_TOTAL_COUNT INTEGER,
                 $COLUMN_CALENDAR_EVENT_ID INTEGER,
                 $COLUMN_TIMESTAMP TEXT,
+                $COLUMN_SUB_TASKS_JSON TEXT NOT NULL DEFAULT '[]',
                 $COLUMN_UID TEXT UNIQUE,
                 $COLUMN_DELETED INTEGER NOT NULL DEFAULT 0,
                 $COLUMN_VER_TS TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z',
                 $COLUMN_VER_CTR INTEGER NOT NULL DEFAULT 0,
-                $COLUMN_VER_DEV TEXT NOT NULL DEFAULT ''
+                $COLUMN_VER_DEV TEXT NOT NULL DEFAULT '',
+                $COLUMN_HABIT_APPLIED_VER_TS TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z',
+                $COLUMN_HABIT_APPLIED_VER_CTR INTEGER NOT NULL DEFAULT 0,
+                $COLUMN_HABIT_APPLIED_VER_DEV TEXT NOT NULL DEFAULT ''
             )
         """.trimIndent()
         db.execSQL(createTableQuery)
@@ -310,6 +333,59 @@ class DatabaseHelper private constructor(context: Context) :
                 }
             }
         }
+        if (oldVersion < 14) {
+            db.transaction {
+                try {
+                    execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_STATE TEXT NOT NULL DEFAULT 'active'")
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "Add state to ddl_items failed", e)
+                }
+                try {
+                    execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_SUB_TASKS_JSON TEXT NOT NULL DEFAULT '[]'")
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "Add sub_tasks_json to ddl_items failed", e)
+                }
+                execSQL(
+                    """
+                    UPDATE $TABLE_NAME
+                       SET $COLUMN_STATE = CASE
+                           WHEN COALESCE($COLUMN_IS_ARCHIVED, 0) = 1 THEN 'archived'
+                           WHEN COALESCE($COLUMN_IS_COMPLETED, 0) = 1 THEN 'completed'
+                           ELSE 'active'
+                       END
+                     WHERE $COLUMN_STATE IS NULL
+                        OR TRIM($COLUMN_STATE) = ''
+                    """.trimIndent()
+                )
+                execSQL(
+                    """
+                    UPDATE $TABLE_NAME
+                       SET $COLUMN_SUB_TASKS_JSON = '[]'
+                     WHERE $COLUMN_SUB_TASKS_JSON IS NULL
+                        OR TRIM($COLUMN_SUB_TASKS_JSON) = ''
+                    """.trimIndent()
+                )
+            }
+        }
+        if (oldVersion < 15) {
+            db.transaction {
+                try {
+                    execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_HABIT_APPLIED_VER_TS TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z'")
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "Add habit_applied_ver_ts failed", e)
+                }
+                try {
+                    execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_HABIT_APPLIED_VER_CTR INTEGER NOT NULL DEFAULT 0")
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "Add habit_applied_ver_ctr failed", e)
+                }
+                try {
+                    execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_HABIT_APPLIED_VER_DEV TEXT NOT NULL DEFAULT ''")
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "Add habit_applied_ver_dev failed", e)
+                }
+            }
+        }
     }
 
     // region Deadline数据库
@@ -332,16 +408,21 @@ class DatabaseHelper private constructor(context: Context) :
             put(COLUMN_COMPLETE_TIME, "")
             put(COLUMN_NOTE, note)
             put(COLUMN_IS_ARCHIVED, false)
+            put(COLUMN_STATE, DDLState.ACTIVE.toWire())
             put(COLUMN_IS_STARED, false)
             put(COLUMN_TYPE, type.toString())
             put(COLUMN_HABIT_COUNT, 0)
             put(COLUMN_HABIT_TOTAL_COUNT, 0)
             put(COLUMN_CALENDAR_EVENT_ID, (calendarEventId?:-1).toInt())
             put(COLUMN_TIMESTAMP, LocalDateTime.now().toString())
+            put(COLUMN_SUB_TASKS_JSON, "[]")
             put(COLUMN_DELETED, 0)
             put(COLUMN_VER_TS, java.time.Instant.now().toString())
             put(COLUMN_VER_CTR, 0)
             put(COLUMN_VER_DEV, getDeviceId())
+            put(COLUMN_HABIT_APPLIED_VER_TS, "1970-01-01T00:00:00Z")
+            put(COLUMN_HABIT_APPLIED_VER_CTR, 0)
+            put(COLUMN_HABIT_APPLIED_VER_DEV, "")
         }
 
         val id = db.insert(TABLE_NAME, null, values)
@@ -398,16 +479,23 @@ class DatabaseHelper private constructor(context: Context) :
         val result = mutableListOf<DDLItem>()
         with(cursor) {
             while (moveToNext()) {
+                val state = readCanonicalState(
+                    rawState = getString(getColumnIndexOrThrow(COLUMN_STATE)),
+                    isCompleted = getInt(getColumnIndexOrThrow(COLUMN_IS_COMPLETED)).toBoolean(),
+                    isArchived = getInt(getColumnIndexOrThrow(COLUMN_IS_ARCHIVED)).toBoolean()
+                )
+                val legacy = legacyFlagsForState(state)
                 result.add(
                     DDLItem(
                         id = getLong(getColumnIndexOrThrow(COLUMN_ID)),
                         name = getString(getColumnIndexOrThrow(COLUMN_NAME)),
                         startTime = getString(getColumnIndexOrThrow(COLUMN_START_TIME)),
                         endTime = getString(getColumnIndexOrThrow(COLUMN_END_TIME)),
-                        isCompleted = getInt(getColumnIndexOrThrow(COLUMN_IS_COMPLETED)).toBoolean(),
+                        isCompleted = legacy.first.toBoolean(),
+                        state = state,
                         completeTime = getString(getColumnIndexOrThrow(COLUMN_COMPLETE_TIME)),
                         note = getString(getColumnIndexOrThrow(COLUMN_NOTE)),
-                        isArchived = getInt(getColumnIndexOrThrow(COLUMN_IS_ARCHIVED)).toBoolean(),
+                        isArchived = legacy.second.toBoolean(),
                         isStared = getInt(getColumnIndexOrThrow(COLUMN_IS_STARED)).toBoolean(),
                         type = DeadlineType.Companion.fromString(
                             getString(
@@ -421,7 +509,10 @@ class DatabaseHelper private constructor(context: Context) :
                         calendarEventId = parseCalendarEventId(
                             getInt(getColumnIndexOrThrow(COLUMN_CALENDAR_EVENT_ID))
                         ),
-                        timeStamp = getString(getColumnIndexOrThrow(COLUMN_TIMESTAMP))
+                        timeStamp = getString(getColumnIndexOrThrow(COLUMN_TIMESTAMP)),
+                        subTasks = parseSubTasksJson(
+                            getString(getColumnIndexOrThrow(COLUMN_SUB_TASKS_JSON))
+                        )
                     )
                 )
             }
@@ -433,20 +524,24 @@ class DatabaseHelper private constructor(context: Context) :
     fun updateDDL(item: DDLItem) {
         val db = writableDatabase
         val v = nextVersionUTC()
+        val canonicalState = normalizeStateForPersistence(item)
+        val legacy = legacyFlagsForState(canonicalState)
         val values = ContentValues().apply {
             put(COLUMN_NAME, item.name)
             put(COLUMN_START_TIME, item.startTime)
             put(COLUMN_END_TIME, item.endTime)
-            put(COLUMN_IS_COMPLETED, item.isCompleted.toInt())
+            put(COLUMN_IS_COMPLETED, legacy.first)
             put(COLUMN_COMPLETE_TIME, item.completeTime)
             put(COLUMN_NOTE, item.note)
-            put(COLUMN_IS_ARCHIVED, item.isArchived.toInt())
+            put(COLUMN_IS_ARCHIVED, legacy.second)
+            put(COLUMN_STATE, canonicalState.toWire())
             put(COLUMN_IS_STARED, item.isStared.toInt())
             put(COLUMN_TYPE, item.type.toString())
             put(COLUMN_HABIT_COUNT, item.habitCount)
             put(COLUMN_HABIT_TOTAL_COUNT, item.habitTotalCount)
             put(COLUMN_CALENDAR_EVENT_ID, item.calendarEventId?:-1)
             put(COLUMN_TIMESTAMP, LocalDateTime.now().toString())
+            put(COLUMN_SUB_TASKS_JSON, serializeSubTasks(item.subTasks))
             put(COLUMN_VER_TS, v.ts); put(COLUMN_VER_CTR, v.ctr); put(COLUMN_VER_DEV, v.dev)
         }
         db.update(TABLE_NAME, values, "$COLUMN_ID = ?", arrayOf(item.id.toString()))
@@ -497,12 +592,20 @@ class DatabaseHelper private constructor(context: Context) :
             put(HABIT_TIMES_PER_PERIOD, habit.timesPerPeriod)
             put(HABIT_GOAL_TYPE, habit.goalType.name)
             habit.totalTarget?.let { put(HABIT_TOTAL_TARGET, it) } ?: putNull(HABIT_TOTAL_TARGET)
+            put(HABIT_CREATED_AT, habit.createdAt.toString())
             put(HABIT_UPDATED_AT, habit.updatedAt.toString())
             put(HABIT_STATUS, habit.status.name)
             put(HABIT_SORT_ORDER, habit.sortOrder)
             habit.alarmTime?.let { put(HABIT_ALARM_TIME, it) } ?: putNull(HABIT_ALARM_TIME)
         }
         db.update(TABLE_HABIT, values, "$HABIT_ID = ?", arrayOf(habit.id.toString()))
+    }
+
+    fun updateHabitUpdatedAt(habitId: Long, updatedAt: LocalDateTime) {
+        writableDatabase.execSQL(
+            "UPDATE $TABLE_HABIT SET $HABIT_UPDATED_AT = ? WHERE $HABIT_ID = ?",
+            arrayOf(updatedAt.toString(), habitId)
+        )
     }
 
     fun getHabitByDdlId(ddlId: Long): com.aritxonly.deadliner.model.Habit? {
@@ -549,9 +652,47 @@ class DatabaseHelper private constructor(context: Context) :
         return parseHabitCursor(cursor)
     }
 
+    fun getHabitCarrierSyncRows(): List<HabitCarrierSyncRow> {
+        val rows = mutableListOf<HabitCarrierSyncRow>()
+        readableDatabase.rawQuery(
+            """
+            SELECT $COLUMN_ID, $COLUMN_UID, COALESCE($COLUMN_DELETED, 0), $COLUMN_VER_TS, $COLUMN_VER_CTR, $COLUMN_VER_DEV
+              FROM $TABLE_NAME
+             WHERE $COLUMN_TYPE = ?
+            """.trimIndent(),
+            arrayOf(DeadlineType.HABIT.toString())
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                val uid = cursor.getString(1) ?: continue
+                rows.add(
+                    HabitCarrierSyncRow(
+                        ddlId = cursor.getLong(0),
+                        uid = uid,
+                        deleted = cursor.getInt(2).toBoolean(),
+                        ver = Ver(
+                            cursor.getString(3),
+                            cursor.getInt(4),
+                            cursor.getString(5)
+                        )
+                    )
+                )
+            }
+        }
+        return rows
+    }
+
     fun deleteHabitByDdlId(ddlId: Long) {
         val db = writableDatabase
         db.delete(TABLE_HABIT, "$HABIT_DDL_ID = ?", arrayOf(ddlId.toString()))
+    }
+
+    fun getHabitIdByDdlId(ddlId: Long): Long? {
+        return readableDatabase.rawQuery(
+            "SELECT $HABIT_ID FROM $TABLE_HABIT WHERE $HABIT_DDL_ID = ? LIMIT 1",
+            arrayOf(ddlId.toString())
+        ).use { cursor ->
+            if (cursor.moveToFirst()) cursor.getLong(0) else null
+        }
     }
 
     /**
@@ -676,12 +817,35 @@ class DatabaseHelper private constructor(context: Context) :
         return parseHabitRecordCursor(cursor)
     }
 
+    fun getAllHabitRecordsForHabit(habitId: Long): List<com.aritxonly.deadliner.model.HabitRecord> {
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_HABIT_RECORD,
+            null,
+            "$HR_HABIT_ID = ?",
+            arrayOf(habitId.toString()),
+            null,
+            null,
+            "$HR_DATE ASC, $HR_ID ASC"
+        )
+        return parseHabitRecordCursor(cursor)
+    }
+
     fun deleteHabitRecordsForHabitOnDate(habitId: Long, date: java.time.LocalDate) {
         val db = writableDatabase
         db.delete(
             TABLE_HABIT_RECORD,
             "$HR_HABIT_ID = ? AND $HR_DATE = ?",
             arrayOf(habitId.toString(), date.toString())
+        )
+    }
+
+    fun deleteHabitRecordsForHabit(habitId: Long) {
+        val db = writableDatabase
+        db.delete(
+            TABLE_HABIT_RECORD,
+            "$HR_HABIT_ID = ?",
+            arrayOf(habitId.toString())
         )
     }
 
@@ -876,6 +1040,177 @@ class DatabaseHelper private constructor(context: Context) :
         return habitId
     }
     // endregion
+
+    private fun readCanonicalState(
+        rawState: String?,
+        isCompleted: Boolean,
+        isArchived: Boolean
+    ): DDLState {
+        val candidate = rawState?.trim().orEmpty()
+        if (candidate.isNotEmpty()) {
+            return DDLState.fromWire(candidate)
+        }
+        return when {
+            isArchived -> DDLState.ARCHIVED
+            isCompleted -> DDLState.COMPLETED
+            else -> DDLState.ACTIVE
+        }
+    }
+
+    private fun legacyFlagsForState(state: DDLState): Pair<Int, Int> {
+        return when (state) {
+            DDLState.ACTIVE -> 0 to 0
+            DDLState.COMPLETED -> 1 to 0
+            DDLState.ARCHIVED -> 1 to 1
+            DDLState.ABANDONED -> 0 to 0
+            DDLState.ABANDONED_ARCHIVED -> 0 to 1
+        }
+    }
+
+    private fun normalizeStateForPersistence(item: DDLItem): DDLState {
+        return when {
+            item.state == DDLState.ABANDONED_ARCHIVED -> DDLState.ABANDONED_ARCHIVED
+            item.state == DDLState.ABANDONED -> if (item.isArchived) DDLState.ABANDONED_ARCHIVED else DDLState.ABANDONED
+            item.isArchived -> DDLState.ARCHIVED
+            item.isCompleted -> DDLState.COMPLETED
+            else -> DDLState.ACTIVE
+        }
+    }
+
+    private fun parseSubTasksJson(raw: String?): List<SubTask> {
+        val json = raw?.takeIf { it.isNotBlank() } ?: return emptyList()
+        return runCatching {
+            gson.fromJson<List<SubTask>>(
+                json,
+                object : TypeToken<List<SubTask>>() {}.type
+            ) ?: emptyList()
+        }.getOrElse {
+            Log.e("DatabaseHelper", "Parse sub_tasks_json failed", it)
+            emptyList()
+        }
+    }
+
+    private fun serializeSubTasks(subTasks: List<SubTask>): String {
+        return gson.toJson(subTasks.sortedBy { it.sortOrder })
+    }
+
+    fun getDdlUidById(ddlId: Long): String? = readableDatabase.rawQuery(
+        "SELECT $COLUMN_UID FROM $TABLE_NAME WHERE $COLUMN_ID = ? LIMIT 1",
+        arrayOf(ddlId.toString())
+    ).use { cursor ->
+        if (cursor.moveToFirst()) cursor.getString(0) else null
+    }
+
+    fun getDdlIdByUid(uid: String): Long? = readableDatabase.rawQuery(
+        "SELECT $COLUMN_ID FROM $TABLE_NAME WHERE $COLUMN_UID = ? LIMIT 1",
+        arrayOf(uid)
+    ).use { cursor ->
+        if (cursor.moveToFirst()) cursor.getLong(0) else null
+    }
+
+    fun getDdlVersionById(ddlId: Long): Ver? = readableDatabase.rawQuery(
+        """
+        SELECT $COLUMN_VER_TS, $COLUMN_VER_CTR, $COLUMN_VER_DEV
+          FROM $TABLE_NAME
+         WHERE $COLUMN_ID = ?
+         LIMIT 1
+        """.trimIndent(),
+        arrayOf(ddlId.toString())
+    ).use { cursor ->
+        if (cursor.moveToFirst()) {
+            Ver(
+                cursor.getString(0),
+                cursor.getInt(1),
+                cursor.getString(2)
+            )
+        } else {
+            null
+        }
+    }
+
+    fun getHabitAppliedVersionByDdlId(ddlId: Long): Ver? = readableDatabase.rawQuery(
+        """
+        SELECT $COLUMN_HABIT_APPLIED_VER_TS, $COLUMN_HABIT_APPLIED_VER_CTR, $COLUMN_HABIT_APPLIED_VER_DEV
+          FROM $TABLE_NAME
+         WHERE $COLUMN_ID = ?
+         LIMIT 1
+        """.trimIndent(),
+        arrayOf(ddlId.toString())
+    ).use { cursor ->
+        if (cursor.moveToFirst()) {
+            val ver = Ver(
+                cursor.getString(0),
+                cursor.getInt(1),
+                cursor.getString(2)
+            )
+            if (
+                ver.ts == "1970-01-01T00:00:00Z" &&
+                ver.ctr == 0 &&
+                ver.dev.isEmpty()
+            ) {
+                null
+            } else {
+                ver
+            }
+        } else {
+            null
+        }
+    }
+
+    fun setDdlVersionById(ddlId: Long, ver: Ver) {
+        writableDatabase.execSQL(
+            """
+            UPDATE $TABLE_NAME
+               SET $COLUMN_VER_TS = ?,
+                   $COLUMN_VER_CTR = ?,
+                   $COLUMN_VER_DEV = ?
+             WHERE $COLUMN_ID = ?
+            """.trimIndent(),
+            arrayOf(ver.ts, ver.ctr, ver.dev, ddlId)
+        )
+    }
+
+    fun setHabitAppliedVersionByDdlId(ddlId: Long, ver: Ver) {
+        writableDatabase.execSQL(
+            """
+            UPDATE $TABLE_NAME
+               SET $COLUMN_HABIT_APPLIED_VER_TS = ?,
+                   $COLUMN_HABIT_APPLIED_VER_CTR = ?,
+                   $COLUMN_HABIT_APPLIED_VER_DEV = ?
+             WHERE $COLUMN_ID = ?
+            """.trimIndent(),
+            arrayOf(ver.ts, ver.ctr, ver.dev, ddlId)
+        )
+    }
+
+    fun getLastLocalVersion(): Ver = readableDatabase.rawQuery(
+        "SELECT last_local_ts, last_local_ctr, device_id FROM sync_state WHERE id=1", null
+    ).use {
+        it.moveToFirst()
+        Ver(it.getString(0), it.getInt(1), it.getString(2))
+    }
+
+    fun reserveVersionAtUtc(timestamp: LocalDateTime): Ver {
+        val requestedTs = timestamp.atOffset(ZoneOffset.UTC).toInstant().toString()
+        val last = getLastLocalVersion()
+        val dev = getDeviceId()
+        val ver = if (requestedTs > last.ts) {
+            Ver(requestedTs, 0, dev)
+        } else {
+            Ver(last.ts, last.ctr + 1, dev)
+        }
+        writableDatabase.execSQL(
+            "UPDATE sync_state SET last_local_ts=?, last_local_ctr=? WHERE id=1",
+            arrayOf(ver.ts, ver.ctr)
+        )
+        return ver
+    }
+
+    fun bumpDdlVersionById(ddlId: Long): Ver {
+        val ver = nextVersionUTC()
+        setDdlVersionById(ddlId, ver)
+        return ver
+    }
 
     fun getDeviceId(): String = readableDatabase.rawQuery(
         "SELECT device_id FROM sync_state WHERE id=1", null

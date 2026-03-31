@@ -70,13 +70,7 @@ class ArchiveActivity : AppCompatActivity() {
             MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.clear_all_archive)
                 .setPositiveButton(resources.getString(R.string.accept)) { _, _ ->
-                    val itemList = repo.getAllDDLs()
-                    val filteredList = itemList.filterNot { item ->
-                        if (!item.isCompleted) return@filterNot true
-                        item.isArchived = (!GlobalUtils.filterArchived(item)) || item.isArchived
-                        repo.updateDDL(item)
-                        !item.isArchived
-                    }
+                    val filteredList = repo.getAllDDLs().filter { it.state.isArchiveListVisible() }
 
                     for (item in filteredList) {
                         repo.deleteDDL(item.id)

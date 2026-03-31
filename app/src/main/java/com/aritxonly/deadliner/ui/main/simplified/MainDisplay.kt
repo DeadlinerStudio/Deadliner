@@ -228,15 +228,16 @@ fun MainDisplay(
                                 TaskItem(
                                     item = item,
                                     activity = activity,
-                                    updateDDL = { newItem ->
-                                        DDLRepository().updateDDL(newItem)
+                                    applyTaskAction = { action, confirmed ->
+                                        DDLRepository().applyTaskAction(
+                                            itemId = item.id,
+                                            action = action,
+                                            confirmed = confirmed
+                                        )
                                         vm.loadData(selectedPage)
                                     },
                                     celebrate = {
                                         if (GlobalUtils.fireworksOnFinish) onCelebrate?.invoke()
-                                    },
-                                    onDelete = {
-                                        pendingDelete = item
                                     },
                                     selectionMode = selectionMode,
                                     selected = isSelected(item.id),

@@ -5,12 +5,63 @@ import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.HabitRecord
 import com.aritxonly.deadliner.model.HabitRecordStatus
+import com.aritxonly.deadliner.sync.SyncService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.time.OffsetDateTime
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 class HabitRepository(
-    private val db: DatabaseHelper = AppSingletons.db
+    private val db: DatabaseHelper = AppSingletons.db,
+    private val sync: SyncService = AppSingletons.sync,
+    private val autoScheduleSync: Boolean = true
 ) {
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var pendingJob: Job? = null
+
+    private fun scheduleSync() {
+        if (!autoScheduleSync) return
+        pendingJob?.cancel()
+        pendingJob = scope.launch {
+            delay(800)
+            try { sync.syncOnce() } catch (_: Exception) {}
+        }
+    }
+
+    private fun utcNow(): LocalDateTime = LocalDateTime.ofInstant(java.time.Instant.now(), java.time.ZoneOffset.UTC)
+
+    internal fun nextContentUpdatedAt(previous: LocalDateTime?): LocalDateTime {
+        val now = utcNow()
+        val lastSyncTs = parseVersionTs(syncBaseVersion().ts)
+        val floor = listOfNotNull(previous?.plusNanos(1), lastSyncTs.plusNanos(1)).maxOrNull()
+        return when {
+            floor == null -> now
+            now.isAfter(floor) -> now
+            else -> floor
+        }
+    }
+
+    private fun syncBaseVersion() = db.getLastLocalVersion()
+
+    private fun parseVersionTs(ts: String): LocalDateTime {
+        return runCatching { LocalDateTime.parse(ts) }
+            .getOrElse { OffsetDateTime.parse(ts).withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime() }
+    }
+
+    private fun reservePayloadVersionAndUpdatedAt(ddlId: Long, previous: LocalDateTime?): Pair<com.aritxonly.deadliner.model.Ver, LocalDateTime> {
+        val requestedUpdatedAt = nextContentUpdatedAt(previous)
+        val ver = db.reserveVersionAtUtc(requestedUpdatedAt)
+        val resolvedUpdatedAt = parseVersionTs(ver.ts)
+        db.setDdlVersionById(ddlId, ver)
+        return ver to resolvedUpdatedAt
+    }
 
     // —— Habit 本体 —— //
 
@@ -27,7 +78,7 @@ class HabitRepository(
         iconKey: String? = null,
         sortOrder: Int = 0
     ): Long {
-        val now = LocalDateTime.now()
+        val (ver, resolvedUpdatedAt) = reservePayloadVersionAndUpdatedAt(ddlId, null)
         val habit = Habit(
             ddlId = ddlId,
             name = name,
@@ -38,11 +89,13 @@ class HabitRepository(
             timesPerPeriod = timesPerPeriod,
             goalType = goalType,
             totalTarget = totalTarget,
-            createdAt = now,
-            updatedAt = now,
+            createdAt = resolvedUpdatedAt,
+            updatedAt = resolvedUpdatedAt,
             sortOrder = sortOrder
         )
-        return db.insertHabit(habit)
+        val id = db.insertHabit(habit)
+        scheduleSync()
+        return id
     }
 
     fun getHabitByDdlId(ddlId: Long): Habit? = db.getHabitByDdlId(ddlId)
@@ -52,12 +105,16 @@ class HabitRepository(
     fun getAllHabits(): List<Habit> = db.getAllHabits()
 
     fun updateHabit(habit: Habit) {
-        val updated = habit.copy(updatedAt = LocalDateTime.now())
+        val (_, resolvedUpdatedAt) = reservePayloadVersionAndUpdatedAt(habit.ddlId, habit.updatedAt)
+        val updated = habit.copy(updatedAt = resolvedUpdatedAt)
         db.updateHabit(updated)
+        scheduleSync()
     }
 
     fun deleteHabitByDdlId(ddlId: Long) {
         db.deleteHabitByDdlId(ddlId)
+        db.bumpDdlVersionById(ddlId)
+        scheduleSync()
     }
 
     // —— Habit 打卡记录 —— //
@@ -82,18 +139,33 @@ class HabitRepository(
         status: com.aritxonly.deadliner.model.HabitRecordStatus =
             com.aritxonly.deadliner.model.HabitRecordStatus.COMPLETED
     ): Long {
+        val habit = getHabitById(habitId)
+        val resolvedUpdatedAt = habit?.let {
+            reservePayloadVersionAndUpdatedAt(it.ddlId, it.updatedAt).second
+        } ?: nextContentUpdatedAt(null)
         val record = HabitRecord(
             habitId = habitId,
             date = date,
             count = count,
             status = status,
-            createdAt = LocalDateTime.now()
+            createdAt = resolvedUpdatedAt
         )
-        return db.insertHabitRecord(record)
+        val id = db.insertHabitRecord(record)
+        if (habit != null) {
+            db.updateHabitUpdatedAt(habitId, resolvedUpdatedAt)
+        }
+        scheduleSync()
+        return id
     }
 
     fun deleteRecordsForHabitOnDate(habitId: Long, date: LocalDate) {
+        val habit = getHabitById(habitId)
         db.deleteHabitRecordsForHabitOnDate(habitId, date)
+        if (habit != null) {
+            val resolvedUpdatedAt = reservePayloadVersionAndUpdatedAt(habit.ddlId, habit.updatedAt).second
+            db.updateHabitUpdatedAt(habitId, resolvedUpdatedAt)
+        }
+        scheduleSync()
     }
 
     // 返回某天“有完成记录”的 habitId 集合（只看 COMPLETED）

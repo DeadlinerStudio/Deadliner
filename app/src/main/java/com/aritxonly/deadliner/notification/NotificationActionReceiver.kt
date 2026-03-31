@@ -11,6 +11,7 @@ import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.model.TaskStateAction
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -31,10 +32,15 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             ACTION_MARK_COMPLETE -> {
-                DDLRepository().updateDDL(item.copy(
-                    isCompleted = !item.isCompleted,
-                    completeTime = LocalDateTime.now().toString()
-                ))
+                val action = when (item.state) {
+                    com.aritxonly.deadliner.model.DDLState.ACTIVE -> TaskStateAction.MARK_COMPLETE
+                    com.aritxonly.deadliner.model.DDLState.COMPLETED,
+                    com.aritxonly.deadliner.model.DDLState.ABANDONED -> TaskStateAction.RESTORE_ACTIVE
+                    else -> null
+                }
+                if (action != null) {
+                    DDLRepository().applyTaskAction(ddlId, action, confirmed = true)
+                }
             }
 
             ACTION_DELETE -> {

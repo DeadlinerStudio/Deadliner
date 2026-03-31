@@ -21,13 +21,16 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils.refreshCount
+import com.aritxonly.deadliner.model.DDLState
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.HabitMetaData
+import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.updateNoteWithDate
 import com.aritxonly.deadliner.ui.main.DDLItemCardSwipeable
 import com.aritxonly.deadliner.ui.main.HabitItemCardSimplified
+import com.aritxonly.deadliner.ui.iconResource
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.LocalDate
@@ -64,9 +67,8 @@ fun AnimatedItem(
 fun TaskItem(
     item: DDLItem,
     activity: MainActivity,
-    updateDDL: (DDLItem) -> Unit,
+    applyTaskAction: (TaskStateAction, Boolean) -> Unit,
     celebrate: () -> Unit,
-    onDelete: () -> Unit,
     selectionMode: Boolean = false,
     selected: Boolean = false,
     onLongPressSelect: (() -> Unit)? = null,
@@ -79,7 +81,9 @@ fun TaskItem(
     val now = LocalDateTime.now()
 
     val remainingTimeText =
-        if (!item.isCompleted)
+        if (item.state == DDLState.ABANDONED)
+            stringResource(R.string.abandoned)
+        else if (!item.state.isCompletedFamily())
             GlobalUtils.buildRemainingTime(
                 context,
                 startTime,
@@ -90,8 +94,31 @@ fun TaskItem(
         else stringResource(R.string.completed)
 
     val progress = computeProgress(startTime, endTime, now)
-    val status =
-        DDLStatus.calculateStatus(startTime, endTime, now, item.isCompleted)
+    val status = if (item.state.isCompletedFamily() || item.state.isAbandonedFamily()) {
+        DDLStatus.COMPLETED
+    } else {
+        DDLStatus.calculateStatus(startTime, endTime, now, false)
+    }
+
+    val primaryAction = when (item.state) {
+        DDLState.ACTIVE -> TaskStateAction.MARK_COMPLETE
+        DDLState.COMPLETED, DDLState.ABANDONED -> TaskStateAction.RESTORE_ACTIVE
+        else -> null
+    }
+    val secondaryAction = when (item.state) {
+        DDLState.ACTIVE -> TaskStateAction.MARK_GIVE_UP
+        DDLState.COMPLETED, DDLState.ABANDONED -> TaskStateAction.MARK_ARCHIVE
+        else -> null
+    }
+    val primaryIcon = when (primaryAction) {
+        TaskStateAction.RESTORE_ACTIVE -> iconResource(R.drawable.ic_back)
+        else -> iconResource(R.drawable.ic_done)
+    }
+    val secondaryIcon = when (secondaryAction) {
+        TaskStateAction.MARK_ARCHIVE -> iconResource(R.drawable.ic_archiving)
+        TaskStateAction.MARK_GIVE_UP -> iconResource(R.drawable.ic_close)
+        else -> iconResource(R.drawable.ic_delete)
+    }
 
     DDLItemCardSwipeable(
         title = item.name,
@@ -100,42 +127,46 @@ fun TaskItem(
         progress = progress,
         isStarred = item.isStared,
         status = status,
+        useDisabledCompletedStyle = item.state.isAbandonedFamily(),
         onClick = {
             val intent = DeadlineDetailActivity.newIntent(context, item)
             activity.startActivity(intent)
         },
         onComplete = {
             GlobalUtils.triggerVibration(activity, 100)
-
-            val realItem = DDLRepository().getDDLById(item.id)
-                ?: return@DDLItemCardSwipeable
-            val newItem = realItem.copy(
-                isCompleted = !realItem.isCompleted,
-                completeTime = if (!realItem.isCompleted) LocalDateTime.now()
-                    .toString() else ""
-            )
-
-            updateDDL(newItem)
-
-            if (newItem.isCompleted) {
+            val action = primaryAction ?: return@DDLItemCardSwipeable
+            applyTaskAction(action, true)
+            if (action == TaskStateAction.MARK_COMPLETE) {
                 celebrate()
-                Toast.makeText(
-                    activity,
-                    R.string.toast_finished,
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(activity, R.string.toast_finished, Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(
-                    activity,
-                    R.string.toast_definished,
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(activity, R.string.toast_restored_active, Toast.LENGTH_SHORT).show()
             }
         },
         onDelete = {
             GlobalUtils.triggerVibration(activity, 200)
-            onDelete()
+            val action = secondaryAction ?: return@DDLItemCardSwipeable
+            if (action == TaskStateAction.MARK_GIVE_UP) {
+                androidx.appcompat.app.AlertDialog.Builder(activity)
+                    .setTitle(R.string.confirm_give_up_title)
+                    .setMessage(R.string.confirm_give_up_message)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.accept) { _, _ ->
+                        applyTaskAction(action, true)
+                        Toast.makeText(activity, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
+                    }
+                    .show()
+            } else {
+                applyTaskAction(action, true)
+                Toast.makeText(
+                    activity,
+                    activity.getString(R.string.toast_archived, 1),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         },
+        primaryActionIcon = primaryIcon,
+        secondaryActionIcon = secondaryIcon,
         selectionMode = selectionMode,
         selected = selected,
         onLongPressSelect = onLongPressSelect,

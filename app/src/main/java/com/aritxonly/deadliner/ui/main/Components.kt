@@ -243,7 +243,8 @@ fun DDLItemCardSimplified(
     isStarred: Boolean,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    status: DDLStatus = DDLStatus.UNDERGO
+    status: DDLStatus = DDLStatus.UNDERGO,
+    useDisabledCompletedStyle: Boolean = false
 ) {
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
     val progressClamped = progress.coerceIn(0f, 1f)
@@ -275,10 +276,15 @@ fun DDLItemCardSimplified(
             else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
         }
         DDLStatus.COMPLETED -> {
-            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_completed).copy(alpha = 0.55f)
-            else MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f)
-            bgColor = if (usePreset) colorResource(R.color.bg_morandi_completed).copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+            if (useDisabledCompletedStyle) {
+                indicatorColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                bgColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+            } else {
+                indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_completed).copy(alpha = 0.55f)
+                else MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f)
+                bgColor = if (usePreset) colorResource(R.color.bg_morandi_completed).copy(alpha = 0.3f)
+                else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+            }
         }
     }
 
@@ -381,12 +387,21 @@ fun DDLItemCardSwipeable(
     onClick: (() -> Unit)? = null,
     onComplete: () -> Unit,
     onDelete: () -> Unit,
+    useDisabledCompletedStyle: Boolean = false,
+    primaryActionIcon: ImageVector? = null,
+    primaryActionColor: Color? = null,
+    secondaryActionIcon: ImageVector? = null,
+    secondaryActionColor: Color? = null,
     selectionMode: Boolean = false,
     selected: Boolean = false,
     onLongPressSelect: (() -> Unit)? = null,
     onToggleSelect: (() -> Unit)? = null
 ) {
     val swipeEnabled = !selectionMode
+    val resolvedPrimaryActionIcon = primaryActionIcon ?: ImageVector.vectorResource(R.drawable.ic_check)
+    val resolvedPrimaryActionColor = primaryActionColor ?: colorResource(R.color.chart_green)
+    val resolvedSecondaryActionIcon = secondaryActionIcon ?: ImageVector.vectorResource(R.drawable.ic_delete)
+    val resolvedSecondaryActionColor = secondaryActionColor ?: colorResource(R.color.chart_red)
 
     var hasTriggered by remember { mutableStateOf(false) }
     val dismissState = rememberSwipeToDismissBoxState(
@@ -458,13 +473,13 @@ fun DDLItemCardSwipeable(
 
             when (dir) {
                 SwipeToDismissBoxValue.EndToStart -> {
-                    actionColor = colorResource(R.color.chart_red)
-                    icon = ImageVector.vectorResource(R.drawable.ic_delete)
+                    actionColor = resolvedSecondaryActionColor
+                    icon = resolvedSecondaryActionIcon
                     alignment = Alignment.CenterEnd
                 }
                 SwipeToDismissBoxValue.StartToEnd -> {
-                    actionColor = colorResource(R.color.chart_green)
-                    icon = ImageVector.vectorResource(R.drawable.ic_check)
+                    actionColor = resolvedPrimaryActionColor
+                    icon = resolvedPrimaryActionIcon
                     alignment = Alignment.CenterStart
                 }
                 else -> {
@@ -530,7 +545,8 @@ fun DDLItemCardSwipeable(
                         .clip(shape)
                         .onSizeChanged { widthPx = it.width },
                     onClick = null,
-                    status = status
+                    status = status,
+                    useDisabledCompletedStyle = useDisabledCompletedStyle
                 )
 
                 if (selectionMode && selected) {

@@ -20,6 +20,9 @@
     <string name="alert_edit_archive">归档</string>
     <string name="toast_definished">撤销完成Deadline...😭</string>
     <string name="toast_archived">%1$d 项Deadline已归档！🗃️</string>
+    <string name="toast_unarchived">已取消归档</string>
+    <string name="toast_give_up">已放弃任务</string>
+    <string name="toast_restored_active">已恢复为进行中</string>
     <string name="toast_stared">已修改星标状态</string>
 
     <string name="settings_archive">归档</string>
@@ -303,6 +306,10 @@
     <string name="mark_complete">标记完成</string>
     <string name="undo_complete">撤销完成</string>
     <string name="archive">归档</string>
+    <string name="unarchive">取消归档</string>
+    <string name="give_up_task">放弃任务</string>
+    <string name="restore_active">恢复进行中</string>
+    <string name="abandoned">已放弃</string>
     <string name="delete">删除</string>
     <string name="expand">展开</string>
     <string name="retract">收起</string>
@@ -313,6 +320,12 @@
     <string name="label_start_time">开始时间：%1$s</string>
     <string name="label_end_time">结束时间：%1$s</string>
     <string name="label_remaining_time">剩余时间：%1$s</string>
+    <string name="confirm_give_up_title">放弃这个任务？</string>
+    <string name="confirm_give_up_message">放弃后任务仍会保留在主列表，你之后也可以恢复继续。</string>
+    <string name="archive_task_message">将这个任务移入归档列表？</string>
+    <string name="archive_label_completed">完成归档</string>
+    <string name="archive_label_abandoned">放弃归档</string>
+    <string name="archive_time_with_state">%1$s · %2$s</string>
 
     <string name="daily_frequency">每天%1$d次</string>
     <string name="daily_frequency_with_total">每天%1$d次/共%2$d次</string>

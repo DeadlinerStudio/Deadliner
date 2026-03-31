@@ -84,6 +84,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
@@ -724,12 +725,15 @@ fun SimplifiedHost(
                                                     val item =
                                                         ddlList.find { it.id == id }
                                                             ?: return@forEach
-                                                    val updatedTask = item.copy(
-                                                        isCompleted = true,
-                                                        completeTime = LocalDateTime.now()
-                                                            .toString()
-                                                    )
-                                                    DDLRepository().updateDDL(updatedTask)
+                                                    val action = when (item.state) {
+                                                        com.aritxonly.deadliner.model.DDLState.ACTIVE -> TaskStateAction.MARK_COMPLETE
+                                                        com.aritxonly.deadliner.model.DDLState.COMPLETED,
+                                                        com.aritxonly.deadliner.model.DDLState.ABANDONED -> TaskStateAction.RESTORE_ACTIVE
+                                                        else -> null
+                                                    }
+                                                    if (action != null) {
+                                                        DDLRepository().applyTaskAction(item.id, action, confirmed = true)
+                                                    }
                                                 }
 
                                                 vm.loadData(selectedPage)
@@ -770,9 +774,8 @@ fun SimplifiedHost(
                                                 idsToUpdate.forEach { id ->
                                                     val item = ddlList.firstOrNull { it.id == id }
                                                         ?: return@forEach
-                                                    if (item.isCompleted) {
-                                                        val updated = item.copy(isArchived = true)
-                                                        DDLRepository().updateDDL(updated)
+                                                    if (item.state.canManualArchive()) {
+                                                        DDLRepository().applyTaskAction(item.id, TaskStateAction.MARK_ARCHIVE, confirmed = true)
                                                         count++
                                                     }
                                                 }

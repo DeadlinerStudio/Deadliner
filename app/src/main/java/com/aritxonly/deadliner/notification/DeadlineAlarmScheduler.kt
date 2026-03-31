@@ -219,7 +219,7 @@ object DeadlineAlarmScheduler {
     }
 
     fun scheduleUpcomingDDLAlarm(context: Context, ddl: DDLItem) {
-        if (ddl.type == DeadlineType.HABIT || ddl.isCompleted || ddl.isArchived) return
+        if (ddl.type == DeadlineType.HABIT || !ddl.state.isActionable()) return
 
         val remainingTime = calculateRemainingTime(ddl) // 剩余秒数
         if (remainingTime <= 0) return // 过期不设闹钟

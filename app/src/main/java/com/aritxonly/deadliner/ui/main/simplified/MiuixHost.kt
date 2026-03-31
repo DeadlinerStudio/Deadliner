@@ -89,6 +89,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils.showHabitReminderDialog
 import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
@@ -449,7 +450,15 @@ fun MiuixHost(
                                     } else {
                                         selectedIds.forEach { id ->
                                             val item = ddlList.find { it.id == id } ?: return@forEach
-                                            DDLRepository().updateDDL(item.copy(isCompleted = true, completeTime = LocalDateTime.now().toString()))
+                                            val action = when (item.state) {
+                                                com.aritxonly.deadliner.model.DDLState.ACTIVE -> TaskStateAction.MARK_COMPLETE
+                                                com.aritxonly.deadliner.model.DDLState.COMPLETED,
+                                                com.aritxonly.deadliner.model.DDLState.ABANDONED -> TaskStateAction.RESTORE_ACTIVE
+                                                else -> null
+                                            }
+                                            if (action != null) {
+                                                DDLRepository().applyTaskAction(item.id, action, confirmed = true)
+                                            }
                                         }
                                         vm.loadData(selectedPage); habitVm.refresh()
                                         Toast.makeText(context, R.string.toast_finished, Toast.LENGTH_SHORT).show()
@@ -464,7 +473,10 @@ fun MiuixHost(
                                         var count = 0
                                         selectedIds.forEach { id ->
                                             val item = ddlList.firstOrNull { it.id == id } ?: return@forEach
-                                            if (item.isCompleted) { DDLRepository().updateDDL(item.copy(isArchived = true)); count++ }
+                                            if (item.state.canManualArchive()) {
+                                                DDLRepository().applyTaskAction(item.id, TaskStateAction.MARK_ARCHIVE, confirmed = true)
+                                                count++
+                                            }
                                         }
                                         vm.loadData(selectedPage); habitVm.refresh()
                                         Toast.makeText(activity, activity.getString(R.string.toast_archived, count), Toast.LENGTH_SHORT).show()

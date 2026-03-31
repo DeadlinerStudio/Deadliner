@@ -1,13 +1,19 @@
+package com.aritxonly.deadliner.model
+
+import android.os.Parcelable
+import com.google.gson.annotations.SerializedName
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class SubTask(
-    val id: Long = 0,
-    val ddlId: Long,
+    val id: String,
     val content: String,
+    @SerializedName("is_completed")
     val isCompleted: Boolean = false,
+    @SerializedName("sort_order")
     val sortOrder: Int = 0,
-    // Sync 字段
-    val uid: String? = null,
-    val deleted: Boolean = false,
-    val verTs: String = "1970-01-01T00:00:00Z",
-    val verCtr: Int = 0,
-    val verDev: String = ""
-)
+    @SerializedName("created_at")
+    val createdAt: String? = null,
+    @SerializedName("updated_at")
+    val updatedAt: String? = null
+) : Parcelable

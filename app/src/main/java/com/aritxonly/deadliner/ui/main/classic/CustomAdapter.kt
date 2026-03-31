@@ -19,6 +19,7 @@ import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.data.MainViewModel
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.model.DDLState
 import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.HabitMetaData
@@ -540,7 +541,14 @@ class CustomAdapter(
             constraintLayout.setBackgroundResource(R.drawable.item_background)
         }
 
-        if (item.isCompleted) {
+        if (item.state.isAbandonedFamily()) {
+            val abandonedColor = getThemeColor(com.google.android.material.R.attr.colorOutline)
+            progressBar.setIndicatorColor(abandonedColor)
+            constraintLayout.background.alpha = 180
+            progressBar.setProgressCompat(100, true)
+            remainingTimeText.text = context.getString(R.string.abandoned)
+            remainingTimeTextAlt.text = context.getString(R.string.abandoned)
+        } else if (item.isCompleted) {
             val finishedColor = getThemeColor(android.R.attr.colorControlActivated)
             progressBar.setIndicatorColor(finishedColor)
             constraintLayout.setBackgroundResource(R.drawable.item_background_finished)

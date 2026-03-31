@@ -1,7 +1,6 @@
 package com.aritxonly.deadliner.model
 
 import android.os.Parcelable
-import com.aritxonly.deadliner.model.DeadlineType
 import kotlinx.parcelize.Parcelize
 import java.time.LocalDateTime
 
@@ -12,6 +11,7 @@ data class DDLItem(
     val startTime: String,
     val endTime: String,
     var isCompleted: Boolean = false,
+    var state: DDLState = DDLState.ACTIVE,
     var completeTime: String = "",
     val note: String,
     var isArchived: Boolean = false,
@@ -20,5 +20,6 @@ data class DDLItem(
     var habitCount: Int = 0,
     var habitTotalCount: Int = 0,
     var calendarEventId: Long? = null,
-    var timeStamp: String = LocalDateTime.now().toString()
+    var timeStamp: String = LocalDateTime.now().toString(),
+    var subTasks: List<SubTask> = emptyList()
 ) : Parcelable

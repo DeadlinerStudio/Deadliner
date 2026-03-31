@@ -44,7 +44,7 @@ class UpcomingLiveUpdateService : Service() {
             }
 
             // 到期或完成就做最后一版并退出
-            if (remaining <= 0 || latest.isCompleted || latest.isArchived) {
+            if (remaining <= 0 || !latest.state.isActionable()) {
                 NotificationUtil.sendUpcomingDDLNotification(this@UpcomingLiveUpdateService, latest, remaining)
                 stopSelf()
                 return

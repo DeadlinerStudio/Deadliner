@@ -8,7 +8,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.data.DatabaseHelper
-import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -37,7 +36,11 @@ class ArchiveAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = filteredItemList[position]
-        val endTime = GlobalUtils.safeParseDateTime(item.endTime)
+        val actionTime = runCatching {
+            com.aritxonly.deadliner.localutils.GlobalUtils.safeParseDateTime(
+                item.completeTime.ifBlank { item.endTime }
+            )
+        }.getOrElse { com.aritxonly.deadliner.localutils.GlobalUtils.timeNull }
 
         holder.archiveTitleText.text = item.name
         holder.archiveNoteText.text = item.note
@@ -52,11 +55,12 @@ class ArchiveAdapter(
             .ofLocalizedDateTime(FormatStyle.SHORT)
             .withLocale(Locale.getDefault())
 
-        holder.endingTimeText.text = if (displayFullContent) {
-            endTime.format(formatter)
-        } else {
-            endTime.format(formatterAlt)
+        val timeText = if (displayFullContent) actionTime.format(formatter) else actionTime.format(formatterAlt)
+        val stateLabel = when {
+            item.state.isAbandonedFamily() -> context.getString(R.string.archive_label_abandoned)
+            else -> context.getString(R.string.archive_label_completed)
         }
+        holder.endingTimeText.text = context.getString(R.string.archive_time_with_state, stateLabel, timeText)
 
         val databaseHelper = DatabaseHelper.getInstance(context)
 
@@ -78,12 +82,7 @@ class ArchiveAdapter(
 
     // 过滤列表，仅保留符合条件的项目
     private fun filterItems(itemList: List<DDLItem>, context: Context): List<DDLItem> {
-        return itemList.filterNot { item ->
-            if (!item.isCompleted) return@filterNot true
-            item.isArchived = (!GlobalUtils.filterArchived(item)) || item.isArchived
-            DDLRepository().updateDDL(item)
-            !item.isArchived
-        }
+        return itemList.filter { it.state.isArchiveListVisible() }
     }
 
     // 更新数据并重新筛选

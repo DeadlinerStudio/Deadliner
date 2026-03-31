@@ -56,6 +56,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.model.DDLState
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.base.TextButton
@@ -292,7 +293,9 @@ private fun SearchResultContent(
                         val now = LocalDateTime.now()
 
                         val remainingTimeText =
-                            if (!item.isCompleted)
+                            if (item.state == DDLState.ABANDONED)
+                                stringResource(R.string.abandoned)
+                            else if (!item.state.isCompletedFamily())
                                 GlobalUtils.buildRemainingTime(
                                     context,
                                     startTime,
@@ -304,12 +307,16 @@ private fun SearchResultContent(
 
                         val progress = computeProgress(startTime, endTime, now)
                         val status =
-                            DDLStatus.calculateStatus(
-                                startTime,
-                                endTime,
-                                now,
-                                item.isCompleted
-                            )
+                            if (item.state.isCompletedFamily() || item.state.isAbandonedFamily()) {
+                                DDLStatus.COMPLETED
+                            } else {
+                                DDLStatus.calculateStatus(
+                                    startTime,
+                                    endTime,
+                                    now,
+                                    false
+                                )
+                            }
 
                         DDLItemCardSimplified(
                             title = item.name,
@@ -317,6 +324,7 @@ private fun SearchResultContent(
                             note = item.note,
                             progress = progress,
                             isStarred = item.isStared,
+                            useDisabledCompletedStyle = item.state.isAbandonedFamily(),
                             status = status,
                             onClick = {
                                 val intent =

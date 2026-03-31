@@ -106,6 +106,7 @@ import com.aritxonly.deadliner.model.DeadlineFrequency.WEEKLY
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.HabitMetaData
 import com.aritxonly.deadliner.model.PartyPresets
+import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.updateNoteWithDate
 import com.aritxonly.deadliner.notification.NotificationUtil
 import com.aritxonly.deadliner.ui.main.simplified.HabitScreen
@@ -884,9 +885,15 @@ class ClassicController(
                             val positionsToUpdate = adapter.selectedPositions.toList()
                             for (position in positionsToUpdate) {
                                 val item = adapter.itemList[position]
-                                item.isCompleted = true
-                                item.completeTime = LocalDateTime.now().toString()
-                                DDLRepository().updateDDL(item)
+                                val action = when (item.state) {
+                                    com.aritxonly.deadliner.model.DDLState.ACTIVE -> TaskStateAction.MARK_COMPLETE
+                                    com.aritxonly.deadliner.model.DDLState.COMPLETED,
+                                    com.aritxonly.deadliner.model.DDLState.ABANDONED -> TaskStateAction.RESTORE_ACTIVE
+                                    else -> null
+                                }
+                                if (action != null) {
+                                    DDLRepository().applyTaskAction(item.id, action, confirmed = true)
+                                }
                             }
                             viewModel.loadData(currentType)
                             habitViewModel.refresh()
@@ -914,9 +921,8 @@ class ClassicController(
                         var count = 0
                         for (position in positionsToUpdate) {
                             val item = adapter.itemList[position]
-                            if (item.isCompleted) {
-                                item.isArchived = true
-                                DDLRepository().updateDDL(item)
+                            if (item.state.canManualArchive()) {
+                                DDLRepository().applyTaskAction(item.id, TaskStateAction.MARK_ARCHIVE, confirmed = true)
                                 count++
                             }
                         }
@@ -1188,47 +1194,75 @@ class ClassicController(
 
     override fun onSwipeRight(position: Int) {
         val item = adapter.itemList[position]
-        item.isCompleted = !item.isCompleted
-        item.completeTime = if (item.isCompleted) {
-            LocalDateTime.now().toString()
-        } else {
-            ""
-        }
-        DDLRepository().updateDDL(item)
+        val action = when (item.state) {
+            com.aritxonly.deadliner.model.DDLState.ACTIVE -> TaskStateAction.MARK_COMPLETE
+            com.aritxonly.deadliner.model.DDLState.COMPLETED,
+            com.aritxonly.deadliner.model.DDLState.ABANDONED -> TaskStateAction.RESTORE_ACTIVE
+            else -> null
+        } ?: return
+        DDLRepository().applyTaskAction(item.id, action, confirmed = true)
         viewModel.loadData(currentType)
         habitViewModel.refresh()
-        if (item.isCompleted) {
+        if (action == TaskStateAction.MARK_COMPLETE) {
             if (isFireworksAnimEnable) { konfettiViewMain.start(PartyPresets.festive()) }
             Toast.makeText(activity, R.string.toast_finished, Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(activity, R.string.toast_definished, Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, R.string.toast_restored_active, Toast.LENGTH_SHORT).show()
         }
     }
 
     override fun onSwipeLeft(position: Int) {
         pauseRefresh = true
-        MaterialAlertDialogBuilder(activity)
-            .setTitle(R.string.alert_delete_title)
-            .setMessage(R.string.alert_delete_message)
-            .setNegativeButton(resources.getString(R.string.cancel)) { dialog, _ ->
-                adapter.notifyItemChanged(position) // 取消删除，刷新该项
-                pauseRefresh = false
-            }
-            .setPositiveButton(resources.getString(R.string.accept)) { dialog, _ ->
-                val item = adapter.itemList[position]
-                DDLRepository().deleteDDL(item.id)
-                DeadlineAlarmScheduler.cancelAlarm(applicationContext, item.id)
-                viewModel.loadData(currentType)
-                habitViewModel.refresh()
-                Toast.makeText(activity, R.string.toast_deletion, Toast.LENGTH_SHORT).show()
-                decideShowEmptyNotice()
+        val item = adapter.itemList[position]
+        val action = when (item.state) {
+            com.aritxonly.deadliner.model.DDLState.ACTIVE -> TaskStateAction.MARK_GIVE_UP
+            com.aritxonly.deadliner.model.DDLState.COMPLETED,
+            com.aritxonly.deadliner.model.DDLState.ABANDONED -> TaskStateAction.MARK_ARCHIVE
+            else -> null
+        }
+        if (action == null) {
+            adapter.notifyItemChanged(position)
+            pauseRefresh = false
+            return
+        }
+
+        val builder = MaterialAlertDialogBuilder(activity)
+            .setNegativeButton(resources.getString(R.string.cancel)) { _, _ ->
+                adapter.notifyItemChanged(position)
                 pauseRefresh = false
             }
             .setOnCancelListener {
-                adapter.notifyItemChanged(position) // 取消删除，刷新该项
+                adapter.notifyItemChanged(position)
                 pauseRefresh = false
             }
-            .show()
+
+        if (action == TaskStateAction.MARK_GIVE_UP) {
+            builder
+                .setTitle(R.string.confirm_give_up_title)
+                .setMessage(R.string.confirm_give_up_message)
+                .setPositiveButton(resources.getString(R.string.accept)) { _, _ ->
+                    DDLRepository().applyTaskAction(item.id, action, confirmed = true)
+                    viewModel.loadData(currentType)
+                    habitViewModel.refresh()
+                    Toast.makeText(activity, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
+                    decideShowEmptyNotice()
+                    pauseRefresh = false
+                }
+                .show()
+        } else {
+            builder
+                .setTitle(R.string.archive)
+                .setMessage(R.string.archive_task_message)
+                .setPositiveButton(resources.getString(R.string.accept)) { _, _ ->
+                    DDLRepository().applyTaskAction(item.id, action, confirmed = true)
+                    viewModel.loadData(currentType)
+                    habitViewModel.refresh()
+                    Toast.makeText(activity, resources.getString(R.string.toast_archived, 1), Toast.LENGTH_SHORT).show()
+                    decideShowEmptyNotice()
+                    pauseRefresh = false
+                }
+                .show()
+        }
     }
 
     private fun decideShowEmptyNotice() {
