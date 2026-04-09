@@ -25,6 +25,12 @@ data class HabitCarrierSyncRow(
     val ver: Ver
 )
 
+data class DeletedDdlRow(
+    val ddlId: Long,
+    val uid: String,
+    val ver: Ver
+)
+
 class DatabaseHelper private constructor(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
@@ -185,6 +191,11 @@ class DatabaseHelper private constructor(context: Context) :
         """.trimIndent()
         )
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_hr_habit_date ON $TABLE_HABIT_RECORD($HR_HABIT_ID, $HR_DATE)")
+    }
+
+    override fun onOpen(db: SQLiteDatabase) {
+        super.onOpen(db)
+        repairCanonicalStateFromLegacy(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -353,8 +364,6 @@ class DatabaseHelper private constructor(context: Context) :
                            WHEN COALESCE($COLUMN_IS_COMPLETED, 0) = 1 THEN 'completed'
                            ELSE 'active'
                        END
-                     WHERE $COLUMN_STATE IS NULL
-                        OR TRIM($COLUMN_STATE) = ''
                     """.trimIndent()
                 )
                 execSQL(
@@ -679,6 +688,45 @@ class DatabaseHelper private constructor(context: Context) :
             }
         }
         return rows
+    }
+
+    fun getDeletedDdlRows(): List<DeletedDdlRow> {
+        val rows = mutableListOf<DeletedDdlRow>()
+        readableDatabase.rawQuery(
+            """
+            SELECT $COLUMN_ID, $COLUMN_UID, $COLUMN_VER_TS, $COLUMN_VER_CTR, $COLUMN_VER_DEV
+              FROM $TABLE_NAME
+             WHERE COALESCE($COLUMN_DELETED, 0) = 1
+            """.trimIndent(),
+            null
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                val uid = cursor.getString(1) ?: continue
+                rows.add(
+                    DeletedDdlRow(
+                        ddlId = cursor.getLong(0),
+                        uid = uid,
+                        ver = Ver(
+                            cursor.getString(2),
+                            cursor.getInt(3),
+                            cursor.getString(4)
+                        )
+                    )
+                )
+            }
+        }
+        return rows
+    }
+
+    fun hardDeleteDdlRows(ids: List<Long>): Int {
+        if (ids.isEmpty()) return 0
+        var deletedCount = 0
+        writableDatabase.transaction {
+            ids.forEach { ddlId ->
+                deletedCount += delete(TABLE_NAME, "$COLUMN_ID = ?", arrayOf(ddlId.toString()))
+            }
+        }
+        return deletedCount
     }
 
     fun deleteHabitByDdlId(ddlId: Long) {
@@ -1046,15 +1094,11 @@ class DatabaseHelper private constructor(context: Context) :
         isCompleted: Boolean,
         isArchived: Boolean
     ): DDLState {
-        val candidate = rawState?.trim().orEmpty()
-        if (candidate.isNotEmpty()) {
-            return DDLState.fromWire(candidate)
-        }
-        return when {
-            isArchived -> DDLState.ARCHIVED
-            isCompleted -> DDLState.COMPLETED
-            else -> DDLState.ACTIVE
-        }
+        return DDLState.fromStoredValue(
+            rawState = rawState,
+            isCompleted = isCompleted,
+            isArchived = isArchived
+        )
     }
 
     private fun legacyFlagsForState(state: DDLState): Pair<Int, Int> {
@@ -1092,6 +1136,24 @@ class DatabaseHelper private constructor(context: Context) :
 
     private fun serializeSubTasks(subTasks: List<SubTask>): String {
         return gson.toJson(subTasks.sortedBy { it.sortOrder })
+    }
+
+    private fun repairCanonicalStateFromLegacy(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            UPDATE $TABLE_NAME
+               SET $COLUMN_STATE = CASE
+                   WHEN COALESCE($COLUMN_IS_ARCHIVED, 0) = 1 THEN 'archived'
+                   WHEN COALESCE($COLUMN_IS_COMPLETED, 0) = 1 THEN 'completed'
+                   ELSE 'active'
+               END
+             WHERE TRIM(COALESCE($COLUMN_STATE, '')) = ''
+                OR (LOWER(TRIM($COLUMN_STATE)) = 'active' AND (
+                    COALESCE($COLUMN_IS_COMPLETED, 0) = 1
+                    OR COALESCE($COLUMN_IS_ARCHIVED, 0) = 1
+                ))
+            """.trimIndent()
+        )
     }
 
     fun getDdlUidById(ddlId: Long): String? = readableDatabase.rawQuery(

@@ -2,8 +2,10 @@ package com.aritxonly.deadliner.sync
 
 import android.content.ContentValues
 import android.util.Log
+import com.aritxonly.deadliner.data.DeletedDdlRow
 import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.data.HabitCarrierSyncRow
+import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLState
 import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.HabitGoalType
@@ -26,6 +28,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 
 class SyncService(
     private val db: DatabaseHelper,
@@ -74,7 +77,7 @@ class SyncService(
         }
     }
 
-    private fun buildLocalDdlSnapshotV2(): JsonObject {
+    internal fun buildLocalDdlSnapshotV2(): JsonObject {
         val items = JsonArray()
         val sql = """
             SELECT
@@ -83,6 +86,8 @@ class SyncService(
                 COALESCE(ver_ts,'1970-01-01T00:00:00Z') AS ver_ts,
                 COALESCE(ver_ctr,0) AS ver_ctr,
                 COALESCE(ver_dev,'') AS ver_dev,
+                COALESCE(is_completed,0) AS is_completed,
+                COALESCE(is_archived,0) AS is_archived,
                 id,
                 name,
                 start_time,
@@ -106,6 +111,8 @@ class SyncService(
             val idxVerTs = c.getColumnIndexOrThrow("ver_ts")
             val idxVerCtr = c.getColumnIndexOrThrow("ver_ctr")
             val idxVerDev = c.getColumnIndexOrThrow("ver_dev")
+            val idxIsCompleted = c.getColumnIndexOrThrow("is_completed")
+            val idxIsArchived = c.getColumnIndexOrThrow("is_archived")
             val idxId = c.getColumnIndexOrThrow("id")
             val idxName = c.getColumnIndexOrThrow("name")
             val idxStart = c.getColumnIndexOrThrow("start_time")
@@ -134,7 +141,11 @@ class SyncService(
                     addProperty("deleted", deleted)
                 }
                 if (!deleted) {
-                    val state = DDLState.fromWire(c.getString(idxState))
+                    val state = DDLState.fromStoredValue(
+                        rawState = c.getString(idxState),
+                        isCompleted = c.getInt(idxIsCompleted) != 0,
+                        isArchived = c.getInt(idxIsArchived) != 0
+                    )
                     item.add("doc", JsonObject().apply {
                         addProperty("id", c.getLong(idxId))
                         addProperty("name", c.getString(idxName))
@@ -158,10 +169,14 @@ class SyncService(
             }
         }
 
-        return JsonObject().apply {
-            add("version", snapshotVersionObject())
-            add("items", items)
-        }
+        return pruneExpiredTombstones(
+            JsonObject().apply {
+                add("version", snapshotVersionObject())
+                add("items", items)
+            },
+            source = "ddl-local-build",
+            logTag = "Sync"
+        )
     }
 
     internal fun buildLocalHabitSnapshotV2(): JsonObject {
@@ -223,10 +238,14 @@ class SyncService(
             }
         }
 
-        return JsonObject().apply {
-            add("version", snapshotVersionObject())
-            add("items", items)
-        }
+        return pruneExpiredTombstones(
+            JsonObject().apply {
+                add("version", snapshotVersionObject())
+                add("items", items)
+            },
+            source = "habit-local-build",
+            logTag = "HabitSync"
+        )
     }
 
     private fun habitToJson(habit: Habit): JsonObject {
@@ -314,7 +333,7 @@ class SyncService(
         return adev >= bdev
     }
 
-    private fun mergeSnapshots(local: JsonObject, remote: JsonObject): JsonObject {
+    internal fun mergeSnapshots(local: JsonObject, remote: JsonObject): JsonObject {
         fun toMap(root: JsonObject): MutableMap<String, JsonObject> {
             val map = mutableMapOf<String, JsonObject>()
             root.getAsJsonArray("items")?.forEach { el ->
@@ -324,8 +343,8 @@ class SyncService(
             return map
         }
 
-        val localMap = toMap(local)
-        val remoteMap = toMap(remote)
+        val localMap = toMap(pruneExpiredTombstones(local, source = "merge-local", logTag = "Sync"))
+        val remoteMap = toMap(pruneExpiredTombstones(remote, source = "merge-remote", logTag = "Sync"))
         val keys = (localMap.keys + remoteMap.keys).toSortedSet()
         val items = JsonArray()
 
@@ -340,10 +359,75 @@ class SyncService(
             items.add(chosen.deepCopy())
         }
 
+        return pruneExpiredTombstones(
+            JsonObject().apply {
+                add("version", snapshotVersionObject())
+                add("items", items)
+            },
+            source = "merge-result",
+            logTag = "Sync"
+        )
+    }
+
+    private fun tombstoneRetentionDays(): Int = GlobalUtils.tombstoneRetentionDays.coerceAtLeast(0)
+
+    private fun tombstoneCutoff(now: Instant = Instant.now()): Instant? {
+        val retentionDays = tombstoneRetentionDays()
+        if (retentionDays == 0) return null
+        return now.minus(retentionDays.toLong(), ChronoUnit.DAYS)
+    }
+
+    private fun parseVersionInstantOrNull(ts: String?): Instant? {
+        val raw = ts?.trim().orEmpty()
+        if (raw.isEmpty()) return null
+        return runCatching { Instant.parse(raw) }
+            .recoverCatching { OffsetDateTime.parse(raw).toInstant() }
+            .getOrNull()
+    }
+
+    internal fun isExpiredDeletedItem(item: JsonObject, now: Instant = Instant.now()): Boolean {
+        if (item["deleted"]?.asBoolean != true) return false
+        val cutoff = tombstoneCutoff(now) ?: return false
+        val ts = item.getAsJsonObject("ver")?.get("ts")?.asString
+        val tombstoneInstant = parseVersionInstantOrNull(ts) ?: return false
+        return tombstoneInstant.isBefore(cutoff)
+    }
+
+    internal fun pruneExpiredTombstones(
+        root: JsonObject,
+        source: String,
+        logTag: String,
+        now: Instant = Instant.now()
+    ): JsonObject {
+        val items = JsonArray()
+        root.getAsJsonArray("items")?.forEach { el ->
+            val item = el.asJsonObject
+            if (isExpiredDeletedItem(item, now)) {
+                val uid = item["uid"]?.asString ?: "(unknown)"
+                val verTs = item.getAsJsonObject("ver")?.get("ts")?.asString ?: "(missing)"
+                Log.d(logTag, "prune expired tombstone uid=$uid ver=$verTs source=$source")
+            } else {
+                items.add(item.deepCopy())
+            }
+        }
         return JsonObject().apply {
-            add("version", snapshotVersionObject())
+            add("version", root.getAsJsonObject("version")?.deepCopy() ?: snapshotVersionObject())
             add("items", items)
         }
+    }
+
+    internal fun cleanupExpiredDeletedRows(now: Instant = Instant.now()): Int {
+        if (tombstoneRetentionDays() == 0) return 0
+        val cutoff = tombstoneCutoff(now) ?: return 0
+        val expiredIds = db.getDeletedDdlRows()
+            .filter { row -> isExpiredDeletedRow(row, cutoff) }
+            .map { it.ddlId }
+        return db.hardDeleteDdlRows(expiredIds)
+    }
+
+    private fun isExpiredDeletedRow(row: DeletedDdlRow, cutoff: Instant): Boolean {
+        val tombstoneInstant = parseVersionInstantOrNull(row.ver.ts) ?: return false
+        return tombstoneInstant.isBefore(cutoff)
     }
 
     private fun canonicalizeDdlV2Snapshot(root: JsonObject): JsonObject {
@@ -824,6 +908,8 @@ class SyncService(
                 val mergedHabit = mergeSnapshots(localHabit, remoteHabit.snapshot)
                 putSnapshot(habitSnapshotV2Path(), mergedHabit, remoteHabit)
                 applyHabitSnapshotToLocal(mergedHabit)
+                val prunedCount = cleanupExpiredDeletedRows()
+                Log.d("Sync", "pruned $prunedCount expired tombstones")
                 return@withContext true
             } catch (_: WebUtils.PreconditionFailed) {
                 if (attempt == 1) return@withContext false

@@ -46,6 +46,7 @@
     <string name="settings_support_backup">导入与导出用户数据库</string>
     <string name="settings_support_deadliner_ai">Deadliner AI · API接入 · 自定义prompt</string>
     <string name="settings_support_webdav">WebDAV 云同步服务</string>
+    <string name="settings_support_tombstone_retention">删除后的同步墓碑会保留一段时间，之后自动回收以减少 snapshot 体积和垃圾数据堆积</string>
     <string name="settings_support_lab">调试选项与实验性内容</string>
     <string name="settings_support_widget">小组件配置 · 小组件界面与交互设置</string>
     <string name="settings_support_wiki">访问 Github Wiki 快速入门</string>
@@ -467,6 +468,8 @@
     <string name="starts_in_compact_days_short">%.1fd 开始</string>
     <string name="settings_web_auto_sync">同步设置</string>
     <string name="settings_support_web_auto_sync">点击设置同步频率和同步时机</string>
+    <string name="settings_tombstone_retention">已删除记录保留天数</string>
+    <string name="settings_tombstone_retention_description">删除后的同步墓碑会保留 %1$d 天，之后自动回收，减少 snapshot 体积和垃圾数据堆积。设为 0 则永久保留。</string>
     <string name="settings_web_wifi_only">仅Wi-Fi</string>
     <string name="settings_web_charging_only">仅充电时</string>
     <string name="settings_support_web_wifi_only">仅在连接 Wi-Fi 时进行自动同步（可节省流量）</string>

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.data.HabitRepository
+import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.Ver
@@ -38,11 +39,13 @@ class HabitSyncServiceTest {
         DatabaseHelper.closeInstance()
         context.deleteDatabase(DatabaseHelper.DATABASE_NAME)
         db = DatabaseHelper.getInstance(context)
+        GlobalUtils.init(context)
         sync = SyncService(db, WebUtils("http://127.0.0.1"))
     }
 
     @After
     fun tearDown() {
+        GlobalUtils.tombstoneRetentionDays = 30
         DatabaseHelper.closeInstance()
         context.deleteDatabase(DatabaseHelper.DATABASE_NAME)
     }

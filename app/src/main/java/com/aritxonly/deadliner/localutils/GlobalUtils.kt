@@ -157,6 +157,18 @@ object GlobalUtils {
             sharedPreferences.edit { putBoolean("archive_enable", value) }
         }
 
+    var tombstoneRetentionDays: Int
+        get() = if (::sharedPreferences.isInitialized) {
+            sharedPreferences.getInt("tombstone_retention_days", 30)
+        } else {
+            30
+        }
+        set(value) {
+            if (::sharedPreferences.isInitialized) {
+                sharedPreferences.edit { putInt("tombstone_retention_days", value.coerceAtLeast(0)) }
+            }
+        }
+
     var firstRun: Boolean
         get() = sharedPreferences.getBoolean("first_run_v2", true)
         set(value) {

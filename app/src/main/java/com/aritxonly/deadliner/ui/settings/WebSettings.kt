@@ -38,6 +38,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -76,6 +77,7 @@ fun WebSettingsScreen(
     var intervalMin by remember { mutableStateOf(GlobalUtils.syncIntervalMinutes.coerceAtLeast(0)) }
     var wifiOnly by remember { mutableStateOf(GlobalUtils.syncWifiOnly) }
     var chargingOnly by remember { mutableStateOf(GlobalUtils.syncChargingOnly) }
+    var tombstoneRetentionDays by remember { mutableIntStateOf(GlobalUtils.tombstoneRetentionDays) }
 
     val hostFaultHint = stringResource(R.string.settings_web_host_fault)
     val hostSuccessHint = stringResource(R.string.settings_web_host_success)
@@ -268,6 +270,32 @@ fun WebSettingsScreen(
                             showSheet = true
                         }
                     }
+                }
+
+                item {
+                    SettingsSection(topLabel = stringResource(R.string.settings_tombstone_retention)) {
+                        SettingsSliderItemWithLabel(
+                            label = R.string.settings_tombstone_retention,
+                            value = tombstoneRetentionDays.toFloat(),
+                            valueRange = 0f..90f,
+                            steps = 89,
+                            onValueChange = {
+                                tombstoneRetentionDays = it.toInt()
+                                GlobalUtils.tombstoneRetentionDays = it.toInt()
+                            }
+                        )
+                    }
+                }
+
+                item {
+                    Text(
+                        text = stringResource(
+                            R.string.settings_tombstone_retention_description,
+                            tombstoneRetentionDays
+                        ),
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
 

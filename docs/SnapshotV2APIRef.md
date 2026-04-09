@@ -54,6 +54,28 @@ Meaning:
 - `state` answers: what is the task lifecycle status?
 - `deleted` answers: should the record be treated as deleted in sync?
 
+### Tombstone Retention and GC
+
+Tombstone does not need to exist forever.
+
+Clients may apply a local retention window, for example `30 days`.
+
+Rules:
+
+- within the retention window, tombstone continues to participate in normal LWW merge
+- after the retention window, client may drop tombstone during local snapshot build
+- after the retention window, client may drop tombstone during merge
+- after a successful sync writes back the filtered snapshot, client may physically delete expired local tombstones
+
+Recommended tombstone time source:
+
+- use `item.ver.ts` as tombstone timestamp
+
+Engineering tradeoff:
+
+- very old offline devices may no longer observe ancient delete markers
+- this is acceptable in order to control snapshot growth and long-term local tombstone accumulation
+
 ## Snapshot V2 File
 
 ### WebDAV path
