@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,12 +43,14 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.aritxonly.deadliner.ArchiveActivity
+import com.aritxonly.deadliner.CaptureActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.OverviewActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsActivity
 import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.iconResource
 import java.time.LocalTime
 
 @Composable
@@ -80,7 +82,7 @@ fun MorePanelCard(
                 )
             } else {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_person),
+                    imageVector = iconResource(R.drawable.ic_person),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(32.dp)
@@ -92,11 +94,11 @@ fun MorePanelCard(
                 Text(stringResource(R.string.panel_greeting_deadliner), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             IconButton(onClick = onDismiss) {
-                Icon(ImageVector.vectorResource(R.drawable.ic_close), contentDescription = stringResource(R.string.close), modifier = expressiveTypeModifier)
+                Icon(iconResource(R.drawable.ic_close), contentDescription = stringResource(R.string.close), modifier = expressiveTypeModifier)
             }
         }
 
-        Divider()
+        HorizontalDivider()
 
         // 功能列表
         Column(Modifier.padding(vertical = 4.dp)) {
@@ -115,6 +117,9 @@ fun MorePanelCard(
             }
             MoreRow(R.drawable.ic_chart, stringResource(R.string.overview)) {
                 activity.startActivity(Intent(context, OverviewActivity::class.java))
+            }
+            MoreRow(R.drawable.ic_quote, stringResource(R.string.capture_title)) {
+                activity.startActivity(Intent(context, CaptureActivity::class.java))
             }
             MoreRow(R.drawable.ic_edit, stringResource(R.string.edit_profile)) {
                 showProfileEditor = true
@@ -158,7 +163,7 @@ fun MorePanelCard(
 private fun MoreRow(@DrawableRes icon: Int, title: String, onClick: () -> Unit) {
     androidx.compose.material3.ListItem(
         leadingContent = {
-            Icon(ImageVector.vectorResource(icon), contentDescription = null)
+            Icon(iconResource(icon), contentDescription = null)
         },
         headlineContent = { Text(title) },
         modifier = Modifier

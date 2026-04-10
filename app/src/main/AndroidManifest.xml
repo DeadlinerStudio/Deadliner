@@ -75,6 +75,11 @@
             android:exported="false"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+        <activity
+            android:name=".CaptureActivity"
+            android:exported="false"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
 
         <service
             android:name=".AddDDLTileService"

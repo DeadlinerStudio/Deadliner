@@ -692,5 +692,44 @@
     <string name="settings_support_miuix_color">Use HyperOS’s default color palette (requires enabling Modern Mode in the main screen layout to avoid display issues).</string>
     <string name="settings_preset_indicator">Colorful Task Indicator</string>
     <string name="settings_support_preset_indicator">Replaces the colorful task progress indicator from the HarmonyOS version.</string>
+    <string name="capture_title">Inspiration</string>
+    <string name="capture_multi_select">Multi-select</string>
+    <string name="capture_selected_count">%1$d selected</string>
+    <string name="capture_delete">Delete</string>
+    <string name="capture_merge_count">Merge %1$d</string>
+    <string name="capture_merge_sheet_title">Merge and organize</string>
+    <string name="capture_merge_sheet_desc">AI organization is the default path. You can still choose direct organization from the secondary option.</string>
+    <string name="capture_ai_task">AI organize to task</string>
+    <string name="capture_ai_habit">AI organize to habit</string>
+    <string name="capture_direct_secondary">Direct organization (Secondary)</string>
+    <string name="capture_direct_secondary_short">Direct organization</string>
+    <string name="capture_direct_task">Direct to task</string>
+    <string name="capture_direct_habit">Direct to habit</string>
+    <string name="capture_search_label">Search inspiration</string>
+    <string name="capture_list_title">Inspiration list</string>
+    <string name="capture_search_result_group">Search results · Inspiration</string>
+    <string name="capture_empty_hint_default">Keep unfinished thoughts here first.\nWrite it down now, organize it later.</string>
+    <string name="capture_empty_hint_search">No matching inspiration yet.\nTry another keyword, or keep capturing first.</string>
+    <string name="capture_input_title">Capture one thought first</string>
+    <string name="capture_input_subtitle">Organize it later</string>
+    <string name="capture_input_desc">This space is for inspirations, plan drafts, and things you may do later. No need to make it too formal yet; keep the raw version first.</string>
+    <string name="capture_input_placeholder">For example: maybe start a weekly reflection ritual…</string>
+    <string name="capture_voice_input">Voice input</string>
+    <string name="capture_save">Save inspiration</string>
+    <string name="capture_voice_reserved_toast">Voice entry is reserved here. Real-time transcription can be added next.</string>
+    <string name="capture_card_tip">Open to keep editing, or organize into tasks and habits</string>
+    <string name="capture_detail_title">Inspiration detail</string>
+    <string name="capture_detail_placeholder">Keep its raw form first, then organize when it becomes clearer.</string>
+    <string name="capture_ai_loading">AI is organizing…</string>
+    <string name="capture_ai_default_label">AI-first organization</string>
+    <string name="capture_delete_item">Delete this inspiration</string>
+    <string name="capture_clipboard_label">Inspiration raw text</string>
+    <string name="capture_clipboard_copied">Raw text copied. Paste it directly in the editor.</string>
+    <string name="capture_ai_habit_toast">AI organization is applied. You’ll enter the habit editor next for final tuning.</string>
+    <string name="capture_relative_just_now">Just now</string>
+    <string name="capture_relative_minutes_ago">%1$d minutes ago</string>
+    <string name="capture_relative_hours_ago">%1$d hours ago</string>
+    <string name="capture_relative_days_ago">%1$d days ago</string>
+    <string name="capture_date_short_pattern" translatable="false">MMM d</string>
 
 </resources>
