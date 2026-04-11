@@ -105,6 +105,9 @@ fun MorePanelCard(
             MoreRow(R.drawable.ic_settings, stringResource(R.string.settings_title)) {
                 activity.startActivity(Intent(context, SettingsActivity::class.java))
             }
+            MoreRow(R.drawable.ic_draw, stringResource(R.string.capture_title)) {
+                activity.startActivity(Intent(context, CaptureActivity::class.java))
+            }
             MoreRow(R.drawable.ic_archive, stringResource(R.string.archive)) {
                 val intent = Intent(activity, ArchiveActivity::class.java)
 
@@ -117,9 +120,6 @@ fun MorePanelCard(
             }
             MoreRow(R.drawable.ic_chart, stringResource(R.string.overview)) {
                 activity.startActivity(Intent(context, OverviewActivity::class.java))
-            }
-            MoreRow(R.drawable.ic_quote, stringResource(R.string.capture_title)) {
-                activity.startActivity(Intent(context, CaptureActivity::class.java))
             }
             MoreRow(R.drawable.ic_edit, stringResource(R.string.edit_profile)) {
                 showProfileEditor = true

@@ -34,3 +34,6 @@ google-services.json
 
 # Environment Variables
 .env
+
+# Deadliner core synced binaries and bindings
+.deadliner-core/

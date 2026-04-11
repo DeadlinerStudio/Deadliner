@@ -726,6 +726,11 @@
     <string name="capture_clipboard_label">Inspiration raw text</string>
     <string name="capture_clipboard_copied">Raw text copied. Paste it directly in the editor.</string>
     <string name="capture_ai_habit_toast">AI organization is applied. You’ll enter the habit editor next for final tuning.</string>
+    <string name="ai_quick_add">AI Quick Add</string>
+    <string name="ai_quick_add_placeholder">For example: submit project doc by 8 PM tomorrow</string>
+    <string name="ai_parse">Parse</string>
+    <string name="ai_parsing">Parsing…</string>
+    <string name="ai_parse_failed">AI parsing failed. Please try again later.</string>
     <string name="capture_relative_just_now">Just now</string>
     <string name="capture_relative_minutes_ago">%1$d minutes ago</string>
     <string name="capture_relative_hours_ago">%1$d hours ago</string>

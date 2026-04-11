@@ -1,0 +1,665 @@
+package com.aritxonly.deadliner
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
+import android.util.TypedValue
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowInsetsController
+import android.view.WindowManager
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Filter
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.ListView
+import android.widget.RadioButton
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
+import androidx.annotation.IdRes
+import androidx.annotation.LayoutRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
+import com.aritxonly.deadliner.localutils.GlobalUtils.toDateTimeString
+import com.aritxonly.deadliner.calendar.CalendarHelper
+import com.aritxonly.deadliner.data.DDLRepository
+import com.aritxonly.deadliner.data.DatabaseHelper
+import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
+import com.aritxonly.deadliner.model.CalendarEvent
+import com.aritxonly.deadliner.model.DeadlineFrequency
+import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.ai.GeneratedDDL
+import com.aritxonly.deadliner.data.HabitRepository
+import com.aritxonly.deadliner.localutils.DynamicColorsExtension
+import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.model.Habit
+import com.aritxonly.deadliner.model.HabitGoalType
+import com.aritxonly.deadliner.model.HabitMetaData
+import com.aritxonly.deadliner.model.HabitPeriod
+import com.aritxonly.deadliner.model.toJson
+import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.color.DynamicColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.*
+
+@SuppressLint("SimpleDateFormat")
+class OldAddDDLActivity : AppCompatActivity() {
+
+    private val repo = DDLRepository()
+    private val habitRepo = HabitRepository()
+
+    private lateinit var ddlNameEditText: EditText
+    private lateinit var startTimeCard: MaterialCardView
+    private lateinit var endTimeCard: MaterialCardView
+    private lateinit var ddlNoteEditText: EditText
+    private lateinit var saveButton: Button
+    private lateinit var saveToCalendarButton: Button
+    private lateinit var backButton: ImageButton
+    private lateinit var ddlNoteLayout: TextInputLayout
+
+    private var startTime: LocalDateTime? = null
+    private var endTime: LocalDateTime? = null
+
+    private lateinit var freqEditLayout: LinearLayout
+    private lateinit var typeTabLayout: TabLayout
+    private lateinit var freqTypeToggleGroup: MaterialButtonToggleGroup
+    private lateinit var freqTextInput: TextInputLayout
+    private lateinit var freqEditText: EditText
+    private lateinit var totalTextInput: TextInputLayout
+    private lateinit var totalEditText: EditText
+    private lateinit var freqTypeHint: TextView
+    private lateinit var habitNoteHint: TextView
+
+    private lateinit var importFromCalendarButton: ImageButton
+
+    private var calendarEventId: Long? = null
+
+    private var selectedPage = 0
+
+    private var frequency: Int? = null
+    private var total: Int? = null
+    private var frequencyType = DeadlineFrequency.TOTAL
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d("OldAddDDLActivity", "available: ${DynamicColors.isDynamicColorAvailable()}")
+
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_add_ddl)
+
+        enableEdgeToEdgeForAllDevices()
+
+        normalizeRootInsets()
+
+        val generatedDDL = intent.getParcelableExtra<GeneratedDDL>("EXTRA_GENERATE_DDL")
+        val fullDDL = intent.getParcelableExtra<DDLItem>("EXTRA_FULL_DDL")
+
+        DynamicColorsExtension.applyApp(this.application, GlobalUtils.seedColor)
+        DynamicColorsExtension.apply(this, GlobalUtils.seedColor)
+
+        GlobalUtils.decideHideFromRecent(this, this@OldAddDDLActivity)
+
+        selectedPage = intent.getIntExtra("EXTRA_CURRENT_TYPE", 0)
+
+        ddlNameEditText = findViewById(R.id.ddlNameEditText)
+        startTimeCard = findViewById(R.id.startTimeCard) // MaterialCardView
+        endTimeCard = findViewById(R.id.endTimeCard) // MaterialCardView
+        ddlNoteEditText = findViewById(R.id.ddlNoteEditText)
+        saveButton = findViewById(R.id.saveButton)
+        saveToCalendarButton = findViewById(R.id.saveToCalendarButton)
+        backButton = findViewById(R.id.backButton)
+        importFromCalendarButton = findViewById(R.id.importFromCalendarButton)
+        ddlNoteLayout = findViewById(R.id.ddlNoteLayout)
+
+        freqEditLayout = findViewById(R.id.freqEditLayout)
+        typeTabLayout = findViewById(R.id.typeTabLayout)
+        freqTypeToggleGroup = findViewById(R.id.freqTypeToggleGroup)
+        freqTextInput = findViewById(R.id.freqTextInput)
+        freqEditText = findViewById(R.id.freqEditText)
+        totalTextInput = findViewById(R.id.totalTextInput)
+        totalEditText = findViewById(R.id.totalEditText)
+        freqTypeHint = findViewById(R.id.freqTypeHint)
+        habitNoteHint = findViewById(R.id.habitNoteHint)
+
+        val startTimeContent: TextView = findViewById(R.id.startTimeContent)
+        val endTimeContent: TextView = findViewById(R.id.endTimeContent)
+
+        // 默认时间
+        startTime = LocalDateTime.now()
+        startTimeContent.text = formatLocalDateTime(startTime!!)
+
+        // 设置开始时间选择
+        startTimeCard.setOnClickListener {
+            GlobalUtils.showDateTimePicker(supportFragmentManager) { selectedTime ->
+                startTime = selectedTime
+                startTimeContent.text = formatLocalDateTime(startTime!!)
+            }
+        }
+
+        // 设置结束时间选择
+        endTimeCard.setOnClickListener {
+            GlobalUtils.showDateTimePicker(supportFragmentManager, startTime, {
+                Toast.makeText(this, getString(R.string.please_choose_the_time_after, it), Toast.LENGTH_SHORT).show()
+            }) { selectedTime ->
+                endTime = selectedTime
+                endTimeContent.text = formatLocalDateTime(endTime!!)
+            }
+        }
+
+        // 保存按钮点击事件
+        saveButton.setOnClickListener {
+            save(toCalendar = false)
+        }
+
+        saveToCalendarButton.setOnClickListener {
+            save(toCalendar = true)
+        }
+
+        backButton.setOnClickListener {
+            finishAfterTransition()
+        }
+
+        typeTabLayout.getTabAt(selectedPage)?.select()
+        initTab()
+
+        typeTabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                selectedPage = tab?.position!!
+                when (selectedPage) {
+                    0 -> {
+                        ddlNoteLayout.visibility = View.VISIBLE
+                        ddlNoteEditText.visibility = View.VISIBLE
+                        freqTypeToggleGroup.visibility = View.GONE
+                        freqTypeHint.visibility = View.GONE
+                        freqEditLayout.visibility = View.GONE
+                        habitNoteHint.visibility = View.GONE
+                    }
+                    1 -> {
+                        ddlNoteLayout.visibility = View.GONE
+                        ddlNoteEditText.visibility = View.GONE
+                        freqTypeToggleGroup.visibility = View.VISIBLE
+                        freqTypeHint.visibility = View.VISIBLE
+                        freqEditLayout.visibility = View.VISIBLE
+                        habitNoteHint.visibility = View.VISIBLE
+                    }
+                    else -> {}
+                }
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {}
+        })
+
+        freqEditText.addTextChangedListener(
+            afterTextChanged = { editable ->
+                frequency = editable?.toString()?.toIntOrNull()
+                val formattedNote = GlobalUtils.generateHabitNote(this@OldAddDDLActivity, frequency, total, frequencyType)
+                habitNoteHint.text = formattedNote
+            }
+        )
+
+        totalEditText.addTextChangedListener(
+            afterTextChanged = { editable ->
+                total = editable?.toString()?.toIntOrNull()
+                val formattedNote = GlobalUtils.generateHabitNote(this@OldAddDDLActivity, frequency, total, frequencyType)
+                habitNoteHint.text = formattedNote
+            }
+        )
+
+        freqTypeToggleGroup.addOnButtonCheckedListener { _, _, _ ->
+            frequencyType = when (freqTypeToggleGroup.checkedButtonId) {
+                R.id.btnDaily -> DeadlineFrequency.DAILY
+                R.id.btnWeekly -> DeadlineFrequency.WEEKLY
+                R.id.btnYearly -> DeadlineFrequency.MONTHLY
+                else -> DeadlineFrequency.TOTAL
+            }
+            val formattedNote = GlobalUtils.generateHabitNote(this@OldAddDDLActivity, frequency, total, frequencyType)
+            habitNoteHint.text = formattedNote
+        }
+
+        importFromCalendarButton.setOnClickListener {
+            try {
+                loadCalendarEventsAndShowDialog()
+            } catch (e: Exception) {
+                Log.e("Calendar", e.toString())
+                Toast.makeText(this, getString(R.string.permission_calendar_error, e.toString()), Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        val formattedNote = GlobalUtils.generateHabitNote(this, frequency, total, frequencyType)
+        habitNoteHint.text = formattedNote
+
+        generatedDDL?.let {
+            ddlNameEditText.setText(it.name)
+            endTime = it.dueTime
+            endTimeContent.text = formatLocalDateTime(it.dueTime)
+            ddlNoteEditText.setText(it.note)
+        }
+
+        fullDDL?.let {
+            ddlNameEditText.setText(it.name)
+            val et = GlobalUtils.parseDateTime(it.endTime)
+            val st = GlobalUtils.parseDateTime(it.startTime)
+            endTime = et
+            startTime = st
+            et?.let { endTimeContent.text = formatLocalDateTime(et) }
+            startTimeContent.text = formatLocalDateTime(st?:LocalDateTime.now())
+            calendarEventId = it.calendarEventId
+
+            when (it.type) {
+                DeadlineType.TASK -> {
+                    // 选中“任务”Tab并设置可见性
+                    selectedPage = 0
+                    typeTabLayout.getTabAt(0)?.select()
+
+                    ddlNoteLayout.visibility = View.VISIBLE
+                    ddlNoteEditText.visibility = View.VISIBLE
+
+                    freqTypeToggleGroup.visibility = View.GONE
+                    freqTypeHint.visibility = View.GONE
+                    freqEditLayout.visibility = View.GONE
+                    habitNoteHint.visibility = View.GONE
+
+                    // 备注
+                    ddlNoteEditText.setText(it.note)
+                }
+                DeadlineType.HABIT -> {
+                    // 选中“习惯”Tab并设置可见性
+                    selectedPage = 1
+                    typeTabLayout.getTabAt(1)?.select()
+
+                    ddlNoteLayout.visibility = View.GONE
+                    ddlNoteEditText.visibility = View.GONE
+
+                    freqTypeToggleGroup.visibility = View.VISIBLE
+                    freqTypeHint.visibility = View.VISIBLE
+                    freqEditLayout.visibility = View.VISIBLE
+                    habitNoteHint.visibility = View.VISIBLE
+
+                    // 解析习惯元数据并回填
+                    val meta = GlobalUtils.parseHabitMetaData(it.note)
+
+                    // 频率数值
+                    freqEditText.setText(meta.frequency.toString())
+
+                    // 总次数：为 0 则清空，避免造成“总次数限制”的误解
+                    if (meta.total > 0) {
+                        totalEditText.setText(meta.total.toString())
+                    } else {
+                        totalEditText.setText("")
+                    }
+
+                    val checkedId = when (meta.frequencyType) {
+                        DeadlineFrequency.TOTAL  -> R.id.btnTotal
+                        DeadlineFrequency.DAILY  -> R.id.btnDaily
+                        DeadlineFrequency.WEEKLY -> R.id.btnWeekly
+                        DeadlineFrequency.MONTHLY -> R.id.btnYearly
+                    }
+                    if (freqTypeToggleGroup.checkedButtonId != checkedId) {
+                        freqTypeToggleGroup.check(checkedId)
+                    }
+
+                    // 刷新提示文案
+                    val formattedNote = GlobalUtils.generateHabitNote(
+                        this@OldAddDDLActivity,
+                        meta.frequency,
+                        meta.total.takeIf { t -> t > 0 },
+                        meta.frequencyType
+                    )
+                    habitNoteHint.text = formattedNote
+                }
+            }
+        }
+    }
+
+    private fun save(toCalendar: Boolean) {
+        val ddlName = ddlNameEditText.text.toString()
+        val ddlNote = ddlNoteEditText.text.toString()
+        val frequency = freqEditText.text.toString().ifBlank { "1" }.toInt()
+        val total = totalEditText.text.toString().ifBlank { "0" }.toIntOrNull()
+
+        val frequencyType = when (freqTypeToggleGroup.checkedButtonId) {
+            R.id.btnDaily -> DeadlineFrequency.DAILY
+            R.id.btnWeekly -> DeadlineFrequency.WEEKLY
+            R.id.btnYearly -> DeadlineFrequency.MONTHLY
+            else -> DeadlineFrequency.TOTAL
+        }
+
+        if (ddlName.isNotBlank() && startTime != null) {
+            if (selectedPage != 1) {
+                if (endTime == null) return
+
+                val ddlId = repo.insertDDL(
+                    ddlName,
+                    startTime.toString(),
+                    endTime.toString(),
+                    ddlNote,
+                    calendarEventId = calendarEventId
+                )
+
+                repo.getDDLById(ddlId)?.let { item ->
+                    if (GlobalUtils.deadlineNotification) {
+                        DeadlineAlarmScheduler.scheduleExactAlarm(applicationContext, item)
+                        DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(applicationContext, item)
+                    }
+                    if (toCalendar) {
+                        val calendarHelper = CalendarHelper(this)
+                        lifecycleScope.launch {
+                            try {
+                                val eventId = calendarHelper.insertEvent(item)
+                                item.calendarEventId = eventId
+                                // 这里直接用同一个 repo，别再 new 一个
+                                repo.updateDDL(item)
+                                Toast.makeText(
+                                    this@OldAddDDLActivity,
+                                    getString(R.string.add_calendar_success),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } catch (e: Exception) {
+                                Log.e("Calendar", e.toString())
+                                Toast.makeText(
+                                    this@OldAddDDLActivity,
+                                    getString(R.string.add_calendar_failed, e.toString()),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                }
+
+                setResult(RESULT_OK)
+                finishAfterTransition()
+            } else {
+                // ========= 新的 Habit 分支：DDL + Habit 双写 =========
+
+                val meta = HabitMetaData(
+                    completedDates = setOf(),
+                    frequencyType = frequencyType,
+                    frequency = frequency,
+                    total = total ?: 0,
+                    refreshDate = LocalDate.now().toString()
+                )
+
+                val noteJson = meta.toJson()
+
+                val ddlId = repo.insertDDL(
+                    ddlName,
+                    startTime.toString(),
+                    endTime.toString(),
+                    note = noteJson,
+                    type = DeadlineType.HABIT
+                )
+
+                val habitPeriod = when (frequencyType) {
+                    DeadlineFrequency.DAILY -> HabitPeriod.DAILY
+                    DeadlineFrequency.WEEKLY -> HabitPeriod.WEEKLY
+                    DeadlineFrequency.MONTHLY -> HabitPeriod.MONTHLY
+                    DeadlineFrequency.TOTAL -> HabitPeriod.DAILY
+                }
+
+                val habitGoalType =
+                    if (frequencyType == DeadlineFrequency.TOTAL)
+                        HabitGoalType.TOTAL
+                    else
+                        HabitGoalType.PER_PERIOD
+
+                val habitTimesPerPeriod =
+                    if (frequencyType == DeadlineFrequency.TOTAL)
+                        1
+                    else
+                        frequency
+
+                val habitTotalTarget =
+                    if (frequencyType == DeadlineFrequency.TOTAL)
+                        total
+                    else
+                        null
+
+                // 4) 再在 habits 表插一条 Habit（挂在 ddlId 上）
+                habitRepo.createHabitForDdl(
+                    ddlId = ddlId,
+                    name = ddlName,
+                    period = habitPeriod,
+                    timesPerPeriod = habitTimesPerPeriod,
+                    goalType = habitGoalType,
+                    totalTarget = habitTotalTarget,
+                    description = ddlNote
+                )
+
+                Log.d("endTime", endTime.toString())
+                setResult(RESULT_OK)
+                finishAfterTransition()
+            }
+        }
+    }
+
+    private fun loadCalendarEventsAndShowDialog() {
+        val calendarHelper = CalendarHelper(applicationContext)
+        val calendarEvents = calendarHelper.queryAllCalendarEvents()
+        if (calendarEvents.isEmpty()) {
+            Toast.makeText(this, getString(R.string.no_task_add_calendar), Toast.LENGTH_SHORT).show()
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.select_calendar_to_import)
+                .setMessage(getString(R.string.no_task_add_calendar))
+                .setNeutralButton(R.string.filter_calendar_account) { _, _ -> showCalendarFilterDialog() }
+                .setNegativeButton(R.string.close, null)
+                .show()
+            return
+        }
+
+        data class EventItem(val event: CalendarEvent) {
+            val display: String get() {
+                val time = GlobalUtils.parseDateTime(event.startMillis.toDateTimeString())
+                return "${event.title} – ${time?.let(::formatLocalDateTime) ?: getString(R.string.parse_failed)}"
+            }
+            override fun toString() = display
+        }
+
+        // 原始条目文本
+        val items = calendarEvents.map { EventItem(it) }
+
+        // Inflate 布局
+        val dialogView = LayoutInflater.from(this)
+            .inflate(R.layout.dialog_calendar_events, null, false)
+        val etSearch = dialogView.findViewById<TextInputEditText>(R.id.searchEditText)
+        val lvEvents = dialogView.findViewById<ListView>(R.id.eventListView)
+
+        // 自定义 ArrayAdapter + Filterable
+        open class EventAdapter(
+            ctx: Context,
+            @LayoutRes layoutResId: Int,
+            @IdRes textViewResId: Int,
+            items: List<EventItem>
+        ) : ArrayAdapter<EventItem>(ctx, layoutResId, textViewResId, items) {
+            private val original = items.toList()
+            private val filtered = items.toMutableList()
+
+            override fun getFilter(): Filter = object : Filter() {
+                override fun performFiltering(constraint: CharSequence?) = FilterResults().apply {
+                    filtered.clear()
+                    if (constraint.isNullOrBlank()) {
+                        filtered.addAll(original)
+                    } else {
+                        val kw = constraint.toString().lowercase()
+                        filtered.addAll(
+                            original.filter { it.display.lowercase().contains(kw) }
+                        )
+                    }
+                    values = filtered.toList()
+                    count = filtered.size
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                override fun publishResults(c: CharSequence?, results: FilterResults) {
+                    clear()
+                    addAll(results.values as List<EventItem>)
+                    notifyDataSetChanged()
+                }
+            }
+
+            override fun getView(pos: Int, cv: View?, parent: ViewGroup): View {
+                val view = super.getView(pos, cv, parent)
+                val rb = view.findViewById<RadioButton>(R.id.radio)
+                rb.isChecked = (parent as ListView).isItemChecked(pos)
+                return view
+            }
+        }
+
+        // 1. 用自定义适配器
+        val adapter = EventAdapter(this, R.layout.dialog_single_choice_layout, android.R.id.text1, items)
+        lvEvents.adapter = adapter
+        lvEvents.choiceMode = ListView.CHOICE_MODE_SINGLE
+
+        // 2. 搜索框监听：每次文本变化都触发 filter
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                adapter.filter.filter(s)
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        // 3. 记录用户的点击
+        var selectedPosition = -1
+        lvEvents.setOnItemClickListener { _, _, pos, _ ->
+            selectedPosition = pos
+            lvEvents.setItemChecked(pos, true)
+            adapter.notifyDataSetChanged()
+        }
+
+        // 4. 弹窗
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.select_calendar_to_import)
+            .setView(dialogView)
+            .setNeutralButton(R.string.filter_calendar_account) { _, _ -> showCalendarFilterDialog() }
+            .setPositiveButton(R.string.settings_import) { dialog, _ ->
+                if (selectedPosition >= 0) {
+                    val item = adapter.getItem(selectedPosition)!!
+                    val event = item.event
+                    ddlNameEditText.setText(event.title)
+                    ddlNoteEditText.setText(event.description)
+                    endTime = GlobalUtils.parseDateTime(event.startMillis.toDateTimeString())
+                    findViewById<TextView>(R.id.endTimeContent)
+                        .text = formatLocalDateTime(endTime!!)
+                    calendarEventId = event.id
+                } else {
+                    Toast.makeText(this, getString(R.string.no_event_select), Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showCalendarFilterDialog() {
+        // 先拿到所有账号
+        val helper = CalendarHelper(applicationContext)
+        val accounts = helper.getAllCalendarAccounts()
+
+        if (accounts.isEmpty()) {
+            Toast.makeText(this, R.string.no_valid_calendar_account, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // 准备对话框要显示的条目和选中状态
+        val names = accounts.map { it.accountName.ifEmpty { it.accountName } }.toTypedArray()
+        val savedSet = GlobalUtils.filteredCalendars?:setOf()
+        val checked = names.map { savedSet.contains(it) }.toBooleanArray()
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.select_calendar_account_to_hide)
+            .setMultiChoiceItems(names, checked) { _, which, isChecked ->
+                checked[which] = isChecked
+            }
+            .setPositiveButton(R.string.accept) { _, _ ->
+                // 把勾选了的那些账户名存到 prefs 里
+                val newFiltered = names
+                    .zip(checked.toList())
+                    .filter { it.second }    // true 表示要“过滤掉”
+                    .map   { it.first }
+                    .toSet()
+
+                GlobalUtils.filteredCalendars = newFiltered
+
+                Toast.makeText(this, R.string.calendar_filter_saved, Toast.LENGTH_SHORT).show()
+                loadCalendarEventsAndShowDialog()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun initTab() {
+        when (selectedPage) {
+            0 -> {
+                ddlNoteLayout.visibility = View.VISIBLE
+                ddlNoteEditText.visibility = View.VISIBLE
+                freqTypeToggleGroup.visibility = View.GONE
+                freqTypeHint.visibility = View.GONE
+                freqEditLayout.visibility = View.GONE
+            }
+            1 -> {
+                ddlNoteLayout.visibility = View.GONE
+                ddlNoteEditText.visibility = View.GONE
+                freqTypeToggleGroup.visibility = View.VISIBLE
+                freqTypeHint.visibility = View.VISIBLE
+                freqEditLayout.visibility = View.VISIBLE
+            }
+            else -> {}
+        }
+    }
+
+    fun formatLocalDateTime(dateTime: LocalDateTime): String {
+        // 定义格式化器
+        val formatter = DateTimeFormatter
+            .ofLocalizedDateTime(FormatStyle.MEDIUM)  // SHORT / MEDIUM / LONG / FULL
+            .withLocale(Locale.getDefault())
+        // 格式化 LocalDateTime
+        return dateTime.format(formatter)
+    }
+
+    private fun normalizeRootInsets() {
+        val root = findViewById<ViewGroup>(android.R.id.content).getChildAt(0) ?: return
+        ViewCompat.setOnApplyWindowInsetsListener(root, null)
+
+        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+            val status = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            val navigation = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.setPadding(v.paddingLeft, status.top, v.paddingRight, navigation.bottom)
+            insets
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        enableEdgeToEdgeForAllDevices()
+        normalizeRootInsets()
+    }
+
+    override fun onMultiWindowModeChanged(isInMultiWindowMode: Boolean, newConfig: Configuration) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
+        enableEdgeToEdgeForAllDevices()
+        normalizeRootInsets()
+    }
+}

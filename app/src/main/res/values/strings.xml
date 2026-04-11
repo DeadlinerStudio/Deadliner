@@ -781,6 +781,11 @@
     <string name="capture_clipboard_label">灵感原文</string>
     <string name="capture_clipboard_copied">已复制原始文本，进入编辑器后可直接粘贴。</string>
     <string name="capture_ai_habit_toast">已走 AI 整理，接下来会进入习惯编辑器，你可以继续微调。</string>
+    <string name="ai_quick_add">AI 快速添加</string>
+    <string name="ai_quick_add_placeholder">例如：明天晚上8点前交项目文档</string>
+    <string name="ai_parse">解析</string>
+    <string name="ai_parsing">解析中…</string>
+    <string name="ai_parse_failed">AI 解析失败，请稍后再试</string>
     <string name="capture_relative_just_now">刚刚</string>
     <string name="capture_relative_minutes_ago">%1$d分钟前</string>
     <string name="capture_relative_hours_ago">%1$d小时前</string>
