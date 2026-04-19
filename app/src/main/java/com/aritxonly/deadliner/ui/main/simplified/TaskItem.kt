@@ -31,6 +31,7 @@ import com.aritxonly.deadliner.model.updateNoteWithDate
 import com.aritxonly.deadliner.ui.main.DDLItemCardSwipeable
 import com.aritxonly.deadliner.ui.main.HabitItemCardSimplified
 import com.aritxonly.deadliner.ui.iconResource
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.LocalDate
@@ -116,7 +117,7 @@ fun TaskItem(
     }
     val secondaryIcon = when (secondaryAction) {
         TaskStateAction.MARK_ARCHIVE -> iconResource(R.drawable.ic_archiving)
-        TaskStateAction.MARK_GIVE_UP -> iconResource(R.drawable.ic_close)
+        TaskStateAction.MARK_GIVE_UP -> iconResource(R.drawable.ic_flag)
         else -> iconResource(R.drawable.ic_delete)
     }
 
@@ -147,7 +148,7 @@ fun TaskItem(
             GlobalUtils.triggerVibration(activity, 200)
             val action = secondaryAction ?: return@DDLItemCardSwipeable
             if (action == TaskStateAction.MARK_GIVE_UP) {
-                androidx.appcompat.app.AlertDialog.Builder(activity)
+                MaterialAlertDialogBuilder(activity)
                     .setTitle(R.string.confirm_give_up_title)
                     .setMessage(R.string.confirm_give_up_message)
                     .setNegativeButton(R.string.cancel, null)

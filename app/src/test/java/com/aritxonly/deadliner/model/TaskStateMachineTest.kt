@@ -62,6 +62,16 @@ class TaskStateMachineTest {
         sampleItem(state = DDLState.ACTIVE).transition(TaskStateAction.MARK_GIVE_UP, confirmed = false, now = now)
     }
 
+    @Test
+    fun repeatedMarkCompleteOnCompletedIsNoOp() {
+        assertEquals(true, TaskStateMachine.isNoOp(DDLState.COMPLETED, TaskStateAction.MARK_COMPLETE))
+    }
+
+    @Test
+    fun repeatedRestoreActiveOnActiveIsNoOp() {
+        assertEquals(true, TaskStateMachine.isNoOp(DDLState.ACTIVE, TaskStateAction.RESTORE_ACTIVE))
+    }
+
     private fun sampleItem(
         state: DDLState,
         completeTime: String = ""

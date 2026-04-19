@@ -593,7 +593,8 @@ class ClassicController(
 
             // 定义画笔和图标
             private val paint = Paint()
-            private val deleteIcon = ContextCompat.getDrawable(activity, R.drawable.ic_delete) // 🗑图标资源
+            private val giveUpIcon = ContextCompat.getDrawable(activity, R.drawable.ic_flag)
+            private val archiveIcon = ContextCompat.getDrawable(activity, R.drawable.ic_archiving)
             private val checkIcon = ContextCompat.getDrawable(activity, R.drawable.ic_check)   // ✅图标资源
             private val iconMargin = resources.getDimension(R.dimen.icon_margin).toInt()
             private val cornerRadius = resources.getDimension(R.dimen.item_corner_radius) // 24dp圆角
@@ -643,10 +644,21 @@ class ClassicController(
 
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
                     val path = Path()
+                    val item = adapter.itemList.getOrNull(viewHolder.adapterPosition)
+                    val leftAction = when (item?.state) {
+                        com.aritxonly.deadliner.model.DDLState.ACTIVE -> TaskStateAction.MARK_GIVE_UP
+                        com.aritxonly.deadliner.model.DDLState.COMPLETED,
+                        com.aritxonly.deadliner.model.DDLState.ABANDONED -> TaskStateAction.MARK_ARCHIVE
+                        else -> null
+                    }
 
                     // 左滑：绘制低饱和度红色背景和🗑图标
                     if (dX < 0) {
-                        paint.color = "#FFEBEE".toColorInt() // 低饱和度红色
+                        paint.color = when (leftAction) {
+                            TaskStateAction.MARK_GIVE_UP -> "#FFEBEE".toColorInt()
+                            TaskStateAction.MARK_ARCHIVE -> "#ECEFF1".toColorInt()
+                            else -> "#FFEBEE".toColorInt()
+                        }
 
                         val background = RectF(
                             itemView.right + dX + horizontalPadding,
@@ -658,7 +670,12 @@ class ClassicController(
                         path.addRoundRect(background, cornerRadius, cornerRadius, Path.Direction.CW)
                         c.drawPath(path, paint)
 
-                        deleteIcon?.let {
+                        val leftIcon = when (leftAction) {
+                            TaskStateAction.MARK_GIVE_UP -> giveUpIcon
+                            TaskStateAction.MARK_ARCHIVE -> archiveIcon
+                            else -> null
+                        }
+                        leftIcon?.let {
                             val iconTop = itemView.top + (itemHeight - it.intrinsicHeight) / 2
                             val iconLeft = itemView.right - iconMargin - it.intrinsicWidth
                             val iconRight = itemView.right - iconMargin

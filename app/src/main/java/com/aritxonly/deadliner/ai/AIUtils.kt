@@ -2,8 +2,8 @@ package com.aritxonly.deadliner.ai
 
 import android.content.Context
 import android.util.Log
-import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.ApiKeystore
+import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
@@ -15,9 +15,17 @@ import java.time.format.DateTimeFormatter
 object AIUtils {
     private var model: String = "deepseek-chat"
     private var transport: LlmTransport? = null
+    private var appContext: Context? = null
+    private var coreBridge: DeadlinerCoreBridge? = null
+    private val gson by lazy {
+        GsonBuilder()
+            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
+            .create()
+    }
 
     /** 初始化：在 Application 或首次使用时调用 */
     fun init(context: Context) {
+        appContext = context.applicationContext
         val config = GlobalUtils.getDeadlinerAIConfig()
         val preset0 = config.getCurrentPreset()?: defaultLlmPreset
         val deviceId = GlobalUtils.getOrCreateDeviceId(context)
@@ -40,6 +48,7 @@ object AIUtils {
             appSecret = appSecret,
             deviceId = deviceId
         )
+        coreBridge = DeadlinerCoreBridge(context.applicationContext, gson)
     }
 
     fun setPreset(preset0: LlmPreset, context: Context) {
@@ -51,6 +60,7 @@ object AIUtils {
         val deviceId = GlobalUtils.getOrCreateDeviceId(context)
 
         transport = LlmTransportFactory.create(bp, bearerKey, appSecret, deviceId)
+        coreBridge = DeadlinerCoreBridge(context.applicationContext, gson)
     }
 
     /**
@@ -73,7 +83,7 @@ object AIUtils {
         withExample: Boolean = false
     ): String {
         val base = """
-你是 Deadliner AI。仅输出**纯 JSON**，不允许多余文字/注释/代码块。
+你是 Lifi AI。仅输出**纯 JSON**，不允许多余文字/注释/代码块。
 所有时间必须使用 $timeFormatSpec（24小时制、零填充、不带时区），相对时间需基于 $tzId、当前 $nowLocal 解析为**具体时间**。
 name/note 使用设备语言（当前：$langTag）。若出现“晚上”等模糊表达，默认 ${profile?.defaultEveningHour ?: 20}:00。
 若无提醒偏好，默认 reminders=${profile?.defaultReminderMinutes ?: listOf(30)}（分钟）。
@@ -139,15 +149,21 @@ primaryIntent 只能为 "ExtractTasks" | "PlanDay" | "SplitToSteps"。${candidat
         }.trim()
     }
 
-    suspend fun generateDeadline(context: Context, rawText: String): String =
-        generateMixed(context, rawText, candidatePrimary = IntentType.ExtractTasks)
-
+    // Legacy chain is kept only for AddDDLActivity (structured extraction to local cards).
     suspend fun generateMixed(
         context: Context,
         rawText: String,
         profile: UserProfile? = null,
         candidatePrimary: IntentType? = null
     ): String = withContext(Dispatchers.IO) {
+        if (candidatePrimary != IntentType.PlanDay && candidatePrimary != IntentType.SplitToSteps) {
+            val coreJson = runCatching {
+                val mixed = processByCore(context, rawText)
+                gson.toJson(withReservedCalendarToolCall(mixed))
+            }.getOrNull()
+            if (!coreJson.isNullOrBlank()) return@withContext coreJson
+        }
+
         val langTag = profile?.preferredLang ?: currentLangTag(context)
         val timeFormatSpec = "yyyy-MM-dd HH:mm"
         val tzId = java.util.TimeZone.getDefault().id
@@ -172,38 +188,57 @@ primaryIntent 只能为 "ExtractTasks" | "PlanDay" | "SplitToSteps"。${candidat
         )
 
         val raw = sendPrompt(messages)
-        extractJsonFromMarkdown(raw)
+        val mixed = parseMixedResult(extractJsonFromMarkdown(raw), gson)
+        gson.toJson(withReservedCalendarToolCall(mixed))
     }
 
     /**
      * 自动意图识别 + 调用 generateByIntent()
      * @param preferLLM 当启发式置信度 < 0.75 时，自动用 LLM 复核；置 false 则只用本地启发式
      */
+    @Suppress("UNUSED_PARAMETER")
     suspend fun generateAuto(
         context: Context,
         rawText: String,
         profile: UserProfile? = null,
         preferLLM: Boolean = true
     ): Pair<IntentGuess, String> {
-        // 1) 本地启发式
-        val h = IntentClassifier.heuristicClassify(rawText)
+        val mixed = processByCore(context, rawText)
+        val intent = mixed.primaryIntent.toIntentTypeOrDefault(IntentType.ExtractTasks)
+        val guess = IntentGuess(
+            intent = intent,
+            confidence = 1.0,
+            reason = "core_only"
+        )
+        return guess to gson.toJson(withReservedCalendarToolCall(mixed))
+    }
 
-        val guess = if (preferLLM && h.confidence < 0.75) {
-            // 2) 低置信 → LLM 覆核
-            try {
-                val g = IntentClassifier.llmClassifyIntent(context, rawText)
-                // 若 LLM 与启发式一致且置信度更高，采用 LLM；否则选择更可信的
-                if (g.intent == h.intent && g.confidence >= h.confidence) g
-                else if (g.confidence >= 0.8) g else h.copy(reason = h.reason + " | llm_disagree:$g")
-            } catch (t: Throwable) {
-                // 网络/权限失败：回退启发式
-                h.copy(reason = h.reason + " | llm_fallback:${t::class.simpleName}")
-            }
-        } else h
-
-        // 3) 进入既有管线
-        val json = generateMixed(context, rawText, profile)
-        return guess to json
+    @Suppress("UNUSED_PARAMETER")
+    internal suspend fun generateAutoInteractive(
+        context: Context,
+        rawText: String,
+        profile: UserProfile? = null,
+        preferLLM: Boolean = true,
+        onToolRequest: (suspend (AIToolRequest) -> ToolDecision)? = null,
+        onTextStream: (suspend (String) -> Unit)? = null,
+        onThinking: (suspend (agent: String, phase: String, message: String?) -> Unit)? = null,
+        onLifecycle: (suspend (AgentLifecycleEvent) -> Unit)? = null,
+    ): Pair<IntentGuess, String> {
+        val mixed = processByCore(
+            context = context,
+            rawText = rawText,
+            onToolRequest = onToolRequest,
+            onTextStream = onTextStream,
+            onThinking = onThinking,
+            onLifecycle = onLifecycle,
+        )
+        val intent = mixed.primaryIntent.toIntentTypeOrDefault(IntentType.ExtractTasks)
+        val guess = IntentGuess(
+            intent = intent,
+            confidence = 1.0,
+            reason = "core_interactive_only"
+        )
+        return guess to gson.toJson(withReservedCalendarToolCall(mixed))
     }
 
     fun extractJsonFromMarkdown(raw: String): String {
@@ -276,93 +311,99 @@ primaryIntent 只能为 "ExtractTasks" | "PlanDay" | "SplitToSteps"。${candidat
         }
     }
 
-    object IntentClassifier {
-        fun heuristicClassify(raw: String): IntentGuess {
-            val text = raw.lowercase().trim()
-
-            // --- 关键词覆盖（中英混合） ---
-            val planHit = listOf(
-                "日程", "安排", "计划", "规划", "时间块", "番茄", "今天", "明天", "这周", "本周",
-                "下午", "晚上", "早上", "上午", "晚上学习", "复习两小时",
-                "schedule", "plan my day", "time block", "timeline", "today", "tomorrow"
-            ).count { text.contains(it) }
-
-            val splitHit = listOf(
-                "拆解", "步骤", "清单", "子任务", "分解", "workflow", "checklist", "steps", "break down"
-            ).count { text.contains(it) }
-
-            val extractHit = listOf(
-                "ddl", "截止", "截止时间", "提醒", "任务", "todo", "待办", "到期",
-                "提交", "完成", "安排提交", "deadline", "due", "remind", "tag"
-            ).count { text.contains(it) }
-
-            // --- 强特征正则 ---
-            val timeLike = Regex("""\b(\d{1,2}:\d{2})\b|今天|明天|后天|本周|下周|周[一二三四五六日天]""")
-                .containsMatchIn(text)
-            val imperative = Regex("""^(安排|规划|计划|请|帮我|plan|schedule|make|create)\b""")
-                .containsMatchIn(text)
-
-            // --- 简单打分 ---
-            var planScore = planHit * 1.0 + (if (timeLike) 0.5 else 0.0) + (if (imperative) 0.2 else 0.0)
-            var splitScore = splitHit * 1.0 + (if (text.contains("步骤") || text.contains("checklist")) 0.3 else 0.0)
-            var extractScore = extractHit * 1.0 + (if (text.contains("截止") || text.contains("ddl")) 0.4 else 0.0)
-
-            // 避免全零
-            if (planScore == 0.0 && splitScore == 0.0 && extractScore == 0.0) {
-                // 兜底倾向任务抽取
-                extractScore = 0.2
-            }
-
-            val scores = mapOf(
-                IntentType.PlanDay to planScore,
-                IntentType.SplitToSteps to splitScore,
-                IntentType.ExtractTasks to extractScore
-            )
-            val (bestIntent, bestScore) = scores.maxBy { it.value }
-
-            // 计算相对置信度（与次优拉开）
-            val sorted = scores.values.sortedDescending()
-            val margin = if (sorted.size >= 2) (sorted[0] - sorted[1]).coerceAtLeast(0.0) else sorted[0]
-            val confidence = (0.55 + margin / 5.0).coerceIn(0.0, 0.95) // 0.55 起步，留点空间给 LLM 覆核
-
-            return IntentGuess(bestIntent, confidence, reason = "heuristic: $scores, margin=$margin")
+    private suspend fun processByCore(
+        context: Context,
+        rawText: String,
+        onToolRequest: (suspend (AIToolRequest) -> ToolDecision)? = null,
+        onTextStream: (suspend (String) -> Unit)? = null,
+        onThinking: (suspend (agent: String, phase: String, message: String?) -> Unit)? = null,
+        onLifecycle: (suspend (AgentLifecycleEvent) -> Unit)? = null,
+    ): MixedResult {
+        val bridge = coreBridge ?: DeadlinerCoreBridge(context.applicationContext, gson).also {
+            coreBridge = it
         }
-
-        suspend fun llmClassifyIntent(
-            context: Context,
-            rawText: String,
-        ): IntentGuess {
-            val langTag = currentLangTag(context)
-
-            val prompt = """
-你是一个分类器。仅输出**纯 JSON**，不要代码块，不要多余文字。
-在以下三类中选择最合适的一类，输出 {"intent":"ExtractTasks|PlanDay|SplitToSteps"}。
-
-- ExtractTasks：用户在描述待办/DDL/提醒，期望抽取一个或多个任务、截止时间、提醒等结构化数据。
-- PlanDay：用户希望把当天/某段时间安排成多个日程块（含开始/结束时间），进行时间规划或学习/工作安排。
-- SplitToSteps：用户给出一个目标任务，希望拆解成可执行的步骤清单（checklist）。
-
-用户输入（$langTag）：
-$rawText
-""".trimIndent()
-
-            val messages = listOf(
-                Message("system", prompt),
-                Message("user", """请仅输出：{"intent":"..."}""")
-            )
-
-            val raw = sendPrompt(messages)
-            val json = extractJsonFromMarkdown(raw)
-
-            // 极简解析（无需引入新 DTO）
-            val m = Regex(""""intent"\s*:\s*"([A-Za-z]+)"""").find(json)
-            val intentStr = m?.groupValues?.get(1) ?: "ExtractTasks"
-            val intent = when (intentStr) {
-                "PlanDay" -> IntentType.PlanDay
-                "SplitToSteps" -> IntentType.SplitToSteps
-                else -> IntentType.ExtractTasks
-            }
-            return IntentGuess(intent, confidence = 0.85, reason = "llm")
-        }
+        val config = readCoreRuntimeConfig(context)
+        val strictToolArgHint = """
+            [Adapter Contract]
+            Tool-call arguments must strictly match schema.
+            Never use null for integer fields.
+            If an optional integer is unknown, omit that field.
+            For create_habit.totalTarget: provide an integer only when goalType indicates total target; otherwise omit totalTarget.
+        """.trimIndent()
+        val composedInput = "$rawText\n\n$strictToolArgHint"
+        val output = bridge.processInput(
+            text = composedInput,
+            apiKey = config.apiKey,
+            baseUrl = config.baseUrl,
+            modelId = config.modelId,
+            platform = "android",
+            onToolRequest = onToolRequest,
+            onTextStream = onTextStream,
+            onThinking = onThinking,
+            onLifecycle = onLifecycle,
+        )
+        return output.mixed
     }
+
+    private fun withReservedCalendarToolCall(mixed: MixedResult): MixedResult {
+        val firstPlan = mixed.planBlocks.firstOrNull() ?: return mixed
+        val existing = mixed.toolCalls.any { it.tool == DeadlinerCoreBridge.TOOL_ADD_TO_CALENDAR }
+        if (existing) return mixed
+
+        val reserved = AIToolCall(
+            tool = DeadlinerCoreBridge.TOOL_ADD_TO_CALENDAR,
+            addToCalendarArgs = AddToCalendarArgs(
+                title = firstPlan.title,
+                start = firstPlan.start,
+                end = firstPlan.end,
+                location = firstPlan.location,
+                description = firstPlan.linkTask?.let { "关联任务: $it" },
+            ),
+            reason = "保留为后续 Calendar Skill 执行入口",
+        )
+
+        return mixed.copy(toolCalls = mixed.toolCalls + reserved)
+    }
+
+    private fun readCoreRuntimeConfig(context: Context): CoreRuntimeConfig {
+        val apiKey = ApiKeystore.retrieveAndDecrypt(context).orEmpty()
+        val preset = GlobalUtils.getDeadlinerAIConfig().getCurrentPreset() ?: defaultLlmPreset
+        val baseUrl = normalizeCoreBaseUrl(preset.endpoint)
+        if (apiKey.isBlank()) {
+            Log.w("AIUtils", "core runtime api key is empty")
+        }
+        Log.d(
+            "AIUtils",
+            "core runtime config: endpoint=${preset.endpoint}, normalizedBaseUrl=$baseUrl, model=${preset.model}"
+        )
+        return CoreRuntimeConfig(
+            apiKey = apiKey,
+            baseUrl = baseUrl,
+            modelId = preset.model,
+        )
+    }
+
+    private fun normalizeCoreBaseUrl(endpoint: String): String {
+        var e = endpoint.trim().trimEnd('/')
+        // Core expects provider-compatible base URL (e.g. .../v1), not app proxy endpoints.
+        if (e.contains("deadliner.aritxonly.top/api")) {
+            return "https://api.deepseek.com/v1"
+        }
+        if (e.endsWith("/api")) {
+            return "https://api.deepseek.com/v1"
+        }
+        if (e.endsWith("/chat/completions")) {
+            e = e.removeSuffix("/chat/completions")
+        }
+        if (!e.startsWith("http://") && !e.startsWith("https://")) {
+            e = "https://$e"
+        }
+        return e.trimEnd('/')
+    }
+
+    private data class CoreRuntimeConfig(
+        val apiKey: String,
+        val baseUrl: String,
+        val modelId: String,
+    )
 }

@@ -319,7 +319,7 @@ object GlobalUtils {
     var hideDividerUi by mutableStateOf(false)
         private set
 
-    @Deprecated("Deadliner AI is enable by default. This api would always return TRUE.")
+    @Deprecated("Lifi AI is enable by default. This api would always return TRUE.")
     var deadlinerAIEnable: Boolean
         get() = true
         set(_) {  }

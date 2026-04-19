@@ -12,6 +12,8 @@ import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.SubTask
 import com.aritxonly.deadliner.model.Ver
 import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import java.time.Instant
 import java.time.LocalDateTime
@@ -460,8 +462,16 @@ class DatabaseHelper private constructor(context: Context) :
 
     fun getDDLsByType(type: DeadlineType): List<DDLItem> {
         val db = readableDatabase
-        val selection = "$COLUMN_DELETED = 0 AND $COLUMN_TYPE = ?"
-        val selectionArgs = arrayOf(type.toString().lowercase())
+        val selection = if (type == DeadlineType.HABIT) {
+            "$COLUMN_DELETED = 0 AND $COLUMN_TYPE = ? AND EXISTS (SELECT 1 FROM $TABLE_HABIT h WHERE h.$HABIT_DDL_ID = $TABLE_NAME.$COLUMN_ID AND h.$HABIT_STATUS = ?)"
+        } else {
+            "$COLUMN_DELETED = 0 AND $COLUMN_TYPE = ?"
+        }
+        val selectionArgs = if (type == DeadlineType.HABIT) {
+            arrayOf(type.toString().lowercase(), com.aritxonly.deadliner.model.HabitStatus.ACTIVE.name)
+        } else {
+            arrayOf(type.toString().lowercase())
+        }
         val cursor = db.query(
             TABLE_NAME, null, selection, selectionArgs, null, null,
             "$COLUMN_IS_COMPLETED ASC, $COLUMN_END_TIME ASC"
@@ -652,8 +662,8 @@ class DatabaseHelper private constructor(context: Context) :
         val cursor = db.query(
             TABLE_HABIT,
             null,
-            null,
-            null,
+            "$HABIT_STATUS = ?",
+            arrayOf(com.aritxonly.deadliner.model.HabitStatus.ACTIVE.name),
             null,
             null,
             "$HABIT_SORT_ORDER ASC, $HABIT_ID ASC"
@@ -1124,13 +1134,53 @@ class DatabaseHelper private constructor(context: Context) :
     private fun parseSubTasksJson(raw: String?): List<SubTask> {
         val json = raw?.takeIf { it.isNotBlank() } ?: return emptyList()
         return runCatching {
-            gson.fromJson<List<SubTask>>(
-                json,
-                object : TypeToken<List<SubTask>>() {}.type
-            ) ?: emptyList()
+            val parsed = JsonParser.parseString(json)
+            if (!parsed.isJsonArray) return@runCatching emptyList()
+            parsed.asJsonArray.mapNotNull { el ->
+                if (!el.isJsonObject) return@mapNotNull null
+                val obj = el.asJsonObject
+                val id = obj["id"]?.asString ?: return@mapNotNull null
+                SubTask(
+                    id = id,
+                    content = obj["content"]?.asString ?: "",
+                    isCompleted = readBooleanishInt(obj["is_completed"] ?: obj["isCompleted"]),
+                    sortOrder = readIntOrDefault(obj["sort_order"] ?: obj["sortOrder"], 0),
+                    createdAt = obj["created_at"]?.takeUnless { it.isJsonNull }?.asString
+                        ?: obj["createdAt"]?.takeUnless { it.isJsonNull }?.asString,
+                    updatedAt = obj["updated_at"]?.takeUnless { it.isJsonNull }?.asString
+                        ?: obj["updatedAt"]?.takeUnless { it.isJsonNull }?.asString
+                )
+            }
         }.getOrElse {
             Log.e("DatabaseHelper", "Parse sub_tasks_json failed", it)
             emptyList()
+        }
+    }
+
+    private fun readIntOrDefault(element: JsonElement?, default: Int): Int {
+        if (element == null || element.isJsonNull) return default
+        val primitive = element.asJsonPrimitive
+        return when {
+            primitive.isNumber -> primitive.asInt
+            primitive.isString -> primitive.asString.toIntOrNull() ?: default
+            primitive.isBoolean -> if (primitive.asBoolean) 1 else 0
+            else -> default
+        }
+    }
+
+    private fun readBooleanishInt(element: JsonElement?): Int {
+        if (element == null || element.isJsonNull) return 0
+        val primitive = element.asJsonPrimitive
+        return when {
+            primitive.isBoolean -> if (primitive.asBoolean) 1 else 0
+            primitive.isNumber -> if (primitive.asInt != 0) 1 else 0
+            primitive.isString -> {
+                when (primitive.asString.trim().lowercase()) {
+                    "1", "true", "yes", "y", "on" -> 1
+                    else -> 0
+                }
+            }
+            else -> 0
         }
     }
 

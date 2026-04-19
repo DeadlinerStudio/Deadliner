@@ -103,7 +103,10 @@ class DeadlinerAIConfig(private val sp: SharedPreferences) {
     }
 
     fun getCurrentLogo(): Int {
-        return getLogoList()[sp.getInt(KEY_CURRENT_LOGO_INDEX, 0)]
+        val logos = getLogoList()
+        if (logos.isEmpty()) return R.drawable.ic_lifi
+        val index = sp.getInt(KEY_CURRENT_LOGO_INDEX, 0).coerceIn(0, logos.lastIndex)
+        return logos[index]
     }
 
     fun setCurrentLogo(res: Int) {
@@ -121,18 +124,6 @@ class DeadlinerAIConfig(private val sp: SharedPreferences) {
     }
 
     fun getLogoList(): List<Int> {
-        return listOf(
-            R.drawable.ic_orbit,
-            R.drawable.ic_wand_stars,
-            R.drawable.ic_wand_shine,
-            R.drawable.ic_lightbulb,
-            R.drawable.ic_psycho,
-            R.drawable.ic_stars_2,
-            R.drawable.ic_star_shine,
-            R.drawable.ic_deepseek,
-            R.drawable.ic_qwen,
-            R.drawable.ic_gemini_color,
-            R.drawable.ic_openai,
-        )
+        return listOf(R.drawable.ic_lifi)
     }
 }

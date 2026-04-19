@@ -32,7 +32,7 @@
     <string name="settings_interface_display">界面外观</string>
     <string name="settings_widget">小组件</string>
     <string name="settings_notification">通知</string>
-    <string name="settings_deadliner_ai" translatable="false">Deadliner AI</string>
+    <string name="settings_deadliner_ai" translatable="false">Lifi AI</string>
     <string name="settings_backup">备份</string>
     <string name="settings_lab">实验室</string>
     <string name="settings_wiki" translatable="false">Wiki</string>
@@ -44,7 +44,7 @@
     <string name="settings_support_interface_display">主界面布局 · 显示风格</string>
     <string name="settings_support_notification">DDL临近通知 · 每日定时通知</string>
     <string name="settings_support_backup">导入与导出用户数据库</string>
-    <string name="settings_support_deadliner_ai">Deadliner AI · API接入 · 自定义prompt</string>
+    <string name="settings_support_deadliner_ai">Lifi AI · API接入 · 自定义prompt</string>
     <string name="settings_support_webdav">WebDAV 云同步服务</string>
     <string name="settings_support_tombstone_retention">删除后的同步墓碑会保留一段时间，之后自动回收以减少 snapshot 体积和垃圾数据堆积</string>
     <string name="settings_support_lab">调试选项与实验性内容</string>
@@ -131,7 +131,7 @@
     <string name="settings_web_user">用户名</string>
     <string name="settings_web_pass">密码</string>
 
-    <string name="settings_enable_ai">启用Deadliner AI</string>
+    <string name="settings_enable_ai">启用Lifi AI</string>
     <string name="settings_ai_description">Deadliner 接入AI服务商为用户提供从长段文本中提取任务信息的能力，从而帮助用户快速添加任务。</string>
     <string name="settings_ai_api_key">API Key</string>
     <string name="settings_ai_success">设置API Key成功！</string>
@@ -237,7 +237,7 @@
     <string name="progress_days">%.1f天 %d%%</string>
     <string name="untitled">(无标题)</string>
     <string name="ai_overlay_enter_questions">输入你的问题…</string>
-    <string name="ai_overlay_hint_top">向 Deadliner AI 提问，快速添加日程</string>
+    <string name="ai_overlay_hint_top">向 Lifi AI 提问，快速添加日程</string>
     <string name="parse_failed">解析失败</string>
     <string name="unknown_error">未知错误</string>
     <string name="send">发送</string>
@@ -254,7 +254,7 @@
     <string name="duration_days_hours">%1$d天 %2$d小时</string>
     <string name="duration_hours">%1$d小时</string>
     <string name="duration_less_than_hour">&lt;1小时</string>
-    <string name="show_clipboard_ai_snackbar">检测到剪切板内容，使用 Deadliner AI 快捷添加？</string>
+    <string name="show_clipboard_ai_snackbar">检测到剪切板内容，使用 Lifi AI 快捷添加？</string>
     <string name="add">添加</string>
     <string name="selected_items">已选中 %1$d 项</string>
     <string name="habit_success">打卡成功 🎉</string>
@@ -502,7 +502,7 @@
 
     <string name="settings_model">模型设置</string>
     <string name="settings_model_endpoint">模型接入点</string>
-    <string name="settings_support_model_endpoint">选择Deadliner AI预设的模型</string>
+    <string name="settings_support_model_endpoint">选择Lifi AI预设的模型</string>
     <string name="settings_support_model_endpoint_advance">自定义模型接入点</string>
     <string name="settings_current_model">当前模型为: %1$s</string>
     <string name="settings_current_endpoint">接入点: %1$s</string>
@@ -517,8 +517,8 @@
     <string name="edit_model">编辑模型</string>
     <string name="preset_delete_title">删除预设</string>
     <string name="preset_delete_msg">确定要删除“%1$s”吗？</string>
-    <string name="settings_ai_icon">设置Deadliner AI图标</string>
-    <string name="settings_support_clipboard">开启选项后，Deadliner将在剪切板变化时提示你使用Deadliner AI添加任务。</string>
+    <string name="settings_ai_icon">设置Lifi AI图标</string>
+    <string name="settings_support_clipboard">开启选项后，Deadliner将在剪切板变化时提示你使用Lifi AI添加任务。</string>
     <string name="toast_ai_logo_requires_reboot">图标设置成功，请重启Deadliner以应用效果</string>
     <string name="settings_simplified">简洁模式主界面</string>
     <string name="settings_support_simplified">开启后，主界面将变成全新的简洁设计，带来不一样的待办管理体验</string>
@@ -695,14 +695,14 @@
     <string name="wizard_mark_as_complete_desc">向右滑动完成任务。</string>
     <string name="wizard_delete">删除任务</string>
     <string name="wizard_delete_desc">向左滑动删除任务。</string>
-    <string name="wizard_deadliner_ai">打开 Deadliner AI</string>
-    <string name="wizard_deadliner_ai_classic_desc">在经典模式下，点击底部栏最左侧的 AI 图标，打开 Deadliner AI。</string>
-    <string name="wizard_deadliner_ai_simplified_desc">在简洁模式下，从底栏向上滑动，即可唤醒 Deadliner AI。</string>
+    <string name="wizard_deadliner_ai">打开 Lifi AI</string>
+    <string name="wizard_deadliner_ai_classic_desc">在经典模式下，点击底部栏最左侧的 AI 图标，打开 Lifi AI。</string>
+    <string name="wizard_deadliner_ai_simplified_desc">在简洁模式下，从底栏向上滑动，即可唤醒 Lifi AI。</string>
     <string name="wizard_add_a_task_info">添加一个任务</string>
     <string name="wizard_add_a_task_info_desc">点击右下角的「+」按钮，填写标题、截止时间等信息，就可以创建一个新的 Deadliner 任务。</string>
     <string name="i_know_and_continue">我知道了，继续</string>
-    <string name="wizard_deadliner_ai_info">使用 Deadliner AI</string>
-    <string name="wizard_deadliner_ai_info_desc">在 Deadliner AI 中，你可以用自然语言描述待办事项，让 AI 帮你拆解任务、生成子任务和时间规划。</string>
+    <string name="wizard_deadliner_ai_info">使用 Lifi AI</string>
+    <string name="wizard_deadliner_ai_info_desc">在 Lifi AI 中，你可以用自然语言描述待办事项，让 AI 帮你拆解任务、生成子任务和时间规划。</string>
     <string name="finish_wizard">完成向导</string>
 
     <string name="wizard_simplified_title_sample">Deadliner 主界面（经典模式示例）</string>
@@ -791,4 +791,21 @@
     <string name="capture_relative_hours_ago">%1$d小时前</string>
     <string name="capture_relative_days_ago">%1$d天前</string>
     <string name="capture_date_short_pattern" translatable="false">M月d日</string>
+
+    <string name="detail_actions_title">任务操作</string>
+    <string name="detail_progress_title">任务进度</string>
+    <string name="detail_task_info_title">基础信息</string>
+    <string name="detail_note_title">完整备注</string>
+    <string name="detail_note_empty">暂无备注</string>
+    <string name="detail_plan_title">详细计划</string>
+    <string name="detail_plan_progress">%1$d/%2$d 已完成</string>
+    <string name="detail_plan_empty">还没有子任务，点击右下角开始拆解。</string>
+    <string name="detail_plan_add">新增子任务</string>
+    <string name="detail_plan_add_hint">输入子任务，回车可连续添加</string>
+    <string name="state_active">进行中</string>
+    <string name="state_completed">已完成</string>
+    <string name="state_archived">已归档</string>
+    <string name="state_abandoned">已放弃</string>
+    <string name="state_abandoned_archived">放弃并归档</string>
+
 </resources>

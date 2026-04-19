@@ -6,7 +6,10 @@ import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.data.HabitRepository
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.model.Habit
+import com.aritxonly.deadliner.model.HabitGoalType
 import com.aritxonly.deadliner.model.HabitPeriod
+import com.aritxonly.deadliner.model.HabitStatus
 import com.aritxonly.deadliner.model.Ver
 import com.aritxonly.deadliner.web.WebUtils
 import com.google.gson.JsonArray
@@ -26,6 +29,7 @@ import org.robolectric.RobolectricTestRunner
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 @RunWith(RobolectricTestRunner::class)
 class HabitSyncServiceTest {
@@ -96,7 +100,198 @@ class HabitSyncServiceTest {
         )
 
         assertNull(db.getHabitByDdlId(ddlId))
+        assertNull(db.getDDLById(ddlId))
         assertEquals(tombstoneVer, db.getHabitAppliedVersionByDdlId(ddlId))
+    }
+
+    @Test
+    fun archivedHabitPayloadIsNotDeletedAndIsStoredAsArchived() {
+        val ddlId = db.insertDDL(
+            name = "carrier",
+            startTime = "2026-03-24T08:00:00",
+            endTime = "2026-03-24T18:00:00",
+            type = DeadlineType.HABIT
+        )
+        val repo = HabitRepository(db, sync, autoScheduleSync = false)
+        repo.createHabitForDdl(ddlId, "habit", HabitPeriod.DAILY)
+        val uid = db.getDdlUidById(ddlId)!!
+        val ver = db.nextVersionUTC()
+
+        sync.applyHabitSnapshotToLocal(
+            habitSnapshotOf(
+                uid = uid,
+                ver = ver,
+                deleted = false,
+                status = HabitStatus.ARCHIVED.name
+            )
+        )
+
+        val stored = db.getHabitByDdlId(ddlId)
+        assertNotNull(stored)
+        assertEquals(HabitStatus.ARCHIVED, stored!!.status)
+        assertNotNull(db.getDDLById(ddlId))
+        assertTrue(db.getDDLsByType(DeadlineType.HABIT).none { it.id == ddlId })
+        assertEquals(ver, db.getHabitAppliedVersionByDdlId(ddlId))
+    }
+
+    @Test
+    fun payloadDeletedFlagIsTreatedAsDeletedAndRemovesLocalHabit() {
+        val ddlId = db.insertDDL(
+            name = "carrier",
+            startTime = "2026-03-24T08:00:00",
+            endTime = "2026-03-24T18:00:00",
+            type = DeadlineType.HABIT
+        )
+        val repo = HabitRepository(db, sync, autoScheduleSync = false)
+        repo.createHabitForDdl(ddlId, "habit", HabitPeriod.DAILY)
+        val uid = db.getDdlUidById(ddlId)!!
+        val ver = db.nextVersionUTC()
+
+        sync.applyHabitSnapshotToLocal(
+            habitSnapshotOf(
+                uid = uid,
+                ver = ver,
+                deleted = false,
+                payloadDeleted = 1
+            )
+        )
+
+        assertNull(db.getHabitByDdlId(ddlId))
+        assertNull(db.getDDLById(ddlId))
+        assertEquals(ver, db.getHabitAppliedVersionByDdlId(ddlId))
+    }
+
+    @Test
+    fun getAllHabitsReturnsOnlyActive() {
+        val activeDdlId = db.insertDDL(
+            name = "active habit carrier",
+            startTime = "2026-03-24T08:00:00",
+            endTime = "2026-03-24T18:00:00",
+            type = DeadlineType.HABIT
+        )
+        val archivedDdlId = db.insertDDL(
+            name = "archived habit carrier",
+            startTime = "2026-03-24T08:00:00",
+            endTime = "2026-03-24T18:00:00",
+            type = DeadlineType.HABIT
+        )
+        val now = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)
+        db.insertHabit(
+            Habit(
+                ddlId = activeDdlId,
+                name = "active habit",
+                period = HabitPeriod.DAILY,
+                timesPerPeriod = 1,
+                goalType = HabitGoalType.PER_PERIOD,
+                createdAt = now,
+                updatedAt = now,
+                status = HabitStatus.ACTIVE
+            )
+        )
+        db.insertHabit(
+            Habit(
+                ddlId = archivedDdlId,
+                name = "archived habit",
+                period = HabitPeriod.DAILY,
+                timesPerPeriod = 1,
+                goalType = HabitGoalType.PER_PERIOD,
+                createdAt = now,
+                updatedAt = now,
+                status = HabitStatus.ARCHIVED
+            )
+        )
+
+        val all = db.getAllHabits()
+        assertEquals(1, all.size)
+        assertEquals("active habit", all.first().name)
+    }
+
+    @Test
+    fun missingPayloadForRemoteOwnedCarrierArchivesLocalHabit() {
+        val ddlId = db.insertDDL(
+            name = "remote-owned carrier",
+            startTime = "2026-03-24T08:00:00",
+            endTime = "2026-03-24T18:00:00",
+            type = DeadlineType.HABIT
+        )
+        val repo = HabitRepository(db, sync, autoScheduleSync = false)
+        repo.createHabitForDdl(ddlId, "local habit", HabitPeriod.DAILY)
+        val uid = db.getDdlUidById(ddlId)!!
+        val remoteVer = Ver("2026-04-19T06:50:00Z", 0, "IOS_DEVICE")
+        db.setDdlVersionById(ddlId, remoteVer)
+
+        // merged snapshot omits this uid entirely -> payload missing
+        sync.applyHabitSnapshotToLocal(
+            JsonObject().apply {
+                add("version", JsonObject().apply {
+                    addProperty("ts", "2026-04-19T06:50:01Z")
+                    addProperty("dev", "IOS_DEVICE")
+                })
+                add("items", JsonArray())
+            }
+        )
+
+        val stored = db.getHabitByDdlId(ddlId)
+        assertNotNull(stored)
+        assertEquals(HabitStatus.ARCHIVED, stored!!.status)
+        assertTrue(db.getDDLsByType(DeadlineType.HABIT).none { it.id == ddlId })
+        assertEquals(remoteVer, db.getHabitAppliedVersionByDdlId(ddlId))
+        assertEquals(uid, db.getDdlUidById(ddlId))
+    }
+
+    @Test
+    fun equalVersionButArchivedStatusStillApplies() {
+        val ddlId = db.insertDDL(
+            name = "carrier",
+            startTime = "2026-03-24T08:00:00",
+            endTime = "2026-03-24T18:00:00",
+            type = DeadlineType.HABIT
+        )
+        val repo = HabitRepository(db, sync, autoScheduleSync = false)
+        repo.createHabitForDdl(ddlId, "habit", HabitPeriod.DAILY)
+        val uid = db.getDdlUidById(ddlId)!!
+        val incomingVer = Ver("2026-04-19T06:53:00Z", 0, "IOS_DEVICE")
+        db.setDdlVersionById(ddlId, incomingVer)
+        db.setHabitAppliedVersionByDdlId(ddlId, incomingVer)
+
+        sync.applyHabitSnapshotToLocal(
+            habitSnapshotOf(
+                uid = uid,
+                ver = incomingVer,
+                deleted = false,
+                status = HabitStatus.ARCHIVED.name
+            )
+        )
+
+        val stored = db.getHabitByDdlId(ddlId)
+        assertNotNull(stored)
+        assertEquals(HabitStatus.ARCHIVED, stored!!.status)
+        assertTrue(db.getDDLsByType(DeadlineType.HABIT).none { it.id == ddlId })
+    }
+
+    @Test
+    fun equalVersionTombstoneWithNullDocDoesNotCrash() {
+        val ddlId = db.insertDDL(
+            name = "carrier",
+            startTime = "2026-03-24T08:00:00",
+            endTime = "2026-03-24T18:00:00",
+            type = DeadlineType.HABIT
+        )
+        val uid = db.getDdlUidById(ddlId)!!
+        val ver = Ver("2026-04-19T07:02:33Z", 0, "IOS_DEVICE")
+        db.setDdlVersionById(ddlId, ver)
+        db.setHabitAppliedVersionByDdlId(ddlId, ver)
+
+        sync.applyHabitSnapshotToLocal(
+            habitSnapshotOf(
+                uid = uid,
+                ver = ver,
+                deleted = true
+            )
+        )
+
+        // Should not throw and should keep stable state.
+        assertNotNull(db.getDDLById(ddlId))
     }
 
     @Test
@@ -249,7 +444,13 @@ class HabitSyncServiceTest {
             .getOrElse { OffsetDateTime.parse(ts).toLocalDateTime() }
     }
 
-    private fun habitSnapshotOf(uid: String, ver: Ver, deleted: Boolean): JsonObject {
+    private fun habitSnapshotOf(
+        uid: String,
+        ver: Ver,
+        deleted: Boolean,
+        status: String = HabitStatus.ACTIVE.name,
+        payloadDeleted: Int? = null
+    ): JsonObject {
         val item = JsonObject().apply {
             addProperty("uid", uid)
             add("ver", JsonObject().apply {
@@ -275,9 +476,10 @@ class HabitSyncServiceTest {
                     add("total_target", JsonNull.INSTANCE)
                     addProperty("created_at", "2026-03-24T08:00:00Z")
                     addProperty("updated_at", "2026-03-24T08:00:00Z")
-                    addProperty("status", "ACTIVE")
+                    addProperty("status", status)
                     addProperty("sort_order", 0)
                     add("alarm_time", JsonNull.INSTANCE)
+                    payloadDeleted?.let { addProperty("deleted", it) }
                 })
                 add("records", JsonArray())
             })

@@ -17,10 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,12 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
+import com.aritxonly.deadliner.ai.AIUtils
+import com.aritxonly.deadliner.ai.defaultLlmPreset
+import com.aritxonly.deadliner.localutils.ApiKeystore
+import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
-import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.localutils.ApiKeystore
-import com.aritxonly.deadliner.ai.defaultLlmPreset
-import com.aritxonly.deadliner.ai.AIUtils.generateDeadline
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -69,7 +67,7 @@ fun AISettingsScreen(
     val onTestChange: (String) -> Unit = {
         test = it
     }
-    val scope = rememberCoroutineScope()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     val successText = stringResource(R.string.settings_ai_success)
     val incompleteText = stringResource(R.string.settings_ai_incomplete)
@@ -77,16 +75,12 @@ fun AISettingsScreen(
         if (apiKey.isNullOrEmpty()) {
             Toast.makeText(context, incompleteText, Toast.LENGTH_SHORT).show()
         } else {
-            ApiKeystore.encryptAndStore(context, apiKey?:"")
+            ApiKeystore.encryptAndStore(context, apiKey ?: "")
             Toast.makeText(context, successText, Toast.LENGTH_SHORT).show()
         }
     }
 
     var showTestDialog by remember { mutableStateOf(false) }
-    var showSubscribeDialog by remember { mutableStateOf(false) }
-
-    val config = GlobalUtils.getDeadlinerAIConfig()
-    var selectedIconRes by remember { mutableIntStateOf(config.getCurrentLogo()) }
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_deadliner_ai),
@@ -121,7 +115,7 @@ fun AISettingsScreen(
 
             Spacer(modifier = Modifier.padding(8.dp))
 
-            val preset = GlobalUtils.getDeadlinerAIConfig().getCurrentPreset()?: defaultLlmPreset
+            val preset = GlobalUtils.getDeadlinerAIConfig().getCurrentPreset() ?: defaultLlmPreset
             if (advancedSettings) {
                 SettingsSection(
                     customColor = MaterialTheme.colorScheme.tertiaryContainer
@@ -145,33 +139,6 @@ fun AISettingsScreen(
             }
 
             SettingsSection(topLabel = stringResource(R.string.settings_ai_function)) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.settings_ai_icon),
-                        style = MaterialTheme.typography.titleMediumEmphasized,
-                        modifier = Modifier.padding(16.dp)
-                    )
-
-                    IconPickerRow(
-                        icons = GlobalUtils.getDeadlinerAIConfig().getLogoList(),
-                        selectedIconRes = selectedIconRes,
-                        onSelect = {
-                            selectedIconRes = it
-                            config.setCurrentLogo(it)
-                            println(
-                                Toast.makeText(
-                                    context,
-                                    R.string.toast_ai_logo_requires_reboot,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            )
-                        },
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                }
-
-                SettingsSectionDivider()
-
                 SettingsDetailSwitchItem(
                     headline = R.string.settings_clipboard,
                     supportingText = R.string.settings_support_clipboard,
@@ -253,7 +220,8 @@ fun AISettingsScreen(
                     onClick = {
                         scope.launch {
                             testResp = try {
-                                generateDeadline(context, test)
+                                val (_, json) = AIUtils.generateAuto(context, test)
+                                json
                             } catch (e: Exception) {
                                 "Error: ${e.message}"
                             }
@@ -275,4 +243,3 @@ fun AISettingsScreen(
         )
     }
 }
-

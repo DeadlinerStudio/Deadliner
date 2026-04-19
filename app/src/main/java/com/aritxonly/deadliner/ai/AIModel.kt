@@ -83,7 +83,7 @@ data class LlmPreset(
 
 val defaultLlmPreset = LlmPreset(
     id = "deadliner_official",
-    name = "Deadliner AI",
+    name = "Lifi AI",
     model = "deepseek-chat",
     endpoint = "https://deadliner.aritxonly.top/api"
 )

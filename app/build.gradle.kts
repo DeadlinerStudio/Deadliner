@@ -19,6 +19,12 @@ val deadlinerCoreSyncEnabled = providers
     .gradleProperty("deadliner.core.sync.enabled")
     .orElse("true")
     .map { it.equals("true", ignoreCase = true) }
+val deadlinerCoreGithubToken = providers
+    .gradleProperty("deadliner.core.github.token")
+    .orElse(
+        providers.environmentVariable("DEADLINER_CORE_GITHUB_TOKEN")
+            .orElse(providers.environmentVariable("GITHUB_TOKEN"))
+    )
 
 val syncDeadlinerCoreAndroid by tasks.registering(Exec::class) {
     group = "deadliner"
@@ -26,6 +32,10 @@ val syncDeadlinerCoreAndroid by tasks.registering(Exec::class) {
 
     val syncScript = rootProject.file("scripts/sync_deadliner_core_android.sh")
     commandLine("bash", syncScript.absolutePath, deadlinerCoreSyncMode.get())
+    environment(
+        "DEADLINER_CORE_GITHUB_TOKEN",
+        deadlinerCoreGithubToken.orNull ?: ""
+    )
 
     inputs.file(syncScript)
     outputs.dir(rootProject.file(".deadliner-core/android"))
@@ -117,6 +127,7 @@ dependencies {
     implementation("nl.dionsegijn:konfetti-compose:2.0.4")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.11.0")
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
     implementation("io.noties.markwon:core:4.6.2")
     implementation("androidx.compose.material3:material3-window-size-class:1.4.0-beta02")
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.4.0-beta02")

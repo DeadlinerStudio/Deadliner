@@ -396,7 +396,7 @@ private fun ClassicWizardBottomBar(
                 IconButton(onClick = onAiClick) {
                     Icon(
                         iconResource(aiDrawable),
-                        contentDescription = "Deadliner AI"
+                        contentDescription = "Lifi AI"
                     )
                 }
 

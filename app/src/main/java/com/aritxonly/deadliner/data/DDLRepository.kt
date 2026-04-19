@@ -3,6 +3,7 @@ package com.aritxonly.deadliner.data
 import com.aritxonly.deadliner.AppSingletons
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.model.TaskStateMachine
 import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.transition
 import com.aritxonly.deadliner.sync.SyncService
@@ -60,6 +61,9 @@ class DDLRepository(
     ): DDLItem {
         val latest = db.getDDLById(itemId)
             ?: throw IllegalArgumentException("DDL not found for id=$itemId")
+        if (TaskStateMachine.isNoOp(latest.state, action)) {
+            return latest
+        }
         val updated = latest.transition(using = action, confirmed = confirmed, now = now)
         db.updateDDL(updated)
         sync.onLocalUpdated(updated.id)

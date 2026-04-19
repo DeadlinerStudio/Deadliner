@@ -31,9 +31,9 @@ data class AITask(
 )
 
 data class ExtractTasksResult(
-    val tasks: List<AITask>,
-    val timezone: String,
-    val resolvedAt: String
+    val tasks: List<AITask> = emptyList(),
+    val timezone: String = "",
+    val resolvedAt: String = ""
 )
 
 data class PlanBlock(
@@ -57,8 +57,103 @@ sealed class AIResult {
 }
 
 data class MixedResult(
-    val primaryIntent: String,              // "ExtractTasks" | "PlanDay" | "SplitToSteps"
-    val tasks: List<AITask> = emptyList(),  // 允许缺省，Gson 会给空列表
+    val primaryIntent: String = "ExtractTasks", // "ExtractTasks" | "PlanDay" | "SplitToSteps" | "Chat"
+    val tasks: List<AITask> = emptyList(),
+    val habits: List<AIHabit> = emptyList(),
+    val retrievedTasks: List<AITask> = emptyList(),
+    val retrievedHabits: List<AIHabit> = emptyList(),
+    val newMemories: List<String> = emptyList(),
+    val chatResponse: String? = null,
+    val sessionSummary: String? = null,
+    val userProfile: String? = null,
+    val toolCalls: List<AIToolCall> = emptyList(),
     val planBlocks: List<PlanBlock> = emptyList(),
-    val steps: List<SplitStepsResult> = emptyList() // 支持多个 steps 场景；单个也可放在列表中
+    val steps: List<SplitStepsResult> = emptyList()
+)
+
+data class AIHabit(
+    val name: String,
+    val period: String,
+    val timesPerPeriod: Int,
+    val goalType: String = "",
+    val totalTarget: Int? = null
+)
+
+data class ReadTasksArgs(
+    val timeRangeDays: Int? = null,
+    val status: String? = null,       // OPEN | DONE | ALL
+    val keywords: List<String>? = null,
+    val limit: Int? = null,
+    val sort: String? = null          // DUE_ASC | UPDATED_DESC
+)
+
+data class AddToCalendarArgs(
+    val title: String? = null,
+    val start: String? = null,
+    val end: String? = null,
+    val location: String? = null,
+    val description: String? = null
+)
+
+data class AIToolCall(
+    val tool: String,
+    val args: ReadTasksArgs? = null,
+    val addToCalendarArgs: AddToCalendarArgs? = null,
+    val reason: String? = null
+)
+
+data class AIToolRequest(
+    val id: String,
+    val tool: String,
+    val args: ReadTasksArgs = ReadTasksArgs(),
+    val addToCalendarArgs: AddToCalendarArgs? = null,
+    val reason: String? = null,
+    val executionMode: String? = null,
+    val retryCount: Long? = null,
+    val retryFromErrorCode: String? = null,
+    val rawArgsJson: String? = null,
+)
+
+enum class AgentLifecycleState {
+    Running,
+    WaitingTool,
+    Finished,
+    MemorySynced,
+    Failed,
+    Unknown,
+}
+
+data class AgentLifecycleEvent(
+    val requestId: String? = null,
+    val stage: String,
+    val status: String,
+    val message: String? = null,
+    val state: AgentLifecycleState = AgentLifecycleState.Unknown,
+)
+
+data class TaskDigestItem(
+    val id: Long,
+    val name: String,
+    val due: String,
+    val status: String,
+    val notePreview: String
+)
+
+data class TaskSummary(
+    val count: Int,
+    val overdue: Int,
+    val dueSoon24h: Int
+)
+
+data class ReadTasksResultPayload(
+    val tasks: List<TaskDigestItem>,
+    val summary: TaskSummary
+)
+
+data class AIToolResult(
+    val id: String,
+    val tool: String,
+    val appliedArgs: ReadTasksArgs,
+    val payload: ReadTasksResultPayload,
+    val generatedAtEpochMs: Long = System.currentTimeMillis()
 )

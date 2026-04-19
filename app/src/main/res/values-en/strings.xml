@@ -36,7 +36,7 @@
     <string name="settings_support_interface_display">Main screen layout · Display style</string>
     <string name="settings_support_notification">Deadline reminder · Daily scheduled notification</string>
     <string name="settings_support_backup">Import &amp; export user database</string>
-    <string name="settings_support_deadliner_ai">Deadliner AI · API integration · Custom prompt</string>
+    <string name="settings_support_deadliner_ai">Lifi AI · API integration · Custom prompt</string>
     <string name="settings_support_webdav">WebDAV cloud sync service</string>
     <string name="settings_support_lab">Debug options &amp; experimental features</string>
     <string name="settings_support_widget">Widget configuration · Widget UI &amp; interaction settings</string>
@@ -113,7 +113,7 @@
     <string name="settings_web_host_incomplete">Please fill in all fields!</string>
     <string name="settings_web_user">Username</string>
     <string name="settings_web_pass">Password</string>
-    <string name="settings_enable_ai">Enable Deadliner AI</string>
+    <string name="settings_enable_ai">Enable Lifi AI</string>
     <string name="settings_ai_description">Deadliner integrates with your AI provider to extract task information from long text, helping you quickly add tasks.</string>
     <string name="settings_ai_api_key">API key</string>
     <string name="settings_ai_success">API key set successfully!</string>
@@ -179,7 +179,7 @@
     <string name="progress_days">%.1f days %d%%</string>
     <string name="untitled">(Untitled)</string>
     <string name="ai_overlay_enter_questions">Enter your question…</string>
-    <string name="ai_overlay_hint_top">Ask Deadliner AI to quickly add a schedule</string>
+    <string name="ai_overlay_hint_top">Ask Lifi AI to quickly add a schedule</string>
     <string name="parse_failed">Parse failed</string>
     <string name="unknown_error">Unknown error</string>
     <string name="send">Send</string>
@@ -195,7 +195,7 @@
     <string name="duration_days_hours">%1$d days %2$d hours</string>
     <string name="duration_hours">%1$d hours</string>
     <string name="duration_less_than_hour">&lt;1 hour</string>
-    <string name="show_clipboard_ai_snackbar">Clipboard content detected. Use Deadliner AI to quickly add?</string>
+    <string name="show_clipboard_ai_snackbar">Clipboard content detected. Use Lifi AI to quickly add?</string>
     <string name="add">Add</string>
     <string name="selected_items">%1$d selected</string>
     <string name="habit_success">Check-in successful 🎉</string>
@@ -432,7 +432,7 @@
 
     <string name="settings_model">Model Settings</string>
     <string name="settings_model_endpoint">Model Endpoint Settings</string>
-    <string name="settings_support_model_endpoint">Select a preset model for Deadliner AI</string>
+    <string name="settings_support_model_endpoint">Select a preset model for Lifi AI</string>
     <string name="settings_support_model_endpoint_advance">Custom model endpoint</string>
     <string name="settings_current_model">Current model: %1$s</string>
     <string name="settings_current_endpoint">Endpoint: %1$s</string>
@@ -447,8 +447,8 @@
     <string name="preset_delete_title">Delete Preset</string>
     <string name="preset_delete_msg">Are you sure you want to delete “%1$s”?</string>
     <string name="edit_model">Edit Model</string>
-    <string name="settings_ai_icon">Set Deadliner AI Icon</string>
-    <string name="settings_support_clipboard">When enabled, Deadliner will notify you to add a task with Deadliner AI whenever the clipboard changes.</string>
+    <string name="settings_ai_icon">Set Lifi AI Icon</string>
+    <string name="settings_support_clipboard">When enabled, Deadliner will notify you to add a task with Lifi AI whenever the clipboard changes.</string>
     <string name="toast_ai_logo_requires_reboot">Icon set successfully. Please restart Deadliner to apply the changes.</string>
 
     <!-- Morning -->
@@ -635,17 +635,17 @@
     <string name="wizard_delete">Delete Task</string>
     <string name="wizard_delete_desc">Swipe left to delete a task.</string>
 
-    <string name="wizard_deadliner_ai">Open Deadliner AI</string>
+    <string name="wizard_deadliner_ai">Open Lifi AI</string>
     <string name="wizard_deadliner_ai_classic_desc">In Classic Mode, tap the AI icon on the left side of the bottom bar.</string>
-    <string name="wizard_deadliner_ai_simplified_desc">In Simplified Mode, swipe up from the bottom bar to launch Deadliner AI.</string>
+    <string name="wizard_deadliner_ai_simplified_desc">In Simplified Mode, swipe up from the bottom bar to launch Lifi AI.</string>
 
     <string name="wizard_add_a_task_info">Add a Task</string>
     <string name="wizard_add_a_task_info_desc">Tap the “+” button in the lower right, then fill in the title, deadline, and other details to create a new task.</string>
 
     <string name="i_know_and_continue">Got it, continue</string>
 
-    <string name="wizard_deadliner_ai_info">Using Deadliner AI</string>
-    <string name="wizard_deadliner_ai_info_desc">Describe your tasks in natural language, and Deadliner AI will help break them down, generate subtasks, and plan your schedule.</string>
+    <string name="wizard_deadliner_ai_info">Using Lifi AI</string>
+    <string name="wizard_deadliner_ai_info_desc">Describe your tasks in natural language, and Lifi AI will help break them down, generate subtasks, and plan your schedule.</string>
 
     <string name="finish_wizard">Finish Tutorial</string>
 
@@ -736,5 +736,22 @@
     <string name="capture_relative_hours_ago">%1$d hours ago</string>
     <string name="capture_relative_days_ago">%1$d days ago</string>
     <string name="capture_date_short_pattern" translatable="false">MMM d</string>
+
+
+    <string name="detail_actions_title">Task actions</string>
+    <string name="detail_progress_title">Progress</string>
+    <string name="detail_task_info_title">Task info</string>
+    <string name="detail_note_title">Note</string>
+    <string name="detail_note_empty">No note yet</string>
+    <string name="detail_plan_title">Detailed plan</string>
+    <string name="detail_plan_progress">%1$d/%2$d done</string>
+    <string name="detail_plan_empty">No subtasks yet. Tap the bottom-right button to add one.</string>
+    <string name="detail_plan_add">Add subtask</string>
+    <string name="detail_plan_add_hint">Type a subtask and press Enter to keep adding</string>
+    <string name="state_active">Active</string>
+    <string name="state_completed">Completed</string>
+    <string name="state_archived">Archived</string>
+    <string name="state_abandoned">Abandoned</string>
+    <string name="state_abandoned_archived">Abandoned &amp; archived</string>
 
 </resources>

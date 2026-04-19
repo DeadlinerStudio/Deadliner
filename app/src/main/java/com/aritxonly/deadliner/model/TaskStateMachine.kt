@@ -22,6 +22,16 @@ class TaskActionConfirmationRequiredException(
 ) : IllegalStateException("Confirmation required for action=$action")
 
 object TaskStateMachine {
+    fun isNoOp(state: DDLState, action: TaskStateAction): Boolean {
+        return when (action) {
+            TaskStateAction.MARK_COMPLETE -> state == DDLState.COMPLETED
+            TaskStateAction.MARK_GIVE_UP -> state == DDLState.ABANDONED
+            TaskStateAction.RESTORE_ACTIVE -> state == DDLState.ACTIVE
+            TaskStateAction.MARK_ARCHIVE -> state.isArchivedFamily()
+            TaskStateAction.UNARCHIVE -> state == DDLState.COMPLETED || state == DDLState.ABANDONED
+        }
+    }
+
     fun nextState(from: DDLState, action: TaskStateAction): DDLState {
         return when (from) {
             DDLState.ACTIVE -> when (action) {

@@ -34,11 +34,11 @@ class WebUtils(
         ensureSyncEnabled()
         val url = joinUrl(baseUrl, path)
         val req = auth(Request.Builder().url(url).head()).build()
-        Log.d("WebUtils", req.toString())
+        Log.d("WebUtils", "HEAD ${req.url} headers=${redactedHeaders(req.headers)}")
         client.newCall(req).execute().use { resp ->
             val etag = resp.header("ETag")
             val len = resp.header("Content-Length")?.toLongOrNull()
-            Log.d("WebUtils", resp.toString())
+            Log.d("WebUtils", "HEAD ${req.url} -> ${resp.code}")
             Triple(resp.code, etag, len)
         }
     }
@@ -105,6 +105,23 @@ class WebUtils(
         return "$b/$p"
     }
 
+    private fun redactedHeaders(headers: Headers): String {
+        if (headers.size == 0) return "{}"
+        return buildString {
+            append("{")
+            headers.names().sorted().forEachIndexed { index, name ->
+                if (index > 0) append(", ")
+                val value = if (name.equals("Authorization", ignoreCase = true)) {
+                    "<redacted>"
+                } else {
+                    headers[name] ?: ""
+                }
+                append(name).append("=").append(value)
+            }
+            append("}")
+        }
+    }
+
     /** 目录是否存在（优先 HEAD；部分服务对目录 HEAD 不友好就退回 PROPFIND） */
     suspend fun dirExists(dir: String): Boolean = withContext(Dispatchers.IO) {
         val url = joinUrl(baseUrl, dir.trimEnd('/') + "/")
@@ -139,7 +156,7 @@ class WebUtils(
         val parts = cleaned.split('/').toMutableList()
         if (parts.isEmpty()) return true
         // 如果最后一段带点（看作文件），去掉它保留父目录；否则当作目录链处理
-        if (parts.last().contains('.')) parts.removeLast()
+        if (parts.last().contains('.')) parts.removeAt(parts.lastIndex)
         if (parts.isEmpty()) return true
 
         var cur = ""

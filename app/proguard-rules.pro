@@ -37,3 +37,14 @@
 
 # Compose/Material/Lottie/Navigation 等一般无需额外 keep，除非你有反射/ServiceLoader
 
+# FFI/JNA：按你的要求，FFI 相关全部不混淆。
+# 1) UniFFI 绑定（Kotlin）不混淆（即使上面已有 com.aritxonly.deadliner.**，这里显式声明便于维护）
+-keep class com.aritxonly.deadliner.lifi.** { *; }
+
+# 2) JNA 相关类和内部类全部不混淆/不裁剪
+-keep class com.sun.jna.** { *; }
+-keep class com.sun.jna.internal.** { *; }
+
+# 3) JNA 含 AWT/Swing 分支，Android 上不会使用；忽略对应缺类告警以通过 R8
+-dontwarn java.awt.**
+-dontwarn javax.swing.**

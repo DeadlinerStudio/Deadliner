@@ -45,7 +45,7 @@ class SyncService(
         return try {
             syncAllSnapshotsOnce()
         } catch (e: Exception) {
-            Log.w("Sync", "Failed: $e")
+            Log.e("Sync", "Failed", e)
             false
         }
     }
@@ -311,6 +311,26 @@ class SyncService(
         }
     }
 
+    private fun readBooleanish(element: JsonElement?): Boolean {
+        if (element == null || element.isJsonNull) return false
+        val primitive = element.asJsonPrimitive
+        return when {
+            primitive.isBoolean -> primitive.asBoolean
+            primitive.isNumber -> primitive.asInt != 0
+            primitive.isString -> {
+                val raw = primitive.asString.trim().lowercase()
+                raw == "1" || raw == "true" || raw == "yes"
+            }
+            else -> false
+        }
+    }
+
+    private fun JsonObject.objectMemberOrNull(key: String): JsonObject? {
+        val element = this[key] ?: return null
+        if (element.isJsonNull || !element.isJsonObject) return null
+        return element.asJsonObject
+    }
+
     private fun versionObject(ts: String, ctr: Int, dev: String): JsonObject {
         return JsonObject().apply {
             addProperty("ts", ts)
@@ -536,23 +556,24 @@ class SyncService(
         val items = JsonArray()
         root.getAsJsonArray("items")?.forEach { el ->
             val obj = el.asJsonObject
-            val deleted = obj["deleted"]?.asBoolean == true
             val uid = obj["uid"].asString
+            val doc = obj.objectMemberOrNull("doc")
+            val deleted = obj["deleted"]?.asBoolean == true || isHabitDocDeleted(doc)
             val out = JsonObject().apply {
                 addProperty("uid", uid)
                 add("ver", obj.getAsJsonObject("ver").deepCopy())
                 addProperty("deleted", deleted)
             }
             if (!deleted) {
-                val doc = obj.getAsJsonObject("doc")
+                val resolvedDoc = doc
                     ?: throw IllegalArgumentException("Habit item missing doc for uid=$uid")
-                val ddlUid = doc["ddl_uid"]?.asString
+                val ddlUid = resolvedDoc["ddl_uid"]?.asString
                     ?: throw IllegalArgumentException("Habit doc missing ddl_uid for uid=$uid")
                 if (ddlUid != uid) {
                     throw IllegalArgumentException("Habit ddl_uid mismatch: $ddlUid != $uid")
                 }
-                val habit = parseHabitPayload(doc.getAsJsonObject("habit"), -1L, 0L)
-                val records = parseHabitRecords(doc.getAsJsonArray("records"), 0L)
+                val habit = parseHabitPayload(resolvedDoc.objectMemberOrNull("habit"), -1L, 0L)
+                val records = parseHabitRecords(resolvedDoc.getAsJsonArray("records"), 0L)
                 out.add("doc", JsonObject().apply {
                     addProperty("ddl_uid", uid)
                     add("habit", habitToJson(habit))
@@ -567,6 +588,13 @@ class SyncService(
             add("version", root.getAsJsonObject("version")?.deepCopy() ?: emptySnapshot().getAsJsonObject("version"))
             add("items", items)
         }
+    }
+
+    private fun isHabitDocDeleted(doc: JsonObject?): Boolean {
+        if (doc == null || doc.isJsonNull) return false
+        val habit = doc.objectMemberOrNull("habit") ?: return false
+        if (readBooleanish(habit["deleted"])) return true
+        return false
     }
 
     private suspend fun loadRemoteSnapshot(
@@ -609,7 +637,8 @@ class SyncService(
                 addProperty("deleted", deleted)
             }
             if (!deleted) {
-                val doc = obj.getAsJsonObject("doc")
+                val doc = obj.objectMemberOrNull("doc")
+                    ?: throw IllegalArgumentException("DDL V1 projection missing doc for uid=${obj["uid"].asString}")
                 val state = DDLState.fromWire(doc["state"]?.asString ?: "")
                 val legacy = when (state) {
                     DDLState.ACTIVE -> 0 to 0
@@ -688,7 +717,7 @@ class SyncService(
                     return@forEach
                 }
 
-                val doc = obj.getAsJsonObject("doc")
+                val doc = obj.objectMemberOrNull("doc")
                     ?: throw IllegalArgumentException("DDL item missing doc for uid=$uid")
                 val state = DDLState.fromWire(doc["state"]?.asString ?: "")
                 val legacy = when (state) {
@@ -734,12 +763,15 @@ class SyncService(
 
     internal fun applyHabitSnapshotToLocal(merged: JsonObject) {
         val items = merged.getAsJsonArray("items") ?: return
+        val seenUids = mutableSetOf<String>()
         items.forEach { el ->
             val obj = el.asJsonObject
             val uid = obj["uid"].asString
+            seenUids.add(uid)
             val ver = parseVer(obj.getAsJsonObject("ver"))
-            val deleted = obj["deleted"]?.asBoolean == true
+            val deleted = obj["deleted"]?.asBoolean == true || isHabitDocDeleted(obj.objectMemberOrNull("doc"))
             val ddlId = db.getDdlIdByUid(uid)
+            var forceApply = false
             val applyDecision = HabitSyncRules.applyDecision(
                 carrierExists = ddlId != null,
                 deleted = deleted,
@@ -756,8 +788,14 @@ class SyncService(
                     throw IllegalArgumentException("Habit carrier DDL missing for uid=$uid")
                 }
                 HabitApplyDecision.SKIP_ALREADY_APPLIED -> {
-                    Log.d("HabitSync", "Skip apply uid=$uid because habit_applied_ver is newer or equal")
-                    return@forEach
+                    val resolvedDdlId = ddlId
+                        ?: throw IllegalArgumentException("Habit carrier DDL missing for uid=$uid")
+                    forceApply = shouldForceApplyDespiteAppliedVersion(obj, resolvedDdlId, ver.dev)
+                    if (!forceApply) {
+                        Log.d("HabitSync", "Skip apply uid=$uid because habit_applied_ver is newer or equal")
+                        return@forEach
+                    }
+                    Log.w("HabitSync", "Force apply uid=$uid because payload differs while version is equal")
                 }
                 HabitApplyDecision.APPLY -> Unit
             }
@@ -771,12 +809,23 @@ class SyncService(
                     db.deleteHabitRecordsForHabit(habitId)
                     db.deleteHabitByDdlId(resolvedDdlId)
                 }
-                db.setDdlVersionById(resolvedDdlId, ver)
+                db.writableDatabase.update(
+                    "ddl_items",
+                    ContentValues().apply {
+                        put("deleted", 1)
+                        put("timestamp", ver.ts)
+                        put("ver_ts", ver.ts)
+                        put("ver_ctr", ver.ctr)
+                        put("ver_dev", ver.dev)
+                    },
+                    "id = ?",
+                    arrayOf(resolvedDdlId.toString())
+                )
                 db.setHabitAppliedVersionByDdlId(resolvedDdlId, ver)
                 return@forEach
             }
 
-            val doc = obj.getAsJsonObject("doc")
+            val doc = obj.objectMemberOrNull("doc")
                 ?: throw IllegalArgumentException("Habit item missing doc for uid=$uid")
             val ddlUid = doc["ddl_uid"]?.asString
                 ?: throw IllegalArgumentException("Habit doc missing ddl_uid for uid=$uid")
@@ -784,7 +833,7 @@ class SyncService(
                 throw IllegalArgumentException("Habit ddl_uid mismatch: $ddlUid != $uid")
             }
 
-            val habit = parseHabitPayload(doc.getAsJsonObject("habit"), resolvedDdlId, db.getHabitIdByDdlId(resolvedDdlId) ?: 0L)
+            val habit = parseHabitPayload(doc.objectMemberOrNull("habit"), resolvedDdlId, db.getHabitIdByDdlId(resolvedDdlId) ?: 0L)
             val records = parseHabitRecords(doc.getAsJsonArray("records"), 0L)
 
             val existing = db.getHabitByDdlId(resolvedDdlId)
@@ -801,7 +850,43 @@ class SyncService(
             }
             Log.d("HabitSync", "Apply habit doc uid=$uid records=${records.size}")
             db.setDdlVersionById(resolvedDdlId, ver)
-            db.setHabitAppliedVersionByDdlId(resolvedDdlId, ver)
+            if (!forceApply) {
+                db.setHabitAppliedVersionByDdlId(resolvedDdlId, ver)
+            }
+        }
+        archiveMissingRemoteOwnedHabits(seenUids)
+    }
+
+    private fun shouldForceApplyDespiteAppliedVersion(
+        item: JsonObject,
+        ddlId: Long,
+        incomingVerDev: String
+    ): Boolean {
+        if (incomingVerDev == db.getDeviceId()) return false
+        val doc = item.objectMemberOrNull("doc") ?: return false
+        val habitDoc = doc.objectMemberOrNull("habit") ?: return false
+        val remoteStatus = runCatching {
+            HabitStatus.valueOf(habitDoc["status"]?.takeUnless { it.isJsonNull }?.asString ?: return false)
+        }.getOrNull() ?: return false
+        val localHabit = db.getHabitByDdlId(ddlId) ?: return false
+        if (localHabit.status != remoteStatus) return true
+
+        val remoteUpdatedAtRaw = habitDoc["updated_at"]?.takeUnless { it.isJsonNull }?.asString ?: return false
+        val remoteUpdatedAt = runCatching { parseFlexibleDateTime(remoteUpdatedAtRaw) }.getOrNull() ?: return false
+        return localHabit.updatedAt != remoteUpdatedAt
+    }
+
+    private fun archiveMissingRemoteOwnedHabits(seenUids: Set<String>) {
+        val localDeviceId = db.getDeviceId()
+        db.getHabitCarrierSyncRows().forEach { carrier ->
+            if (carrier.uid in seenUids) return@forEach
+            if (carrier.deleted) return@forEach
+            if (carrier.ver.dev == localDeviceId) return@forEach
+            val habit = db.getHabitByDdlId(carrier.ddlId) ?: return@forEach
+            if (habit.status == HabitStatus.ARCHIVED) return@forEach
+            db.updateHabit(habit.copy(status = HabitStatus.ARCHIVED, updatedAt = parseFlexibleDateTime(carrier.ver.ts)))
+            db.setHabitAppliedVersionByDdlId(carrier.ddlId, carrier.ver)
+            Log.d("HabitSync", "Archive local habit uid=${carrier.uid} because payload is missing on remote-owned carrier")
         }
     }
 

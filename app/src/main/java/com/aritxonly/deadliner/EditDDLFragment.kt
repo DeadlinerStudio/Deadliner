@@ -108,6 +108,8 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
 
         when (ddlItem.type) {
             DeadlineType.TASK -> {
+                startTimeCard.visibility = View.VISIBLE
+                endTimeCard.visibility = View.VISIBLE
                 ddlNoteLayout.visibility = View.VISIBLE
                 ddlNoteEditText.visibility = View.VISIBLE
                 freqTypeToggleGroup.visibility = View.GONE
@@ -117,6 +119,8 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
                 ddlNoteEditText.setText(ddlItem.note)
             }
             DeadlineType.HABIT -> {
+                startTimeCard.visibility = View.GONE
+                endTimeCard.visibility = View.GONE
                 ddlNoteLayout.visibility = View.GONE
                 ddlNoteEditText.visibility = View.GONE
                 freqTypeToggleGroup.visibility = View.VISIBLE
@@ -160,19 +164,21 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
         val colorSurface = getThemeColor(com.google.android.material.R.attr.colorSurface)
         setSystemBarColors(colorSurface, isLightColor(colorSurface))
 
-        // 选择开始时间
-        startTimeCard.setOnClickListener {
-            GlobalUtils.showDateTimePicker(parentFragmentManager) { selectedTime ->
-                startTime = selectedTime
-                startTimeContent.text = formatLocalDateTime(startTime)
+        if (ddlItem.type == DeadlineType.TASK) {
+            // 选择开始时间
+            startTimeCard.setOnClickListener {
+                GlobalUtils.showDateTimePicker(parentFragmentManager) { selectedTime ->
+                    startTime = selectedTime
+                    startTimeContent.text = formatLocalDateTime(startTime)
+                }
             }
-        }
 
-        // 选择结束时间
-        endTimeCard.setOnClickListener {
-            GlobalUtils.showDateTimePicker(parentFragmentManager) { selectedTime ->
-                endTime = selectedTime
-                endTimeContent.text = formatLocalDateTime(endTime!!)
+            // 选择结束时间
+            endTimeCard.setOnClickListener {
+                GlobalUtils.showDateTimePicker(parentFragmentManager) { selectedTime ->
+                    endTime = selectedTime
+                    endTimeContent.text = formatLocalDateTime(endTime!!)
+                }
             }
         }
 
@@ -214,8 +220,8 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
                     // 3) 更新 DDLItem：写回 note、时间、名字等
                     val updatedDDL = ddlItem.copy(
                         name = ddlName,
-                        startTime = startTime.toString(),
-                        endTime = endTime.toString(),
+                        startTime = "",
+                        endTime = "",
                         note = noteJson,
                         type = DeadlineType.HABIT
                     )

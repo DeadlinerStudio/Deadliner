@@ -38,6 +38,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
@@ -81,6 +82,7 @@ import com.aritxonly.deadliner.ui.base.OutlinedTextField
 import com.aritxonly.deadliner.ui.base.Scaffold
 import com.aritxonly.deadliner.ui.base.Switch
 import com.aritxonly.deadliner.ui.base.TabRow
+import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -257,6 +259,7 @@ class AddDDLActivity : AppCompatActivity() {
     @Composable
     private fun AddDDLScreen() {
         val tabs = listOf(stringResource(R.string.task), stringResource(R.string.habit))
+        val textFieldShape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
         LaunchedEffect(autoRunAiOnAppear, aiInputText, aiAutoTriggered) {
             if (autoRunAiOnAppear && !aiAutoTriggered && aiInputText.isNotBlank()) {
                 aiAutoTriggered = true
@@ -280,7 +283,9 @@ class AddDDLActivity : AppCompatActivity() {
                         IconButton(onClick = { finishAfterTransition() }) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_back),
-                                contentDescription = stringResource(R.string.close)
+                                contentDescription = stringResource(R.string.close),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = expressiveTypeModifier
                             )
                         }
                     },
@@ -289,7 +294,9 @@ class AddDDLActivity : AppCompatActivity() {
                             IconButton(onClick = { onImportFromCalendarClick() }) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_event),
-                                    contentDescription = stringResource(R.string.select_calendar_to_import)
+                                    contentDescription = stringResource(R.string.select_calendar_to_import),
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = expressiveTypeModifier
                                 )
                             }
                         }
@@ -297,7 +304,10 @@ class AddDDLActivity : AppCompatActivity() {
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         scrolledContainerColor = MaterialTheme.colorScheme.surface
-                    )
+                    ),
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(horizontal = 8.dp)
                 )
             },
             bottomBar = {
@@ -316,7 +326,8 @@ class AddDDLActivity : AppCompatActivity() {
                     tabs = tabs,
                     selectedTabIndex = selectedPage,
                     onTabSelected = { selectedPage = it },
-                    modifier = Modifier.fillMaxWidth()
+                    divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surface) },
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
 
                 LazyColumn(
@@ -337,7 +348,8 @@ class AddDDLActivity : AppCompatActivity() {
                             label = { Text(stringResource(R.string.add_ddl_name)) },
                             miuixLabel = stringResource(R.string.add_ddl_name),
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            singleLine = true,
+                            shape = textFieldShape
                         )
                     }
 
@@ -368,35 +380,37 @@ class AddDDLActivity : AppCompatActivity() {
                         }
                     }
 
-                    item {
-                        DateTimeCard(
-                            title = stringResource(R.string.start_time),
-                            value = formatLocalDateTime(startTime),
-                            onClick = {
-                                GlobalUtils.showDateTimePicker(supportFragmentManager) { selected ->
-                                    startTime = selected
-                                    if (endTime.isBefore(selected)) {
-                                        endTime = selected.plusHours(1)
+                    if (selectedPage == 0) {
+                        item {
+                            DateTimeCard(
+                                title = stringResource(R.string.start_time),
+                                value = formatLocalDateTime(startTime),
+                                onClick = {
+                                    GlobalUtils.showDateTimePicker(supportFragmentManager) { selected ->
+                                        startTime = selected
+                                        if (endTime.isBefore(selected)) {
+                                            endTime = selected.plusHours(1)
+                                        }
                                     }
                                 }
-                            }
-                        )
-                    }
+                            )
+                        }
 
-                    item {
-                        DateTimeCard(
-                            title = stringResource(R.string.end_time),
-                            value = formatLocalDateTime(endTime),
-                            onClick = {
-                                GlobalUtils.showDateTimePicker(
-                                    supportFragmentManager,
-                                    startTime,
-                                    { chosen -> Toast.makeText(this@AddDDLActivity, getString(R.string.please_choose_the_time_after, chosen), Toast.LENGTH_SHORT).show() }
-                                ) { selected ->
-                                    endTime = selected
+                        item {
+                            DateTimeCard(
+                                title = stringResource(R.string.end_time),
+                                value = formatLocalDateTime(endTime),
+                                onClick = {
+                                    GlobalUtils.showDateTimePicker(
+                                        supportFragmentManager,
+                                        startTime,
+                                        { chosen -> Toast.makeText(this@AddDDLActivity, getString(R.string.please_choose_the_time_after, chosen), Toast.LENGTH_SHORT).show() }
+                                    ) { selected ->
+                                        endTime = selected
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
 
                     if (selectedPage == 0) {
@@ -408,7 +422,8 @@ class AddDDLActivity : AppCompatActivity() {
                                 miuixLabel = stringResource(R.string.add_ddl_note),
                                 modifier = Modifier.fillMaxWidth(),
                                 minLines = 3,
-                                maxLines = 6
+                                maxLines = 6,
+                                shape = textFieldShape
                             )
                         }
                     } else {
@@ -420,7 +435,8 @@ class AddDDLActivity : AppCompatActivity() {
                                 miuixLabel = stringResource(R.string.add_ddl_note),
                                 modifier = Modifier.fillMaxWidth(),
                                 minLines = 2,
-                                maxLines = 5
+                                maxLines = 5,
+                                shape = textFieldShape
                             )
                         }
 
@@ -444,7 +460,8 @@ class AddDDLActivity : AppCompatActivity() {
                                     label = { Text(stringResource(R.string.add_ddl_frequency)) },
                                     miuixLabel = stringResource(R.string.add_ddl_frequency),
                                     modifier = Modifier.weight(1f),
-                                    singleLine = true
+                                    singleLine = true,
+                                    shape = textFieldShape
                                 )
                                 OutlinedTextField(
                                     value = totalInput,
@@ -452,7 +469,8 @@ class AddDDLActivity : AppCompatActivity() {
                                     label = { Text(stringResource(R.string.add_ddl_total)) },
                                     miuixLabel = stringResource(R.string.add_ddl_total),
                                     modifier = Modifier.weight(1f),
-                                    singleLine = true
+                                    singleLine = true,
+                                    shape = textFieldShape
                                 )
                             }
                             Spacer(modifier = Modifier.height(6.dp))
@@ -488,6 +506,7 @@ class AddDDLActivity : AppCompatActivity() {
 
     @Composable
     private fun AiQuickAddCard() {
+        val textFieldShape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -508,7 +527,8 @@ class AddDDLActivity : AppCompatActivity() {
                     miuixLabel = stringResource(R.string.ai_quick_add_placeholder),
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 1,
-                    maxLines = 3
+                    maxLines = 3,
+                    shape = textFieldShape
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(
@@ -824,8 +844,8 @@ class AddDDLActivity : AppCompatActivity() {
 
         val ddlId = repo.insertDDL(
             name = name,
-            startTime = startTime.toString(),
-            endTime = endTime.toString(),
+            startTime = "",
+            endTime = "",
             note = meta.toJson(),
             type = DeadlineType.HABIT
         )
