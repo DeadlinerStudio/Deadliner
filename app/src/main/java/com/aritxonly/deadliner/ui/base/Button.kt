@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -57,6 +59,11 @@ fun Button(
             )
         }
         AppDesignSystem.MIUIX -> {
+            val contentColor = if (enabled) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
             MiuixButton(
                 onClick = onClick,
                 modifier = modifier.padding(vertical = 8.dp),
@@ -65,8 +72,13 @@ fun Button(
                 colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.buttonColors(
                     color = colors.containerColor,
                 ),
-                content = content
-            )
+            ) {
+                CompositionLocalProvider(
+                    LocalContentColor provides contentColor
+                ) {
+                    content()
+                }
+            }
         }
     }
 }
@@ -114,8 +126,6 @@ fun TextButton(
                 modifier = modifier,
                 enabled = enabled,
                 insideMargin = contentPadding,
-
-                // 同样放权，保持默认透明背景
             )
         }
     }

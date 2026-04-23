@@ -39,7 +39,7 @@ import com.aritxonly.deadliner.hashColor
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.ui.AnimatedItem
-import com.aritxonly.deadliner.ui.main.simplified.fadingTopEdge
+import com.aritxonly.deadliner.ui.main.shared.fadingTopEdge
 import java.time.Duration
 import java.time.LocalDateTime
 import kotlin.collections.component1

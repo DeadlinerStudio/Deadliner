@@ -41,6 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
@@ -83,6 +84,7 @@ import com.aritxonly.deadliner.ui.base.Scaffold
 import com.aritxonly.deadliner.ui.base.Switch
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -94,6 +96,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 import com.aritxonly.deadliner.ai.AIUtils
+import com.aritxonly.deadliner.ui.iconResource
 
 @SuppressLint("SimpleDateFormat")
 class AddDDLActivity : AppCompatActivity() {
@@ -369,12 +372,19 @@ class AddDDLActivity : AppCompatActivity() {
                             ) {
                                 Text(
                                     text = stringResource(R.string.star),
-                                    style = MaterialTheme.typography.bodyLarge
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 Switch(
                                     checked = isStarred,
-                                    onCheckedChange = { isStarred = it }
+                                    onCheckedChange = { isStarred = it },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                        checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    )
                                 )
                             }
                         }
@@ -443,7 +453,8 @@ class AddDDLActivity : AppCompatActivity() {
                         item {
                             Text(
                                 text = stringResource(R.string.add_ddl_frequency_type),
-                                style = MaterialTheme.typography.titleSmall
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             FrequencyTypeRow(
@@ -517,7 +528,8 @@ class AddDDLActivity : AppCompatActivity() {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(
                     text = stringResource(R.string.ai_quick_add),
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
@@ -570,7 +582,10 @@ class AddDDLActivity : AppCompatActivity() {
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 ) {
-                    Text(stringResource(R.string.save_and_add_to_calendar))
+                    Text(
+                        text = stringResource(R.string.save_and_add_to_calendar),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
                 }
             }
 
@@ -578,7 +593,10 @@ class AddDDLActivity : AppCompatActivity() {
                 onClick = onSave,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(stringResource(R.string.save))
+                Text(
+                    text = stringResource(R.string.save),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
         }
     }
@@ -635,12 +653,19 @@ class AddDDLActivity : AppCompatActivity() {
                 ) {
                     Text(
                         text = stringResource(R.string.habit_enable_notification),
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Switch(
                         checked = enabled,
-                        onCheckedChange = onEnabledChange
+                        onCheckedChange = onEnabledChange,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
                     )
                 }
 
@@ -654,13 +679,15 @@ class AddDDLActivity : AppCompatActivity() {
                     ) {
                         Text(
                             text = stringResource(R.string.habit_notify_at, time.format(REMINDER_TIME_FORMATTER)),
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Icon(
-                            painter = painterResource(R.drawable.ic_event),
+                            imageVector = iconResource(R.drawable.ic_event),
                             contentDescription = stringResource(R.string.set_time),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }

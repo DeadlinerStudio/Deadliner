@@ -22,14 +22,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,7 +35,6 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.aritxonly.deadliner.ArchiveActivity
 import com.aritxonly.deadliner.CaptureActivity
 import com.aritxonly.deadliner.MainActivity
@@ -50,6 +43,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsActivity
 import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.iconResource
 import java.time.LocalTime
 
@@ -62,7 +56,6 @@ fun MorePanelCard(
     activity: MainActivity
 ) {
     val context = LocalContext.current
-    var showProfileEditor by remember { mutableStateOf(false) }
 
     Column(modifier) {
         Row(
@@ -120,40 +113,6 @@ fun MorePanelCard(
             }
             MoreRow(R.drawable.ic_chart, stringResource(R.string.overview)) {
                 activity.startActivity(Intent(context, OverviewActivity::class.java))
-            }
-            MoreRow(R.drawable.ic_edit, stringResource(R.string.edit_profile)) {
-                showProfileEditor = true
-            }
-        }
-    }
-
-    if (showProfileEditor) {
-        Dialog(
-            onDismissRequest = { showProfileEditor = false }
-        ) {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                tonalElevation = 8.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(16.dp)
-            ) {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.edit_profile),
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Spacer(Modifier.height(16.dp))
-
-                    ProfileEditor(
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
             }
         }
     }

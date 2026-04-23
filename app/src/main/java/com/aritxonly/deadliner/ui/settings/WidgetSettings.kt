@@ -36,6 +36,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
 @Composable
 fun WidgetSettingsScreen(
@@ -64,7 +65,7 @@ fun WidgetSettingsScreen(
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_widget),
         navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = Modifier.padding(start = 8.dp)) {
+            IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(
                     painter = painterResource(R.drawable.ic_back),
                     contentDescription = stringResource(R.string.back),

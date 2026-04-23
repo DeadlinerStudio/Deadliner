@@ -1,6 +1,7 @@
 package com.aritxonly.deadliner
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -17,7 +18,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.overview.DashboardScreen
 import com.aritxonly.deadliner.ui.overview.OverviewStatsScreen
 import com.aritxonly.deadliner.ui.overview.TrendAnalysisScreen
@@ -54,6 +58,8 @@ import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.base.TabRow
+import com.aritxonly.deadliner.ui.base.TopAppBar
+import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -149,13 +155,95 @@ fun hashColor(key: String) : Color {
     return color
 }
 
+@Composable
+fun OverviewTopBar(
+    showNavigationIcon: Boolean = true,
+    onClose: () -> Unit = {},
+    onShowSettings: () -> Unit = {},
+    mode: TopAppBarStyle = TopAppBarStyle.CENTER,
+) {
+    TopAppBar(
+        title = stringResource(R.string.title_activity_overview),
+        mode = mode,
+        navigationIcon = if (showNavigationIcon) {
+            {
+                IconButton(onClick = onClose) {
+                    Icon(
+                        painterResource(R.drawable.ic_back),
+                        contentDescription = stringResource(R.string.close),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = expressiveTypeModifier
+                    )
+                }
+            }
+        } else null,
+        actions = {
+            Row {
+                IconButton(
+                    onClick = onShowSettings,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_pref),
+                        contentDescription = stringResource(R.string.settings_more),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = expressiveTypeModifier
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun OverviewSettingsDialog(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+) {
+    if (!visible) return
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.accept))
+            }
+        },
+        text = {
+            AndroidView(
+                factory = { context ->
+                    LayoutInflater.from(context)
+                        .inflate(R.layout.dialog_overview_settings, null)
+                        .apply {
+                            val seek = findViewById<Slider>(R.id.seekbar_monthly)
+                            val tv = findViewById<TextView>(R.id.text_monthly_value)
+                            val sw = findViewById<MaterialSwitch>(R.id.switch_overdue)
+
+                            seek.value = (GlobalUtils.OverviewSettings.monthlyCount).toFloat()
+                            tv.text = context.getString(R.string.xx_months, GlobalUtils.OverviewSettings.monthlyCount)
+                            sw.isChecked = GlobalUtils.OverviewSettings.showOverdueInDaily
+
+                            seek.addOnChangeListener { _, _, _ ->
+                                GlobalUtils.OverviewSettings.monthlyCount = seek.value.toInt()
+                                tv.text = context.getString(R.string.xx_months, GlobalUtils.OverviewSettings.monthlyCount)
+                            }
+                            sw.setOnCheckedChangeListener { _, isChecked ->
+                                GlobalUtils.OverviewSettings.showOverdueInDaily = isChecked
+                            }
+                        }
+                },
+                update = { }
+            )
+        }
+    )
+}
+
 @SuppressLint("SetTextI18n")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OverviewScreen(
+fun OverviewContent(
     items: List<DDLItem>,
-    activity: OverviewActivity,
-    onClose: () -> Unit
+    activity: Activity,
+    modifier: Modifier = Modifier,
+    flattenedLayout: Boolean = false,
 ) {
     val context = LocalContext.current
 
@@ -200,8 +288,42 @@ fun OverviewScreen(
         .sortedBy { timeBucketOrder[it.first] ?: Int.MAX_VALUE }
 
 
-    // UI准备
-    var showSettings by rememberSaveable { mutableStateOf(false) }
+    if (flattenedLayout) {
+        Row(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            OverviewStatsScreen(
+                activeStats,
+                historyStats,
+                completionTimeStats,
+                overdueItems,
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.surface),
+            )
+            TrendAnalysisScreen(
+                items,
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.surface),
+            )
+            DashboardScreen(
+                items,
+                activity,
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.surface),
+            )
+        }
+        return
+    }
 
     val tabs = listOf(
         stringResource(R.string.tab_overview),
@@ -215,135 +337,86 @@ fun OverviewScreen(
     )
     var selectedTab by rememberSaveable { androidx.compose.runtime.mutableIntStateOf(0) }
 
+    Column(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        val iconsList = tabs.map { title ->
+            mapIcon[title] ?: painterResource(R.drawable.ic_info)
+        }
+
+        TabRow(
+            tabs = tabs,
+            selectedTabIndex = selectedTab,
+            onTabSelected = { selectedTab = it },
+            tabIcons = iconsList,
+            divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surface) },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        when (selectedTab) {
+            0 ->
+                OverviewStatsScreen(
+                    activeStats,
+                    historyStats,
+                    completionTimeStats,
+                    overdueItems,
+                    Modifier
+                        .background(MaterialTheme.colorScheme.surface),
+                )
+            1 ->
+                TrendAnalysisScreen(
+                    items,
+                    Modifier
+                        .background(MaterialTheme.colorScheme.surface),
+                )
+            2 ->
+                DashboardScreen(
+                    items,
+                    activity,
+                    Modifier
+                        .background(MaterialTheme.colorScheme.surface)
+                )
+        }
+    }
+}
+
+@SuppressLint("SetTextI18n")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OverviewScreen(
+    items: List<DDLItem>,
+    activity: Activity,
+    showTopBar: Boolean = true,
+    showNavigationIcon: Boolean = true,
+    onClose: () -> Unit = {},
+) {
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
         containerColor = Color.Transparent,
         contentColor = contentColorFor(Color.Transparent),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(
-                    stringResource(R.string.title_activity_overview),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal)
-                ) },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onClose,
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.ic_back),
-                            contentDescription = stringResource(R.string.close),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = expressiveTypeModifier
-                        )
-                    }
-                },
-                actions = {
-                    Row {
-                        IconButton(
-                            onClick = { showSettings = true },
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.ic_pref),
-                                contentDescription = stringResource(R.string.settings_more),
-                                tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = expressiveTypeModifier
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                ),
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 8.dp)
-            )
+        topBar = if (showTopBar) {
+            {
+                OverviewTopBar(
+                    showNavigationIcon = showNavigationIcon,
+                    onClose = onClose,
+                    onShowSettings = { showSettings = true },
+                )
+            }
+        } else {
+            {}
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surface)
-        ) {
-            val iconsList = tabs.map { title ->
-                mapIcon[title] ?: painterResource(R.drawable.ic_info)
-            }
-
-            TabRow(
-                tabs = tabs,
-                selectedTabIndex = selectedTab,
-                onTabSelected = { selectedTab = it },
-                tabIcons = iconsList,
-                divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surface) },
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-
-            when (selectedTab) {
-                0 ->
-                    OverviewStatsScreen(
-                        activeStats,
-                        historyStats,
-                        completionTimeStats,
-                        overdueItems,
-                        Modifier
-                            .background(MaterialTheme.colorScheme.surface),
-                    )
-                1 ->
-                    TrendAnalysisScreen(
-                        items,
-                        Modifier
-                            .background(MaterialTheme.colorScheme.surface),
-                    )
-                2 ->
-                    DashboardScreen(
-                        items,
-                        activity,
-                        Modifier
-                            .background(MaterialTheme.colorScheme.surface)
-                    )
-            }
-        }
-
-        if (showSettings) {
-            AlertDialog(
-                onDismissRequest = { showSettings = false },
-                confirmButton = {
-                    TextButton(onClick = { showSettings = false }) {
-                        Text(stringResource(R.string.accept))
-                    }
-                },
-                text = {
-                    // 用 AndroidView 加载我们刚才写的 XML 布局
-                    AndroidView(
-                        factory = { context ->
-                            LayoutInflater.from(context)
-                                .inflate(R.layout.dialog_overview_settings, null)
-                                .apply {
-                                    val seek = findViewById<Slider>(R.id.seekbar_monthly)
-                                    val tv = findViewById<TextView>(R.id.text_monthly_value)
-                                    val sw = findViewById<MaterialSwitch>(R.id.switch_overdue)
-
-                                    // 初始化控件状态
-                                    seek.value = (GlobalUtils.OverviewSettings.monthlyCount).toFloat()
-                                    tv.text = context.getString(R.string.xx_months, GlobalUtils.OverviewSettings.monthlyCount)
-                                    sw.isChecked = GlobalUtils.OverviewSettings.showOverdueInDaily
-
-                                    // 监听用户操作，实时更新 SharedPreferences
-                                    seek.addOnChangeListener { _, _, _ ->
-                                        GlobalUtils.OverviewSettings.monthlyCount = seek.value.toInt()
-                                        tv.text = context.getString(R.string.xx_months, GlobalUtils.OverviewSettings.monthlyCount)
-                                    }
-                                    sw.setOnCheckedChangeListener { _, isChecked ->
-                                        GlobalUtils.OverviewSettings.showOverdueInDaily = isChecked
-                                    }
-                                }
-                        },
-                        update = { /* nothing to do */ }
-                    )
-                }
-            )
-        }
+        OverviewContent(
+            items = items,
+            activity = activity,
+            modifier = Modifier.padding(paddingValues),
+        )
+        OverviewSettingsDialog(
+            visible = showSettings,
+            onDismiss = { showSettings = false },
+        )
     }
 }

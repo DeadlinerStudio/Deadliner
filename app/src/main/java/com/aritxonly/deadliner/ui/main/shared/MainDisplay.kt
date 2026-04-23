@@ -1,5 +1,5 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
-package com.aritxonly.deadliner.ui.main.simplified
+package com.aritxonly.deadliner.ui.main.shared
 
 import android.graphics.BitmapFactory
 import android.graphics.Rect
@@ -129,6 +129,7 @@ import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.model.updateNoteWithDate
 import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
 import com.aritxonly.deadliner.ui.main.HabitItemCardSimplified
+import com.aritxonly.deadliner.ui.main.simplified.*
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
@@ -168,11 +169,12 @@ fun MainDisplay(
 
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<DDLItem?>(null) }
+    var abandonDialogVisible by remember { mutableStateOf(false) }
     val pullToRefreshState = rememberPullToRefreshState()
     val isRefreshing = refreshState is MainViewModel.RefreshState.Loading && !refreshState.silent
 
     val needsBlur by remember {
-        derivedStateOf { pendingDelete != null }
+        derivedStateOf { pendingDelete != null || abandonDialogVisible }
     }
     LaunchedEffect(needsBlur) {
         onRequestBackdropBlur(needsBlur)
@@ -242,7 +244,8 @@ fun MainDisplay(
                                     selectionMode = selectionMode,
                                     selected = isSelected(item.id),
                                     onLongPressSelect = { onItemLongPress(item.id) },
-                                    onToggleSelect = { onItemClickInSelection(item.id) }
+                                    onToggleSelect = { onItemClickInSelection(item.id) },
+                                    onAbandonDialogVisibilityChange = { abandonDialogVisible = it },
                                 )
                             }
                         }

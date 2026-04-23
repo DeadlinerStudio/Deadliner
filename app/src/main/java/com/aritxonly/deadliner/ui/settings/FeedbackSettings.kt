@@ -33,7 +33,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -50,13 +52,13 @@ fun FeedbackScreen(
                         text = stringResource(R.string.settings_feedback),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = navIconPaddingModifier
                     )
                 },
                 navigationIcon = {
                     IconButton(
                         onClick = navigateUp,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = navIconPaddingModifier
                     ) {
                         Icon(
                             painterResource(R.drawable.ic_back),

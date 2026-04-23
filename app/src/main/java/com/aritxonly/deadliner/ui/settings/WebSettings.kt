@@ -57,6 +57,7 @@ import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.sync.SyncScheduler
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -190,7 +191,7 @@ fun WebSettingsScreen(
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_webdav),
         navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = Modifier.padding(start = 8.dp)) {
+            IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(
                     painter = painterResource(R.drawable.ic_back),
                     contentDescription = stringResource(R.string.back),

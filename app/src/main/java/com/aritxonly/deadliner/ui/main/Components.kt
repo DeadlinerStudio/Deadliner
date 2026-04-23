@@ -52,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -403,86 +404,65 @@ fun DDLItemCardSwipeable(
     val resolvedSecondaryActionIcon = secondaryActionIcon ?: ImageVector.vectorResource(R.drawable.ic_delete)
     val resolvedSecondaryActionColor = secondaryActionColor ?: colorResource(R.color.chart_red)
 
-    var hasTriggered by remember { mutableStateOf(false) }
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { v ->
-            if (!swipeEnabled) return@rememberSwipeToDismissBoxState false
-            when (v) {
-                SwipeToDismissBoxValue.EndToStart -> {
-                    if (!hasTriggered) {
-                        hasTriggered = true
-                        onDelete()
+    key(
+        swipeEnabled,
+        resolvedPrimaryActionIcon,
+        resolvedPrimaryActionColor,
+        resolvedSecondaryActionIcon,
+        resolvedSecondaryActionColor
+    ) {
+        var hasTriggered by remember { mutableStateOf(false) }
+        val dismissState = rememberSwipeToDismissBoxState(
+            confirmValueChange = { v ->
+                if (!swipeEnabled) return@rememberSwipeToDismissBoxState false
+                when (v) {
+                    SwipeToDismissBoxValue.EndToStart -> {
+                        if (!hasTriggered) {
+                            hasTriggered = true
+                            onDelete()
+                        }
+                        false
                     }
-                    false
-                }
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    if (!hasTriggered) {
-                        hasTriggered = true
-                        onComplete()
+                    SwipeToDismissBoxValue.StartToEnd -> {
+                        if (!hasTriggered) {
+                            hasTriggered = true
+                            onComplete()
+                        }
+                        false
                     }
-                    false
+                    else -> false
                 }
-                else -> false
             }
+        )
+        val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
+
+        var widthPx by remember { mutableIntStateOf(1) }
+        val rawOffset = runCatching { dismissState.requireOffset() }.getOrElse { 0f }
+        val fraction = (abs(rawOffset) / widthPx.toFloat()).coerceIn(0f, 1f)
+
+        LaunchedEffect(dismissState) {
+            snapshotFlow {
+                // 读取偏移和状态
+                val off = runCatching { dismissState.requireOffset() }.getOrElse { 0f }
+                val atRest = abs(off) < 0.5f &&
+                        dismissState.currentValue == SwipeToDismissBoxValue.Settled &&
+                        dismissState.targetValue  == SwipeToDismissBoxValue.Settled
+                atRest
+            }
+                .distinctUntilChanged()
+                .collectLatest { atRest ->
+                    if (atRest) {
+                        hasTriggered = false   // 只有真正回到“静止原位”才解锁
+                    }
+                }
         }
-    )
-    val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
 
-    var widthPx by remember { mutableIntStateOf(1) }
-    val rawOffset = runCatching { dismissState.requireOffset() }.getOrElse { 0f }
-    val fraction = (abs(rawOffset) / widthPx.toFloat()).coerceIn(0f, 1f)
-
-    LaunchedEffect(dismissState) {
-        snapshotFlow {
-            // 读取偏移和状态
-            val off = runCatching { dismissState.requireOffset() }.getOrElse { 0f }
-            val atRest = abs(off) < 0.5f &&
-                    dismissState.currentValue == SwipeToDismissBoxValue.Settled &&
-                    dismissState.targetValue  == SwipeToDismissBoxValue.Settled
-            atRest
-        }
-            .distinctUntilChanged()
-            .collectLatest { atRest ->
-                if (atRest) {
-                    hasTriggered = false   // 只有真正回到“静止原位”才解锁
-                }
-            }
-    }
-
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = true,
-        enableDismissFromEndToStart = true,
-        backgroundContent = {
-            if (!swipeEnabled) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .onSizeChanged { widthPx = it.width }
-                        .clip(shape)
-                )
-                return@SwipeToDismissBox
-            }
-
-            val dir = dismissState.dismissDirection
-
-            // 动作色（红=删除；绿=完成）与对齐位置
-            val actionColor: Color
-            val icon: ImageVector
-            val alignment: Alignment
-
-            when (dir) {
-                SwipeToDismissBoxValue.EndToStart -> {
-                    actionColor = resolvedSecondaryActionColor
-                    icon = resolvedSecondaryActionIcon
-                    alignment = Alignment.CenterEnd
-                }
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    actionColor = resolvedPrimaryActionColor
-                    icon = resolvedPrimaryActionIcon
-                    alignment = Alignment.CenterStart
-                }
-                else -> {
+        SwipeToDismissBox(
+            state = dismissState,
+            enableDismissFromStartToEnd = true,
+            enableDismissFromEndToStart = true,
+            backgroundContent = {
+                if (!swipeEnabled) {
                     Box(
                         Modifier
                             .fillMaxSize()
@@ -491,73 +471,102 @@ fun DDLItemCardSwipeable(
                     )
                     return@SwipeToDismissBox
                 }
-            }
 
-            val base = MaterialTheme.colorScheme.surfaceVariant
-            val bg = lerp(base, actionColor.copy(alpha = 0.80f), fraction)
+                val dir = dismissState.dismissDirection
 
-            val iconTint = lerp(
-                actionColor.copy(alpha = 0.65f),
-                actionColor,
-                fraction.coerceIn(0f, 1f)
-            )
+                // 动作色（红=删除；绿=完成）与对齐位置
+                val actionColor: Color
+                val icon: ImageVector
+                val alignment: Alignment
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onSizeChanged { widthPx = it.width }
-                    .clip(shape)
-                    .background(bg)
-                    .padding(horizontal = 20.dp),
-                contentAlignment = alignment
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconTint
+                when (dir) {
+                    SwipeToDismissBoxValue.EndToStart -> {
+                        actionColor = resolvedSecondaryActionColor
+                        icon = resolvedSecondaryActionIcon
+                        alignment = Alignment.CenterEnd
+                    }
+                    SwipeToDismissBoxValue.StartToEnd -> {
+                        actionColor = resolvedPrimaryActionColor
+                        icon = resolvedPrimaryActionIcon
+                        alignment = Alignment.CenterStart
+                    }
+                    else -> {
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .onSizeChanged { widthPx = it.width }
+                                .clip(shape)
+                        )
+                        return@SwipeToDismissBox
+                    }
+                }
+
+                val base = MaterialTheme.colorScheme.surfaceVariant
+                val bg = lerp(base, actionColor.copy(alpha = 0.80f), fraction)
+
+                val iconTint = lerp(
+                    actionColor.copy(alpha = 0.65f),
+                    actionColor,
+                    fraction.coerceIn(0f, 1f)
                 )
-            }
-        },
-        content = {
-            Box(
-                modifier = modifier
-                    .clip(shape)
-                    .combinedClickable(
-                        onClick = {
-                            if (selectionMode) {
-                                onToggleSelect?.invoke()
-                            } else {
-                                onClick?.invoke()
-                            }
-                        },
-                        onLongClick = {
-                            onLongPressSelect?.invoke()
-                        }
-                    )
-            ) {
-                DDLItemCardSimplified(
-                    title = title,
-                    remainingTimeAlt = remainingTimeAlt,
-                    note = note,
-                    progress = progress,
-                    isStarred = isStarred,
-                    modifier = modifier
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onSizeChanged { widthPx = it.width }
                         .clip(shape)
-                        .onSizeChanged { widthPx = it.width },
-                    onClick = null,
-                    status = status,
-                    useDisabledCompletedStyle = useDisabledCompletedStyle
-                )
-
-                if (selectionMode && selected) {
-                    SelectionOverlay(
-                        shape, Modifier
-                        .height(76.dp)
+                        .background(bg)
+                        .padding(horizontal = 20.dp),
+                    contentAlignment = alignment
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconTint
                     )
                 }
+            },
+            content = {
+                Box(
+                    modifier = modifier
+                        .clip(shape)
+                        .combinedClickable(
+                            onClick = {
+                                if (selectionMode) {
+                                    onToggleSelect?.invoke()
+                                } else {
+                                    onClick?.invoke()
+                                }
+                            },
+                            onLongClick = {
+                                onLongPressSelect?.invoke()
+                            }
+                        )
+                ) {
+                    DDLItemCardSimplified(
+                        title = title,
+                        remainingTimeAlt = remainingTimeAlt,
+                        note = note,
+                        progress = progress,
+                        isStarred = isStarred,
+                        modifier = modifier
+                            .clip(shape)
+                            .onSizeChanged { widthPx = it.width },
+                        onClick = null,
+                        status = status,
+                        useDisabledCompletedStyle = useDisabledCompletedStyle
+                    )
+
+                    if (selectionMode && selected) {
+                        SelectionOverlay(
+                            shape, Modifier
+                            .height(76.dp)
+                        )
+                    }
+                }
             }
-        }
-    )
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

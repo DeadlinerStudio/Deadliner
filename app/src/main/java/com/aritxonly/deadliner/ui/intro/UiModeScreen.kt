@@ -51,10 +51,6 @@ fun UiModeScreen() {
     val onMiuixModeChange: (Boolean) -> Unit = { enabled ->
         GlobalUtils.miuixMode = enabled
         miuixModeEnabled = enabled
-        // 🌟 核心联动：如果关掉了 MIUIX 引擎，且当前刚好是 MIUIX 布局，强制回退到极简布局
-        if (!enabled && currentStyle == "miuix") {
-            onStyleChange("simplified")
-        }
     }
 
     val onThemeChange: (String?) -> Unit = {
@@ -137,7 +133,6 @@ fun UiModeScreen() {
                 currentStyle = currentStyle,
                 onStyleChange = onStyleChange,
                 invertColorFilter = invertColorFilter,
-                isMiuixModeEnabled = miuixModeEnabled, // 动态传递 MIUIX 引擎状态
                 inIntroPage = true,
             )
         }

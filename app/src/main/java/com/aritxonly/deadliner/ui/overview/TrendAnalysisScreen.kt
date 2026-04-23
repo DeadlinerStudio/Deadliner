@@ -31,7 +31,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.OverviewUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.ui.AnimatedItem
-import com.aritxonly.deadliner.ui.main.simplified.fadingTopEdge
+import com.aritxonly.deadliner.ui.main.shared.fadingTopEdge
 import java.time.LocalDate
 
 @Composable

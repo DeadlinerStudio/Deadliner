@@ -31,8 +31,8 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -78,9 +78,6 @@ fun AppearanceSettingsScreen(
     val onMiuixModeChange: (Boolean) -> Unit = {
         GlobalUtils.miuixMode = it
         miuixModeEnabled = it
-        if (!it) {
-            GlobalUtils.style = UiStyle.Simplified.key
-        }
     }
     val onMiuixColorChange: (Boolean) -> Unit = {
         GlobalUtils.miuixColor = it
@@ -99,7 +96,7 @@ fun AppearanceSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = navIconPaddingModifier
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),
@@ -129,7 +126,7 @@ fun AppearanceSettingsScreen(
                         trailingContent = null
                     )
 
-                    if (index != SettingsRoute.behaviorThirdRoutes.lastIndex) {
+                    if (index != SettingsRoute.appearanceThirdRoutes.lastIndex) {
                         SettingsSectionDivider()
                     }
                 }

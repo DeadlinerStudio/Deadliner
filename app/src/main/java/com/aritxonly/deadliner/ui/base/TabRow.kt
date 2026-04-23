@@ -12,9 +12,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
-import top.yukonga.miuix.kmp.basic.TabRowColors
-import top.yukonga.miuix.kmp.basic.TabRowDefaults
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 // 别名防止冲突
 import top.yukonga.miuix.kmp.basic.TabRow as MiuixTabRow

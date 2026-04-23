@@ -30,6 +30,7 @@ import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.updateNoteWithDate
 import com.aritxonly.deadliner.ui.main.DDLItemCardSwipeable
 import com.aritxonly.deadliner.ui.main.HabitItemCardSimplified
+import com.aritxonly.deadliner.ui.main.shared.computeProgress
 import com.aritxonly.deadliner.ui.iconResource
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.delay
@@ -73,7 +74,8 @@ fun TaskItem(
     selectionMode: Boolean = false,
     selected: Boolean = false,
     onLongPressSelect: (() -> Unit)? = null,
-    onToggleSelect: (() -> Unit)? = null
+    onToggleSelect: (() -> Unit)? = null,
+    onAbandonDialogVisibilityChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
 
@@ -148,6 +150,7 @@ fun TaskItem(
             GlobalUtils.triggerVibration(activity, 200)
             val action = secondaryAction ?: return@DDLItemCardSwipeable
             if (action == TaskStateAction.MARK_GIVE_UP) {
+                onAbandonDialogVisibilityChange(true)
                 MaterialAlertDialogBuilder(activity)
                     .setTitle(R.string.confirm_give_up_title)
                     .setMessage(R.string.confirm_give_up_message)
@@ -155,6 +158,9 @@ fun TaskItem(
                     .setPositiveButton(R.string.accept) { _, _ ->
                         applyTaskAction(action, true)
                         Toast.makeText(activity, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
+                    }
+                    .setOnDismissListener {
+                        onAbandonDialogVisibilityChange(false)
                     }
                     .show()
             } else {

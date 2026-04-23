@@ -29,6 +29,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DayOverview
 import com.aritxonly.deadliner.model.HabitWithDailyStatus
+import com.aritxonly.deadliner.ui.main.shared.fadingTopEdge
 import java.time.LocalDate
 import java.time.LocalDateTime
 

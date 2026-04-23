@@ -1,0 +1,44 @@
+package com.aritxonly.deadliner.ui.base
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
+import com.aritxonly.deadliner.ui.theme.AppDesignSystem
+import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
+
+import androidx.compose.material3.FloatingActionButton as Material3Fab
+import top.yukonga.miuix.kmp.basic.FloatingActionButton as MiuixFab
+
+/**
+ * 应用级 FAB：统一 Material3 / MIUIX 两套实现。
+ */
+@Composable
+fun FloatingActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.primary,
+    content: @Composable () -> Unit,
+) {
+    when (LocalAppDesignSystem.current) {
+        AppDesignSystem.MATERIAL3 -> {
+            Material3Fab(
+                onClick = onClick,
+                modifier = modifier,
+                containerColor = containerColor,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                content = content,
+            )
+        }
+
+        AppDesignSystem.MIUIX -> {
+            MiuixFab(
+                onClick = onClick,
+                modifier = modifier,
+                content = content,
+            )
+        }
+    }
+}
+

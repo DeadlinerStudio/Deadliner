@@ -38,7 +38,7 @@ import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.HabitGoalType
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.HabitRecordStatus
-import com.aritxonly.deadliner.ui.main.simplified.computeProgress
+import com.aritxonly.deadliner.ui.main.shared.computeProgress
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.time.Duration
 import java.time.LocalDate

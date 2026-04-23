@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -56,13 +57,13 @@ fun WikiScreen(
                         text = stringResource(R.string.settings_wiki),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = navIconPaddingModifier
                     )
                 },
                 navigationIcon = {
                     IconButton(
                         onClick = navigateUp,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = navIconPaddingModifier
                     ) {
                         Icon(
                             painterResource(R.drawable.ic_back),

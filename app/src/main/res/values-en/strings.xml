@@ -427,6 +427,7 @@
     <string name="setup_finish_desc">Thanks for completing the setup. You can now enjoy using Deadliner!</string>
     <string name="start_to_use">Get started</string>
     <string name="search_events">Search events</string>
+    <string name="search">Search</string>
     <string name="overview_settings_month">Number of months to display</string>
     <string name="overview_settings_weekly_show_overdue_complete">Show overdue completed tasks in weekly view</string>
 
@@ -615,12 +616,14 @@
     <string name="ai_empty_hint">Try describing your task, today’s plan, or let me break your goal into steps.</string>
     <string name="linked_task">Linked: %s</string>
     <string name="settings_support_ui_mode">Adjust Deadliner’s layout and display style</string>
+    <string name="settings_support_profile">Edit avatar and nickname</string>
     <string name="ui_style_classic">Classic</string>
     <string name="ui_style_simplified">Simplified</string>
     <string name="settings_ui_mode_title">Main screen layout</string>
     <string name="ui_style_simplified_support">Focuses on core task and habit management with a cleaner, more straightforward layout.</string>
     <string name="ui_style_classic_support">Retains the classic v2 layout for a more comprehensive, at-a-glance task management experience.</string>
     <string name="ui_style_miuix">Modern Mode</string>
+    <string name="main_section_list">List</string>
     <string name="ui_style_miuix_support">Inspired by HyperOS’s modern design language—more native, more reliable.</string>
 
     <string name="intro_cover_title">Reinvent Your Task Management</string>

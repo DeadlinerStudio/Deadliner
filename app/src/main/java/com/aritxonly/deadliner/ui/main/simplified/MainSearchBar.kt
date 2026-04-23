@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.DeadlineDetailActivity
 // 别名导入，防止 M3 和 MIUIX 冲突
@@ -61,6 +62,7 @@ import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.base.TextButton
 import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
+import com.aritxonly.deadliner.ui.main.shared.MainSearchResultsContent
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import kotlinx.coroutines.delay
@@ -81,7 +83,9 @@ fun MainSearchBar(
     expanded: Boolean,
     onExpandedChangeExternal: (Boolean) -> Unit = {},
     selectedPage: DeadlineType,
-    miuixMode: Boolean = false
+    miuixMode: Boolean = LocalAppDesignSystem.current == AppDesignSystem.MIUIX,
+    resultsHorizontalPadding: Dp = 16.dp,
+    mixedResultTypes: Boolean = false,
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -174,7 +178,13 @@ fun MainSearchBar(
                     onExpandedChangeExternal(exp)
                 }
             ) {
-                SearchResultContent(searchResults, selectedPage, context, activity)
+                SearchResultContent(
+                    searchResults = searchResults,
+                    selectedPage = selectedPage,
+                    activity = activity,
+                    horizontalPadding = resultsHorizontalPadding,
+                    mixedResultTypes = mixedResultTypes,
+                )
             }
         }
     } else {
@@ -208,7 +218,13 @@ fun MainSearchBar(
                 onExpandedChangeExternal(exp)
             }
         ) {
-            SearchResultContent(searchResults, selectedPage, context, activity)
+            SearchResultContent(
+                searchResults = searchResults,
+                selectedPage = selectedPage,
+                activity = activity,
+                horizontalPadding = resultsHorizontalPadding,
+                mixedResultTypes = mixedResultTypes,
+            )
         }
     }
 }
@@ -217,152 +233,16 @@ fun MainSearchBar(
 private fun SearchResultContent(
     searchResults: List<DDLItem>,
     selectedPage: DeadlineType,
-    context: Context,
-    activity: MainActivity?
+    activity: MainActivity?,
+    horizontalPadding: Dp,
+    mixedResultTypes: Boolean,
 ) {
-    if (searchResults.isEmpty()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 48.dp, horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(R.string.search_no_result_title),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = buildAnnotatedString {
-                    append(stringResource(R.string.search_no_result_suggestion_prefix))
-                    append("\n")
-                    appendExample("y2025", R.string.search_example_y)
-                    append("\n")
-                    appendExample("m10", R.string.search_example_m)
-                    append("\n")
-                    appendExample("d15", R.string.search_example_d)
-                    append("\n")
-                    appendExample("h20", R.string.search_example_h)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Icon(
-                painter = painterResource(R.drawable.ic_search),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier
-                    .size(48.dp)
-                    .alpha(0.6f)
-            )
-        }
-    }
-
-    when (selectedPage) {
-        DeadlineType.TASK -> {
-            LazyColumn(
-                contentPadding = PaddingValues(
-                    top = 16.dp,
-                    bottom = 96.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .fadingTopEdge(height = 16.dp),
-            ) {
-                itemsIndexed(
-                    items = searchResults,
-                    key = { _, it -> it.id }
-                ) { index, item ->
-                    AnimatedItem(
-                        item = item,
-                        index = index
-                    ) {
-                        val startTime = GlobalUtils.parseDateTime(item.startTime)
-                        val endTime = GlobalUtils.parseDateTime(item.endTime)
-                        val now = LocalDateTime.now()
-
-                        val remainingTimeText =
-                            if (item.state == DDLState.ABANDONED)
-                                stringResource(R.string.abandoned)
-                            else if (!item.state.isCompletedFamily())
-                                GlobalUtils.buildRemainingTime(
-                                    context,
-                                    startTime,
-                                    endTime,
-                                    true,
-                                    now
-                                )
-                            else stringResource(R.string.completed)
-
-                        val progress = computeProgress(startTime, endTime, now)
-                        val status =
-                            if (item.state.isCompletedFamily() || item.state.isAbandonedFamily()) {
-                                DDLStatus.COMPLETED
-                            } else {
-                                DDLStatus.calculateStatus(
-                                    startTime,
-                                    endTime,
-                                    now,
-                                    false
-                                )
-                            }
-
-                        DDLItemCardSimplified(
-                            title = item.name,
-                            remainingTimeAlt = remainingTimeText,
-                            note = item.note,
-                            progress = progress,
-                            isStarred = item.isStared,
-                            useDisabledCompletedStyle = item.state.isAbandonedFamily(),
-                            status = status,
-                            onClick = {
-                                val intent =
-                                    DeadlineDetailActivity.newIntent(context, item)
-                                activity?.startActivity(intent)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        DeadlineType.HABIT -> {
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2), // 👉 手机上固定两列
-                verticalItemSpacing = 10.dp,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(16.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                itemsIndexed(
-                    items = searchResults,
-                    key = { _, it -> it.id }
-                ) { index, item ->
-                    AnimatedItem(
-                        item = item,
-                        index = index
-                    ) {
-                        HabitItem(
-                            item = item,
-                            onRefresh = {  },
-                            updateDDL = {  },
-                            onCheckInFailed = {  },
-                            onCheckInSuccess = { _, _ -> },
-                        )
-                    }
-                }
-            }
-        }
-    }
+    val targetActivity = activity ?: return
+    MainSearchResultsContent(
+        searchResults = searchResults,
+        selectedPage = selectedPage,
+        activity = targetActivity,
+        horizontalPadding = horizontalPadding,
+        mixedResultTypes = mixedResultTypes,
+    )
 }

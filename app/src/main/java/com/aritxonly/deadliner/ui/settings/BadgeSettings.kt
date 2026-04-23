@@ -35,6 +35,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.PreviewCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
 @Composable
 fun BadgeSettingsScreen(
@@ -59,7 +60,7 @@ fun BadgeSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = navIconPaddingModifier
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),

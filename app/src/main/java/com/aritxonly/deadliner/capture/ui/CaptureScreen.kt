@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +36,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -61,6 +61,8 @@ import com.aritxonly.deadliner.capture.CaptureEffect
 import com.aritxonly.deadliner.capture.CaptureViewModel
 import com.aritxonly.deadliner.capture.model.InspirationItem
 import com.aritxonly.deadliner.ui.base.Scaffold
+import com.aritxonly.deadliner.ui.base.TopAppBar
+import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.settings.RoundedTextField
 import com.aritxonly.deadliner.ui.settings.RoundedTextFieldMetrics
 import java.time.Duration
@@ -71,16 +73,105 @@ import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun CaptureTopBar(
+    vm: CaptureViewModel,
+    onClose: () -> Unit,
+    showNavigationIcon: Boolean = true,
+    onRequestMerge: () -> Unit = {},
+) {
+    val ui by vm.uiState.collectAsState()
+    if (!ui.isMultiSelectMode) {
+        TopAppBar(
+            title = stringResource(R.string.capture_title),
+            navigationIcon = if (showNavigationIcon) {
+                {
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_close),
+                            contentDescription = stringResource(R.string.close)
+                        )
+                    }
+                }
+            } else null,
+            actions = {
+                TextButton(onClick = vm::toggleMultiSelect) { Text(stringResource(R.string.capture_multi_select)) }
+            },
+            mode = if (showNavigationIcon) TopAppBarStyle.CENTER else TopAppBarStyle.SMALL
+        )
+    } else {
+        TopAppBar(
+            title = stringResource(R.string.capture_selected_count, ui.selectedIds.size),
+            navigationIcon = {
+                IconButton(onClick = vm::exitMultiSelect) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_close),
+                        contentDescription = stringResource(R.string.close)
+                    )
+                }
+            },
+            actions = {
+                TextButton(
+                    onClick = vm::deleteSelected,
+                    enabled = ui.selectedIds.isNotEmpty()
+                ) {
+                    Text(stringResource(R.string.capture_delete))
+                }
+                TextButton(
+                    onClick = onRequestMerge,
+                    enabled = ui.selectedIds.size >= 2
+                ) {
+                    Text(stringResource(R.string.capture_merge_count, ui.selectedIds.size))
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun CaptureScreen(
     vm: CaptureViewModel,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    showTopBar: Boolean = true,
+    showNavigationIcon: Boolean = true,
+) {
+    var showMergeSheet by rememberSaveable { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            if (!showTopBar) return@Scaffold
+            CaptureTopBar(
+                vm = vm,
+                onClose = onClose,
+                showNavigationIcon = showNavigationIcon,
+                onRequestMerge = { showMergeSheet = true },
+            )
+        }
+    ) { innerPadding ->
+        CaptureContent(
+            vm = vm,
+            contentPadding = innerPadding,
+            showMergeSheet = showMergeSheet,
+            onShowMergeSheetChange = { showMergeSheet = it },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun CaptureContent(
+    vm: CaptureViewModel,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    twoColumnLayout: Boolean = false,
+    showMergeSheet: Boolean = false,
+    onShowMergeSheetChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val ui by vm.uiState.collectAsState()
-    var showMergeSheet by rememberSaveable { mutableStateOf(false) }
     var showDirectConvertMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        vm.updateQuery("")
         vm.effects.collect { effect ->
             when (effect) {
                 is CaptureEffect.ToastRes -> {
@@ -129,7 +220,7 @@ fun CaptureScreen(
     if (showMergeSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-            onDismissRequest = { showMergeSheet = false },
+            onDismissRequest = { onShowMergeSheetChange(false) },
             sheetState = sheetState
         ) {
             Column(
@@ -150,14 +241,14 @@ fun CaptureScreen(
                 )
                 FilledTonalButton(
                     onClick = {
-                        showMergeSheet = false
+                        onShowMergeSheetChange(false)
                         vm.mergeAndConvertToTask(useAi = true)
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text(stringResource(R.string.capture_ai_task)) }
                 FilledTonalButton(
                     onClick = {
-                        showMergeSheet = false
+                        onShowMergeSheetChange(false)
                         vm.mergeAndConvertToHabit(useAi = true)
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -178,7 +269,7 @@ fun CaptureScreen(
                             text = { Text(stringResource(R.string.capture_direct_task)) },
                             onClick = {
                                 showDirectConvertMenu = false
-                                showMergeSheet = false
+                                onShowMergeSheetChange(false)
                                 vm.mergeAndConvertToTask(useAi = false)
                             }
                         )
@@ -186,7 +277,7 @@ fun CaptureScreen(
                             text = { Text(stringResource(R.string.capture_direct_habit)) },
                             onClick = {
                                 showDirectConvertMenu = false
-                                showMergeSheet = false
+                                onShowMergeSheetChange(false)
                                 vm.mergeAndConvertToHabit(useAi = false)
                             }
                         )
@@ -196,58 +287,12 @@ fun CaptureScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            if (!ui.isMultiSelectMode) {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.capture_title)) },
-                    navigationIcon = {
-                        IconButton(onClick = onClose) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_close),
-                                contentDescription = stringResource(R.string.close)
-                            )
-                        }
-                    },
-                    actions = {
-                        TextButton(onClick = vm::toggleMultiSelect) { Text(stringResource(R.string.capture_multi_select)) }
-                    }
-                )
-            } else {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.capture_selected_count, ui.selectedIds.size)) },
-                    navigationIcon = {
-                        IconButton(onClick = vm::exitMultiSelect) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_close),
-                                contentDescription = stringResource(R.string.close)
-                            )
-                        }
-                    },
-                    actions = {
-                        TextButton(
-                            onClick = vm::deleteSelected,
-                            enabled = ui.selectedIds.isNotEmpty()
-                        ) {
-                            Text(stringResource(R.string.capture_delete))
-                        }
-                        TextButton(
-                            onClick = { showMergeSheet = true },
-                            enabled = ui.selectedIds.size >= 2
-                        ) {
-                            Text(stringResource(R.string.capture_merge_count, ui.selectedIds.size))
-                        }
-                    }
-                )
-            }
-        }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
             item {
                 Column(
                     modifier = Modifier
@@ -260,23 +305,13 @@ fun CaptureScreen(
                         onDraftChange = vm::updateDraft,
                         onSave = vm::saveDraft
                     )
-                    RoundedTextField(
-                        value = ui.query,
-                        onValueChange = vm::updateQuery,
-                        hint = stringResource(R.string.capture_search_label),
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 }
             }
 
             if (ui.filteredItems.isNotEmpty()) {
                 item {
                     Text(
-                        text = if (ui.query.isBlank()) {
-                            stringResource(R.string.capture_list_title)
-                        } else {
-                            stringResource(R.string.capture_search_result_group)
-                        },
+                        text = stringResource(R.string.capture_list_title),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp)
@@ -284,34 +319,58 @@ fun CaptureScreen(
                 }
             }
 
-            items(ui.filteredItems, key = { it.id }) { item ->
-                InspirationLightCard(
-                    item = item,
-                    selected = ui.selectedIds.contains(item.id),
-                    inMultiSelectMode = ui.isMultiSelectMode,
-                    onClick = {
-                        if (ui.isMultiSelectMode) vm.toggleSelect(item.id) else vm.openDetail(item.id)
-                    },
-                    onDelete = { vm.deleteItem(item.id) },
-                    onAiTask = { vm.convertItemToTask(item.id, useAi = true) },
-                    onAiHabit = { vm.convertItemToHabit(item.id, useAi = true) }
-                )
+            if (twoColumnLayout && ui.filteredItems.isNotEmpty()) {
+                item {
+                    FlowRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        maxItemsInEachRow = 2,
+                    ) {
+                        ui.filteredItems.forEach { item ->
+                            InspirationLightCard(
+                                item = item,
+                                selected = ui.selectedIds.contains(item.id),
+                                inMultiSelectMode = ui.isMultiSelectMode,
+                                modifier = Modifier.weight(1f),
+                                useHorizontalPadding = false,
+                                onClick = {
+                                    if (ui.isMultiSelectMode) vm.toggleSelect(item.id) else vm.openDetail(item.id)
+                                },
+                                onDelete = { vm.deleteItem(item.id) },
+                                onAiTask = { vm.convertItemToTask(item.id, useAi = true) },
+                                onAiHabit = { vm.convertItemToHabit(item.id, useAi = true) }
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(ui.filteredItems, key = { it.id }) { item ->
+                    InspirationLightCard(
+                        item = item,
+                        selected = ui.selectedIds.contains(item.id),
+                        inMultiSelectMode = ui.isMultiSelectMode,
+                        onClick = {
+                            if (ui.isMultiSelectMode) vm.toggleSelect(item.id) else vm.openDetail(item.id)
+                        },
+                        onDelete = { vm.deleteItem(item.id) },
+                        onAiTask = { vm.convertItemToTask(item.id, useAi = true) },
+                        onAiHabit = { vm.convertItemToHabit(item.id, useAi = true) }
+                    )
+                }
             }
 
             if (ui.filteredItems.isEmpty()) {
                 item {
                     EmptyCaptureHint(
-                        text = if (ui.query.isBlank()) {
-                            stringResource(R.string.capture_empty_hint_default)
-                        } else {
-                            stringResource(R.string.capture_empty_hint_search)
-                        }
+                        text = stringResource(R.string.capture_empty_hint_default)
                     )
                 }
             }
 
             item { Box(modifier = Modifier.size(16.dp)) }
-        }
     }
 }
 
@@ -393,6 +452,8 @@ private fun InspirationLightCard(
     item: InspirationItem,
     selected: Boolean,
     inMultiSelectMode: Boolean,
+    modifier: Modifier = Modifier,
+    useHorizontalPadding: Boolean = true,
     onClick: () -> Unit,
     onDelete: () -> Unit,
     onAiTask: () -> Unit,
@@ -407,9 +468,9 @@ private fun InspirationLightCard(
         MaterialTheme.colorScheme.surfaceContainer
     }
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .then(if (useHorizontalPadding) Modifier.padding(horizontal = 16.dp) else Modifier)
             .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = cardColor),
         shape = sectionShape,

@@ -25,7 +25,7 @@ import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.main.classic.ClassicController
 import com.aritxonly.deadliner.ui.main.classic.ClassicHost
 import com.aritxonly.deadliner.ui.main.classic.CustomAdapter
-import com.aritxonly.deadliner.ui.main.simplified.MiuixHost
+import com.aritxonly.deadliner.ui.main.modern.ModernHost
 import com.aritxonly.deadliner.ui.main.simplified.SimplifiedHost
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.widgets.HabitMiniWidget
@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity(), CustomAdapter.SwipeListener {
                         )
                     }
                     UiStyle.Miuix -> {
-                        MiuixHost(
+                        ModernHost(
                             searchActive = searchActive,
                             onSearchActiveChange = { _showSearch.value = it },
                             activity = this
@@ -193,4 +193,3 @@ class MainActivity : AppCompatActivity(), CustomAdapter.SwipeListener {
         }
     }
 }
-

@@ -60,23 +60,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aritxonly.deadliner.AddDDLActivity
-import com.aritxonly.deadliner.DeadlineAlarmScheduler
-import com.aritxonly.deadliner.EditDDLFragment
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.data.DDLRepository
-import com.aritxonly.deadliner.data.HabitRepository
 import com.aritxonly.deadliner.data.MainViewModel
 import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.data.MainViewModelFactory
@@ -84,13 +77,19 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
-import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
-import com.aritxonly.deadliner.ui.iconResource
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.main.TextPageIndicator
+import com.aritxonly.deadliner.ui.main.shared.DeadlinerUrlIntake
+import com.aritxonly.deadliner.ui.main.shared.MainDisplay
+import com.aritxonly.deadliner.ui.main.shared.MainHostLifecycleCoordinator
+import com.aritxonly.deadliner.ui.main.shared.MainSelectionFloatingToolbar
+import com.aritxonly.deadliner.ui.main.shared.rememberMainHostUiState
+import com.aritxonly.deadliner.ui.main.shared.rememberMainSelectionActionController
+import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -104,9 +103,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.data.HabitViewModelFactory
-import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
-import com.aritxonly.deadliner.localutils.DeadlinerURLScheme.DEADLINER_URL_SCHEME_PREFIX
-import com.aritxonly.deadliner.localutils.DeadlinerURLScheme.DEADLINER_URL_SCHEME_PREFIX_LEGACY
 import com.aritxonly.deadliner.localutils.GlobalUtils.showHabitReminderDialog
 
 @Composable
@@ -121,111 +117,50 @@ fun SimplifiedHost(
     val scope = rememberCoroutineScope()
     val vm: MainViewModel = viewModel(factory = MainViewModelFactory(context))
     val habitVm: HabitViewModel = viewModel(factory = HabitViewModelFactory(context))
-    val clipboardManager = remember {
-        context.getSystemService(android.content.ClipboardManager::class.java)
-    }
-    val view = LocalView.current
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val hostState = rememberMainHostState(vm.currentType)
 
-    var pendingUrl by rememberSaveable { mutableStateOf<String?>(null) }
-    var lastHandledUrl by rememberSaveable { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(Unit) {
-        consumeDeadlinerUrl(activity)?.let { url ->
-            try {
-                val item = DeadlinerURLScheme.decodeWithPassphrase(
-                    url,
-                    "deadliner-2025".toCharArray()
-                )
-                val intent = Intent(context, AddDDLActivity::class.java).apply {
-                    putExtra("EXTRA_FULL_DDL", item)
-                }
-                activity.startActivity(intent)
-            } catch (e: Exception) {
-                Toast.makeText(context, context.getString(R.string.share_link_parse_failed), Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    LaunchedEffect(pendingUrl) {
-        val url = pendingUrl ?: return@LaunchedEffect
-        if (url == lastHandledUrl) return@LaunchedEffect
-
-        val result = snackbarHostState.showSnackbar(
-            message = context.getString(R.string.detect_share_link),
-            actionLabel = context.getString(R.string.add),
-            withDismissAction = true,
-            duration = SnackbarDuration.Long
-        )
-
-        if (result == SnackbarResult.ActionPerformed) {
-            val item = DeadlinerURLScheme.decodeWithPassphrase(url, "deadliner-2025".toCharArray())
+    DeadlinerUrlIntake(
+        activity = activity,
+        snackbarHostState = snackbarHostState,
+        pendingUrl = hostState.pendingUrl,
+        onPendingUrlChange = { hostState.pendingUrl = it },
+        onDecodedItemReady = { item ->
             val intent = Intent(context, AddDDLActivity::class.java).apply {
                 putExtra("EXTRA_FULL_DDL", item)
             }
             activity.startActivity(intent)
-        }
-    }
-
-    DisposableEffect(view) {
-        val listener = android.view.ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
-            if (!hasFocus) return@OnWindowFocusChangeListener
-
-            // 只有窗口真正拿到焦点时才读剪贴板，避免 Android 14 的 Denying log
-            val clipText = clipboardManager.primaryClip
-                ?.getItemAt(0)
-                ?.coerceToText(context)
-                ?.toString()
-                ?.trim()
-                .orEmpty()
-
-            if (clipText.isNotEmpty() &&
-                (clipText.startsWith(DEADLINER_URL_SCHEME_PREFIX) || clipText.startsWith(DEADLINER_URL_SCHEME_PREFIX_LEGACY))) {
-                pendingUrl = clipText
-            }
-        }
-
-        view.viewTreeObserver.addOnWindowFocusChangeListener(listener)
-        onDispose {
-            view.viewTreeObserver.removeOnWindowFocusChangeListener(listener)
-        }
-    }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                vm.loadData(vm.currentType)  // Activity 恢复时强制刷新
-                habitVm.refresh()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
+        },
+    )
 
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { res ->
         if (res.resultCode == Activity.RESULT_OK) {
-            vm.loadData(vm.currentType)
+            vm.loadData(hostState.selectedPage)
             habitVm.refresh()
         }
     }
 
-    LaunchedEffect(Unit) {
-        GlobalUtils.decideHideFromRecent(context, activity)
-        vm.loadData(vm.currentType)
-        habitVm.refresh()
-    }
+    MainHostLifecycleCoordinator(
+        activity = activity,
+        selectedPage = hostState.selectedPage,
+        onPageChanged = { page ->
+            vm.loadData(page)
+            habitVm.refresh()
+        },
+        onResumed = { page ->
+            vm.loadData(page)
+            habitVm.refresh()
+        },
+    )
 
     val ddlList by vm.ddlListFlow.collectAsStateWithLifecycle()
     val dueSoonCounts by vm.dueSoonCounts.observeAsState(emptyMap())
     val refreshState by vm.refreshState.collectAsStateWithLifecycle()
 
-    var toolbarExpanded by remember { mutableStateOf(true) }
+    val uiState = rememberMainHostUiState()
     val listState = rememberLazyListState()
     LaunchedEffect(listState) {
         val closeThresholdPx = with(density) { 32.dp.toPx() }   // 收起需要更大距离
@@ -245,7 +180,7 @@ fun SimplifiedHost(
             // 顶部自动展开，且清零累计
             val atTop = index == 0 && offset == 0
             if (atTop) {
-                if (!toolbarExpanded) toolbarExpanded = true
+                if (!uiState.toolbarExpanded) uiState.toolbarExpanded = true
                 accumDown = 0f; accumUp = 0f
                 return@collect
             }
@@ -254,16 +189,16 @@ fun SimplifiedHost(
                 // 向下滚：准备收起
                 accumDown += dyPx
                 accumUp = 0f
-                if (toolbarExpanded && accumDown >= closeThresholdPx) {
-                    toolbarExpanded = false
+                if (uiState.toolbarExpanded && accumDown >= closeThresholdPx) {
+                    uiState.toolbarExpanded = false
                     accumDown = 0f
                 }
             } else if (dyPx < 0f) {
                 // 向上滚：准备展开
                 accumUp += -dyPx
                 accumDown = 0f
-                if (!toolbarExpanded && accumUp >= openThresholdPx) {
-                    toolbarExpanded = true
+                if (!uiState.toolbarExpanded && accumUp >= openThresholdPx) {
+                    uiState.toolbarExpanded = true
                     accumUp = 0f
                 }
             }
@@ -274,33 +209,32 @@ fun SimplifiedHost(
         if (!listState.isScrollInProgress) {
             val nearTop = listState.firstVisibleItemIndex == 0 &&
                     listState.firstVisibleItemScrollOffset < with(density) { 24.dp.toPx() }
-            if (nearTop) toolbarExpanded = true
+            if (nearTop) uiState.toolbarExpanded = true
         }
     }
 
-    var selectedPage by remember { mutableStateOf(vm.currentType) }
-    LaunchedEffect(selectedPage) {
-        vm.loadData(selectedPage)
-        habitVm.refresh()
-    }
+    val selectionActions = rememberMainSelectionActionController(
+        activity = activity,
+        vm = vm,
+        habitVm = habitVm,
+        hostState = hostState,
+    )
+    val shouldBlur = uiState.showOverlay ||
+        uiState.childRequestsBlur ||
+        uiState.moreExpanded ||
+        selectionActions.showDeleteDialog ||
+        (selectionActions.habitReminderTargetId != null)
 
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var moreExpanded by remember { mutableStateOf(false) }
-    var showOverlay by remember { mutableStateOf(false) }
-    var childRequestsBlur by remember { mutableStateOf(false) }
-    var habitRemTargetId by remember { mutableStateOf<Long?>(null) }
-    val shouldBlur = showOverlay || childRequestsBlur || moreExpanded || showDeleteDialog || (habitRemTargetId != null)
-
-    LaunchedEffect(habitRemTargetId) {
-        val targetId = habitRemTargetId ?: return@LaunchedEffect
+    LaunchedEffect(selectionActions.habitReminderTargetId) {
+        val targetId = selectionActions.habitReminderTargetId ?: return@LaunchedEffect
 
         // 这里已经发生了一次重组，背景会根据 shouldBlur 开始模糊
         showHabitReminderDialog(context, targetId) {
-            habitRemTargetId = null
+            selectionActions.clearHabitReminderTarget()
         }
     }
 
-    val scale by animateFloatAsState(targetValue = if (showOverlay) 0.98f else 1f, label = "content-scale")
+    val scale by animateFloatAsState(targetValue = if (uiState.showOverlay) 0.98f else 1f, label = "content-scale")
     val maxBlur = 24f
     val blurProgress by animateFloatAsState(
         targetValue = if (shouldBlur) 1f else 0f,
@@ -347,8 +281,8 @@ fun SimplifiedHost(
     val textFieldState = rememberTextFieldState()
     var suggestions by rememberSaveable { mutableStateOf(emptyList<DDLItem>()) }
     var base by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
-    LaunchedEffect(selectedPage) {
-        base = vm.getBaseList(selectedPage)
+    LaunchedEffect(hostState.selectedPage) {
+        base = vm.getBaseList(hostState.selectedPage)
     }
     LaunchedEffect(textFieldState) {
         snapshotFlow { textFieldState.text.toString() }
@@ -385,28 +319,12 @@ fun SimplifiedHost(
     val useAvatar = avatarPainter != null
     var moreAnchorRect by remember { mutableStateOf<Rect?>(null) }
 
-    var selectionMode by remember { mutableStateOf(false) }
-    val selectedIds = remember { mutableStateListOf<Long>() }
-
-    fun enterSelection(id: Long) {
-        selectionMode = true
-        if (!selectedIds.contains(id)) selectedIds.add(id)
-    }
-    fun toggleSelection(id: Long) {
-        if (selectedIds.contains(id)) selectedIds.remove(id) else selectedIds.add(id)
-        if (selectedIds.isEmpty()) selectionMode = false
-    }
-    fun clearSelection() {
-        selectedIds.clear()
-        selectionMode = false
-    }
-
-    BackHandler(enabled = selectionMode || searchActive) {
+    BackHandler(enabled = hostState.selectionMode || searchActive) {
         when {
             searchActive -> {
                 onSearchActiveChange(false)
             }
-            selectionMode -> clearSelection()
+            hostState.selectionMode -> hostState.clearSelection()
         }
     }
 
@@ -466,7 +384,7 @@ fun SimplifiedHost(
         },
         topBar = {
             AnimatedContent(
-                targetState = selectionMode,
+                targetState = hostState.selectionMode,
                 transitionSpec = {
                     (fadeIn(animationSpec = tween(180, delayMillis = 60)) +
                             scaleIn(initialScale = 0.98f, animationSpec = tween(180)))
@@ -482,14 +400,14 @@ fun SimplifiedHost(
                     TopAppBar(
                         navigationIcon = {
                             IconButton(
-                                onClick = { clearSelection() },
+                                onClick = { hostState.clearSelection() },
                                 modifier = Modifier.padding(horizontal = 8.dp)
                             ) {
                                 Icon(ImageVector.vectorResource(R.drawable.ic_close), null,
                                     modifier = expressiveTypeModifier)
                             }
                         },
-                        title = { Text(stringResource(R.string.selected_items, selectedIds.size)) },
+                        title = { Text(stringResource(R.string.selected_items, hostState.selectedIds.size)) },
                         modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     )
                 } else {
@@ -501,14 +419,15 @@ fun SimplifiedHost(
                             suggestions = if (q.isBlank()) emptyList()
                             else base.filter { f.matches(it) }.toList()
                         },
-                        onMoreClick = { moreExpanded = true },
+                        onMoreClick = { uiState.moreExpanded = true },
                         onMoreAnchorChange = { rect -> moreAnchorRect = rect },
                         useAvatar = useAvatar,
                         avatarPainter = avatarPainter,
                         activity = activity,
                         expanded = searchActive,
                         onExpandedChangeExternal = onSearchActiveChange,
-                        selectedPage = selectedPage,
+                        selectedPage = hostState.selectedPage,
+                        miuixMode = false,
                         modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     )
                 }
@@ -525,13 +444,13 @@ fun SimplifiedHost(
                 ddlList = ddlList,
                 habitViewModel = habitVm,
                 refreshState = refreshState,
-                selectedPage = selectedPage,
+                selectedPage = hostState.selectedPage,
                 activity = activity,
                 modifier = Modifier
                     .fillMaxSize(),
                 vm = vm,
                 listState = listState,
-                onRequestBackdropBlur = { enable -> childRequestsBlur = enable },
+                onRequestBackdropBlur = { enable -> uiState.childRequestsBlur = enable },
                 onShowUndoSnackbar = { updatedHabit ->
                     scope.launch {
                         val result = snackbarHostState.showSnackbar(
@@ -556,22 +475,22 @@ fun SimplifiedHost(
                                 habitCount = updatedHabit.habitCount - 1
                             )
                             DDLRepository().updateDDL(revertedHabit)
-                            vm.loadData(selectedPage)
+                            vm.loadData(hostState.selectedPage)
                             habitVm.refresh()
                         }
                     }
                 },
                 onCelebrate = { celebrate() },
-                moreExpanded = moreExpanded,
+                moreExpanded = uiState.moreExpanded,
                 moreAnchorRect = moreAnchorRect,
                 useAvatar = useAvatar,
                 nickname = nickname,
                 avatarPainter = avatarPainter,
-                onCloseMorePanel = { moreExpanded = false },
-                selectionMode = selectionMode,
-                isSelected = { id -> selectedIds.contains(id) },
-                onItemLongPress = { id -> enterSelection(id) },
-                onItemClickInSelection = { id -> toggleSelection(id) }
+                onCloseMorePanel = { uiState.moreExpanded = false },
+                selectionMode = hostState.selectionMode,
+                isSelected = { id -> hostState.selectedIds.contains(id) },
+                onItemLongPress = { id -> hostState.enterSelection(id) },
+                onItemClickInSelection = { id -> hostState.toggleSelection(id) }
             )
 
             key(fireKey) {
@@ -597,7 +516,7 @@ fun SimplifiedHost(
                         .animateContentSize()
                 ) {
                     AnimatedContent(
-                        targetState = selectionMode,
+                        targetState = hostState.selectionMode,
                         transitionSpec = {
                             (slideInVertically(
                                 animationSpec = tween(180, easing = FastOutSlowInEasing),
@@ -616,7 +535,7 @@ fun SimplifiedHost(
                     ) { isSelection ->
                         if (!isSelection) {
                             HorizontalFloatingToolbar(
-                                expanded = toolbarExpanded,
+                                expanded = uiState.toolbarExpanded,
                                 colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
                                 expandedShadowElevation = 1.dp,
                                 collapsedShadowElevation = 1.dp,
@@ -625,8 +544,8 @@ fun SimplifiedHost(
                                     Box(modifier = Modifier.padding(start = 4.dp, end = 12.dp)) {
                                         TextPageIndicator(
                                             text = stringResource(R.string.task),
-                                            onClick = { selectedPage = DeadlineType.TASK },
-                                            selected = selectedPage.toString(),
+                                            onClick = { hostState.selectedPage = DeadlineType.TASK },
+                                            selected = hostState.selectedPage.toString(),
                                             tag = DeadlineType.TASK.toString(),
                                             badgeConfig = Triple(
                                                 GlobalUtils.nearbyTasksBadge,
@@ -640,8 +559,8 @@ fun SimplifiedHost(
                                     Box(modifier = Modifier.padding(start = 12.dp, end = 4.dp)) {
                                         TextPageIndicator(
                                             text = stringResource(R.string.habit),
-                                            onClick = { selectedPage = DeadlineType.HABIT },
-                                            selected = selectedPage.toString(),
+                                            onClick = { hostState.selectedPage = DeadlineType.HABIT },
+                                            selected = hostState.selectedPage.toString(),
                                             tag = DeadlineType.HABIT.toString(),
                                             badgeConfig = Triple(
                                                 GlobalUtils.nearbyTasksBadge,
@@ -655,7 +574,7 @@ fun SimplifiedHost(
                                 FilledIconButton(
                                     onClick = {
                                         val intent = Intent(context, AddDDLActivity::class.java).apply {
-                                            putExtra("EXTRA_CURRENT_TYPE", if (selectedPage == DeadlineType.TASK) 0 else 1)
+                                            putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
                                         }
                                         launcher.launch(intent)
                                     },
@@ -663,244 +582,29 @@ fun SimplifiedHost(
                                         .width(56.dp)
                                         .detectSwipeUp {
                                             Log.d("SwipeUp", "Triggered")
-                                            showOverlay = true
+                                            uiState.showOverlay = true
                                         }
                                 ) {
                                     Icon(ImageVector.vectorResource(R.drawable.ic_add), "")
                                 }
                             }
                         } else {
-                            HorizontalFloatingToolbar(
-                                expanded = toolbarExpanded,
-                                colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
-                                expandedShadowElevation = 1.dp,
-                                collapsedShadowElevation = 1.dp,
-                                modifier = Modifier.padding(2.dp),
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        if (selectedIds.isNotEmpty()) {
-                                            GlobalUtils.triggerVibration(activity, 100)
-
-                                            if (selectedPage == DeadlineType.HABIT) {
-                                                val idsToUpdate = selectedIds.toList()
-                                                val habitRepo = HabitRepository()
-                                                val selectedDate = habitVm.selectedDate.value
-                                                val today = LocalDate.now()
-
-                                                if (selectedDate.isAfter(today)) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        R.string.cannot_check_future,
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                } else {
-                                                    idsToUpdate.forEach { id ->
-                                                        val item = ddlList.find { it.id == id } ?: return@forEach
-                                                        if (item.type != DeadlineType.HABIT) return@forEach
-
-                                                        // ddlId -> Habit
-                                                        val habit = habitRepo.getHabitByDdlId(item.id) ?: return@forEach
-
-                                                        // 行为等价于单个条目的点击：按周期规则 toggle 一下这一天的记录
-                                                        habitRepo.toggleRecord(habit.id, selectedDate)
-                                                    }
-
-                                                    vm.loadData(selectedPage)
-                                                    habitVm.refresh()
-
-                                                    selectedIds.clear()
-                                                    if (GlobalUtils.fireworksOnFinish) celebrate()
-
-                                                    Toast.makeText(
-                                                        context,
-                                                        R.string.toast_finished,
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                    selectionMode = false
-                                                }
-                                            } else {
-                                                val idsToUpdate = selectedIds.toList()
-                                                idsToUpdate.forEach { id ->
-                                                    val item =
-                                                        ddlList.find { it.id == id }
-                                                            ?: return@forEach
-                                                    val action = when (item.state) {
-                                                        com.aritxonly.deadliner.model.DDLState.ACTIVE -> TaskStateAction.MARK_COMPLETE
-                                                        com.aritxonly.deadliner.model.DDLState.COMPLETED,
-                                                        com.aritxonly.deadliner.model.DDLState.ABANDONED -> TaskStateAction.RESTORE_ACTIVE
-                                                        else -> null
-                                                    }
-                                                    if (action != null) {
-                                                        DDLRepository().applyTaskAction(item.id, action, confirmed = true)
-                                                    }
-                                                }
-
-                                                vm.loadData(selectedPage)
-                                                habitVm.refresh()
-                                                Toast.makeText(
-                                                    context,
-                                                    R.string.toast_finished,
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-
-                                                selectedIds.clear()
-                                                selectionMode = false
-                                            }
-                                        } else {
-                                            Toast.makeText(
-                                                context,
-                                                R.string.please_select_done_first,
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    },
-                                ) {
-                                    Icon(
-                                        iconResource(R.drawable.ic_done),
-                                        contentDescription = null
+                            MainSelectionFloatingToolbar(
+                                expanded = uiState.toolbarExpanded,
+                                selectedPage = hostState.selectedPage,
+                                onDoneClick = {
+                                    selectionActions.onDoneClick(
+                                        ddlList = ddlList,
+                                        onCelebrate = {
+                                            if (GlobalUtils.fireworksOnFinish) celebrate()
+                                        },
                                     )
-                                }
-
-                                Spacer(modifier = Modifier.width(16.dp))
-
-                                if (selectedPage == DeadlineType.TASK) {
-                                    IconButton(
-                                        onClick = {
-                                            if (selectedIds.isNotEmpty()) {
-                                                val idsToUpdate = selectedIds.toList()
-                                                var count = 0
-
-                                                idsToUpdate.forEach { id ->
-                                                    val item = ddlList.firstOrNull { it.id == id }
-                                                        ?: return@forEach
-                                                    if (item.state.canManualArchive()) {
-                                                        DDLRepository().applyTaskAction(item.id, TaskStateAction.MARK_ARCHIVE, confirmed = true)
-                                                        count++
-                                                    }
-                                                }
-
-                                                // 刷新 & 提示
-                                                vm.loadData(selectedPage)
-                                                habitVm.refresh()
-                                                Toast.makeText(
-                                                    activity,
-                                                    activity.getString(
-                                                        R.string.toast_archived,
-                                                        count
-                                                    ),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-
-                                                // 清除多选状态 & 恢复 AppBar
-                                                selectedIds.clear()
-                                                selectionMode = false
-                                            } else {
-                                                Toast.makeText(
-                                                    activity,
-                                                    activity.getString(R.string.please_select_done_first),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        },
-                                    ) {
-                                        Icon(iconResource(R.drawable.ic_archiving), null)
-                                    }
-                                } else {
-                                    IconButton(
-                                        onClick = {
-                                            if (selectedIds.isNotEmpty()) {
-                                                // 取第一个选中项
-                                                val firstId = selectedIds.first()
-                                                val item =
-                                                    ddlList.firstOrNull { it.id == firstId }
-
-                                                if (item != null) {
-                                                    habitRemTargetId = item.id
-                                                } else {
-                                                    Toast.makeText(
-                                                        activity,
-                                                        activity.getString(R.string.please_select_edit_first),
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
-                                            } else {
-                                                Toast.makeText(
-                                                    activity,
-                                                    activity.getString(R.string.please_select_edit_first),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        },
-                                    ) {
-                                        Icon(iconResource(R.drawable.ic_notification_add), null)
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.width(16.dp))
-
-                                IconButton(
-                                    onClick = {
-                                        if (selectedIds.isNotEmpty()) {
-                                            GlobalUtils.triggerVibration(activity, 200)
-                                            showDeleteDialog = true
-                                        } else {
-                                            Toast.makeText(
-                                                activity,
-                                                activity.getString(R.string.please_select_delete_first),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    },
-                                ) {
-                                    Icon(iconResource(R.drawable.ic_delete), null)
-                                }
-
-                                Spacer(modifier = Modifier.width(16.dp))
-
-                                IconButton(
-                                    onClick = {
-                                        if (selectedIds.isNotEmpty()) {
-                                            // 取第一个选中项
-                                            val firstId = selectedIds.first()
-                                            val clickedItem =
-                                                ddlList.firstOrNull { it.id == firstId }
-
-                                            if (clickedItem != null) {
-                                                val editDialog =
-                                                    EditDDLFragment(clickedItem) { updatedDDL ->
-                                                        // 回调：保存并刷新
-                                                        DDLRepository().updateDDL(updatedDDL)
-                                                        vm.loadData(selectedPage)
-                                                        habitVm.refresh()
-
-                                                        // 清除多选状态
-                                                        selectedIds.clear()
-                                                        selectionMode = false
-                                                    }
-                                                editDialog.show(
-                                                    activity.supportFragmentManager,
-                                                    "EditDDLFragment"
-                                                )
-                                            } else {
-                                                Toast.makeText(
-                                                    activity,
-                                                    activity.getString(R.string.please_select_edit_first),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        } else {
-                                            Toast.makeText(
-                                                activity,
-                                                activity.getString(R.string.please_select_edit_first),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    },
-                                ) {
-                                    Icon(iconResource(R.drawable.ic_edit), null)
-                                }
-                            }
+                                },
+                                onArchiveClick = { selectionActions.onArchiveClick(ddlList = ddlList) },
+                                onReminderClick = { selectionActions.onReminderClick(ddlList = ddlList) },
+                                onDeleteClick = { selectionActions.onDeleteClick() },
+                                onEditClick = { selectionActions.onEditClick(ddlList = ddlList) },
+                            )
                         }
                     }
                 }
@@ -908,58 +612,36 @@ fun SimplifiedHost(
         }
     }
 
-    if (showOverlay) {
+    if (uiState.showOverlay) {
         AIOverlayHost(
             initialText = "",
             onAddDDL = { intent ->
                 launcher.launch(intent)
             },
             onRemoveFromWindow = {
-                showOverlay = false
+                uiState.showOverlay = false
             },
             respondIme = true
         )
     }
 
-    if (showDeleteDialog) {
+    if (selectionActions.showDeleteDialog) {
         AlertDialog(
             onDismissRequest = {
-                showDeleteDialog = false
+                selectionActions.dismissDeleteDialog()
             },
             title = { Text(stringResource(R.string.alert_delete_title)) },
             text  = { Text(stringResource(R.string.alert_delete_message)) },
             dismissButton = {
                 TextButton(onClick = {
-                    // 取消删除
-                    showDeleteDialog = false
+                    selectionActions.dismissDeleteDialog()
                 }) {
                     Text(stringResource(R.string.cancel))
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    // 确认删除
-                    val idsToDelete = selectedIds.toList() // 拷贝一份避免并发修改
-                    idsToDelete.forEach { id ->
-                        DDLRepository().deleteDDL(id)
-                        HabitRepository().deleteHabitByDdlId(id)
-                        DeadlineAlarmScheduler.cancelAlarm(activity.applicationContext, id)
-                    }
-
-                    vm.loadData(selectedPage)
-                    habitVm.refresh()
-
-                    Toast.makeText(
-                        activity,
-                        activity.getString(R.string.toast_deletion),
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    // 清空多选 & 恢复 AppBar
-                    selectedIds.clear()
-                    selectionMode = false
-
-                    showDeleteDialog = false
+                    selectionActions.confirmDeleteSelected()
                 }) {
                     Text(stringResource(R.string.accept))
                 }
@@ -1000,14 +682,4 @@ fun Modifier.detectSwipeUp(
             }
         )
     }
-}
-
-private fun consumeDeadlinerUrl(activity: Activity): String? {
-    val data = activity.intent?.dataString ?: return null
-    if (data.startsWith(DEADLINER_URL_SCHEME_PREFIX) || data.startsWith(DEADLINER_URL_SCHEME_PREFIX_LEGACY)) {
-        // 消费一次，避免重组或回到前台时重复触发
-        activity.intent?.data = null
-        return data
-    }
-    return null
 }

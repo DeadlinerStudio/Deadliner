@@ -143,6 +143,14 @@ val expressiveTypeModifier: Modifier
             .padding(8.dp)
     }
 
+val navIconPaddingModifier: Modifier
+    @Composable get() {
+        val isMaterial3 = LocalAppDesignSystem.current == AppDesignSystem.MATERIAL3
+
+        return Modifier
+            .padding(start = if (isMaterial3) 8.dp else 0.dp)
+    }
+
 @SuppressLint("ComposableNaming")
 @Composable
 fun iconResource(@DrawableRes id: Int): ImageVector {

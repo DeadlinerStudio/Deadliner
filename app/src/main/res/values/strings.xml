@@ -497,6 +497,7 @@
     <string name="setup_finish_desc">感谢你完成引导，现在可以愉快使用Deadliner啦。</string>
     <string name="start_to_use">开始使用</string>
     <string name="search_events">搜索事件</string>
+    <string name="search">搜索</string>
     <string name="overview_settings_month">查看的月度数</string>
     <string name="overview_settings_weekly_show_overdue_complete">每周视图显示逾期完成</string>
 
@@ -680,9 +681,11 @@
     <string name="linked_task">关联: %s</string>
     <string name="settings_ui_mode_title">主界面风格</string>
     <string name="settings_support_ui_mode">调整 Deadliner 的布局与显示风格</string>
+    <string name="settings_support_profile">编辑头像与昵称</string>
     <string name="ui_style_classic">经典模式</string>
     <string name="ui_style_simplified">简洁模式</string>
     <string name="ui_style_miuix">现代模式</string>
+    <string name="main_section_list">清单</string>
     <string name="ui_style_simplified_support">聚焦核心任务与习惯管理，提供更清爽、直观的界面布局。</string>
     <string name="ui_style_classic_support">沿用自 v2 的完整布局，呈现更全面、一触即达的任务管理体验。</string>
     <string name="ui_style_miuix_support">来自 HyperOS 的现代化设计理念，更原生，更可靠。</string>

@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.widget.Toast
+import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.MutableTransitionState
@@ -52,14 +53,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.OverviewActivity
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.ui.TintedGradientImage
 import com.aritxonly.deadliner.ui.iconResource
-import com.aritxonly.deadliner.ui.main.simplified.fadingTopEdge
+import com.aritxonly.deadliner.ui.main.shared.fadingTopEdge
 import com.aritxonly.deadliner.ui.poster.ExportDashboardData
 import com.aritxonly.deadliner.ui.poster.ShareDashboardPoster
 import com.aritxonly.deadliner.ui.poster.renderPosterToCacheUri
@@ -78,7 +78,7 @@ import kotlin.math.abs
 @Composable
 fun DashboardScreen(
     items: List<DDLItem>,
-    activity: OverviewActivity,
+    activity: Activity,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current

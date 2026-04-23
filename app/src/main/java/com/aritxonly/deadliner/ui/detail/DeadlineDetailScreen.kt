@@ -81,6 +81,7 @@ import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.ui.base.RadioButton
 import com.aritxonly.deadliner.ui.base.Scaffold
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.iconResource
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.time.Duration

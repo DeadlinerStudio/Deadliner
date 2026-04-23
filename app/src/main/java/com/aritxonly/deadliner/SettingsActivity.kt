@@ -44,6 +44,7 @@ import com.aritxonly.deadliner.ui.settings.ModelSettingsScreen
 import com.aritxonly.deadliner.ui.settings.NotificationSettingsScreen
 import com.aritxonly.deadliner.ui.settings.PolicyScreen
 import com.aritxonly.deadliner.ui.settings.PromptSettingsScreen
+import com.aritxonly.deadliner.ui.settings.ProfileSettingsScreen
 import com.aritxonly.deadliner.ui.settings.UpdateScreen
 import com.aritxonly.deadliner.ui.settings.VibrationSettingsScreen
 import com.aritxonly.deadliner.ui.settings.WebSettingsScreen
@@ -94,6 +95,7 @@ sealed class SettingsRoute(
 
     object Badge : SettingsRoute("badge", R.string.settings_tasks_badge_title, R.string.settings_support_tasks_badge, null)
     object UI : SettingsRoute("ui", R.string.settings_ui_mode_title, R.string.settings_support_ui_mode, null)
+    object Profile : SettingsRoute("profile", R.string.edit_profile, R.string.settings_support_profile, null)
 
     object Update : SettingsRoute("update", R.string.settings_check_for_updates, R.string.settings_check_for_updates, R.drawable.ic_update)
     object License : SettingsRoute("license", R.string.settings_license, R.string.settings_license_summary, R.drawable.ic_license)
@@ -206,6 +208,9 @@ class SettingsActivity : AppCompatActivity() {
                             BehaviorSettingsScreen(
                                 navController, handleRestart = { showDialogRestartAppTablet() }
                             ) { navController.navigateUp() }
+                        }
+                        composable(SettingsRoute.Profile.route) {
+                            ProfileSettingsScreen { navController.navigateUp() }
                         }
                         composable(SettingsRoute.Notification.route) { NotificationSettingsScreen { navController.navigateUp() } }
                         composable(SettingsRoute.Backup.route) {

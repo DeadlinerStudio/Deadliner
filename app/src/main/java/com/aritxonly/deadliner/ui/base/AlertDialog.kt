@@ -20,7 +20,7 @@ import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
 // 别名防止冲突
 import androidx.compose.material3.AlertDialog as Material3AlertDialog
-import top.yukonga.miuix.kmp.extra.WindowDialog as MiuixWindowDialog
+import top.yukonga.miuix.kmp.window.WindowDialog as MiuixWindowDialog
 
 /**
  * Deadliner 基础 AlertDialog 组件
@@ -64,24 +64,10 @@ fun AlertDialog(
         }
 
         AppDesignSystem.MIUIX -> {
-            // 1. 状态桥接：把外层传进来的 Boolean 包装成 MIUIX 需要的 MutableState
-            val miuixShowState = remember { mutableStateOf(show) }
-
-            // 2. 同步向下：当外层的 show 变化时，同步给 MIUIX
-            LaunchedEffect(show) {
-                miuixShowState.value = show
-            }
-
-            // 3. 同步向上：如果 MIUIX 内部（比如手势返回、点击外部）把状态改为了 false，我们要通知外层业务
-            LaunchedEffect(miuixShowState.value) {
-                if (!miuixShowState.value && show) {
-                    onDismissRequest()
-                }
-            }
 
             // MIUIX 分支：传入伪装好的 MutableState
             MiuixWindowDialog(
-                show = miuixShowState, // 传入包装好的 MutableState
+                show = show, // 传入包装好的 MutableState
                 onDismissRequest = onDismissRequest,
                 modifier = modifier,
                 title = miuixTitle,

@@ -1,39 +1,33 @@
 package com.aritxonly.deadliner.ui.settings
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
+import com.aritxonly.deadliner.ui.main.simplified.ProfileEditor
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DonateScreen(
-    navigateUp: () -> Unit
+fun ProfileSettingsScreen(
+    navigateUp: () -> Unit,
 ) {
-
     CollapsingTopBarScaffold(
-        title = stringResource(R.string.settings_donate),
+        title = stringResource(R.string.edit_profile),
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
@@ -53,23 +47,14 @@ fun DonateScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsSection(mainContent = true, enabled = true) {
-                Column(modifier = Modifier.padding(24.dp).fillMaxWidth()) {
-                    Text(stringResource(R.string.settings_donate_emotional), style = MaterialTheme.typography.titleMedium)
-
-                    Text(stringResource(R.string.settings_donate_thanks), style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .clip(RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)))) {
-                Image(
-                    painterResource(R.drawable.alipay),
-                    contentDescription = null
+            SettingsSection {
+                ProfileEditor(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
                 )
             }
+            Spacer(Modifier.navigationBarsPadding())
         }
     }
 }

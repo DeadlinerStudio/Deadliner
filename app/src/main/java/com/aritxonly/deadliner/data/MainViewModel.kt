@@ -32,6 +32,10 @@ class MainViewModel(
     private val _ddlList = MutableStateFlow<List<DDLItem>>(emptyList())
     val ddlList: LiveData<List<DDLItem>> = _ddlList.asLiveData()
     val ddlListFlow: StateFlow<List<DDLItem>> = _ddlList
+    private val _taskList = MutableStateFlow<List<DDLItem>>(emptyList())
+    val taskListFlow: StateFlow<List<DDLItem>> = _taskList
+    private val _habitList = MutableStateFlow<List<DDLItem>>(emptyList())
+    val habitListFlow: StateFlow<List<DDLItem>> = _habitList
 
     // 用于存储即将到的DDL
     private val _dueSoonCounts = MutableStateFlow<Map<DeadlineType, Int>>(emptyMap())
@@ -67,7 +71,19 @@ class MainViewModel(
      */
     fun dueSoonCount(type: DeadlineType): Int = computeDueSoonCount(type)
 
-    private fun filterDataByList(ddlList: List<DDLItem>): List<DDLItem> {
+    private fun syncSelectedList() {
+        _ddlList.value = when (currentType) {
+            DeadlineType.TASK -> _taskList.value
+            DeadlineType.HABIT -> _habitList.value
+        }
+    }
+
+    fun selectType(type: DeadlineType) {
+        currentType = type
+        syncSelectedList()
+    }
+
+    private fun filterDataByList(ddlList: List<DDLItem>, type: DeadlineType): List<DDLItem> {
         var changed = false
         ddlList.forEach { item ->
             Log.d("updateData", "item ${item.id}, name ${item.name}, completeTime ${item.completeTime}, state ${item.state}")
@@ -81,7 +97,7 @@ class MainViewModel(
             }
         }
 
-        val source = if (changed) repo.getDDLsByType(currentType) else ddlList
+        val source = if (changed) repo.getDDLsByType(type) else ddlList
         return source
             .filter { it.state.isMainListVisible() }
             .sortedWith(
@@ -127,7 +143,12 @@ class MainViewModel(
         currentType = type
         _refreshState.value = RefreshState.Loading(silent)
         viewModelScope.launch(Dispatchers.IO) {
-            _ddlList.value = filterDataByList(repo.getDDLsByType(type))
+            val list = filterDataByList(repo.getDDLsByType(type), type)
+            when (type) {
+                DeadlineType.TASK -> _taskList.value = list
+                DeadlineType.HABIT -> _habitList.value = list
+            }
+            syncSelectedList()
 
             val map = DeadlineType.entries.associateWith { computeDueSoonCount(it) }
             _dueSoonCounts.value = map
@@ -135,6 +156,21 @@ class MainViewModel(
             _refreshState.value = RefreshState.Success
 
             Log.d("Loading", "I reached here, ${_refreshState.value}")
+        }
+    }
+
+    fun loadAllData(silent: Boolean = false) {
+        if (_refreshState.value is RefreshState.Loading) return
+        _refreshState.value = RefreshState.Loading(silent)
+        viewModelScope.launch(Dispatchers.IO) {
+            _taskList.value = filterDataByList(repo.getDDLsByType(DeadlineType.TASK), DeadlineType.TASK)
+            _habitList.value = filterDataByList(repo.getDDLsByType(DeadlineType.HABIT), DeadlineType.HABIT)
+            syncSelectedList()
+
+            val map = DeadlineType.entries.associateWith { computeDueSoonCount(it) }
+            _dueSoonCounts.value = map
+
+            _refreshState.value = RefreshState.Success
         }
     }
 
@@ -147,9 +183,13 @@ class MainViewModel(
             val filtered = withContext(Dispatchers.Default) {           // 纯 CPU
                 base.filter { filter.matches(it) }
             }
+            when (type) {
+                DeadlineType.TASK -> _taskList.value = filtered
+                DeadlineType.HABIT -> _habitList.value = filtered
+            }
+            syncSelectedList()
             val counts = DeadlineType.entries.associateWith { computeDueSoonCount(it) }
             _dueSoonCounts.value = counts
-            _ddlList.value = filtered
         }
     }
 
@@ -173,10 +213,40 @@ class MainViewModel(
                 repo.syncNow()
 
                 // 同步完成后直接拉取 + 过滤 + 统计
-                val data = filterDataByList(repo.getDDLsByType(type))
+                val data = filterDataByList(repo.getDDLsByType(type), type)
                 val map = DeadlineType.entries.associateWith { computeDueSoonCount(it) }
 
-                _ddlList.value = data
+                when (type) {
+                    DeadlineType.TASK -> _taskList.value = data
+                    DeadlineType.HABIT -> _habitList.value = data
+                }
+                syncSelectedList()
+                _dueSoonCounts.value = map
+            }
+
+            val elapsed = System.currentTimeMillis() - start
+            if (elapsed < 500) {
+                delay(500 - elapsed)
+            }
+
+            _refreshState.value = RefreshState.Success
+        }
+    }
+
+    fun refreshAllFromPull() {
+        viewModelScope.launch {
+            _refreshState.value = RefreshState.Loading(silent = false)
+
+            val start = System.currentTimeMillis()
+
+            withContext(Dispatchers.IO) {
+                repo.syncNow()
+
+                _taskList.value = filterDataByList(repo.getDDLsByType(DeadlineType.TASK), DeadlineType.TASK)
+                _habitList.value = filterDataByList(repo.getDDLsByType(DeadlineType.HABIT), DeadlineType.HABIT)
+                syncSelectedList()
+
+                val map = DeadlineType.entries.associateWith { computeDueSoonCount(it) }
                 _dueSoonCounts.value = map
             }
 

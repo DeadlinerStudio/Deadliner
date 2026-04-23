@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.base.RadioButton
 
 @Composable
@@ -91,7 +92,7 @@ fun UiSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = navIconPaddingModifier
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),
@@ -112,7 +113,6 @@ fun UiSettingsScreen(
                 currentStyle = currentStyle,
                 onStyleChange = onStyleChange,
                 invertColorFilter = invertColorFilter,
-                isMiuixModeEnabled = GlobalUtils.miuixMode // 传入当前的 MIUIX 引擎开关状态
             )
 
             Spacer(modifier = Modifier.navigationBarsPadding())
@@ -125,7 +125,6 @@ fun UiModeSelectionRow(
     currentStyle: String,
     onStyleChange: (String) -> Unit,
     invertColorFilter: ColorFilter?,
-    isMiuixModeEnabled: Boolean,
     inIntroPage: Boolean = false
 ) {
     val listState = rememberLazyListState()
@@ -171,9 +170,9 @@ fun UiModeSelectionRow(
                 supporting = stringResource(R.string.ui_style_miuix_support),
                 imageRes = R.drawable.preview_classic,
                 selected = currentStyle == "miuix",
-                enabled = isMiuixModeEnabled,
+                enabled = true,
                 colorFilter = invertColorFilter,
-                onClick = { if (isMiuixModeEnabled) onStyleChange("miuix") },
+                onClick = { onStyleChange("miuix") },
                 modifier = Modifier.fillParentMaxWidth(0.66f)
             )
         }
