@@ -111,7 +111,7 @@ fun MorePanelCard(
                     activity.startActivity(intent)
                 }
             }
-            MoreRow(R.drawable.ic_chart, stringResource(R.string.overview)) {
+            MoreRow(R.drawable.ic_overview, stringResource(R.string.overview)) {
                 activity.startActivity(Intent(context, OverviewActivity::class.java))
             }
         }

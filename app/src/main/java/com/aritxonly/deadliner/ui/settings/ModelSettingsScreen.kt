@@ -41,6 +41,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ai.LlmPreset
 import com.aritxonly.deadliner.ai.AIUtils
 import java.util.UUID
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 
 @Composable
 fun ModelSettingsScreen(
@@ -188,6 +189,7 @@ fun AddPresetDialog(
     onDismiss: () -> Unit,
     onConfirm: (name: String, model: String, endpoint: String) -> Unit
 ) {
+    RegisterAdvancedMaterialDialogBlur()
     var name by remember { mutableStateOf("") }
     var model by remember { mutableStateOf("") }
     var endpoint by remember { mutableStateOf("") }
@@ -239,6 +241,7 @@ fun EditPresetDialog(
     onDismiss: () -> Unit,
     onConfirm: (name: String, model: String, endpoint: String) -> Unit
 ) {
+    RegisterAdvancedMaterialDialogBlur()
     var name by remember { mutableStateOf(initial.name) }
     var model by remember { mutableStateOf(initial.model) }
     var endpoint by remember { mutableStateOf(initial.endpoint) }
@@ -282,6 +285,7 @@ fun ManagePresetsSheet(
     var confirmDelete by remember { mutableStateOf<LlmPreset?>(null) }
     var editTarget by remember { mutableStateOf<LlmPreset?>(null) }
 
+    RegisterAdvancedMaterialDialogBlur()
     ModalBottomSheet(onDismissRequest = onClose, sheetState = sheetState) {
         Text(stringResource(R.string.manage_presets), modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.titleMedium)
         presets.forEachIndexed { i, p ->
@@ -309,6 +313,7 @@ fun ManagePresetsSheet(
 
     // 删除确认
     confirmDelete?.let { target ->
+        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
             onDismissRequest = { confirmDelete = null },
             confirmButton = {

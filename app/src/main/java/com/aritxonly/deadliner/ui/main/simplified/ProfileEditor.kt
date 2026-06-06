@@ -57,6 +57,7 @@ import androidx.compose.ui.window.Dialog
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.model.UserProfile
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.image.cropview.CropType
 import com.image.cropview.EdgeType
 import com.image.cropview.ImageCrop
@@ -222,6 +223,7 @@ fun AvatarCropperDialog(
     onCancel: () -> Unit,
     onDone: (Bitmap) -> Unit
 ) {
+    RegisterAdvancedMaterialDialogBlur()
     val imageCrop = remember(src) { ImageCrop(src) }
     val aspect = src.width.toFloat() / src.height.toFloat()
 

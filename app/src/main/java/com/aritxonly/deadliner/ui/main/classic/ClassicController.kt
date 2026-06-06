@@ -1724,10 +1724,8 @@ class ClassicController(
     private fun restoreAllAlarms() {
         activity.lifecycleScope.launch(Dispatchers.IO) {
             val allDDLs = DDLRepository().getAllDDLs()
-            allDDLs.filter { !it.isCompleted }.forEach { ddl ->
-                DeadlineAlarmScheduler.scheduleExactAlarm(applicationContext, ddl)
-                DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(applicationContext, ddl)
-                DeadlineAlarmScheduler.scheduleHabitNotifyAlarm(applicationContext, ddl.id)
+            allDDLs.forEach { ddl ->
+                DeadlineAlarmScheduler.syncScheduledNotifications(applicationContext, ddl)
             }
         }
     }

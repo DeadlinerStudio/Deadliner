@@ -91,6 +91,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -184,9 +185,11 @@ fun SettingsSection(
     mainContent: Boolean = false,
     enabled: Boolean = false,
     customColor: Color? = null,
+    clipContent: Boolean = true,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
     val radiusDimen = if (mainContent) 48.dp else dimensionResource(R.dimen.item_corner_radius)
+    val sectionShape = MaterialTheme.shapes.large.copy(CornerSize(radiusDimen))
     val containerColor = customColor
         ?: if (enabled && mainContent) {
             MaterialTheme.colorScheme.primaryContainer
@@ -207,11 +210,30 @@ fun SettingsSection(
                 modifier = modifier.padding(horizontal = 24.dp, vertical = 8.dp)
             )
         }
-        Surface(
-            shape = MaterialTheme.shapes.large.copy(CornerSize(radiusDimen)),
-            color = containerColor
-        ) {
-            Column(content = content)
+        if (clipContent) {
+            Surface(
+                shape = sectionShape,
+                color = containerColor
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    content = content
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = containerColor,
+                        shape = RectangleShape
+                    )
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    content = content
+                )
+            }
         }
     }
 }
@@ -317,6 +339,9 @@ fun CollapsingTopBarScaffold(
     containerColor: Color = MaterialTheme.colorScheme.surface,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     collapsible: Boolean = true,
+    topBarStyle: TopAppBarStyle = TopAppBarStyle.LARGE,
+    allowAdvancedMaterialTopBarBlur: Boolean = true,
+    forceOverlayTopBar: Boolean = false,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
@@ -326,11 +351,11 @@ fun CollapsingTopBarScaffold(
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val canScrollState = remember { mutableStateOf(true) }
     val canCollapseTopBar = collapsible && canScrollState.value
-    val useLegacyTopBar = !advancedMaterial.enabled
+    val useLegacyTopBar = !advancedMaterial.enabled && !forceOverlayTopBar
 
     when (LocalAppDesignSystem.current) {
         AppDesignSystem.MATERIAL3 -> {
-            val scrollBehavior = if (collapsible) {
+            val scrollBehavior = if (collapsible && topBarStyle == TopAppBarStyle.LARGE) {
                 TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
                     state = rememberTopAppBarState(),
                     canScroll = { canCollapseTopBar },
@@ -341,32 +366,29 @@ fun CollapsingTopBarScaffold(
             val overlayTopBar: @Composable () -> Unit = {
                 TopAppBar(
                     title = title,
-                    mode = TopAppBarStyle.LARGE,
+                    mode = topBarStyle,
                     navigationIcon = navigationIcon,
                     actions = actions,
                     titleTextStyle = MaterialTheme.typography.headlineMedium,
                     useParentMaterialContainer = false,
+                    allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
                     material3ScrollBehavior = scrollBehavior,
                 )
             }
             val legacyTopBar: @Composable () -> Unit = {
-                LargeTopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = containerColor,
-                        scrolledContainerColor = containerColor,
-                        titleContentColor = titleColor,
-                    ),
-                    title = {
-                        Text(
-                            text = title,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    },
+                TopAppBar(
+                    title = title,
+                    mode = topBarStyle,
                     navigationIcon = navigationIcon,
                     actions = actions,
-                    scrollBehavior = scrollBehavior,
+                    titleTextStyle = if (topBarStyle == TopAppBarStyle.LARGE) {
+                        MaterialTheme.typography.headlineMedium
+                    } else {
+                        null
+                    },
+                    forceMaterial3 = true,
+                    allowAdvancedMaterialBlur = false,
+                    material3ScrollBehavior = scrollBehavior,
                 )
             }
             AdaptiveMaterialScaffold(
@@ -391,7 +413,7 @@ fun CollapsingTopBarScaffold(
         }
 
         AppDesignSystem.MIUIX -> {
-            val scrollBehavior = if (collapsible) {
+            val scrollBehavior = if (collapsible && topBarStyle == TopAppBarStyle.LARGE) {
                 top.yukonga.miuix.kmp.basic.MiuixScrollBehavior(
                     canScroll = { canCollapseTopBar },
                 )
@@ -401,21 +423,22 @@ fun CollapsingTopBarScaffold(
             val overlayTopBar: @Composable () -> Unit = {
                 TopAppBar(
                     title = title,
-                    mode = TopAppBarStyle.LARGE,
+                    mode = topBarStyle,
                     navigationIcon = navigationIcon,
                     actions = actions,
                     useParentMaterialContainer = false,
+                    allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
                     miuixScrollBehavior = scrollBehavior,
                 )
             }
             val legacyTopBar: @Composable () -> Unit = {
-                top.yukonga.miuix.kmp.basic.TopAppBar(
+                TopAppBar(
                     title = title,
-                    largeTitle = title,
-                    color = containerColor,
+                    mode = topBarStyle,
                     navigationIcon = navigationIcon,
                     actions = actions,
-                    scrollBehavior = scrollBehavior,
+                    allowAdvancedMaterialBlur = false,
+                    miuixScrollBehavior = scrollBehavior,
                 )
             }
             AdaptiveMaterialScaffold(

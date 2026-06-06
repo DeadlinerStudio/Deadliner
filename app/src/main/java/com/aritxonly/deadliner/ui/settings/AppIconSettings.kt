@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -113,6 +114,8 @@ private fun AppIconOptionRow(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -122,20 +125,23 @@ private fun AppIconOptionRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Surface(
-            shape = RoundedCornerShape(12.dp),
-            tonalElevation = 1.dp,
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
             AndroidView(
                 factory = { viewContext ->
                     AppCompatImageView(viewContext).apply {
-                        scaleType = ImageView.ScaleType.CENTER_CROP
-                        setImageResource(AppIconManager.previewResFor(mode))
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                        setImageDrawable(AppIconManager.previewDrawableFor(viewContext, mode))
                     }
                 },
                 update = { imageView ->
-                    imageView.setImageResource(AppIconManager.previewResFor(mode))
+                    imageView.setImageDrawable(AppIconManager.previewDrawableFor(context, mode))
                 },
-                modifier = Modifier.size(52.dp),
+                modifier = Modifier
+                    .size(52.dp)
+                    .padding(2.dp)
+                    .clip(CircleShape)
             )
         }
 

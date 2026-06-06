@@ -5,10 +5,6 @@ package com.aritxonly.deadliner.ui.main.simplified
 import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
-import android.graphics.RenderEffect
-import android.graphics.Shader
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -22,7 +18,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -51,9 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -80,6 +73,9 @@ import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
+import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.main.TextPageIndicator
@@ -224,6 +220,10 @@ fun SimplifiedHost(
         uiState.moreExpanded ||
         selectionActions.showDeleteDialog ||
         (selectionActions.habitReminderTargetId != null)
+    val advancedMaterialBlur = uiState.childRequestsBlur ||
+        uiState.moreExpanded ||
+        selectionActions.showDeleteDialog ||
+        (selectionActions.habitReminderTargetId != null)
 
     LaunchedEffect(selectionActions.habitReminderTargetId) {
         val targetId = selectionActions.habitReminderTargetId ?: return@LaunchedEffect
@@ -233,18 +233,6 @@ fun SimplifiedHost(
             selectionActions.clearHabitReminderTarget()
         }
     }
-
-    val scale by animateFloatAsState(targetValue = if (uiState.showOverlay) 0.98f else 1f, label = "content-scale")
-    val maxBlur = 24f
-    val blurProgress by animateFloatAsState(
-        targetValue = if (shouldBlur) 1f else 0f,
-        animationSpec = tween(400, easing = FastOutSlowInEasing),
-        label = "blur-progress"
-    )
-    val blurRadius = (maxBlur * blurProgress)
-        .coerceIn(0f, maxBlur)
-    val saturation = lerp(1f, 0.5f, blurProgress)
-    val EPS = 0.5f
 
     val jumpAnim = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
@@ -328,37 +316,15 @@ fun SimplifiedHost(
         }
     }
 
-    Scaffold(
+    ProvideAdvancedMaterialDialogBlurHost {
+        Scaffold(
         modifier = modifier
             .fillMaxSize()
-            .graphicsLayer {
-                val effects = mutableListOf<RenderEffect>()
-
-                if (blurRadius >= EPS) {
-                    effects += RenderEffect.createBlurEffect(
-                        blurRadius, blurRadius,
-                        Shader.TileMode.CLAMP
-                    )
-                }
-                if (saturation < 1f - 1e-3f) {
-                    val cm = ColorMatrix().apply { setSaturation(saturation) }
-                    effects += RenderEffect.createColorFilterEffect(
-                        ColorMatrixColorFilter(cm)
-                    )
-                }
-
-                renderEffect = when (effects.size) {
-                    0 -> null
-                    1 -> effects[0].asComposeRenderEffect()
-                    else -> RenderEffect.createChainEffect(
-                        effects[0],
-                        effects[1]
-                    ).asComposeRenderEffect()
-                }
-
-                scaleX = scale
-                scaleY = scale
-            },
+            .advancedMaterialDialogBlurHost(
+                active = advancedMaterialBlur,
+                forceActive = uiState.showOverlay,
+                activeScale = if (uiState.showOverlay) 0.98f else 1f,
+            ),
         contentWindowInsets = WindowInsets(0),
         snackbarHost = {
             Box(
@@ -604,6 +570,7 @@ fun SimplifiedHost(
             }
         }
     }
+    }
 
     if (uiState.showOverlay) {
         AIOverlayHost(
@@ -619,6 +586,7 @@ fun SimplifiedHost(
     }
 
     if (selectionActions.showDeleteDialog) {
+        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
             onDismissRequest = {
                 selectionActions.dismissDeleteDialog()

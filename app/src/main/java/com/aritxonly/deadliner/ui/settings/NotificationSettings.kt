@@ -23,6 +23,7 @@ import androidx.fragment.app.FragmentManager
 import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.data.DatabaseHelper
@@ -51,6 +52,7 @@ fun NotificationSettingsScreen(
 
     var dailyMinute by remember { mutableStateOf(GlobalUtils.dailyNotificationMinute) }
     var dailyHour by remember { mutableStateOf(GlobalUtils.dailyNotificationHour) }
+    var showDailyTimePickerDialogBlur by remember { mutableStateOf(false) }
 
     var notifyBefore by remember { mutableStateOf(GlobalUtils.deadlineNotificationBefore) }
     val onNotifyBeforeChange: (Float) -> Unit = {
@@ -89,10 +91,18 @@ fun NotificationSettingsScreen(
     val onDailyNotificationLongPress: (Boolean) -> Unit = {
         if (!it) {
             fragmentManager?.let { supportFragmentManager ->
-                showDailyTimePicker(context, supportFragmentManager) { hour, minute ->
-                    dailyMinute = minute
-                    dailyHour = hour
-                }
+                showDailyTimePickerDialogBlur = true
+                showDailyTimePicker(
+                    context = context,
+                    supportFragmentManager = supportFragmentManager,
+                    onChange = { hour, minute ->
+                        dailyMinute = minute
+                        dailyHour = hour
+                    },
+                    onDismiss = {
+                        showDailyTimePickerDialogBlur = false
+                    }
+                )
             }
         }
         supportingTextDailyNotification = if (!dailyNotification)
@@ -116,6 +126,10 @@ fun NotificationSettingsScreen(
             }
         }
     ) { padding ->
+        if (showDailyTimePickerDialogBlur) {
+            RegisterAdvancedMaterialDialogBlur()
+        }
+
         SettingsScrollColumn(
             contentPadding = padding,
             modifier = Modifier,
@@ -168,7 +182,8 @@ fun NotificationSettingsScreen(
 private fun showDailyTimePicker(
     context: Context,
     supportFragmentManager: FragmentManager,
-    onChange:(Int, Int) -> Unit
+    onChange:(Int, Int) -> Unit,
+    onDismiss: () -> Unit,
 ) {
     val currentHour = GlobalUtils.dailyNotificationHour
     val currentMinute = GlobalUtils.dailyNotificationMinute
@@ -186,6 +201,9 @@ private fun showDailyTimePicker(
         GlobalUtils.dailyNotificationMinute = selectedMinute
         onChange(selectedHour, selectedMinute)
         DeadlineAlarmScheduler.scheduleDailyAlarm(context)
+    }
+    picker.addOnDismissListener {
+        onDismiss()
     }
 
     picker.show(supportFragmentManager, "daily_time_picker")

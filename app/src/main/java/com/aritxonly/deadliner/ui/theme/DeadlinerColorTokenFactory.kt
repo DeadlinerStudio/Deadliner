@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.graphics.toColorInt
 import com.aritxonly.deadliner.model.AppearanceColorSource
+import com.aritxonly.deadliner.model.DynamicPaletteStyle
 import com.aritxonly.deadliner.model.ModernColorPalette
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
@@ -40,6 +41,7 @@ object DeadlinerColorTokenFactory {
     fun rememberBaseMaterialColorScheme(
         seedColorHex: String?,
         colorSource: AppearanceColorSource,
+        dynamicPaletteStyle: DynamicPaletteStyle,
         darkTheme: Boolean,
         dynamicColor: Boolean,
     ): ColorScheme {
@@ -49,11 +51,38 @@ object DeadlinerColorTokenFactory {
             ?.let { runCatching { Color(it.toColorInt()) }.getOrNull() }
 
         return when {
-            parsedSeedColor != null -> createDynamicScheme(parsedSeedColor, darkTheme)
+            dynamicPaletteStyle == DynamicPaletteStyle.System -> {
+                if (
+                    colorSource == AppearanceColorSource.SystemDynamic &&
+                    dynamicColor &&
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                ) {
+                    if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                } else if (darkTheme) {
+                    fallbackDarkScheme
+                } else {
+                    fallbackLightScheme
+                }
+            }
+            parsedSeedColor != null -> createDynamicScheme(
+                seedColor = parsedSeedColor,
+                darkTheme = darkTheme,
+                dynamicPaletteStyle = dynamicPaletteStyle,
+            )
             colorSource == AppearanceColorSource.SystemDynamic &&
                 dynamicColor &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                val systemScheme = if (darkTheme) {
+                    dynamicDarkColorScheme(context)
+                } else {
+                    dynamicLightColorScheme(context)
+                }
+                createDynamicScheme(
+                    seedColor = systemScheme.primary,
+                    darkTheme = darkTheme,
+                    dynamicPaletteStyle = dynamicPaletteStyle,
+                )
+            }
 
             darkTheme -> fallbackDarkScheme
             else -> fallbackLightScheme
@@ -64,6 +93,7 @@ object DeadlinerColorTokenFactory {
     fun rememberTokens(
         seedColorHex: String?,
         colorSource: AppearanceColorSource,
+        dynamicPaletteStyle: DynamicPaletteStyle,
         darkTheme: Boolean,
         dynamicColor: Boolean,
         modernColorPalette: ModernColorPalette,
@@ -73,6 +103,7 @@ object DeadlinerColorTokenFactory {
         val baseScheme = rememberBaseMaterialColorScheme(
             seedColorHex = seedColorHex,
             colorSource = colorSource,
+            dynamicPaletteStyle = dynamicPaletteStyle,
             darkTheme = darkTheme,
             dynamicColor = dynamicColor,
         )
@@ -81,6 +112,7 @@ object DeadlinerColorTokenFactory {
             createDynamicScheme(
                 seedColor = if (darkTheme) miuixAccentSeedDark else miuixAccentSeedLight,
                 darkTheme = darkTheme,
+                dynamicPaletteStyle = dynamicPaletteStyle,
             )
         } else {
             null
@@ -105,14 +137,28 @@ object DeadlinerColorTokenFactory {
     private fun createDynamicScheme(
         seedColor: Color,
         darkTheme: Boolean,
+        dynamicPaletteStyle: DynamicPaletteStyle,
     ): ColorScheme = rememberDynamicColorScheme(
         seedColor = seedColor,
         isDark = darkTheme,
         isAmoled = false,
-        style = PaletteStyle.TonalSpot,
+        style = dynamicPaletteStyle.toPaletteStyle(),
         specVersion = ColorSpec.SpecVersion.SPEC_2025,
         platform = DynamicScheme.Platform.PHONE
     )
+
+    private fun DynamicPaletteStyle.toPaletteStyle(): PaletteStyle = when (this) {
+        DynamicPaletteStyle.System -> PaletteStyle.TonalSpot
+        DynamicPaletteStyle.TonalSpot -> PaletteStyle.TonalSpot
+        DynamicPaletteStyle.Neutral -> PaletteStyle.Neutral
+        DynamicPaletteStyle.Vibrant -> PaletteStyle.Vibrant
+        DynamicPaletteStyle.Expressive -> PaletteStyle.Expressive
+        DynamicPaletteStyle.Rainbow -> PaletteStyle.Rainbow
+        DynamicPaletteStyle.FruitSalad -> PaletteStyle.FruitSalad
+        DynamicPaletteStyle.Monochrome -> PaletteStyle.Monochrome
+        DynamicPaletteStyle.Fidelity -> PaletteStyle.Fidelity
+        DynamicPaletteStyle.Content -> PaletteStyle.Content
+    }
 
     fun createFromMaterialScheme(
         baseScheme: ColorScheme,

@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
@@ -28,8 +29,12 @@ import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.AppIconMode
 import com.aritxonly.deadliner.model.AppThemeStyle
+import com.aritxonly.deadliner.model.AdvancedMaterialLevel
 import com.aritxonly.deadliner.model.AppearanceColorSource
+import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.AppearancePreferences
+import com.aritxonly.deadliner.model.ColorfulIndicatorStyle
+import com.aritxonly.deadliner.model.DynamicPaletteStyle
 import com.aritxonly.deadliner.model.DisplayScalePreset
 import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.DeadlineType
@@ -229,6 +234,18 @@ object GlobalUtils {
             sharedPreferences.edit { putBoolean("show_intro_page_v5.test3", value) }
         }
 
+    var appearanceRefactorIntroSeen: Boolean
+        get() = sharedPreferences.getBoolean("appearance_refactor_intro_seen_v1", false)
+        set(value) {
+            sharedPreferences.edit { putBoolean("appearance_refactor_intro_seen_v1", value) }
+        }
+
+    var seenSettingsFeaturePromos: Set<String>
+        get() = sharedPreferences.getStringSet("seen_settings_feature_promos_v1", emptySet()) ?: emptySet()
+        set(value) {
+            sharedPreferences.edit { putStringSet("seen_settings_feature_promos_v1", value) }
+        }
+
     var detailDisplayMode: Boolean
         get() = sharedPreferences.getBoolean("detail_display_mode", true)
         set(value) {
@@ -271,21 +288,38 @@ object GlobalUtils {
 
     private fun readAppearancePreferences(): AppearancePreferences {
         if (!::sharedPreferences.isInitialized) {
-            return AppearancePreferences()
+            return AppearancePreferences(
+                modernColorPalette = ModernColorPaletteResolver.resolveCurrentDevice()
+            )
         }
 
         val style = UiStyle.fromKey(sharedPreferences.getString("style", UiStyle.Simplified.key))
-        val themeStyle = sharedPreferences.getString("theme_style", null)?.let(AppThemeStyle::fromKey)
+        val legacyThemeStyle = sharedPreferences.getString("theme_style", null)?.let(AppThemeStyle::fromKey)
             ?: if (sharedPreferences.getBoolean("miuix_mode", false)) {
                 AppThemeStyle.Miuix
             } else {
                 AppThemeStyle.Material3
             }
+        val designMode = sharedPreferences.getString("appearance_design_mode", null)
+            ?.let(AppearanceDesignMode::fromKey)
+            ?: when (legacyThemeStyle) {
+                AppThemeStyle.Miuix -> AppearanceDesignMode.Modern
+                AppThemeStyle.Material3 -> AppearanceDesignMode.Vivid
+            }
         val seedColor = sharedPreferences.getString("seed_color", null)
+        val dynamicPaletteStyle = sharedPreferences
+            .getString("dynamic_palette_style", null)
+            ?.let(DynamicPaletteStyle::fromKey)
+            ?: DynamicPaletteStyle.TonalSpot
+        val deviceDefaultPalette = ModernColorPaletteResolver.resolveCurrentDevice()
+        val modernUseDevicePaletteStrategy = sharedPreferences.getBoolean(
+            "modern_use_device_palette_strategy",
+            false
+        )
         val modernColorPalette = sharedPreferences
-            .getString("modern_color_palette", ModernColorPalette.HyperOs.key)
-            ?.let(ModernColorPalette::fromKey)
-            ?: ModernColorPalette.HyperOs
+            .getString("modern_color_palette", null)
+            ?.let { key -> ModernColorPalette.entries.firstOrNull { it.key == key } }
+            ?: deviceDefaultPalette
         val displayScale = DisplayScalePreset.fromKey(
             sharedPreferences.getString("display_scale_preset", DisplayScalePreset.FollowSystem.key)
         )
@@ -295,17 +329,44 @@ object GlobalUtils {
         val miuixNeutralSurfaces = sharedPreferences.getBoolean("miuix_neutral_surfaces", true)
         val useMaterialTopAppBarInMiuix = sharedPreferences.getBoolean("miuix_material_top_bar", true)
         val advancedMaterial = sharedPreferences.getBoolean("advanced_material", false)
+        val advancedMaterialLevel = sharedPreferences.getString("advanced_material_level", null)
+            ?.let(AdvancedMaterialLevel::fromKey)
+            ?: AdvancedMaterialLevel.Soft
+        val legacyHideDivider = sharedPreferences.getBoolean("hide_divider", false)
+        val hasModernHideDivider = sharedPreferences.contains("modern_hide_divider")
+        val hasVividHideDivider = sharedPreferences.contains("vivid_hide_divider")
+        val modernHideDivider = if (hasModernHideDivider) {
+            sharedPreferences.getBoolean("modern_hide_divider", true)
+        } else if (sharedPreferences.contains("hide_divider")) {
+            legacyHideDivider
+        } else {
+            true
+        }
+        val vividHideDivider = if (hasVividHideDivider) {
+            sharedPreferences.getBoolean("vivid_hide_divider", false)
+        } else if (sharedPreferences.contains("hide_divider")) {
+            legacyHideDivider
+        } else {
+            false
+        }
+        val settingsHomepageColoredIcons = sharedPreferences.getBoolean(
+            "settings_homepage_colored_icons",
+            true
+        )
         val appIconMode = AppIconMode.fromKey(sharedPreferences.getString("app_icon_mode", AppIconMode.Default.key))
 
         return AppearancePreferences(
             uiStyle = style,
-            themeStyle = themeStyle,
+            designMode = designMode,
+            themeStyle = legacyThemeStyle,
             colorSource = if (seedColor.isNullOrBlank()) {
                 AppearanceColorSource.SystemDynamic
             } else {
                 AppearanceColorSource.SeedColor
             },
             seedColorHex = seedColor,
+            dynamicPaletteStyle = dynamicPaletteStyle,
+            modernUseDevicePaletteStrategy = modernUseDevicePaletteStrategy,
             modernColorPalette = modernColorPalette,
             displayScalePreset = displayScale,
             customDisplayScaleMultiplier = customDisplayScaleMultiplier,
@@ -313,6 +374,10 @@ object GlobalUtils {
             useMiuixNeutralSurfaces = miuixNeutralSurfaces,
             useMaterialTopAppBarInMiuix = useMaterialTopAppBarInMiuix,
             useAdvancedMaterial = advancedMaterial,
+            advancedMaterialLevel = advancedMaterialLevel,
+            modernHideDivider = modernHideDivider,
+            vividHideDivider = vividHideDivider,
+            useSettingsHomepageColoredIcons = settingsHomepageColoredIcons,
             appIconMode = appIconMode,
         )
     }
@@ -322,15 +387,27 @@ object GlobalUtils {
         commit: Boolean = false
     ) {
         check(::sharedPreferences.isInitialized) { "GlobalUtils not initialized" }
+        val normalizedThemeStyle = when (appearance.designMode) {
+            AppearanceDesignMode.Modern -> AppThemeStyle.Miuix
+            AppearanceDesignMode.Vivid -> AppThemeStyle.Material3
+        }
         sharedPreferences.edit(commit = commit) {
             putString("style", appearance.uiStyle.key)
-            putString("theme_style", appearance.themeStyle.key)
-            putBoolean("miuix_mode", appearance.usesMiuixThemePreference)
+            putString("appearance_design_mode", appearance.designMode.key)
+            putString("theme_style", normalizedThemeStyle.key)
+            putBoolean("miuix_mode", appearance.designMode == AppearanceDesignMode.Modern)
             putBoolean("miuix_color", false)
             putBoolean("miuix_neutral_surfaces", appearance.useMiuixNeutralSurfaces)
             putBoolean("miuix_material_top_bar", appearance.useMaterialTopAppBarInMiuix)
             putBoolean("advanced_material", appearance.useAdvancedMaterial)
+            putString("advanced_material_level", appearance.advancedMaterialLevel.key)
+            putBoolean("modern_hide_divider", appearance.modernHideDivider)
+            putBoolean("vivid_hide_divider", appearance.vividHideDivider)
+            putBoolean("hide_divider", appearance.activeHideDivider)
+            putBoolean("settings_homepage_colored_icons", appearance.useSettingsHomepageColoredIcons)
             putString("seed_color", appearance.seedColorHex)
+            putString("dynamic_palette_style", appearance.dynamicPaletteStyle.key)
+            putBoolean("modern_use_device_palette_strategy", appearance.modernUseDevicePaletteStrategy)
             putString("modern_color_palette", appearance.modernColorPalette.key)
             putString("display_scale_preset", appearance.displayScalePreset.key)
             putFloat("display_scale_custom_multiplier", appearance.customDisplayScaleMultiplier)
@@ -341,6 +418,7 @@ object GlobalUtils {
 
     private fun syncAppearanceFlows(appearance: AppearancePreferences) {
         val style = appearance.uiStyle
+        hideDividerUi = appearance.activeHideDivider
         if (_appearanceFlow == null) {
             _appearanceFlow = MutableStateFlow(appearance)
         } else {
@@ -381,9 +459,14 @@ object GlobalUtils {
     }
 
     var miuixMode: Boolean
-        get() = appearancePreferences.usesMiuixThemePreference
+        get() = appearancePreferences.designMode == AppearanceDesignMode.Modern
         set(value) {
-            updateAppearance { current -> current.copy(themeStyle = if (value) AppThemeStyle.Miuix else AppThemeStyle.Material3) }
+            updateAppearance { current ->
+                current.copy(
+                    designMode = if (value) AppearanceDesignMode.Modern else AppearanceDesignMode.Vivid,
+                    themeStyle = if (value) AppThemeStyle.Miuix else AppThemeStyle.Material3,
+                )
+            }
         }
 
     private var _miuixModeFlow: MutableStateFlow<Boolean>? = null
@@ -410,6 +493,14 @@ object GlobalUtils {
         get() = sharedPreferences.getBoolean("preset_indicator", false)
         set(value) {
             sharedPreferences.edit { putBoolean("preset_indicator", value) }
+        }
+
+    var colorfulIndicatorStyle: ColorfulIndicatorStyle
+        get() = ColorfulIndicatorStyle.fromKey(
+            sharedPreferences.getString("preset_indicator_style", null)
+        )
+        set(value) {
+            sharedPreferences.edit { putString("preset_indicator_style", value.key) }
         }
 
     var hideFromRecent: Boolean
@@ -465,9 +556,14 @@ object GlobalUtils {
         }
 
     var hideDivider: Boolean
-        get() = sharedPreferences.getBoolean("hide_divider", false)
+        get() = appearancePreferences.activeHideDivider
         set(value) {
-            sharedPreferences.edit { putBoolean("hide_divider", value) }
+            updateAppearance { current ->
+                when (current.designMode) {
+                    AppearanceDesignMode.Modern -> current.copy(modernHideDivider = value)
+                    AppearanceDesignMode.Vivid -> current.copy(vividHideDivider = value)
+                }
+            }
             hideDividerUi = value
         }
 
@@ -581,6 +677,32 @@ object GlobalUtils {
             updateAppearance { it.copy(appIconMode = value) }
         }
 
+    var settingsHomepageColoredIcons: Boolean
+        get() = appearancePreferences.useSettingsHomepageColoredIcons
+        set(value) {
+            updateAppearance { it.copy(useSettingsHomepageColoredIcons = value) }
+        }
+
+    var designMode: AppearanceDesignMode
+        get() = appearancePreferences.designMode
+        set(value) {
+            updateAppearance {
+                it.copy(
+                    designMode = value,
+                    themeStyle = when (value) {
+                        AppearanceDesignMode.Modern -> AppThemeStyle.Miuix
+                        AppearanceDesignMode.Vivid -> AppThemeStyle.Material3
+                    },
+                )
+            }
+        }
+
+    var advancedMaterialLevel: AdvancedMaterialLevel
+        get() = appearancePreferences.advancedMaterialLevel
+        set(value) {
+            updateAppearance { it.copy(advancedMaterialLevel = value) }
+        }
+
     private var _seedColorFlow: MutableStateFlow<String?>? = null
 
     val seedColorFlow: StateFlow<String?>
@@ -608,6 +730,18 @@ object GlobalUtils {
         get() = appearancePreferences.modernColorPalette
         set(value) {
             updateAppearance { it.copy(modernColorPalette = value) }
+        }
+
+    var modernUseDevicePaletteStrategy: Boolean
+        get() = appearancePreferences.modernUseDevicePaletteStrategy
+        set(value) {
+            updateAppearance { it.copy(modernUseDevicePaletteStrategy = value) }
+        }
+
+    var dynamicPaletteStyle: DynamicPaletteStyle
+        get() = appearancePreferences.dynamicPaletteStyle
+        set(value) {
+            updateAppearance { it.copy(dynamicPaletteStyle = value) }
         }
 
     var addDeadlineGuide: Boolean
@@ -711,6 +845,11 @@ object GlobalUtils {
 
     private fun loadSettings(context: Context) {
         Log.d("GlobalUtils", "Settings loaded from SharedPreferences")
+        if (!sharedPreferences.contains("modern_color_palette")) {
+            sharedPreferences.edit {
+                putString("modern_color_palette", ModernColorPaletteResolver.resolveCurrentDevice().key)
+            }
+        }
         hideDividerUi = hideDivider
         syncAppearanceFlows(readAppearancePreferences())
     }
@@ -802,6 +941,7 @@ object GlobalUtils {
         fragmentManager: FragmentManager,
         afterDateTime: LocalDateTime? = null,
         makeToast: (String) -> Unit = {},
+        onDialogVisibilityChanged: (Boolean) -> Unit = {},
         onDateTimeSelected: (LocalDateTime) -> Unit,
     ) {
         val zone = ZoneId.systemDefault()
@@ -831,8 +971,10 @@ object GlobalUtils {
         }
 
         val datePicker = builder.build()
+        var timePickerOpened = false
 
         datePicker.addOnPositiveButtonClickListener { selectedDateUtcMillis ->
+            timePickerOpened = true
             val selectedLocalDate = Instant.ofEpochMilli(selectedDateUtcMillis)
                 .atZone(zone)
                 .toLocalDate()
@@ -848,10 +990,18 @@ object GlobalUtils {
                 datePart = baseDateTime,
                 minAllowedTime = minAllowedTime,
                 makeToast = makeToast,
+                onDialogVisibilityChanged = onDialogVisibilityChanged,
                 onDateTimeSelected = onDateTimeSelected
             )
         }
 
+        datePicker.addOnDismissListener {
+            if (!timePickerOpened) {
+                onDialogVisibilityChanged(false)
+            }
+        }
+
+        onDialogVisibilityChanged(true)
         datePicker.show(fragmentManager, "datePicker_after_${minDayStartMillisUtc ?: "none"}")
     }
 
@@ -863,6 +1013,7 @@ object GlobalUtils {
         datePart: LocalDateTime,
         minAllowedTime: LocalTime?,
         makeToast: (String) -> Unit = {},
+        onDialogVisibilityChanged: (Boolean) -> Unit = {},
         onDateTimeSelected: (LocalDateTime) -> Unit,
     ) {
         val now = LocalTime.now()
@@ -872,17 +1023,20 @@ object GlobalUtils {
         }
 
         fun buildAndShow(hour: Int, minute: Int) {
+            onDialogVisibilityChanged(true)
             val timePicker = MaterialTimePicker.Builder()
                 .setTimeFormat(TimeFormat.CLOCK_24H)
                 .setHour(hour)
                 .setMinute(minute)
                 .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
                 .build()
+            var relaunching = false
 
             timePicker.addOnPositiveButtonClickListener {
                 val picked = LocalTime.of(timePicker.hour, timePicker.minute)
 
                 if (minAllowedTime != null && picked.isBefore(minAllowedTime)) {
+                    relaunching = true
                     makeToast("${minAllowedTime.hour.toString().padStart(2, '0')}:${minAllowedTime.minute.toString().padStart(2, '0')}")
                     buildAndShow(minAllowedTime.hour, minAllowedTime.minute)
                     return@addOnPositiveButtonClickListener
@@ -891,10 +1045,40 @@ object GlobalUtils {
                 onDateTimeSelected(datePart.withHour(picked.hour).withMinute(picked.minute))
             }
 
+            timePicker.addOnDismissListener {
+                if (!relaunching) {
+                    onDialogVisibilityChanged(false)
+                }
+            }
+
             timePicker.show(fragmentManager, "timePicker_${datePart.toLocalDate()}_$hour:$minute")
         }
 
         buildAndShow(initialTime.hour, initialTime.minute)
+    }
+
+    fun showTimePicker(
+        fragmentManager: FragmentManager,
+        initialTime: LocalTime = LocalTime.now(),
+        onDialogVisibilityChanged: (Boolean) -> Unit = {},
+        onTimeSelected: (LocalTime) -> Unit,
+    ) {
+        onDialogVisibilityChanged(true)
+        val timePicker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_24H)
+            .setHour(initialTime.hour)
+            .setMinute(initialTime.minute)
+            .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
+            .build()
+
+        timePicker.addOnPositiveButtonClickListener {
+            onTimeSelected(LocalTime.of(timePicker.hour, timePicker.minute))
+        }
+        timePicker.addOnDismissListener {
+            onDialogVisibilityChanged(false)
+        }
+
+        timePicker.show(fragmentManager, "timePicker_only_${initialTime.hour}:${initialTime.minute}")
     }
 
     /**
@@ -922,23 +1106,9 @@ object GlobalUtils {
     }
 
     fun setAlarms(databaseHelper: DatabaseHelper, context: Context) {
-        if (!deadlineNotification) {
-            return
-        }
-
-        val pendingTasks = databaseHelper.getDDLsByType(DeadlineType.TASK)
-            .filter {
-                if (!it.state.isActionable()) {
-                    return@filter false
-                }
-
-                val endTime = parseDateTime(it.endTime)
-                endTime != null && endTime.isAfter(LocalDateTime.now())
-            }
-
-        pendingTasks.forEach { ddlItem ->
-            DeadlineAlarmScheduler.scheduleExactAlarm(context, ddlItem)
-            DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(context, ddlItem)
+        val allDdls = databaseHelper.getAllDDLs()
+        allDdls.forEach { ddlItem ->
+            DeadlineAlarmScheduler.syncScheduledNotifications(context, ddlItem)
         }
     }
 
@@ -1287,5 +1457,9 @@ object GlobalUtils {
                 onCancel()
             }
             .show()
+    }
+
+    fun getCurrentDeviceColorPalette(): ModernColorPalette {
+        return ModernColorPaletteResolver.resolveCurrentDevice()
     }
 }

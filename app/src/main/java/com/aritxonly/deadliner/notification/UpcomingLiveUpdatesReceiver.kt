@@ -6,6 +6,8 @@ import android.content.Intent
 import android.util.Log
 import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.data.DatabaseHelper
+import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.model.DeadlineType
 
 class UpcomingLiveUpdatesReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -18,7 +20,21 @@ class UpcomingLiveUpdatesReceiver: BroadcastReceiver() {
 
         val ddl = DatabaseHelper.getInstance(context).getDDLById(ddlId) ?: return
 
-        if (!ddl.state.isActionable()) return
+        if (ddl.type != DeadlineType.TASK || !ddl.state.isActionable()) {
+            DeadlineAlarmScheduler.syncScheduledNotifications(context, ddl)
+            return
+        }
+
+        val remaining = DeadlineAlarmScheduler.calculateRemainingTime(ddl)
+        val liveWindowSeconds = GlobalUtils.liveUpdatesInAdvance * 60L
+
+        if (remaining <= 0L) return
+
+        if (remaining > liveWindowSeconds) {
+            UpcomingLiveUpdateService.stop(context, ddl.id)
+            DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(context, ddl)
+            return
+        }
 
         UpcomingLiveUpdateService.start(context, ddl)
     }

@@ -6,6 +6,7 @@ enum class HabitPeriod {
     DAILY,
     WEEKLY,
     MONTHLY,
+    EBBINGHAUS,
 }
 
 enum class HabitGoalType {

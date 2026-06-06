@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -56,6 +57,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -81,6 +83,10 @@ import com.aritxonly.deadliner.ui.base.RadioButton
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
+import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
+import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.iconResource
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -94,6 +100,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import top.yukonga.miuix.kmp.blur.BlendColorEntry
 
 private enum class DetailAction(
     val iconRes: Int,
@@ -348,28 +355,9 @@ fun DeadlineDetailScreen(
         },
         bottomBar = {
             val actions = availableActions(deadline.state)
-            val split = actions.size / 2
-            FlexibleBottomAppBar(
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                contentPadding = PaddingValues(horizontal = 0.dp),
-                content = {
-                    actions.take(split).forEach { action ->
-                        IconButton(onClick = { executeAction(action) }) {
-                            Icon(
-                                imageVector = iconResource(action.iconRes),
-                                contentDescription = stringResource(action.labelRes)
-                            )
-                        }
-                    }
-                    actions.drop(split).forEach { action ->
-                        IconButton(onClick = { executeAction(action) }) {
-                            Icon(
-                                imageVector = iconResource(action.iconRes),
-                                contentDescription = stringResource(action.labelRes)
-                            )
-                        }
-                    }
-                }
+            DetailBottomActions(
+                actions = actions,
+                onActionClick = ::executeAction
             )
         },
         floatingActionButton = {
@@ -465,6 +453,57 @@ fun DeadlineDetailScreen(
             )
             Spacer(modifier = Modifier.height(88.dp))
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DetailBottomActions(
+    actions: List<DetailAction>,
+    onActionClick: (DetailAction) -> Unit,
+) {
+    val advancedMaterial = LocalAdvancedMaterialSpec.current
+    val backdrop = LocalAdvancedMaterialBackdrop.current
+    val surfaceTint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = advancedMaterial.navigationTintAlpha * 0.55f)
+    val materialColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (advancedMaterial.enabled && backdrop != null) {
+                    Modifier.advancedTextureBlur(
+                        advancedMaterial = advancedMaterial,
+                        backdrop = backdrop,
+                        shape = RectangleShape,
+                        colors = materialColors,
+                    )
+                } else {
+                    Modifier.background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RectangleShape
+                    )
+                }
+            )
+    ) {
+        FlexibleBottomAppBar(
+            modifier = Modifier
+                .fillMaxWidth(),
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            contentPadding = PaddingValues(horizontal = 0.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            content = {
+                actions.forEach { action ->
+                    IconButton(onClick = { onActionClick(action) }) {
+                        Icon(
+                            imageVector = iconResource(action.iconRes),
+                            contentDescription = stringResource(action.labelRes)
+                        )
+                    }
+                }
+            }
+        )
     }
 }
 

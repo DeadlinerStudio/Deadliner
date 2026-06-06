@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -147,6 +146,7 @@ private fun ResponsiveContributionHeatmapGrid(
 private fun DailyCompletedCard(
     dailyStats: List<DailyStat>,
 ) {
+    val indicatorPalette = rememberOverviewIndicatorPalette()
     OverviewSurfaceCard {
         Column(
             modifier = Modifier
@@ -165,8 +165,8 @@ private fun DailyCompletedCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp),
-                barColor = colorResource(R.color.chart_green),
-                overdueColor = colorResource(R.color.chart_red)
+                barColor = indicatorPalette.completed,
+                overdueColor = indicatorPalette.overdue,
             )
         }
     }
@@ -176,6 +176,7 @@ private fun DailyCompletedCard(
 private fun MonthlyTrendCard(
     monthlyStats: List<MonthlyStat>,
 ) {
+    val indicatorPalette = rememberOverviewIndicatorPalette()
     OverviewSurfaceCard {
         Column(
             modifier = Modifier
@@ -194,9 +195,9 @@ private fun MonthlyTrendCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(260.dp),
-                totalColor = colorResource(R.color.chart_blue),
-                completedColor = colorResource(R.color.chart_green),
-                overdueColor = colorResource(R.color.chart_orange)
+                totalColor = indicatorPalette.total,
+                completedColor = indicatorPalette.completed,
+                overdueColor = indicatorPalette.pending,
             )
         }
     }
@@ -206,6 +207,7 @@ private fun MonthlyTrendCard(
 private fun PrevWeeksCard(
     weeklyStats: List<WeeklyStat>,
 ) {
+    val indicatorPalette = rememberOverviewIndicatorPalette()
     OverviewSurfaceCard {
         Column(
             modifier = Modifier
@@ -224,7 +226,7 @@ private fun PrevWeeksCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp),
-                barColor = MaterialTheme.colorScheme.secondary
+                barColor = indicatorPalette.pending,
             )
         }
     }
@@ -288,11 +290,8 @@ private fun HeatLegend(
 
 @Composable
 private fun colorForContribution(count: Int): Color {
-    return when {
-        count <= 0 -> MaterialTheme.colorScheme.surfaceVariant
-        count < 2 -> colorResource(R.color.chart_green).copy(alpha = 0.30f)
-        count < 4 -> colorResource(R.color.chart_green).copy(alpha = 0.50f)
-        count < 6 -> colorResource(R.color.chart_green).copy(alpha = 0.72f)
-        else -> colorResource(R.color.chart_green)
-    }
+    return rememberOverviewHeatmapColor(
+        role = OverviewIndicatorRole.Completed,
+        count = count,
+    )
 }

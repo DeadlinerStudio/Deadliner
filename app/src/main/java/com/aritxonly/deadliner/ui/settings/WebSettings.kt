@@ -56,6 +56,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.sync.SyncScheduler
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TextButton
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
@@ -233,7 +234,8 @@ fun WebSettingsScreen(
             if (webEnabled) {
                 item {
                     SettingsSection(
-                        customColor = MaterialTheme.colorScheme.surface
+                        customColor = MaterialTheme.colorScheme.surface,
+                        clipContent = false
                     ) {
                         RoundedTextField(
                             value = serverBase,
@@ -258,8 +260,8 @@ fun WebSettingsScreen(
                         Button(
                             onClick = onSaveButtonClick,
                             modifier = Modifier
-                                .padding(top = 8.dp)
                                 .fillMaxWidth()
+                                .padding(top = 8.dp)
                         ) {
                             Text(stringResource(R.string.save))
                         }
@@ -373,6 +375,7 @@ fun SyncIntervalBottomSheet(
         )
     }
 
+    RegisterAdvancedMaterialDialogBlur()
     ModalBottomSheet(
         sheetState = sheetState,
         onDismissRequest = onDismiss,

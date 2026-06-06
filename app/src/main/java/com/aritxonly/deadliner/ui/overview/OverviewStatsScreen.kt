@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.hashColor
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.ui.AnimatedItem
@@ -81,6 +80,13 @@ fun OverviewStatsScreen(
 fun HistoryStatsCard(
     historyStats: Map<String, Int>,
 ) {
+    val indicatorPalette = rememberOverviewIndicatorPalette()
+    val indicatorRoles = listOf(
+        OverviewIndicatorRole.Completed,
+        OverviewIndicatorRole.Pending,
+        OverviewIndicatorRole.Abandoned,
+        OverviewIndicatorRole.Overdue,
+    )
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -106,7 +112,7 @@ fun HistoryStatsCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                historyStats.forEach { (key, value) ->
+                historyStats.entries.forEachIndexed { index, (key, value) ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.width(80.dp)
@@ -123,7 +129,9 @@ fun HistoryStatsCard(
                         Text(
                             text = value.toString(),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = hashColor(key = key),
+                            color = indicatorPalette.colorFor(
+                                indicatorRoles.getOrElse(index) { OverviewIndicatorRole.Total }
+                            ),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -144,6 +152,7 @@ fun HistoryStatsCard(
 fun CompletionTimeCard(
     completionTimeStats: List<Pair<String, Int>>,
 ) {
+    val indicatorPalette = rememberOverviewIndicatorPalette()
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -168,6 +177,7 @@ fun CompletionTimeCard(
             // 使用条形图展示完成时间段统计
             NewBarChartCompletionTimeStats(
                 data = completionTimeStats,
+                barColor = indicatorPalette.total,
                 textColor = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -178,6 +188,13 @@ fun CompletionTimeCard(
 fun ActiveStatsCard(
     activeStats: Map<String, Int>,
 ) {
+    val indicatorPalette = rememberOverviewIndicatorPalette()
+    val indicatorRoles = listOf(
+        OverviewIndicatorRole.Completed,
+        OverviewIndicatorRole.Pending,
+        OverviewIndicatorRole.Overdue,
+        OverviewIndicatorRole.Abandoned,
+    )
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -204,7 +221,7 @@ fun ActiveStatsCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                activeStats.forEach { (key, value) ->
+                activeStats.entries.forEachIndexed { index, (key, value) ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.width(80.dp)
@@ -221,7 +238,9 @@ fun ActiveStatsCard(
                         Text(
                             text = value.toString(),
                             style = MaterialTheme.typography.titleLarge,
-                            color = hashColor(key = key),
+                            color = indicatorPalette.colorFor(
+                                indicatorRoles.getOrElse(index) { OverviewIndicatorRole.Total }
+                            ),
                             fontWeight = FontWeight.Bold
                         )
                     }

@@ -4,8 +4,15 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewTreeObserver
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.annotation.DrawableRes
@@ -22,17 +29,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.core.view.drawToBitmap
 import com.aritxonly.deadliner.ui.settings.AboutSettingsScreen
+import com.aritxonly.deadliner.ui.settings.AdvancedMaterialSettingsScreen
 import com.aritxonly.deadliner.ui.settings.AppIconSettingsScreen
 import com.aritxonly.deadliner.ui.settings.ArchiveSettingsScreen
 import com.aritxonly.deadliner.ui.settings.BackupSettingsScreen
 import com.aritxonly.deadliner.ui.settings.BadgeSettingsScreen
 import com.aritxonly.deadliner.ui.settings.AISettingsScreen
+import com.aritxonly.deadliner.ui.settings.DesignColorSettingsScreen
 import com.aritxonly.deadliner.ui.settings.CustomDisplayScaleSettingsScreen
 import com.aritxonly.deadliner.ui.settings.DisplayScaleSettingsScreen
 import com.aritxonly.deadliner.ui.settings.LabSettingsScreen
@@ -56,9 +74,11 @@ import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.DisplayScaleManager
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
+import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.ui.settings.UiSettingsScreen
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import java.io.FileInputStream
@@ -97,6 +117,8 @@ sealed class SettingsRoute(
     object Prompt : SettingsRoute("prompt", R.string.settings_ai_custom_prompt, R.string.settings_support_ai_custom_prompt, null)
 
     object Badge : SettingsRoute("badge", R.string.settings_tasks_badge_title, R.string.settings_support_tasks_badge, null)
+    object AppearanceDesign : SettingsRoute("appearance_design", R.string.settings_design_color_title, R.string.settings_design_color_summary, null)
+    object AppearanceMaterial : SettingsRoute("appearance_material", R.string.settings_advanced_material, R.string.settings_advanced_material_summary, null)
     object UI : SettingsRoute("ui", R.string.settings_ui_mode_title, R.string.settings_support_ui_mode, null)
     object DisplayScale : SettingsRoute("display_scale", R.string.settings_display_size_title, R.string.settings_support_display_size_menu, null)
     object DisplayScaleCustom : SettingsRoute("display_scale_custom", R.string.settings_display_size_custom_title, R.string.settings_support_display_size_lab, null)
@@ -135,7 +157,7 @@ sealed class SettingsRoute(
         )
 
         val appearanceThirdRoutes = listOf(
-            UI, Badge, DisplayScale, AppIcon
+            AppearanceDesign, AppearanceMaterial, AppIcon, UI, DisplayScale
         )
 
         val aboutThirdRoutes = listOf(
@@ -144,54 +166,85 @@ sealed class SettingsRoute(
     }
 }
 
+private data class SettingsDesignModeTransition(
+    val targetMode: AppearanceDesignMode,
+    val snapshotBitmap: Bitmap?,
+    val overlayColorArgb: Int,
+    val indicatorColorArgb: Int,
+)
+
 class SettingsActivity : DeadlinerAppCompatActivity() {
     companion object {
         private const val EXPORT_REQUEST_CODE = 1001
         private const val IMPORT_REQUEST_CODE = 1002
 
         const val EXTRA_INITIAL_ROUTE = "extra_initial_route"
+        private const val STATE_CURRENT_ROUTE = "state_current_route"
     }
+
+    private var latestRoute: String = SettingsRoute.Main.route
+    private var designModeTransitionOverlay: View? = null
+    private var designModeTransitionInFlight: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdgeForAllDevices()
 
         super.onCreate(savedInstanceState)
 
+        val initialRoute = savedInstanceState?.getString(STATE_CURRENT_ROUTE)
+            ?: intent.getStringExtra(EXTRA_INITIAL_ROUTE)
+            ?: SettingsRoute.Main.route
+        latestRoute = initialRoute
+        intent.putExtra(EXTRA_INITIAL_ROUTE, initialRoute)
+
         setContent {
-            DeadlinerTheme {
-                val navController = rememberNavController()
+            val navController = rememberNavController()
+            var restoredRoute by rememberSaveable {
+                mutableStateOf(initialRoute)
+            }
+            val currentBackStackEntry by navController.currentBackStackEntryAsState()
 
-                val defaultEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(300)
-                    ) + fadeIn(tween(300))
-                }
-                val defaultExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-                    fadeOut(tween(300))
-                }
-                val defaultPopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-                    fadeIn(tween(300))
-                }
-                val defaultPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(300)
-                    ) + fadeOut(tween(300))
-                }
+            val defaultEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(300)
+                ) + fadeIn(tween(300))
+            }
+            val defaultExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+                fadeOut(tween(300))
+            }
+            val defaultPopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+                fadeIn(tween(300))
+            }
+            val defaultPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(300)
+                ) + fadeOut(tween(300))
+            }
 
-                val initialRoute = intent.getStringExtra(EXTRA_INITIAL_ROUTE)
-                LaunchedEffect(initialRoute) {
-                    initialRoute?.let { route ->
-                        navController.navigate(route) {
-                            popUpTo(SettingsRoute.Main.route) { inclusive = false }
-                        }
+            LaunchedEffect(restoredRoute) {
+                val route = restoredRoute
+                if (route != SettingsRoute.Main.route && navController.currentDestination?.route != route) {
+                    navController.navigate(route) {
+                        popUpTo(SettingsRoute.Main.route) { inclusive = false }
+                        launchSingleTop = true
                     }
                 }
+            }
+            LaunchedEffect(currentBackStackEntry?.destination?.route) {
+                currentBackStackEntry?.destination?.route?.let {
+                    restoredRoute = it
+                    latestRoute = it
+                    intent.putExtra(EXTRA_INITIAL_ROUTE, it)
+                }
+            }
 
+            DeadlinerTheme {
+                val colorScheme = MaterialTheme.colorScheme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.surface
+                    color = colorScheme.surface
                 ) {
                     NavHost(
                         navController,
@@ -342,6 +395,22 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
                         composable(SettingsRoute.Vibration.route) { VibrationSettingsScreen { navController.navigateUp() } }
                         composable(SettingsRoute.Archive.route) { ArchiveSettingsScreen { navController.navigateUp() } }
                         composable(SettingsRoute.Badge.route) { BadgeSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.AppearanceDesign.route) {
+                            DesignColorSettingsScreen(
+                                navigateUp = { navController.navigateUp() },
+                                onRequestDesignModeChange = { mode ->
+                                    requestDesignModeTransition(
+                                        transition = SettingsDesignModeTransition(
+                                            targetMode = mode,
+                                            snapshotBitmap = window.decorView.rootView.drawToBitmap(Bitmap.Config.ARGB_8888),
+                                            overlayColorArgb = colorScheme.surface.toArgb(),
+                                            indicatorColorArgb = colorScheme.primary.toArgb(),
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                        composable(SettingsRoute.AppearanceMaterial.route) { AdvancedMaterialSettingsScreen { navController.navigateUp() } }
                         composable(SettingsRoute.DisplayScale.route) { DisplayScaleSettingsScreen { navController.navigateUp() } }
                         composable(SettingsRoute.DisplayScaleCustom.route) { CustomDisplayScaleSettingsScreen { navController.navigateUp() } }
                         composable(SettingsRoute.AppIcon.route) { AppIconSettingsScreen { navController.navigateUp() } }
@@ -357,6 +426,11 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(STATE_CURRENT_ROUTE, latestRoute)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -465,6 +539,133 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
             e.printStackTrace()
             showToast(getString(R.string.import_failed, e.localizedMessage))
         }
+    }
+
+    private fun requestDesignModeTransition(transition: SettingsDesignModeTransition) {
+        if (designModeTransitionInFlight) return
+
+        val contentRoot = window.decorView.findViewById<ViewGroup>(android.R.id.content)
+            ?: run {
+                GlobalUtils.designMode = transition.targetMode
+                return
+            }
+
+        designModeTransitionInFlight = true
+        designModeTransitionOverlay?.let { existing ->
+            contentRoot.removeView(existing)
+        }
+
+        val overlay = buildDesignModeTransitionOverlay(transition)
+        designModeTransitionOverlay = overlay
+        contentRoot.addView(overlay)
+
+        overlay.animate()
+            .alpha(1f)
+            .setDuration(220L)
+            .withEndAction {
+                GlobalUtils.designMode = transition.targetMode
+                dismissDesignModeTransitionOverlayAfterNextDraw(
+                    contentRoot = contentRoot,
+                    overlay = overlay,
+                    snapshotBitmap = transition.snapshotBitmap,
+                )
+            }
+            .start()
+    }
+
+    private fun buildDesignModeTransitionOverlay(
+        transition: SettingsDesignModeTransition,
+    ): View {
+        val overlay = FrameLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            alpha = 0f
+            isClickable = true
+            isFocusable = true
+        }
+
+        transition.snapshotBitmap?.let { snapshot ->
+            overlay.addView(
+                ImageView(this).apply {
+                    layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                    )
+                    scaleType = ImageView.ScaleType.FIT_XY
+                    setImageBitmap(snapshot)
+                }
+            )
+        }
+
+        overlay.addView(
+            View(this).apply {
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                )
+                setBackgroundColor(applyAlpha(transition.overlayColorArgb, 0.92f))
+            }
+        )
+
+        overlay.addView(
+            CircularProgressIndicator(this).apply {
+                layoutParams = FrameLayout.LayoutParams(dpToPx(64), dpToPx(64)).apply {
+                    gravity = Gravity.CENTER
+                }
+                isIndeterminate = true
+                setIndicatorColor(transition.indicatorColorArgb)
+                trackThickness = dpToPx(4)
+                trackColor = applyAlpha(transition.indicatorColorArgb, 0.16f)
+            }
+        )
+
+        return overlay
+    }
+
+    private fun dismissDesignModeTransitionOverlayAfterNextDraw(
+        contentRoot: ViewGroup,
+        overlay: View,
+        snapshotBitmap: Bitmap?,
+    ) {
+        contentRoot.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                if (contentRoot.viewTreeObserver.isAlive) {
+                    contentRoot.viewTreeObserver.removeOnPreDrawListener(this)
+                }
+
+                contentRoot.post {
+                    contentRoot.post {
+                        overlay.animate()
+                            .alpha(0f)
+                            .setDuration(320L)
+                            .withEndAction {
+                                if (overlay.parent === contentRoot) {
+                                    contentRoot.removeView(overlay)
+                                }
+                                if (designModeTransitionOverlay === overlay) {
+                                    designModeTransitionOverlay = null
+                                }
+                                snapshotBitmap?.recycle()
+                                designModeTransitionInFlight = false
+                            }
+                            .start()
+                    }
+                }
+
+                return true
+            }
+        })
+        contentRoot.invalidate()
+    }
+
+    private fun dpToPx(dp: Int): Int =
+        (dp * resources.displayMetrics.density).toInt()
+
+    private fun applyAlpha(color: Int, alphaFraction: Float): Int {
+        val alpha = (255 * alphaFraction.coerceIn(0f, 1f)).toInt()
+        return (color and 0x00FFFFFF) or (alpha shl 24)
     }
 
     private fun showDialogRestartAppTablet() {

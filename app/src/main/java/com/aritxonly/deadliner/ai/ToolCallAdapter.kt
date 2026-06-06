@@ -404,6 +404,7 @@ internal class AndroidToolCallAdapter(
             "day", "daily" -> HabitPeriod.DAILY
             "week", "weekly" -> HabitPeriod.WEEKLY
             "month", "monthly" -> HabitPeriod.MONTHLY
+            "ebbinghaus", "memory", "review" -> HabitPeriod.EBBINGHAUS
             else -> HabitPeriod.DAILY
         }
     }

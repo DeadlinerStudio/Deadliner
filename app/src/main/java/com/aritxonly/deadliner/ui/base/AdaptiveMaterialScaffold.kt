@@ -81,8 +81,9 @@ fun AdaptiveMaterialScaffold(
     val surfaceTint = tintBaseColor.copy(alpha = advancedMaterial.topBarTintAlpha)
     val blurColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
 
-    Scaffold(
-        modifier = modifier,
+    ProvideAdvancedMaterialDialogBlurHost {
+        Scaffold(
+        modifier = modifier.advancedMaterialDialogBlurHost(),
         topBar = {
             if (backdrop != null) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
@@ -191,5 +192,6 @@ fun AdaptiveMaterialScaffold(
                 }
             }
         }
+    }
     }
 }

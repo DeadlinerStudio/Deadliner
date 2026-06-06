@@ -178,6 +178,36 @@ class CaptureViewModel(
         convertTextToHabit(merged.text, useAi)
     }
 
+    fun convertSelectedToTask(useAi: Boolean) {
+        val state = _uiState.value
+        val selectedIds = state.selectedIds
+        if (selectedIds.isEmpty()) return
+        if (selectedIds.size == 1) {
+            val selected = state.items.firstOrNull { selectedIds.contains(it.id) } ?: return
+            val text = selected.text.trim()
+            if (text.isEmpty()) return
+            exitMultiSelect()
+            convertTextToTask(text, useAi)
+            return
+        }
+        mergeAndConvertToTask(useAi)
+    }
+
+    fun convertSelectedToHabit(useAi: Boolean) {
+        val state = _uiState.value
+        val selectedIds = state.selectedIds
+        if (selectedIds.isEmpty()) return
+        if (selectedIds.size == 1) {
+            val selected = state.items.firstOrNull { selectedIds.contains(it.id) } ?: return
+            val text = selected.text.trim()
+            if (text.isEmpty()) return
+            exitMultiSelect()
+            convertTextToHabit(text, useAi)
+            return
+        }
+        mergeAndConvertToHabit(useAi)
+    }
+
     private fun convertTextToTask(text: String, useAi: Boolean) {
         viewModelScope.launch {
             _effects.emit(

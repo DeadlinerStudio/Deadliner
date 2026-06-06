@@ -48,6 +48,7 @@ import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.Switch
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TopAppBar
@@ -159,7 +160,8 @@ fun OverviewTopBar(
                     modifier = expressiveTypeModifier,
                 )
             }
-        }
+        },
+        isMainTitle = !showNavigationIcon
     )
 }
 
@@ -169,6 +171,7 @@ fun OverviewSettingsDialog(
     onDismiss: () -> Unit,
 ) {
     if (!visible) return
+    RegisterAdvancedMaterialDialogBlur()
 
     var showOverdueSeries by remember {
         mutableStateOf(GlobalUtils.OverviewSettings.showOverdueInDaily)

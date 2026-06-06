@@ -34,6 +34,7 @@ import com.aritxonly.deadliner.ai.defaultLlmPreset
 import com.aritxonly.deadliner.localutils.ApiKeystore
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.SvgCard
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
@@ -191,7 +192,10 @@ fun AISettingsScreen(
             }
 
             if (advancedSettings) {
-                SettingsSection(customColor = MaterialTheme.colorScheme.surface) {
+                SettingsSection(
+                    customColor = MaterialTheme.colorScheme.surface,
+                    clipContent = false
+                ) {
                     RoundedTextField(
                         value = apiKey ?: "",
                         onValueChange = onApiKeyChange,
@@ -203,8 +207,8 @@ fun AISettingsScreen(
                     Button(
                         onClick = onSaveButtonClick,
                         modifier = Modifier
-                            .padding(top = 8.dp)
                             .fillMaxWidth()
+                            .padding(top = 8.dp)
                     ) {
                         Text(stringResource(R.string.save))
                     }
@@ -216,6 +220,7 @@ fun AISettingsScreen(
     }
 
     if (showTestDialog) {
+        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
             onDismissRequest = { showTestDialog = false },
             confirmButton = {

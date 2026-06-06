@@ -4,8 +4,13 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -35,6 +40,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,20 +51,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -82,21 +92,30 @@ import com.aritxonly.deadliner.model.HabitMetaData
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.toJson
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
-import com.aritxonly.deadliner.ui.base.Button
-import com.aritxonly.deadliner.ui.base.OutlinedTextField
-import com.aritxonly.deadliner.ui.base.Switch
+import com.aritxonly.deadliner.ui.base.AlertDialog
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.editor.DeadlineAiQuickAddCard
+import com.aritxonly.deadliner.ui.editor.DeadlineBottomActions
+import com.aritxonly.deadliner.ui.editor.DeadlineNameField
+import com.aritxonly.deadliner.ui.editor.DeadlineStarToggleCard
+import com.aritxonly.deadliner.ui.editor.EditorHabitPeriod
+import com.aritxonly.deadliner.ui.editor.HabitEditorDraft
+import com.aritxonly.deadliner.ui.editor.HabitEditorSection
+import com.aritxonly.deadliner.ui.editor.TaskEditorDraft
+import com.aritxonly.deadliner.ui.editor.TaskEditorSection
+import com.aritxonly.deadliner.ui.editor.toDeadlineFrequency
+import com.aritxonly.deadliner.ui.editor.toEditorHabitPeriod
+import com.aritxonly.deadliner.ui.editor.toModelPeriod
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
-import com.aritxonly.deadliner.ui.navIconPaddingModifier
-import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
-import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -105,8 +124,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 import com.aritxonly.deadliner.ai.AIUtils
-import com.aritxonly.deadliner.ui.iconResource
-import top.yukonga.miuix.kmp.blur.BlendColorEntry
 
 @SuppressLint("SimpleDateFormat")
 class AddDDLActivity : DeadlinerAppCompatActivity() {
@@ -116,30 +133,27 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
 
     private var selectedPage by mutableIntStateOf(0)
 
-    private var ddlName by mutableStateOf("")
-    private var taskNote by mutableStateOf("")
-    private var habitDescription by mutableStateOf("")
-    private var isStarred by mutableStateOf(false)
-
-    private var startTime by mutableStateOf(LocalDateTime.now())
-    private var endTime by mutableStateOf(LocalDateTime.now().plusHours(1))
-
-    private var frequencyInput by mutableStateOf("1")
-    private var totalInput by mutableStateOf("")
-    private var frequencyType by mutableStateOf(DeadlineFrequency.DAILY)
-
-    private var habitReminderEnabled by mutableStateOf(false)
-    private var habitReminderTime by mutableStateOf(LocalTime.of(20, 0))
+    private var taskDraft by mutableStateOf(TaskEditorDraft())
+    private var habitDraft by mutableStateOf(HabitEditorDraft())
     private var aiInputText by mutableStateOf("")
     private var isAiLoading by mutableStateOf(false)
     private var autoRunAiOnAppear by mutableStateOf(false)
     private var aiAutoTriggered by mutableStateOf(false)
+    private var showDonatePrompt by mutableStateOf(false)
+    private var showPickerDialogBlur by mutableStateOf(false)
+    private var pendingPickerLaunchJob: Job? = null
 
     private var calendarEventId: Long? = null
     private var pendingCalendarAction: PendingCalendarAction? = null
+    private var pendingSaveAction: SaveAction? = null
 
     private enum class PendingCalendarAction {
         IMPORT,
+        SAVE_TO_CALENDAR
+    }
+
+    private enum class SaveAction {
+        SAVE,
         SAVE_TO_CALENDAR
     }
 
@@ -163,8 +177,9 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
 
                 PendingCalendarAction.SAVE_TO_CALENDAR -> {
                     if (hasCalendarWritePermission()) {
-                        save(toCalendar = true)
+                        performPendingSaveIfNeeded()
                     } else {
+                        pendingSaveAction = null
                         Toast.makeText(
                             this,
                             getString(R.string.permission_calendar_error, "Missing calendar permission"),
@@ -218,42 +233,58 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         autoRunAi: Boolean
     ) {
         generatedDDL?.let {
-            ddlName = it.name
-            endTime = it.dueTime
-            taskNote = it.note
+            updateSharedName(it.name)
+            taskDraft = taskDraft.copy(
+                endTime = it.dueTime,
+                note = it.note
+            )
         }
 
         fullDDL?.let { item ->
-            ddlName = item.name
-            isStarred = item.isStared
+            updateSharedName(item.name)
+            taskDraft = taskDraft.copy(isStarred = item.isStared)
             calendarEventId = item.calendarEventId
 
-            GlobalUtils.parseDateTime(item.startTime)?.let { startTime = it }
-            GlobalUtils.parseDateTime(item.endTime)?.let { endTime = it }
+            val parsedStart = GlobalUtils.parseDateTime(item.startTime)
+            val parsedEnd = GlobalUtils.parseDateTime(item.endTime)
 
             when (item.type) {
                 DeadlineType.TASK -> {
                     selectedPage = 0
-                    taskNote = item.note
+                    taskDraft = taskDraft.copy(
+                        note = item.note,
+                        startTime = parsedStart ?: taskDraft.startTime,
+                        endTime = parsedEnd ?: taskDraft.endTime
+                    )
                 }
                 DeadlineType.HABIT -> {
                     selectedPage = 1
 
                     val meta = GlobalUtils.parseHabitMetaData(item.note)
-                    frequencyInput = meta.frequency.toString()
-                    totalInput = if (meta.total > 0) meta.total.toString() else ""
-                    frequencyType = meta.frequencyType
-
                     val habit = habitRepo.getHabitByDdlId(item.id)
-                    habitDescription = habit?.description.orEmpty()
-                    val alarm = habit?.alarmTime.orEmpty()
-                    if (alarm.isNotBlank()) {
-                        runCatching { LocalTime.parse(alarm, REMINDER_TIME_FORMATTER) }
-                            .onSuccess {
-                                habitReminderEnabled = true
-                                habitReminderTime = it
+                    val reminderTime = parseReminderTime(habit?.alarmTime)
+                    val goalType = habit?.goalType
+                        ?: if (meta.frequencyType == DeadlineFrequency.TOTAL) HabitGoalType.TOTAL else HabitGoalType.PER_PERIOD
+                    val timesPerPeriod = habit?.timesPerPeriod?.toString()
+                        ?: meta.frequency.coerceAtLeast(1).toString()
+                    val totalTarget = habit?.totalTarget
+                        ?: meta.total.takeIf { it > 0 }
+
+                    habitDraft = habitDraft.copy(
+                        period = habit?.period?.let { modelPeriod ->
+                            when (modelPeriod) {
+                                HabitPeriod.DAILY -> EditorHabitPeriod.DAILY
+                                HabitPeriod.WEEKLY -> EditorHabitPeriod.WEEKLY
+                                HabitPeriod.MONTHLY -> EditorHabitPeriod.MONTHLY
+                                HabitPeriod.EBBINGHAUS -> EditorHabitPeriod.EBBINGHAUS
                             }
-                    }
+                        } ?: meta.frequencyType.toEditorHabitPeriod(),
+                        goalType = goalType,
+                        timesPerPeriod = timesPerPeriod,
+                        totalTarget = totalTarget?.toString().orEmpty(),
+                        reminderEnabled = reminderTime != null,
+                        reminderTime = reminderTime ?: habitDraft.reminderTime
+                    )
                 }
             }
         }
@@ -269,31 +300,40 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         }
     }
 
+    private fun updateSharedName(name: String) {
+        taskDraft = taskDraft.copy(name = name)
+        habitDraft = habitDraft.copy(name = name)
+    }
+
+    private fun updateSharedStarred(isStarred: Boolean) {
+        taskDraft = taskDraft.copy(isStarred = isStarred)
+    }
+
+    private fun parseReminderTime(raw: String?): LocalTime? {
+        if (raw.isNullOrBlank()) return null
+        return runCatching { LocalTime.parse(raw, REMINDER_TIME_FORMATTER) }.getOrNull()
+    }
+
+    private fun buildHabitSummary(): String {
+        return GlobalUtils.generateHabitNote(
+            this,
+            habitDraft.timesPerPeriod.toIntOrNull(),
+            habitDraft.totalTarget.toIntOrNull(),
+            habitDraft.toDeadlineFrequency()
+        )
+    }
+
     private fun promptDeadlinerDonateIfNeeded() {
         if (!GlobalUtils.shouldShowDeadlinerDonatePrompt()) return
         GlobalUtils.markDeadlinerDonatePromptShown()
-        MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.deadliner_donate_plan_title))
-            .setMessage(getString(R.string.deadliner_donate_plan_message))
-            .setPositiveButton(getString(R.string.deadliner_donate_go)) { _, _ ->
-                startActivity(
-                    Intent(this, SettingsActivity::class.java).apply {
-                        putExtra(SettingsActivity.EXTRA_INITIAL_ROUTE, SettingsRoute.Donate.route)
-                    }
-                )
-            }
-            .setNegativeButton(getString(R.string.later), null)
-            .show()
+        showDonatePrompt = true
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun AddDDLScreen() {
         val tabs = listOf(stringResource(R.string.task), stringResource(R.string.habit))
-        val textFieldShape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
         val pageSurfaceColor = MaterialTheme.colorScheme.surface
-        val sectionContainerColor = MaterialTheme.colorScheme.surfaceContainer
-        val emphasizedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         val advancedMaterial = LocalAdvancedMaterialSpec.current
         val layoutDirection = LocalLayoutDirection.current
         LaunchedEffect(autoRunAiOnAppear, aiInputText, aiAutoTriggered) {
@@ -303,10 +343,49 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
             }
         }
 
+        if (showDonatePrompt) {
+            AlertDialog(
+                show = true,
+                onDismissRequest = { showDonatePrompt = false },
+                title = { Text(stringResource(R.string.deadliner_donate_plan_title)) },
+                text = { Text(stringResource(R.string.deadliner_donate_plan_message)) },
+                miuixTitle = getString(R.string.deadliner_donate_plan_title),
+                miuixSummary = getString(R.string.deadliner_donate_plan_message),
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDonatePrompt = false
+                            startActivity(
+                                Intent(this@AddDDLActivity, SettingsActivity::class.java).apply {
+                                    putExtra(SettingsActivity.EXTRA_INITIAL_ROUTE, SettingsRoute.Donate.route)
+                                }
+                            )
+                        }
+                    ) {
+                        Text(stringResource(R.string.deadliner_donate_go))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDonatePrompt = false }) {
+                        Text(stringResource(R.string.later))
+                    }
+                }
+            )
+        }
+
+        if (showPickerDialogBlur) {
+            RegisterAdvancedMaterialDialogBlur()
+        }
+        PickerWindowBlurEffect(
+            active = showPickerDialogBlur,
+            surfaceColor = MaterialTheme.colorScheme.surface
+        )
+
         AdaptiveMaterialScaffold(
             containerColor = Color.Transparent,
             contentColor = contentColorFor(Color.Transparent),
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            advancedMaterialTopBarTintColor = MaterialTheme.colorScheme.surface,
             topBar = {
                 Column(
                     modifier = Modifier
@@ -346,14 +425,15 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                         selectedTabIndex = selectedPage,
                         onTabSelected = { selectedPage = it },
                         divider = { HorizontalDivider(color = Color.Transparent) },
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)
                     )
                 }
             },
             bottomBar = {
-                BottomActions(
-                    onSave = { save(false) },
-                    onSaveToCalendar = { save(true) }
+                DeadlineBottomActions(
+                    showSaveToCalendar = selectedPage == 0,
+                    onSave = { requestSave(SaveAction.SAVE) },
+                    onSaveToCalendar = { requestSave(SaveAction.SAVE_TO_CALENDAR) }
                 )
             }
         ) { padding ->
@@ -364,419 +444,108 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                     .padding(
                         start = padding.calculateStartPadding(layoutDirection),
                         end = padding.calculateEndPadding(layoutDirection),
-                        bottom = padding.calculateBottomPadding(),
                     ),
                 contentPadding = PaddingValues(
                     start = 16.dp,
-                    top = padding.calculateTopPadding() + 16.dp,
+                    top = padding.calculateTopPadding() + 8.dp,
                     end = 16.dp,
-                    bottom = 16.dp,
+                    bottom = 160.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
-                    AiQuickAddCard()
-                }
-
-                item {
-                    OutlinedTextField(
-                        value = ddlName,
-                        onValueChange = { ddlName = it },
-                        label = { Text(stringResource(R.string.add_ddl_name)) },
-                        miuixLabel = stringResource(R.string.add_ddl_name),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = textFieldShape
+                    DeadlineAiQuickAddCard(
+                        value = aiInputText,
+                        onValueChange = { aiInputText = it },
+                        isLoading = isAiLoading,
+                        onSubmit = { parseAiInput() }
                     )
                 }
 
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = sectionContainerColor
-                        ),
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(R.string.star),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Switch(
-                                checked = isStarred,
-                                onCheckedChange = { isStarred = it },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
-                                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                                )
-                            )
-                        }
-                    }
+                    DeadlineNameField(
+                        value = taskDraft.name,
+                        onValueChange = { updateSharedName(it) }
+                    )
                 }
 
                 if (selectedPage == 0) {
                     item {
-                        DateTimeCard(
-                            title = stringResource(R.string.start_time),
-                            value = formatLocalDateTime(startTime),
-                            onClick = {
-                                GlobalUtils.showDateTimePicker(supportFragmentManager) { selected ->
-                                    startTime = selected
-                                    if (endTime.isBefore(selected)) {
-                                        endTime = selected.plusHours(1)
+                        DeadlineStarToggleCard(
+                            checked = taskDraft.isStarred,
+                            onCheckedChange = { updateSharedStarred(it) }
+                        )
+                    }
+
+                    item {
+                        TaskEditorSection(
+                            draft = taskDraft,
+                            onDraftChange = { taskDraft = it },
+                            formatDateTime = ::formatLocalDateTime,
+                            onPickStartTime = {
+                                launchPickerWithBlur {
+                                    GlobalUtils.showDateTimePicker(
+                                        supportFragmentManager,
+                                        onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
+                                    ) { selected ->
+                                        taskDraft = taskDraft.copy(
+                                            startTime = selected,
+                                            endTime = if (taskDraft.endTime.isBefore(selected)) {
+                                                selected.plusHours(1)
+                                            } else {
+                                                taskDraft.endTime
+                                            }
+                                        )
+                                    }
+                                }
+                            },
+                            onPickEndTime = {
+                                launchPickerWithBlur {
+                                    GlobalUtils.showDateTimePicker(
+                                        supportFragmentManager,
+                                        taskDraft.startTime,
+                                        { chosen ->
+                                            Toast.makeText(
+                                                this@AddDDLActivity,
+                                                getString(R.string.please_choose_the_time_after, chosen),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        },
+                                        onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
+                                    ) { selected ->
+                                        taskDraft = taskDraft.copy(endTime = selected)
                                     }
                                 }
                             }
                         )
                     }
-
-                    item {
-                        DateTimeCard(
-                            title = stringResource(R.string.end_time),
-                            value = formatLocalDateTime(endTime),
-                            onClick = {
-                                GlobalUtils.showDateTimePicker(
-                                    supportFragmentManager,
-                                    startTime,
-                                    { chosen -> Toast.makeText(this@AddDDLActivity, getString(R.string.please_choose_the_time_after, chosen), Toast.LENGTH_SHORT).show() }
-                                ) { selected ->
-                                    endTime = selected
-                                }
-                            }
-                        )
-                    }
-                }
-
-                if (selectedPage == 0) {
-                    item {
-                        OutlinedTextField(
-                            value = taskNote,
-                            onValueChange = { taskNote = it },
-                            label = { Text(stringResource(R.string.add_ddl_note)) },
-                            miuixLabel = stringResource(R.string.add_ddl_note),
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 3,
-                            maxLines = 6,
-                            shape = textFieldShape
-                        )
-                    }
                 } else {
                     item {
-                        OutlinedTextField(
-                            value = habitDescription,
-                            onValueChange = { habitDescription = it },
-                            label = { Text(stringResource(R.string.add_ddl_note)) },
-                            miuixLabel = stringResource(R.string.add_ddl_note),
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 2,
-                            maxLines = 5,
-                            shape = textFieldShape
-                        )
-                    }
-
-                    item {
-                        Text(
-                            text = stringResource(R.string.add_ddl_frequency_type),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        FrequencyTypeRow(
-                            selected = frequencyType,
-                            onSelect = { frequencyType = it }
-                        )
-                    }
-
-                    item {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(
-                                value = frequencyInput,
-                                onValueChange = { frequencyInput = it.filter(Char::isDigit) },
-                                label = { Text(stringResource(R.string.add_ddl_frequency)) },
-                                miuixLabel = stringResource(R.string.add_ddl_frequency),
-                                modifier = Modifier.weight(1f),
-                                singleLine = true,
-                                shape = textFieldShape
-                            )
-                            OutlinedTextField(
-                                value = totalInput,
-                                onValueChange = { totalInput = it.filter(Char::isDigit) },
-                                label = { Text(stringResource(R.string.add_ddl_total)) },
-                                miuixLabel = stringResource(R.string.add_ddl_total),
-                                modifier = Modifier.weight(1f),
-                                singleLine = true,
-                                shape = textFieldShape
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = GlobalUtils.generateHabitNote(
-                                this@AddDDLActivity,
-                                frequencyInput.toIntOrNull(),
-                                totalInput.toIntOrNull(),
-                                frequencyType
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    item {
-                        HabitReminderSection(
-                            enabled = habitReminderEnabled,
-                            onEnabledChange = { habitReminderEnabled = it },
-                            time = habitReminderTime,
-                            onPickTime = {
-                                GlobalUtils.showDateTimePicker(supportFragmentManager) { selected ->
-                                    habitReminderTime = selected.toLocalTime().withSecond(0).withNano(0)
+                        HabitEditorSection(
+                            draft = habitDraft,
+                            onDraftChange = { habitDraft = it },
+                            summaryText = buildHabitSummary(),
+                            reminderTimeLabel = habitDraft.reminderTime.format(REMINDER_TIME_FORMATTER),
+                            onPickReminderTime = {
+                                launchPickerWithBlur {
+                                    GlobalUtils.showTimePicker(
+                                        supportFragmentManager,
+                                        initialTime = habitDraft.reminderTime,
+                                        onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
+                                    ) { selected ->
+                                        habitDraft = habitDraft.copy(
+                                            reminderEnabled = true,
+                                            reminderTime = selected.withSecond(0).withNano(0)
+                                        )
+                                    }
                                 }
+                            },
+                            onClearReminder = {
+                                habitDraft = habitDraft.copy(reminderEnabled = false)
                             }
                         )
                     }
                 }
-            }
-        }
-    }
-
-    @Composable
-    private fun AiQuickAddCard() {
-        val textFieldShape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            ),
-            shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Text(
-                    text = stringResource(R.string.ai_quick_add),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = aiInputText,
-                    onValueChange = { aiInputText = it },
-                    label = { Text(stringResource(R.string.ai_quick_add_placeholder)) },
-                    miuixLabel = stringResource(R.string.ai_quick_add_placeholder),
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 1,
-                    maxLines = 3,
-                    shape = textFieldShape
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Button(
-                        onClick = { parseAiInput() },
-                        enabled = !isAiLoading && aiInputText.trim().isNotEmpty(),
-                        forceMaterial3 = true,
-                    ) {
-                        Text(
-                            if (isAiLoading) stringResource(R.string.ai_parsing)
-                            else stringResource(R.string.ai_parse)
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun BottomActions(
-        onSave: () -> Unit,
-        onSaveToCalendar: () -> Unit
-    ) {
-        val advancedMaterial = LocalAdvancedMaterialSpec.current
-        val backdrop = LocalAdvancedMaterialBackdrop.current
-        val containerShape = RoundedCornerShape(28.dp)
-        val surfaceTint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = advancedMaterial.topBarTintAlpha)
-        val materialColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(
-                        if (advancedMaterial.enabled && backdrop != null) {
-                            Modifier.advancedTextureBlur(
-                                advancedMaterial = advancedMaterial,
-                                backdrop = backdrop,
-                                shape = containerShape,
-                                colors = materialColors,
-                            )
-                        } else {
-                            Modifier.background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                shape = containerShape,
-                            )
-                        }
-                    )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (selectedPage == 0) {
-                        Button(
-                            onClick = onSaveToCalendar,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        ) {
-                            Text(text = stringResource(R.string.save_and_add_to_calendar))
-                        }
-                    }
-
-                    Button(
-                        onClick = onSave,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(text = stringResource(R.string.save))
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun DateTimeCard(
-        title: String,
-        value: String,
-        onClick: () -> Unit
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun HabitReminderSection(
-        enabled: Boolean,
-        onEnabledChange: (Boolean) -> Unit,
-        time: LocalTime,
-        onPickTime: () -> Unit
-    ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            ),
-            shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.habit_enable_notification),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Switch(
-                        checked = enabled,
-                        onCheckedChange = onEnabledChange,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                            checkedTrackColor = MaterialTheme.colorScheme.primary,
-                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    )
-                }
-
-                if (enabled) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onPickTime),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.habit_notify_at, time.format(REMINDER_TIME_FORMATTER)),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Icon(
-                            imageVector = iconResource(R.drawable.ic_event),
-                            contentDescription = stringResource(R.string.set_time),
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    private fun FrequencyTypeRow(
-        selected: DeadlineFrequency,
-        onSelect: (DeadlineFrequency) -> Unit
-    ) {
-        val options = listOf(
-            DeadlineFrequency.TOTAL to stringResource(R.string.frequency_none),
-            DeadlineFrequency.DAILY to stringResource(R.string.frequency_daily),
-            DeadlineFrequency.WEEKLY to stringResource(R.string.frequency_weekly),
-            DeadlineFrequency.MONTHLY to stringResource(R.string.frequency_monthly)
-        )
-
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            options.forEachIndexed { index, (type, label) ->
-                SegmentedButton(
-                    selected = selected == type,
-                    onClick = { onSelect(type) },
-                    shape = androidx.compose.material3.SegmentedButtonDefaults.itemShape(index, options.size),
-                    label = { Text(label) },
-                    colors = androidx.compose.material3.SegmentedButtonDefaults.colors()
-                )
             }
         }
     }
@@ -795,37 +564,35 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                 when (selectedPage) {
                     0 -> {
                         if (firstTask != null) {
-                            if (ddlName.isBlank()) ddlName = firstTask.name
-                            else ddlName = firstTask.name
+                            updateSharedName(firstTask.name)
 
                             runCatching {
                                 LocalDateTime.parse(firstTask.dueTime, AI_DUE_TIME_FORMATTER)
                             }.onSuccess { parsedDue ->
-                                endTime = parsedDue
-                                if (startTime.isAfter(endTime)) {
-                                    startTime = endTime.minusHours(1)
-                                }
+                                taskDraft = taskDraft.copy(
+                                    endTime = parsedDue,
+                                    startTime = if (taskDraft.startTime.isAfter(parsedDue)) {
+                                        parsedDue.minusHours(1)
+                                    } else {
+                                        taskDraft.startTime
+                                    }
+                                )
                             }
 
-                            taskNote = firstTask.note.orEmpty()
+                            taskDraft = taskDraft.copy(note = firstTask.note.orEmpty())
                         } else {
-                            if (taskNote.isBlank()) taskNote = text
+                            if (taskDraft.note.isBlank()) {
+                                taskDraft = taskDraft.copy(note = text)
+                            }
                         }
                     }
 
                     1 -> {
                         val suggestedName = firstTask?.name?.trim().orEmpty()
-                        val suggestedDesc = firstTask?.note?.trim().orEmpty()
                         if (suggestedName.isNotEmpty()) {
-                            ddlName = suggestedName
-                        } else if (ddlName.isBlank()) {
-                            ddlName = text.take(20)
-                        }
-
-                        habitDescription = if (suggestedDesc.isNotEmpty()) {
-                            suggestedDesc
-                        } else {
-                            text
+                            updateSharedName(suggestedName)
+                        } else if (habitDraft.name.isBlank()) {
+                            updateSharedName(text.take(20))
                         }
                     }
                 }
@@ -843,9 +610,21 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         }
     }
 
-    private fun save(toCalendar: Boolean) {
-        val name = ddlName.trim()
+    private fun requestSave(action: SaveAction) {
+        pendingSaveAction = action
+        performPendingSaveIfNeeded()
+    }
+
+    private fun performPendingSaveIfNeeded() {
+        val action = pendingSaveAction ?: return
+        performSave(action)
+    }
+
+    private fun performSave(action: SaveAction) {
+        val toCalendar = action == SaveAction.SAVE_TO_CALENDAR
+        val name = if (selectedPage == 0) taskDraft.name.trim() else habitDraft.name.trim()
         if (name.isBlank()) {
+            pendingSaveAction = null
             Toast.makeText(this, getString(R.string.add_ddl_name), Toast.LENGTH_SHORT).show()
             return
         }
@@ -861,6 +640,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
             return
         }
 
+        pendingSaveAction = null
         if (selectedPage == 0) {
             saveTask(name = name, toCalendar = toCalendar)
         } else {
@@ -871,15 +651,19 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     private fun saveTask(name: String, toCalendar: Boolean) {
         val ddlId = repo.insertDDL(
             name = name,
-            startTime = startTime.toString(),
-            endTime = endTime.toString(),
-            note = taskNote,
+            startTime = taskDraft.startTime.toString(),
+            endTime = taskDraft.endTime.toString(),
+            note = taskDraft.note,
             type = DeadlineType.TASK,
             calendarEventId = calendarEventId
         )
 
         repo.getDDLById(ddlId)?.let { inserted ->
-            val item = if (inserted.isStared != isStarred) inserted.copy(isStared = isStarred) else inserted
+            val item = if (inserted.isStared != taskDraft.isStarred) {
+                inserted.copy(isStared = taskDraft.isStarred)
+            } else {
+                inserted
+            }
             if (item != inserted) {
                 repo.updateDDL(item)
             }
@@ -918,14 +702,25 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     }
 
     private fun saveHabit(name: String) {
-        val frequency = frequencyInput.toIntOrNull()?.coerceAtLeast(1) ?: 1
-        val total = totalInput.toIntOrNull()
+        val isEbbinghaus = habitDraft.period == EditorHabitPeriod.EBBINGHAUS
+        val goalType = if (isEbbinghaus) HabitGoalType.PER_PERIOD else habitDraft.goalType
+        val frequency = if (isEbbinghaus) {
+            1
+        } else {
+            habitDraft.timesPerPeriod.toIntOrNull()?.coerceAtLeast(1) ?: 1
+        }
+        val total = if (goalType == HabitGoalType.TOTAL) {
+            habitDraft.totalTarget.toIntOrNull()
+        } else {
+            null
+        }
+        val frequencyType = if (isEbbinghaus) DeadlineFrequency.DAILY else habitDraft.toDeadlineFrequency()
 
         val meta = HabitMetaData(
             completedDates = emptySet(),
             frequencyType = frequencyType,
-            frequency = frequency,
-            total = total ?: 0,
+            frequency = if (goalType == HabitGoalType.TOTAL) 1 else frequency,
+            total = if (goalType == HabitGoalType.TOTAL) total ?: 0 else 0,
             refreshDate = LocalDate.now().toString()
         )
 
@@ -937,46 +732,27 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
             type = DeadlineType.HABIT
         )
 
-        repo.getDDLById(ddlId)?.takeIf { it.isStared != isStarred }?.let {
-            repo.updateDDL(it.copy(isStared = isStarred))
-        }
-
-        val habitPeriod = when (frequencyType) {
-            DeadlineFrequency.DAILY -> HabitPeriod.DAILY
-            DeadlineFrequency.WEEKLY -> HabitPeriod.WEEKLY
-            DeadlineFrequency.MONTHLY -> HabitPeriod.MONTHLY
-            DeadlineFrequency.TOTAL -> HabitPeriod.DAILY
-        }
-
-        val habitGoalType =
-            if (frequencyType == DeadlineFrequency.TOTAL) HabitGoalType.TOTAL
-            else HabitGoalType.PER_PERIOD
-
-        val habitTimesPerPeriod =
-            if (frequencyType == DeadlineFrequency.TOTAL) 1
-            else frequency
-
-        val habitTotalTarget =
-            if (frequencyType == DeadlineFrequency.TOTAL) total
-            else null
-
         habitRepo.createHabitForDdl(
             ddlId = ddlId,
             name = name,
-            period = habitPeriod,
-            timesPerPeriod = habitTimesPerPeriod,
-            goalType = habitGoalType,
-            totalTarget = habitTotalTarget,
-            description = habitDescription.ifBlank { null }
+            period = habitDraft.period.toModelPeriod(),
+            timesPerPeriod = if (goalType == HabitGoalType.TOTAL) 1 else frequency,
+            goalType = goalType,
+            totalTarget = if (goalType == HabitGoalType.TOTAL) total else null,
+            description = null
         )
 
         habitRepo.getHabitByDdlId(ddlId)?.let { habit ->
             val updated = habit.copy(
-                alarmTime = if (habitReminderEnabled) habitReminderTime.format(REMINDER_TIME_FORMATTER) else null
+                alarmTime = if (habitDraft.reminderEnabled) {
+                    habitDraft.reminderTime.format(REMINDER_TIME_FORMATTER)
+                } else {
+                    null
+                }
             )
             habitRepo.updateHabit(updated)
 
-            if (habitReminderEnabled) {
+            if (habitDraft.reminderEnabled) {
                 DeadlineAlarmScheduler.scheduleHabitNotifyAlarm(applicationContext, ddlId)
             } else {
                 DeadlineAlarmScheduler.cancelHabitNotifyAlarm(applicationContext, ddlId)
@@ -1126,9 +902,11 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                 if (selectedPosition >= 0) {
                     val event = adapter.getItem(selectedPosition)?.event
                     if (event != null) {
-                        ddlName = event.title.orEmpty()
-                        taskNote = event.description.orEmpty()
-                        GlobalUtils.parseDateTime(event.startMillis.toDateTimeString())?.let { endTime = it }
+                        updateSharedName(event.title.orEmpty())
+                        taskDraft = taskDraft.copy(note = event.description.orEmpty())
+                        GlobalUtils.parseDateTime(event.startMillis.toDateTimeString())?.let {
+                            taskDraft = taskDraft.copy(endTime = it)
+                        }
                         calendarEventId = event.id
                     }
                 } else {
@@ -1198,6 +976,86 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         return dateTime.format(formatter)
     }
 
+    private fun launchPickerWithBlur(showPicker: () -> Unit) {
+        pendingPickerLaunchJob?.cancel()
+        showPickerDialogBlur = true
+        pendingPickerLaunchJob = lifecycleScope.launch {
+            delay(PICKER_BLUR_LEAD_IN_MS)
+            showPicker()
+        }
+    }
+
+    private fun onPickerDialogVisibilityChanged(visible: Boolean) {
+        if (!visible) {
+            showPickerDialogBlur = false
+        }
+    }
+
+    @Composable
+    private fun PickerWindowBlurEffect(active: Boolean, surfaceColor: Color) {
+        val blurProgress by animateFloatAsState(
+            targetValue = if (active) 1f else 0f,
+            animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+            label = "add-ddl-picker-blur"
+        )
+        val scale by animateFloatAsState(
+            targetValue = if (active) 0.98f else 1f,
+            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+            label = "add-ddl-picker-scale"
+        )
+        val blurRadius = (24f * blurProgress).coerceIn(0f, 24f)
+        val saturation = 1f - ((1f - 0.5f) * blurProgress)
+
+        val decorView = window?.decorView
+        val contentView = decorView?.findViewById<android.view.View>(android.R.id.content) ?: decorView
+
+        DisposableEffect(decorView, contentView) {
+            val originalBackground = decorView?.background
+
+            onDispose {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && contentView != null) {
+                    contentView.setRenderEffect(null)
+                }
+                contentView?.scaleX = 1f
+                contentView?.scaleY = 1f
+                decorView?.background = originalBackground
+            }
+        }
+
+        SideEffect {
+            decorView?.setBackgroundColor(surfaceColor.toArgb())
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && contentView != null) {
+                val effects = mutableListOf<RenderEffect>()
+
+                if (blurRadius >= 0.5f) {
+                    effects += RenderEffect.createBlurEffect(
+                        blurRadius,
+                        blurRadius,
+                        Shader.TileMode.CLAMP
+                    )
+                }
+                if (saturation < 1f - 1e-3f) {
+                    val colorMatrix = ColorMatrix().apply { setSaturation(saturation) }
+                    effects += RenderEffect.createColorFilterEffect(
+                        ColorMatrixColorFilter(colorMatrix)
+                    )
+                }
+
+                contentView.setRenderEffect(
+                    when (effects.size) {
+                        0 -> null
+                        1 -> effects[0]
+                        else -> RenderEffect.createChainEffect(effects[0], effects[1])
+                    }
+                )
+            }
+
+            contentView?.scaleX = scale
+            contentView?.scaleY = scale
+        }
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         enableEdgeToEdgeForAllDevices()
@@ -1208,3 +1066,5 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         enableEdgeToEdgeForAllDevices()
     }
 }
+
+private const val PICKER_BLUR_LEAD_IN_MS = 45L

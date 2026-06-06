@@ -6,6 +6,7 @@ import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.HabitRecord
 import com.aritxonly.deadliner.model.HabitRecordStatus
+import com.aritxonly.deadliner.model.isReviewDueOn
 import com.aritxonly.deadliner.sync.SyncService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -198,6 +199,7 @@ class HabitRepository(
                 val end = ym.atEndOfMonth()
                 start to end
             }
+            HabitPeriod.EBBINGHAUS -> date to date
         }
     }
 
@@ -208,7 +210,11 @@ class HabitRepository(
      */
     fun toggleRecord(habitId: Long, date: LocalDate) {
         val habit = getHabitById(habitId) ?: return
-        val target = habit.timesPerPeriod.coerceAtLeast(1)
+        val target = if (habit.period == HabitPeriod.EBBINGHAUS) {
+            1
+        } else {
+            habit.timesPerPeriod.coerceAtLeast(1)
+        }
 
         when (habit.period) {
             HabitPeriod.DAILY -> {
@@ -243,6 +249,25 @@ class HabitRepository(
                     else -> {
                         deleteRecordsForHabitOnDate(habitId, date)
                     }
+                }
+            }
+
+            HabitPeriod.EBBINGHAUS -> {
+                if (!habit.isReviewDueOn(date)) return
+
+                val recordsToday = getRecordsForHabitOnDate(habitId, date)
+                    .filter { it.status == HabitRecordStatus.COMPLETED }
+                val currentCount = recordsToday.sumOf { it.count }
+
+                if (currentCount > 0) {
+                    deleteRecordsForHabitOnDate(habitId, date)
+                } else {
+                    insertRecord(
+                        habitId = habitId,
+                        date = date,
+                        count = 1,
+                        status = HabitRecordStatus.COMPLETED
+                    )
                 }
             }
 

@@ -78,7 +78,10 @@ fun PromptSettingsScreen(
                 style = MaterialTheme.typography.bodySmall
             )
 
-            SettingsSection(customColor = MaterialTheme.colorScheme.surface) {
+            SettingsSection(
+                customColor = MaterialTheme.colorScheme.surface,
+                clipContent = false
+            ) {
                 RoundedTextField(
                     value = customPrompt?:"",
                     onValueChange = onPromptChange,
@@ -89,8 +92,8 @@ fun PromptSettingsScreen(
                 Button(
                     onClick = onSaveButtonClick,
                     modifier = Modifier
-                        .padding(top = 8.dp)
                         .fillMaxWidth()
+                        .padding(top = 8.dp)
                 ) {
                     Text(stringResource(R.string.save))
                 }

@@ -127,6 +127,7 @@ import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.model.updateNoteWithDate
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
 import com.aritxonly.deadliner.ui.main.HabitItemCardSimplified
 import com.aritxonly.deadliner.ui.main.simplified.*
@@ -278,6 +279,7 @@ fun MainDisplay(
 
     if (pendingDelete != null) {
         val target = pendingDelete!!
+        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
             onDismissRequest = {
                 pendingDelete = null

@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
 import android.util.Log
 import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.data.HabitRepository
@@ -14,6 +13,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils.PendingCode.RC_ALARM_TRIGG
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.notification.HabitNotifyReceiver
+import com.aritxonly.deadliner.notification.UpcomingLiveUpdateService
 import com.aritxonly.deadliner.notification.UpcomingLiveUpdatesReceiver
 import java.time.Duration
 import java.time.LocalDateTime
@@ -23,7 +23,7 @@ import kotlin.math.abs
 
 object DeadlineAlarmScheduler {
     fun scheduleExactAlarm(context: Context, ddl: DDLItem, hours: Long = GlobalUtils.deadlineNotificationBefore) {
-        if (ddl.type == DeadlineType.HABIT || ddl.isCompleted || ddl.isArchived ||
+        if (ddl.type == DeadlineType.HABIT || !ddl.state.isActionable() ||
             GlobalUtils.NotificationStatusManager.hasBeenNotified(ddl.id)) return
 
         val endTime = GlobalUtils.safeParseDateTime(ddl.endTime)
@@ -75,23 +75,58 @@ object DeadlineAlarmScheduler {
     }
 
     fun cancelAllAlarms(context: Context) {
-        val allDdls = DatabaseHelper.getInstance(context).getDDLsByType(DeadlineType.TASK)
+        val allDdls = DatabaseHelper.getInstance(context).getAllDDLs()
         val allDdlIds: List<Long> = allDdls.map { it.id }
 
         for (ddlId in allDdlIds) {
             Log.d("AlarmDebug", "Removing $ddlId")
-            cancelAlarm(context, ddlId)
-            cancelUpcomingDDLAlarm(context, ddlId)
-            cancelHabitNotifyAlarm(context, ddlId)
+            cancelScheduledNotifications(context, ddlId)
         }
 
         cancelDailyAlarm(context)
     }
 
     fun cancelAlarm(context: Context, ddlId: Long) {
+        cancelScheduledNotifications(context, ddlId)
+    }
+
+    fun cancelScheduledNotifications(
+        context: Context,
+        ddlId: Long,
+        clearDeadlineNotificationStatus: Boolean = false
+    ) {
         cancelExactAlarm(context, ddlId)
         cancelUpcomingDDLAlarm(context, ddlId)
         cancelHabitNotifyAlarm(context, ddlId)
+        UpcomingLiveUpdateService.stop(context, ddlId)
+        if (clearDeadlineNotificationStatus) {
+            GlobalUtils.NotificationStatusManager.clearNotified(ddlId)
+        }
+    }
+
+    fun syncScheduledNotifications(
+        context: Context,
+        ddl: DDLItem,
+        resetDeadlineNotificationStatus: Boolean = false
+    ) {
+        cancelScheduledNotifications(context, ddl.id)
+
+        if (ddl.type == DeadlineType.TASK && resetDeadlineNotificationStatus) {
+            GlobalUtils.NotificationStatusManager.clearNotified(ddl.id)
+        }
+
+        if (!ddl.state.isActionable()) return
+
+        when (ddl.type) {
+            DeadlineType.TASK -> {
+                if (!GlobalUtils.deadlineNotification) return
+                scheduleExactAlarm(context, ddl)
+                scheduleUpcomingDDLAlarm(context, ddl)
+            }
+            DeadlineType.HABIT -> {
+                scheduleHabitNotifyAlarm(context, ddl.id)
+            }
+        }
     }
 
     fun cancelExactAlarm(context: Context, ddlId: Long) {
@@ -289,6 +324,17 @@ object DeadlineAlarmScheduler {
     }
 
     fun scheduleHabitNotifyAlarm(context: Context, ddlId: Long) {
+        val db = DatabaseHelper.getInstance(context)
+        val ddl = db.getDDLById(ddlId) ?: run {
+            Log.d("HabitAlarm", "schedule: no ddl for ddlId=$ddlId")
+            return
+        }
+        if (ddl.type != DeadlineType.HABIT || !ddl.state.isActionable()) {
+            cancelHabitNotifyAlarm(context, ddlId)
+            Log.d("HabitAlarm", "schedule: ddlId=$ddlId is not active habit, skip")
+            return
+        }
+
         val repo = HabitRepository()
         val habit = repo.getHabitByDdlId(ddlId) ?: run {
             Log.d("HabitAlarm", "schedule: no habit for ddlId=$ddlId")

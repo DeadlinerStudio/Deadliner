@@ -86,6 +86,7 @@ fun OutlinedTextField(
                 readOnly = readOnly,
                 // 把辅助参数喂给 MIUIX
                 label = miuixLabel,
+                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 useLabelAsPlaceholder = true, // 让 MIUIX 的行为更接近 M3 的 placeholder 习惯
 //                cornerRadius = dimensionResource(R.dimen.item_corner_radius),
 

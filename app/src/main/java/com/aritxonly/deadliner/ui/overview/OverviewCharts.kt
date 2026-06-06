@@ -29,7 +29,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -53,7 +52,7 @@ import ir.ehsannarmani.compose_charts.models.VerticalIndicatorProperties
 @Composable
 fun BarChartCompletionTimeStats(
     data: List<Pair<String, Int>>,
-    barColor: Color = colorResource(id = R.color.chart_blue),
+    barColor: Color = rememberOverviewIndicatorColor(OverviewIndicatorRole.Total),
     textColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     // 找到最大值用于归一化
@@ -104,10 +103,10 @@ fun BarChartCompletionTimeStats(
 @Composable
 fun NewBarChartCompletionTimeStats(
     data: List<Pair<String, Int>>,
-    barColor: Color = colorResource(id = R.color.chart_blue),
+    barColor: Color = rememberOverviewIndicatorColor(OverviewIndicatorRole.Total),
     textColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
-    val chartData = remember(data) {
+    val chartData = remember(data, barColor) {
         data.map { (label, count) ->
             Bars(
                 label = label,
@@ -157,27 +156,27 @@ fun NewPieChart(
     statistics: Map<String, Int>,
     size: Dp = 160.dp
 ) {
-    val green = colorResource(id = R.color.chart_green)
-    val orange = colorResource(id = R.color.chart_orange)
-    val red = colorResource(id = R.color.chart_red)
-    val blue = colorResource(id = R.color.chart_blue)
+    val indicatorPalette = rememberOverviewIndicatorPalette()
+    val indicatorRoles = listOf(
+        OverviewIndicatorRole.Completed,
+        OverviewIndicatorRole.Pending,
+        OverviewIndicatorRole.Abandoned,
+        OverviewIndicatorRole.Overdue,
+    )
 
-    val initialData = remember(statistics) {
+    val initialData = remember(statistics, indicatorPalette) {
         val total = statistics.values.sum().coerceAtLeast(1)
         statistics.entries.mapIndexed { index, entry ->
             Pie(
                 label = entry.key,
                 data = entry.value.toDouble(),
-                color = when (index) {
-                    0 -> green
-                    1 -> orange
-                    2 -> red
-                    else -> blue
-                },
+                color = indicatorPalette.colorFor(
+                    indicatorRoles.getOrElse(index) { OverviewIndicatorRole.Total }
+                ),
             )
         }
     }
-    var data by remember { mutableStateOf(initialData) }
+    var data by remember(initialData) { mutableStateOf(initialData) }
 
     PieChart(
         modifier = Modifier.size(size),
@@ -206,10 +205,12 @@ fun PieChartView(
     size: Dp = 160.dp
 ) {
     val total = statistics.values.sum().toFloat()
+    val indicatorPalette = rememberOverviewIndicatorPalette()
     val colors = listOf(
-        colorResource(id = R.color.chart_green),
-        colorResource(id = R.color.chart_orange),
-        colorResource(id = R.color.chart_red)
+        indicatorPalette.completed,
+        indicatorPalette.pending,
+        indicatorPalette.abandoned,
+        indicatorPalette.overdue,
     )
 
     Box(

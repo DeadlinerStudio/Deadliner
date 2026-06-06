@@ -3,10 +3,6 @@ package com.aritxonly.deadliner.ui.main.modern
 import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
-import android.graphics.RenderEffect
-import android.graphics.Shader
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,7 +10,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -66,9 +61,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -112,8 +105,11 @@ import com.aritxonly.deadliner.ui.agent.AIOverlayHost
 import com.aritxonly.deadliner.ui.base.AdaptiveNavItem
 import com.aritxonly.deadliner.ui.base.AdaptiveNavigationSuiteScaffold
 import com.aritxonly.deadliner.ui.base.FloatingActionButton
+import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.main.shared.MainSection
 import com.aritxonly.deadliner.ui.main.modern.components.ModernMainHeader
 import com.aritxonly.deadliner.ui.main.shared.DeadlinerUrlIntake
@@ -298,10 +294,30 @@ fun ModernHost(
     }
 
     val navItems = listOf(
-        AdaptiveNavItem("list", context.getString(R.string.main_section_list), ImageVector.vectorResource(R.drawable.ic_done)),
-        AdaptiveNavItem("overview", context.getString(R.string.overview), ImageVector.vectorResource(R.drawable.ic_chart)),
-        AdaptiveNavItem("capture", context.getString(R.string.capture_title), ImageVector.vectorResource(R.drawable.ic_draw)),
-        AdaptiveNavItem("search", context.getString(R.string.search), ImageVector.vectorResource(R.drawable.ic_search)),
+        AdaptiveNavItem(
+            "list",
+            context.getString(R.string.main_section_list),
+            ImageVector.vectorResource(R.drawable.ic_check_circle_fill),
+            ImageVector.vectorResource(R.drawable.ic_check_circle),
+        ),
+        AdaptiveNavItem(
+            "overview",
+            context.getString(R.string.overview),
+            ImageVector.vectorResource(R.drawable.ic_overview_fill),
+            ImageVector.vectorResource(R.drawable.ic_overview),
+        ),
+        AdaptiveNavItem(
+            "capture",
+            context.getString(R.string.capture_title),
+            ImageVector.vectorResource(R.drawable.ic_draw_fill),
+            ImageVector.vectorResource(R.drawable.ic_draw),
+        ),
+        AdaptiveNavItem(
+            "search",
+            context.getString(R.string.search),
+            ImageVector.vectorResource(R.drawable.ic_search),
+            ImageVector.vectorResource(R.drawable.ic_search),
+        ),
     )
 
     val selectedKey = if (showSearchPage) {
@@ -384,50 +400,20 @@ fun ModernHost(
         (selectionActions.habitReminderTargetId != null) ||
         (hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings) ||
         (hostState.selectedSection == MainSection.CAPTURE && showCaptureMergeSheet)
-    val blurProgress by animateFloatAsState(
-        targetValue = if (shouldBlur) 1f else 0f,
-        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
-        label = "modern-blur-progress",
-    )
-    val blurRadius = (24f * blurProgress).coerceIn(0f, 24f)
-    val saturation = 1f - (0.5f * blurProgress)
-    val scale by animateFloatAsState(
-        targetValue = if (hostState.showOverlay) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
-        label = "modern-content-scale",
-    )
-    val blurEps = 0.5f
-
-    AdaptiveNavigationSuiteScaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .graphicsLayer {
-                val effects = mutableListOf<RenderEffect>()
-
-                if (blurRadius >= blurEps) {
-                    effects += RenderEffect.createBlurEffect(
-                        blurRadius,
-                        blurRadius,
-                        Shader.TileMode.CLAMP
-                    )
-                }
-                if (saturation < 1f - 1e-3f) {
-                    val cm = ColorMatrix().apply { setSaturation(saturation) }
-                    effects += RenderEffect.createColorFilterEffect(
-                        ColorMatrixColorFilter(cm)
-                    )
-                }
-                renderEffect = when (effects.size) {
-                    0 -> null
-                    1 -> effects[0].asComposeRenderEffect()
-                    else -> RenderEffect.createChainEffect(
-                        effects[0],
-                        effects[1]
-                    ).asComposeRenderEffect()
-                }
-                scaleX = scale
-                scaleY = scale
-            },
+    val advancedMaterialBlur = uiState.childRequestsBlur ||
+        selectionActions.showDeleteDialog ||
+        (selectionActions.habitReminderTargetId != null) ||
+        (hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings) ||
+        (hostState.selectedSection == MainSection.CAPTURE && showCaptureMergeSheet)
+    ProvideAdvancedMaterialDialogBlurHost {
+        AdaptiveNavigationSuiteScaffold(
+            modifier = modifier
+                .fillMaxSize()
+                .advancedMaterialDialogBlurHost(
+                    active = advancedMaterialBlur,
+                    forceActive = hostState.showOverlay,
+                    activeScale = if (hostState.showOverlay) 0.98f else 1f,
+                ),
         items = navItems,
         selectedKey = selectedKey,
         onItemSelected = {
@@ -827,6 +813,7 @@ fun ModernHost(
                         showMergeSheet = showCaptureMergeSheet,
                         onShowMergeSheetChange = { showCaptureMergeSheet = it },
                         topOverlayPadding = overlayTopBarPadding,
+                        bottomLiftPadding = if (isShortBottomNavigation) 96.dp else 28.dp,
                     )
                 }
             }
@@ -886,9 +873,11 @@ fun ModernHost(
     OverviewSettingsDialog(
         visible = hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings,
         onDismiss = { showOverviewSettings = false },
-    )
+        )
+    }
 
     if (selectionActions.showDeleteDialog) {
+        RegisterAdvancedMaterialDialogBlur()
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { selectionActions.dismissDeleteDialog() },
             title = { Text(stringResource(R.string.alert_delete_title)) },

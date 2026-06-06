@@ -68,6 +68,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.ui.TintedGradientImage
 import com.aritxonly.deadliner.ui.base.Button
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.poster.ExportDashboardData
 import com.aritxonly.deadliner.ui.poster.ShareDashboardPoster
@@ -604,13 +605,10 @@ private fun ResponsiveActivityHeatmapGrid(
 
 @Composable
 private fun colorForLastMonthActivity(count: Int): Color {
-    return when {
-        count <= 0 -> MaterialTheme.colorScheme.surfaceVariant
-        count < 2 -> colorResource(R.color.chart_blue).copy(alpha = 0.30f)
-        count < 4 -> colorResource(R.color.chart_blue).copy(alpha = 0.50f)
-        count < 6 -> colorResource(R.color.chart_blue).copy(alpha = 0.72f)
-        else -> colorResource(R.color.chart_blue)
-    }
+    return rememberOverviewHeatmapColor(
+        role = OverviewIndicatorRole.Total,
+        count = count,
+    )
 }
 
 @Composable
@@ -655,6 +653,7 @@ fun ExportOptionsDialog(
     onConfirm: (TextTone, Bitmap?) -> Unit
 ) {
     if (!open) return
+    RegisterAdvancedMaterialDialogBlur()
 
     val context = LocalContext.current
     var tone by remember { mutableStateOf(TextTone.Light) }

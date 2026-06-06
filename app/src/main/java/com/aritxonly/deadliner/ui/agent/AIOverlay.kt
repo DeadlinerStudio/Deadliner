@@ -124,6 +124,7 @@ import com.aritxonly.deadliner.ai.UserProfile
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.iconResource
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -261,6 +262,7 @@ fun AIOverlay(
     }
 
     if (showDonatePrompt) {
+        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
             onDismissRequest = { showDonatePrompt = false },
             title = { Text(stringResource(R.string.deadliner_donate_plan_title)) },

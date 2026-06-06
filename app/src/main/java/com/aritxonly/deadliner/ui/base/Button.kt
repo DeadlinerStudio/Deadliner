@@ -66,8 +66,8 @@ fun Button(
             }
             MiuixButton(
                 onClick = onClick,
+                modifier = modifier,
                 enabled = enabled,
-                insideMargin = top.yukonga.miuix.kmp.basic.ButtonDefaults.InsideMargin,
                 colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.buttonColors(
                     color = colors.containerColor,
                 ),

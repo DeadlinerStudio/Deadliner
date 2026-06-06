@@ -38,6 +38,9 @@ import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.HabitGoalType
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.HabitRecordStatus
+import com.aritxonly.deadliner.model.formatHint
+import com.aritxonly.deadliner.model.isReviewDueOn
+import com.aritxonly.deadliner.model.scheduleStateOn
 import com.aritxonly.deadliner.ui.main.shared.computeProgress
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.time.Duration
@@ -108,6 +111,8 @@ object NotificationUtil {
     }
 
     fun sendImmediateNotification(context: Context, ddl: DDLItem) {
+        if (ddl.type != DeadlineType.TASK || !ddl.state.isActionable()) return
+
         // 检查通知权限（Android 13+）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
@@ -268,6 +273,8 @@ object NotificationUtil {
     }
 
     fun sendUpcomingDDLNotification(context: Context, ddl: DDLItem, remainingTime: Long) {
+        if (ddl.type != DeadlineType.TASK || !ddl.state.isActionable()) return
+
         // 检查通知权限（Android 13+）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
@@ -389,6 +396,8 @@ object NotificationUtil {
         habit: Habit,
         ddl: DDLItem
     ) {
+        if (ddl.type != DeadlineType.HABIT || !ddl.state.isActionable()) return
+
         // 检查通知权限（Android 13+）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -427,6 +436,7 @@ object NotificationUtil {
                 val e = ym.atEndOfMonth()
                 s to e
             }
+            HabitPeriod.EBBINGHAUS -> today to today
         }
 
         val recordsInPeriod = repo
@@ -435,7 +445,7 @@ object NotificationUtil {
 
         val doneInPeriod = recordsInPeriod.sumOf { it.count }
         val targetInPeriod = when (habit.goalType) {
-            HabitGoalType.PER_PERIOD -> habit.timesPerPeriod.coerceAtLeast(1)
+            HabitGoalType.PER_PERIOD -> if (habit.period == HabitPeriod.EBBINGHAUS) 1 else habit.timesPerPeriod.coerceAtLeast(1)
             HabitGoalType.TOTAL -> habit.totalTarget ?: habit.timesPerPeriod.coerceAtLeast(1)
         }
 
@@ -444,12 +454,18 @@ object NotificationUtil {
                 HabitPeriod.DAILY -> context.getString(R.string.today)
                 HabitPeriod.WEEKLY -> context.getString(R.string.this_week)
                 HabitPeriod.MONTHLY -> context.getString(R.string.this_month)
+                HabitPeriod.EBBINGHAUS -> context.getString(R.string.habit_ebbinghaus_review_today)
             }
             HabitGoalType.TOTAL -> context.getString(R.string.total_progress)
         }
 
         val title = habit.name.ifBlank { context.getString(R.string.habit_notification) }
-        val summary = "$periodLabel " + context.getString(R.string.progress_with_postfix) + "$doneInPeriod / $targetInPeriod"
+        val summary = if (habit.period == HabitPeriod.EBBINGHAUS && !habit.isReviewDueOn(today)) {
+            habit.scheduleStateOn(today)?.formatHint(context)
+                ?: context.getString(R.string.habit_ebbinghaus_cycle_completed)
+        } else {
+            "$periodLabel " + context.getString(R.string.progress_with_postfix) + "$doneInPeriod / $targetInPeriod"
+        }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_DAILY_ID).apply {
             setSmallIcon(R.mipmap.ic_launcher)

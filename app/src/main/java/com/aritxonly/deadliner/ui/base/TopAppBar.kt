@@ -52,13 +52,14 @@ fun TopAppBar(
     titleTextStyle: TextStyle? = null,
     forceMaterial3: Boolean = false,
     useParentMaterialContainer: Boolean = false,
+    allowAdvancedMaterialBlur: Boolean = true,
     material3ScrollBehavior: TopAppBarScrollBehavior? = null,
     miuixScrollBehavior: MiuixScrollBehavior? = null,
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
     val advancedMaterialBlurred =
-        advancedMaterial.enabled && backdrop != null && !useParentMaterialContainer
+        allowAdvancedMaterialBlur && advancedMaterial.enabled && backdrop != null && !useParentMaterialContainer
     val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.topBarTintAlpha)
     val topBarColors = TopAppBarDefaults.topAppBarColors(
         containerColor = when {
@@ -130,8 +131,6 @@ fun TopAppBar(
                                 Text(
                                     text = title,
                                     color = MaterialTheme.colorScheme.onSurface,
-                                    style = titleTextStyle ?: MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Medium
                                 )
                             },
                             navigationIcon = { navigationIcon?.invoke() },

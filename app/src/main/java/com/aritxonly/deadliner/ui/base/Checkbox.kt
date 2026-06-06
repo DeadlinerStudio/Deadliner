@@ -4,6 +4,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CheckboxColors
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CheckboxDefaults as Material3CheckboxDefaults
 import androidx.compose.material3.RadioButtonColors
 import androidx.compose.material3.RadioButtonDefaults
@@ -106,7 +107,9 @@ fun Checkbox(
                 enabled = enabled,
                 colors = CheckboxDefaults.checkboxColors(
                     uncheckedForegroundColor = scheme.secondary,
-                    uncheckedBackgroundColor = scheme.secondary
+                    uncheckedBackgroundColor = scheme.secondary,
+                    checkedBackgroundColor = colors.checkedBoxColor,
+                    checkedForegroundColor = colors.checkedCheckmarkColor
                 )
             )
         }

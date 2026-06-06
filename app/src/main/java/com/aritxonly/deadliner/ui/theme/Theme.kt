@@ -28,12 +28,18 @@ fun DeadlinerTheme(
 ) {
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
     val designSystem = if (appearance.usesMiuixTheme) AppDesignSystem.MIUIX else AppDesignSystem.MATERIAL3
+    val modernColorPalette = if (appearance.modernUseDevicePaletteStrategy) {
+        GlobalUtils.getCurrentDeviceColorPalette()
+    } else {
+        appearance.modernColorPalette
+    }
     val tokens = DeadlinerColorTokenFactory.rememberTokens(
         seedColorHex = appearance.seedColorHex,
         colorSource = appearance.colorSource,
+        dynamicPaletteStyle = appearance.dynamicPaletteStyle,
         darkTheme = darkTheme,
         dynamicColor = dynamicColor,
-        modernColorPalette = appearance.modernColorPalette,
+        modernColorPalette = modernColorPalette,
         usePureMiuixAccent = appearance.usesMiuixTheme && appearance.usePureMiuixAccent,
         useMiuixNeutralSurfaces = appearance.usesMiuixTheme && appearance.useMiuixNeutralSurfaces,
     )
@@ -47,6 +53,8 @@ fun DeadlinerTheme(
     )
     val advancedMaterialSpec = AdvancedMaterialSpec(
         enabled = appearance.useAdvancedMaterial,
+        blurRadius = appearance.advancedMaterialLevel.blurRadius,
+        blurSaturation = appearance.advancedMaterialLevel.blurSaturation,
     )
 
     CompositionLocalProvider(

@@ -30,6 +30,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DayOverview
 import com.aritxonly.deadliner.model.HabitWithDailyStatus
+import com.aritxonly.deadliner.model.formatHint
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -146,7 +147,7 @@ fun HabitDisplayLayout(
                 HabitDisplayItem(
                     habit = item,
                     status = status,
-                    remainingText = remainingText,
+                    remainingText = item.scheduleState?.formatHint(context) ?: remainingText,
                 )
             }
         }
@@ -174,7 +175,7 @@ fun HabitDisplayLayout(
                         data = item.habit,
                         status = item.status,
                         isSelected = selected,
-                        canToggle = canToggleOnThisDate,
+                        canToggle = canToggleOnThisDate && item.habit.scheduleState?.isDue != false,
                         onToggle = {
                             if (selectionMode) {
                                 onItemClickInSelection(item.habit.habit.ddlId)
@@ -191,7 +192,7 @@ fun HabitDisplayLayout(
                     HabitRowClassic(
                         data = item.habit,
                         isSelected = selected,
-                        canToggle = canToggleOnThisDate,
+                        canToggle = canToggleOnThisDate && item.habit.scheduleState?.isDue != false,
                         onToggle = {
                             if (selectionMode) {
                                 onItemClickInSelection(item.habit.habit.ddlId)

@@ -16,6 +16,7 @@ import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.HabitGoalType
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.HabitRecordStatus
+import com.aritxonly.deadliner.model.isReviewDueOn
 import com.aritxonly.deadliner.notification.NotificationUtil.sendHabitNotification
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -42,6 +43,11 @@ class HabitNotifyReceiver : BroadcastReceiver() {
         }
         if (ddl.type != DeadlineType.HABIT) {
             Log.d("HabitAlarm", "onReceive: ddlId=$ddlId is not HABIT, ignore")
+            return
+        }
+        if (!ddl.state.isActionable()) {
+            DeadlineAlarmScheduler.cancelHabitNotifyAlarm(context, ddlId)
+            Log.d("HabitAlarm", "onReceive: ddlId=$ddlId is not active, cancel alarm")
             return
         }
 
@@ -101,13 +107,17 @@ class HabitNotifyReceiver : BroadcastReceiver() {
     ): Boolean {
         return when (habit.goalType) {
             HabitGoalType.PER_PERIOD -> {
+                if (habit.period == HabitPeriod.EBBINGHAUS && !habit.isReviewDueOn(today)) {
+                    return false
+                }
+
                 val (start, endInclusive) = periodBounds(habit.period, today)
                 val recordsInPeriod = repo
                     .getRecordsForHabitInRange(habit.id, start, endInclusive)
                     .filter { it.status == HabitRecordStatus.COMPLETED }
 
                 val done = recordsInPeriod.sumOf { it.count }
-                val target = habit.timesPerPeriod.coerceAtLeast(1)
+                val target = if (habit.period == HabitPeriod.EBBINGHAUS) 1 else habit.timesPerPeriod.coerceAtLeast(1)
                 done < target
             }
 
@@ -173,6 +183,7 @@ class HabitNotifyReceiver : BroadcastReceiver() {
                 val end = ym.atEndOfMonth()
                 start to end
             }
+            HabitPeriod.EBBINGHAUS -> date to date
         }
     }
 }

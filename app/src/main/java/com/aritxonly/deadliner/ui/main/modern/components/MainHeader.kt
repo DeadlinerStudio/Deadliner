@@ -186,6 +186,8 @@ fun ModernMainHeader(
                                 selected = selectedPage.toString(),
                                 tag = DeadlineType.TASK.toString(),
                                 badgeConfig = Triple(false, 0, false),
+                                disableRipple = true,
+                                animateSelection = false,
                             )
                             TextPageIndicator(
                                 text = stringResource(R.string.habit),
@@ -193,6 +195,8 @@ fun ModernMainHeader(
                                 selected = selectedPage.toString(),
                                 tag = DeadlineType.HABIT.toString(),
                                 badgeConfig = Triple(false, 0, false),
+                                disableRipple = true,
+                                animateSelection = false,
                             )
                         }
                     }

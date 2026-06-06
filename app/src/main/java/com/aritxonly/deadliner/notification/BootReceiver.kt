@@ -19,8 +19,7 @@ class BootReceiver : BroadcastReceiver() {
                 // 重新注册所有alarms
                 val allDDLs = DatabaseHelper.getInstance(context).getAllDDLs()
                 allDDLs.forEach {
-                    DeadlineAlarmScheduler.scheduleExactAlarm(context, it)
-                    DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(context, it)
+                    DeadlineAlarmScheduler.syncScheduledNotifications(context, it)
                 }
                 DeadlineAlarmScheduler.scheduleDailyAlarm(context)
             }

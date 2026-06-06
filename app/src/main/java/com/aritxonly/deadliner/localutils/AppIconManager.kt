@@ -3,8 +3,10 @@ package com.aritxonly.deadliner.localutils
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.AppIconMode
 import com.aritxonly.deadliner.model.Season
@@ -14,28 +16,34 @@ object AppIconManager {
     enum class AppIconVariant(
         val aliasClassName: String,
         @DrawableRes val previewRes: Int,
+        @DrawableRes val roundPreviewRes: Int,
         val manifestEnabledByDefault: Boolean = false,
     ) {
         DEFAULT(
             aliasClassName = "com.aritxonly.deadliner.LauncherAliasDefault",
             previewRes = R.mipmap.ic_launcher,
+            roundPreviewRes = R.mipmap.ic_launcher_round,
             manifestEnabledByDefault = true,
         ),
         SPRING(
             aliasClassName = "com.aritxonly.deadliner.LauncherAliasSpring",
             previewRes = R.mipmap.ic_launcher_spring,
+            roundPreviewRes = R.mipmap.ic_launcher_spring_round,
         ),
         SUMMER(
             aliasClassName = "com.aritxonly.deadliner.LauncherAliasSummer",
             previewRes = R.mipmap.ic_launcher_summer,
+            roundPreviewRes = R.mipmap.ic_launcher_summer_round,
         ),
         AUTUMN(
             aliasClassName = "com.aritxonly.deadliner.LauncherAliasAutumn",
             previewRes = R.mipmap.ic_launcher_autumn,
+            roundPreviewRes = R.mipmap.ic_launcher_autumn_round,
         ),
         WINTER(
             aliasClassName = "com.aritxonly.deadliner.LauncherAliasWinter",
             previewRes = R.mipmap.ic_launcher_winter,
+            roundPreviewRes = R.mipmap.ic_launcher_winter_round,
         ),
     }
 
@@ -116,6 +124,20 @@ object AppIconManager {
     @DrawableRes
     fun previewResFor(mode: AppIconMode): Int {
         return resolveVariant(mode).previewRes
+    }
+
+    @DrawableRes
+    fun roundPreviewResFor(mode: AppIconMode): Int {
+        return resolveVariant(mode).roundPreviewRes
+    }
+
+    fun previewDrawableFor(context: Context, mode: AppIconMode): Drawable? {
+        val variant = resolveVariant(mode)
+        return runCatching {
+            context.packageManager.getActivityIcon(ComponentName(context, variant.aliasClassName))
+        }.getOrElse {
+            ContextCompat.getDrawable(context, variant.roundPreviewRes)
+        }
     }
 
     @StringRes
