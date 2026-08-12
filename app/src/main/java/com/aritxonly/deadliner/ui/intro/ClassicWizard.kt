@@ -25,7 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.intro.IntroWizardViewModel
-import com.aritxonly.deadliner.intro.WizardStep
+import com.deadliner.viewmodel.intro.IntroWizardStep as WizardStep
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*

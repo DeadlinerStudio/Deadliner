@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aritxonly.deadliner.intro.IntroWizardViewModel
-import com.aritxonly.deadliner.intro.WizardStep
+import com.deadliner.viewmodel.intro.IntroWizardStep as WizardStep
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.iconResource

@@ -25,6 +25,19 @@ val deadlinerCoreGithubToken = providers
         providers.environmentVariable("DEADLINER_CORE_GITHUB_TOKEN")
             .orElse(providers.environmentVariable("GITHUB_TOKEN"))
     )
+val deadlinerCoreKmpAar = rootProject.file(".deadliner-core/kmp/deadliner-core.aar")
+
+val verifyDeadlinerCoreKmpAar by tasks.registering {
+    group = "deadliner"
+    description = "Verify that the locally deployed Deadliner KMP AAR is available."
+    inputs.file(deadlinerCoreKmpAar)
+    doLast {
+        check(deadlinerCoreKmpAar.isFile) {
+            "Missing ${deadlinerCoreKmpAar.absolutePath}. " +
+                "Run DeadlinerCore/runscript/buildAndDeploy.sh --skip-ios --skip-harmony first."
+        }
+    }
+}
 
 val syncDeadlinerCoreAndroid by tasks.registering(Exec::class) {
     group = "deadliner"
@@ -123,9 +136,18 @@ android {
 
 tasks.named("preBuild") {
     dependsOn(syncDeadlinerCoreAndroid)
+    dependsOn(verifyDeadlinerCoreKmpAar)
 }
 
 dependencies {
+    implementation(files(deadlinerCoreKmpAar))
+    implementation("app.cash.sqldelight:android-driver:2.2.1-0.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2-0.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.1-0.3.0")
+    implementation("io.ktor:ktor-client-okhttp:3.3.3-0.3.0")
+    implementation("io.ktor:ktor-client-content-negotiation:3.3.3-0.3.0")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.3-0.3.0")
     implementation("androidx.work:work-runtime-ktx:2.10.3")
     implementation("nl.dionsegijn:konfetti-xml:2.0.4")
     implementation("nl.dionsegijn:konfetti-compose:2.0.4")

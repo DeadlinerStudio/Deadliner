@@ -132,7 +132,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nl.dionsegijn.konfetti.xml.KonfettiView
-import okhttp3.internal.toHexString
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
@@ -407,7 +406,7 @@ class ClassicController(
         val colorSurface = materialColorScheme.surface
         val colorContainer = materialColorScheme.surfaceContainer
 
-        Log.d("MainActivity", "colorSurface ${colorSurface.toHexString()}")
+        Log.d("MainActivity", "colorSurface ${colorSurface.toUInt().toString(16)}")
 
         val mainPage: ConstraintLayout = b.main
         mainPage.setBackgroundColor(colorSurface)
@@ -1298,7 +1297,7 @@ class ClassicController(
     private fun getThemeColor(attributeId: Int): Int {
         val typedValue = TypedValue()
         activity.theme.resolveAttribute(attributeId, typedValue, true)
-        Log.d("ThemeColor", "getColor $attributeId: ${typedValue.data.toHexString()}")
+        Log.d("ThemeColor", "getColor $attributeId: ${typedValue.data.toUInt().toString(16)}")
         return typedValue.data
     }
 

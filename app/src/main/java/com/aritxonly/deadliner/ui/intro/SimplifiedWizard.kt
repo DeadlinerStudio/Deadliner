@@ -50,7 +50,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.data.HabitViewModelFactory
 import com.aritxonly.deadliner.intro.IntroWizardViewModel
-import com.aritxonly.deadliner.intro.WizardStep
+import com.deadliner.viewmodel.intro.IntroWizardStep as WizardStep
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineType

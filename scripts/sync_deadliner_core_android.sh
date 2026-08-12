@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ANDROID_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEFAULT_CORE_REPO="/Users/aritxonly/Codes/Agent/deadliner_core"
+DEFAULT_CORE_REPO="${HOME}/Codes/ProjectDeadliner/DeadlinerCore"
 DEFAULT_RELEASE_REPO="DeadlinerStudio/LifiAI-Core"
 DEFAULT_RELEASE_TAG="nightly"
 ARTIFACT_NAME="deadliner-android.zip"

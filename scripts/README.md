@@ -7,7 +7,8 @@ Deadliner core Android sync scripts live here.
 - `./scripts/sync_deadliner_core_android.sh nightly`
   Downloads a specific release tag.
 - `./scripts/sync_deadliner_core_android.sh local`
-  Syncs from the local core repo path.
+  Syncs legacy JNI/UniFFI artifacts from
+  `~/Codes/ProjectDeadliner/DeadlinerCore` by default.
 - `./scripts/sync_deadliner_core_android.sh /abs/path/to/deadliner_core`
   Syncs from a specific local core checkout.
 
@@ -22,4 +23,7 @@ Behavior notes:
 - Release mode defaults to `nightly` from `DeadlinerStudio/LifiAI-Core`.
 - Downloaded artifacts are cached under `.deadliner-core/`.
 - If release refresh fails, the script falls back to previously synced cache when available.
+- The v6 KMP AAR is deployed separately by
+  `DeadlinerCore/runscript/buildAndDeploy.sh --skip-ios --skip-harmony` to
+  `.deadliner-core/kmp/deadliner-core.aar`.
 - For local mode, set `DEADLINER_CORE_LOCAL_REPO` if your core checkout path is not the default.

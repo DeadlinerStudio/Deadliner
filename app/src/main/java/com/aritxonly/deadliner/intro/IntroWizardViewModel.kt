@@ -1,52 +1,24 @@
 package com.aritxonly.deadliner.intro
 
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 
+/** Android lifecycle owner for the platform-neutral KMP walkthrough state machine. */
 class IntroWizardViewModel : ViewModel() {
+    private val shared = com.deadliner.viewmodel.intro.IntroWizardViewModel()
 
-    private val _state = MutableStateFlow(IntroWizardState())
-    val state = _state.asStateFlow()
+    val state = shared.state
 
-    fun onAddEntryClicked() {
-        _state.update { it.copy(currentStep = WizardStep.AddEntryInfo) }
-    }
+    fun onAddEntryClicked() = shared.onAddEntryClicked()
 
-    fun onAddEntryInfoNext() {
-        _state.update { it.copy(currentStep = WizardStep.SwipeRightComplete) }
-    }
+    fun onAddEntryInfoNext() = shared.onAddEntryInfoNext()
 
-    fun onSwipeRightComplete() {
-        _state.update { it.copy(currentStep = WizardStep.SwipeLeftDelete) }
-    }
+    fun onSwipeRightComplete() = shared.onSwipeRightComplete()
 
-    fun onSwipeLeftDelete() {
-        _state.update { it.copy(currentStep = WizardStep.AiEntry) }
-    }
+    fun onSwipeLeftDelete() = shared.onSwipeLeftDelete()
 
-    fun onAiEntryTriggered() {
-        _state.update { it.copy(currentStep = WizardStep.AiInfo) }
-    }
+    fun onAiEntryTriggered() = shared.onAiEntryTriggered()
 
-    fun onAiInfoNext() {
-        _state.update { it.copy(currentStep = WizardStep.Done) }
-    }
+    fun onAiInfoNext() = shared.onAiInfoNext()
 
-    /**
-     * next(): 自动前进
-     */
-    fun next() {
-        val nextStep = when (state.value.currentStep) {
-            WizardStep.AddEntry -> WizardStep.AddEntryInfo
-            WizardStep.AddEntryInfo -> WizardStep.SwipeRightComplete
-            WizardStep.SwipeRightComplete -> WizardStep.SwipeLeftDelete
-            WizardStep.SwipeLeftDelete -> WizardStep.AiEntry
-            WizardStep.AiEntry -> WizardStep.AiInfo
-            WizardStep.AiInfo -> WizardStep.Done
-            WizardStep.Done -> WizardStep.Done  // 已结束，不再前进
-        }
-        _state.update { it.copy(currentStep = nextStep) }
-    }
+    fun next() = shared.next()
 }
