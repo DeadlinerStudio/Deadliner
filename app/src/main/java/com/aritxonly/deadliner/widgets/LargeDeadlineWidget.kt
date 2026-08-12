@@ -11,13 +11,11 @@ import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
 import com.aritxonly.deadliner.AddDDLActivity
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.LauncherActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.deadliner.domain.task.TaskState
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.max
@@ -132,22 +130,20 @@ internal fun updateLargeAppWidget(
     views.removeAllViews(R.id.large_item_container)
 
     // 获取数据
-    val allDdls: List<DDLItem> = DatabaseHelper.Companion
-        .getInstance(context)
-        .getDDLsByType(DeadlineType.TASK)
-        .filter { it.state.isActionable() }
+    val allDdls = KmpV6Runtime.database.tasks.list()
+        .filter { !it.isDeleted && it.state == TaskState.ACTIVE && it.dueAt != null }
 
     // 解析并排序
     val now = LocalDateTime.now()
-    val parsed = allDdls.map { ddl ->
-        val start = GlobalUtils.safeParseDateTime(ddl.startTime)
-        val end = GlobalUtils.safeParseDateTime(ddl.endTime)
+    val parsed = allDdls.mapNotNull { task ->
+        val start = task.startAt?.let(::parseWidgetDateTime) ?: return@mapNotNull null
+        val end = task.dueAt?.let(::parseWidgetDateTime) ?: return@mapNotNull null
         val remaining = ChronoUnit.MILLIS.between(now, end)
-        ParsedDDL(ddl, start, end, remaining, false, false)
+        ParsedDDL(task, start, end, remaining)
     }
 
     val sorted = parsed
-        .sortedWith(compareBy<ParsedDDL> { it.ddl.isStared.not() }
+        .sortedWith(compareBy<ParsedDDL> { it.task.isStarred.not() }
             .thenBy { it.remainingMillis })
         .take(if (maxItems > 0) maxItems else 0)
 
@@ -155,9 +151,9 @@ internal fun updateLargeAppWidget(
     for (item in sorted) {
         val itemRv = RemoteViews(context.packageName, R.layout.deadline_item)
         // 标题
-        itemRv.setTextViewText(R.id.item_title, item.ddl.name)
+        itemRv.setTextViewText(R.id.item_title, item.task.title)
         // 星标
-        val starVisibility = if (item.ddl.isStared) View.VISIBLE else View.GONE
+        val starVisibility = if (item.task.isStarred) View.VISIBLE else View.GONE
         itemRv.setViewVisibility(R.id.starIcon, starVisibility)
         // 进度
         val total = ChronoUnit.MILLIS.between(item.startTime, item.endTime)

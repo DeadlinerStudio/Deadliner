@@ -2,6 +2,8 @@ package com.aritxonly.deadliner.platform.kmp
 
 import android.content.Context
 import com.aritxonly.deadliner.data.DatabaseHelper
+import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.notification.AndroidNotificationGateway
 import com.deadliner.db.AndroidDatabaseDriverFactory
 import com.deadliner.db.DeadlinerDatabase
 import com.deadliner.viewmodel.habit.HabitListViewModel
@@ -15,8 +17,11 @@ import com.deadliner.viewmodel.task.TaskDetailViewModel
 import com.deadliner.viewmodel.task.TaskEditorViewModel
 import com.deadliner.viewmodel.search.SearchViewModel
 import com.deadliner.domain.habit.Habit
-import com.deadliner.platform.NotificationService
 import com.deadliner.service.LifiToolExecutor
+import com.deadliner.service.NotificationOrchestrator
+import com.deadliner.sync.WebDavChangeLogSyncOutcome
+import com.deadliner.sync.webdav.WebDavCredentials
+import com.deadliner.sync.webdav.WebDavTransportConfiguration
 import kotlinx.coroutines.runBlocking
 
 /** Android-private composition root for the v6 shared layer. */
@@ -24,11 +29,11 @@ internal object KmpV6Runtime {
     lateinit var database: DeadlinerDatabase
         private set
 
-    private lateinit var notificationService: NotificationService
+    private lateinit var notificationGateway: AndroidNotificationGateway
 
     private val notificationOrchestrator by lazy {
-        check(::database.isInitialized && ::notificationService.isInitialized) { "KmpV6Runtime is not initialized" }
-        database.createNotificationOrchestrator(notificationService)
+        check(::database.isInitialized && ::notificationGateway.isInitialized) { "KmpV6Runtime is not initialized" }
+        NotificationOrchestrator(notificationGateway)
     }
 
     private val lifiToolExecutor by lazy {
@@ -101,12 +106,45 @@ internal object KmpV6Runtime {
         notificationOrchestrator.refreshAll(database.tasks.list(), database.habits.list())
     }
 
+    fun cancelNotifications() {
+        notificationGateway.cancelAll()
+    }
+
     fun onHabitNotificationDelivered(habit: Habit) {
         notificationOrchestrator.onHabitUpdated(habit)
     }
 
     fun executeLifiTool(toolName: String, argumentsJson: String): String =
         lifiToolExecutor.execute(toolName, argumentsJson)
+
+    suspend fun syncOnce(): WebDavChangeLogSyncOutcome {
+        val configuration = webDavConfiguration()
+            ?: return WebDavChangeLogSyncOutcome(
+                succeeded = false,
+                failureMessage = "WebDAV configuration is incomplete",
+            )
+        return database.webDavChangeLogSync.synchronizeSafely(configuration)
+    }
+
+    fun updateAutomaticSync() {
+        val configuration = webDavConfiguration()
+        if (GlobalUtils.cloudSyncEnable && configuration != null) {
+            database.configureAutomaticWebDavSync(configuration)
+        } else {
+            database.disableAutomaticSync()
+        }
+    }
+
+    private fun webDavConfiguration(): WebDavTransportConfiguration? {
+        val baseUrl = GlobalUtils.webDavBaseUrl.trim()
+        val username = GlobalUtils.webDavUser.trim()
+        val password = GlobalUtils.webDavPass
+        if (baseUrl.isEmpty() || username.isEmpty() || password.isEmpty()) return null
+        return WebDavTransportConfiguration(
+            baseUrl = baseUrl,
+            credentials = WebDavCredentials(username, password),
+        )
+    }
 
     fun initialize(
         context: Context,
@@ -117,7 +155,7 @@ internal object KmpV6Runtime {
         database = DeadlinerDatabase.create(
             AndroidDatabaseDriverFactory(context.applicationContext)
         )
-        notificationService = NotificationService(context.applicationContext)
+        notificationGateway = AndroidNotificationGateway(context.applicationContext)
 
         V5DataMigrator(
             legacy = legacyDatabase,
@@ -138,5 +176,6 @@ internal object KmpV6Runtime {
         searchViewModel.initialize()
         settingsViewModel.initialize()
         refreshNotifications()
+        updateAutomaticSync()
     }
 }

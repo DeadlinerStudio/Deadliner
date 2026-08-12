@@ -56,6 +56,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.sync.SyncScheduler
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TextButton
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
@@ -91,8 +92,10 @@ fun WebSettingsScreen(
         webEnabled = it
 
         if (GlobalUtils.cloudSyncEnable) {
+            KmpV6Runtime.updateAutomaticSync()
             SyncScheduler.enqueuePeriodic(context)
         } else {
+            KmpV6Runtime.updateAutomaticSync()
             SyncScheduler.cancelAll(context)
         }
     }
@@ -121,6 +124,7 @@ fun WebSettingsScreen(
         GlobalUtils.webDavUser = serverUser
         GlobalUtils.webDavPass = serverPass
         AppSingletons.updateWeb()
+        KmpV6Runtime.updateAutomaticSync()
         Toast.makeText(context, hostSuccessHint, Toast.LENGTH_SHORT).show()
 
         if (!webEnabled) return@onSaveButtonClick
@@ -159,8 +163,8 @@ fun WebSettingsScreen(
                     Toast.LENGTH_SHORT
                 ).show()
 
-                val ok = AppSingletons.sync.syncOnce()
-                if (ok) {
+                val outcome = KmpV6Runtime.syncOnce()
+                if (outcome.succeeded) {
                     Toast.makeText(
                         context,
                         context.getString(R.string.sync_done),

@@ -8,17 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import android.widget.Toast
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.LauncherActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.HabitRepository
-import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineFrequency
-import com.aritxonly.deadliner.model.HabitMetaData
-import java.time.DayOfWeek
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import java.time.LocalDate
-import java.time.YearMonth
+import java.time.Instant
 
 /**
  * Implementation of App Widget functionality.
@@ -72,27 +66,17 @@ class HabitMiniWidget : AppWidgetProvider() {
 
         if (intent.action == ACTION_CHECK_IN) {
             val widgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-            val ddlId = intent.getLongExtra("extra_habit_id", -1L)
-            if (widgetId == -1 || ddlId == -1L) return
+            val habitUid = intent.getStringExtra(EXTRA_HABIT_UID)
+            if (widgetId == -1 || habitUid == null) return
 
-            val db = DatabaseHelper.getInstance(context)
-            val habitRepo = HabitRepository(db)
-
-            val ddl = db.getDDLById(ddlId)
-            val habit = habitRepo.getHabitByDdlId(ddlId)
-
-            if (ddl == null || habit == null) {
+            val status = habitWidgetStatus(habitUid)
+            if (status == null) {
                 // 对应任务或习惯已经不存在，刷新一下 widget 做兜底
                 refreshOneWidget(context, widgetId)
                 return
             }
 
-            val today = LocalDate.now()
-            val recordsToday = habitRepo.getRecordsForHabitOnDate(habit.id, today)
-            val doneToday = recordsToday.sumOf { it.count }
-            val targetPerDay = habit.timesPerPeriod.coerceAtLeast(1)
-
-            val canClick = doneToday < targetPerDay
+            val canClick = status.scheduleState?.isDue != false && !status.isCompleted
 
             if (!canClick) {
                 // 今天已经到上限了，提示一下，然后刷新 UI
@@ -106,10 +90,10 @@ class HabitMiniWidget : AppWidgetProvider() {
             }
 
             // 可以打卡：追加一条记录（每天可多次，直到 timesPerPeriod）
-            habitRepo.insertRecord(
-                habitId = habit.id,
-                date = today,
-                count = 1
+            KmpV6Runtime.habitListViewModel.toggleHabitRecordNow(
+                habitUid,
+                LocalDate.now().toString(),
+                Instant.now().toString(),
             )
 
             Toast.makeText(context, R.string.habit_success, Toast.LENGTH_SHORT).show()
@@ -156,6 +140,7 @@ class HabitMiniWidget : AppWidgetProvider() {
 }
 
 internal const val ACTION_CHECK_IN = "com.aritxonly.deadliner.ACTION_CHECK_IN"
+internal const val EXTRA_HABIT_UID = "extra_habit_uid"
 
 internal fun updateAppMiniHabitWidget(
     context: Context,
@@ -166,7 +151,7 @@ internal fun updateAppMiniHabitWidget(
     val info = awm.getAppWidgetInfo(appWidgetId)
     val provider = info.provider
 
-    val ddlId = loadIdPref(context, appWidgetId, provider)
+    val habitUid = loadUidPref(context, appWidgetId, provider)
 
     val mainIntent = Intent(context, LauncherActivity::class.java).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -181,7 +166,7 @@ internal fun updateAppMiniHabitWidget(
     val checkInIntent = Intent(context, HabitMiniWidget::class.java).apply {
         action = ACTION_CHECK_IN
         putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        putExtra("extra_habit_id", ddlId)   // 仍然传 DDL 的 id，下游再映射到 Habit
+        putExtra(EXTRA_HABIT_UID, habitUid)
     }
     val checkInPi = PendingIntent.getBroadcast(
         context,
@@ -190,24 +175,16 @@ internal fun updateAppMiniHabitWidget(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    val db = DatabaseHelper.getInstance(context)
-    val habitRepo = HabitRepository(db)
-    val ddl = db.getDDLById(ddlId)
-    val habit = habitRepo.getHabitByDdlId(ddlId)
+    val status = habitUid?.let(::habitWidgetStatus)
 
     val views = RemoteViews(context.packageName, R.layout.habit_mini_widget).apply {
-        if (ddl == null || habit == null) {
+        if (status == null) {
             // 任务/习惯不存在，给一个占位内容
             setTextViewText(R.id.mini_text, context.getString(R.string.app_name))
             setFloat(R.id.btn_check_in, "setAlpha", 0.6f)
         } else {
-            setTextViewText(R.id.mini_text, ddl.name)
-
-            val today = LocalDate.now()
-            val recordsToday = habitRepo.getRecordsForHabitOnDate(habit.id, today)
-            val doneToday = recordsToday.sumOf { it.count }
-            val targetPerDay = habit.timesPerPeriod.coerceAtLeast(1)
-            val canClick = doneToday < targetPerDay
+            setTextViewText(R.id.mini_text, status.habit.name)
+            val canClick = status.scheduleState?.isDue != false && !status.isCompleted
 
             setFloat(R.id.btn_check_in, "setAlpha", if (canClick) 1f else 0.6f)
         }
@@ -218,3 +195,6 @@ internal fun updateAppMiniHabitWidget(
 
     appWidgetManager.updateAppWidget(appWidgetId, views)
 }
+
+internal fun habitWidgetStatus(uid: String) =
+    KmpV6Runtime.habitListViewModel.loadNow().visibleHabits.firstOrNull { it.habit.uid == uid }

@@ -20,14 +20,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 
@@ -58,16 +58,13 @@ fun NotificationSettingsScreen(
     val onNotifyBeforeChange: (Float) -> Unit = {
         notifyBefore = it.toLong()
         GlobalUtils.deadlineNotificationBefore = notifyBefore
-        DeadlineAlarmScheduler.cancelAllAlarms(context)
-        GlobalUtils.setAlarms(DatabaseHelper.getInstance(context), context)
+        KmpV6Runtime.refreshNotifications()
     }
 
     var liveUpdatesInAdvance by remember { mutableStateOf(GlobalUtils.liveUpdatesInAdvance) }
     val onLiveUpdatesChange: (Float) -> Unit = {
         liveUpdatesInAdvance = it.toInt().coerceIn(1, 60)
         GlobalUtils.liveUpdatesInAdvance = liveUpdatesInAdvance
-        DeadlineAlarmScheduler.cancelAllAlarms(context)
-        GlobalUtils.setAlarms(DatabaseHelper.getInstance(context), context)
     }
 
     val defaultText = stringResource(R.string.settings_support_daily_notification)
@@ -80,6 +77,7 @@ fun NotificationSettingsScreen(
     val onDeadlineNotificationChange: (Boolean) -> Unit = {
         GlobalUtils.deadlineNotification = it
         deadlineNotification = it
+        KmpV6Runtime.refreshNotifications()
     }
     val onDailyNotificationChange: (Boolean) -> Unit = {
         GlobalUtils.dailyStatsNotification = it

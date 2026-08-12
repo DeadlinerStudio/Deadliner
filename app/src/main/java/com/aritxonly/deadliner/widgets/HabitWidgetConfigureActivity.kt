@@ -9,9 +9,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import com.aritxonly.deadliner.DeadlinerComponentActivity
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.databinding.HabitMiniWidgetConfigureBinding
-import com.aritxonly.deadliner.model.DeadlineType
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -19,6 +17,8 @@ import androidx.core.view.updatePadding
 import com.aritxonly.deadliner.localutils.DynamicColorsExtension
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.deadliner.domain.habit.HabitStatus
 
 /**
  * The configuration screen for the [HabitMiniWidget] AppWidget.
@@ -31,7 +31,7 @@ class HabitWidgetConfigureActivity : DeadlinerComponentActivity() {
         val context = this@HabitWidgetConfigureActivity
         val awm = AppWidgetManager.getInstance(context)
 
-        saveIdPref(context, appWidgetId, selectedHabitId, provider)
+        saveUidPref(context, appWidgetId, requireNotNull(selectedHabitUid), provider)
 
         // It is the responsibility of the configuration activity to update the app widget
         when (provider?.className) {
@@ -53,7 +53,7 @@ class HabitWidgetConfigureActivity : DeadlinerComponentActivity() {
         finish()
     }
     private lateinit var binding: HabitMiniWidgetConfigureBinding
-    private var selectedHabitId = -1L
+    private var selectedHabitUid: String? = null
 
     public override fun onCreate(icicle: Bundle?) {
         enableEdgeToEdgeForAllDevices()
@@ -100,7 +100,8 @@ class HabitWidgetConfigureActivity : DeadlinerComponentActivity() {
         val info = awm.getAppWidgetInfo(appWidgetId)
         provider = info.provider
 
-        val habits = DatabaseHelper.getInstance(this).getDDLsByType(DeadlineType.HABIT)
+        val habits = KmpV6Runtime.database.habits.list()
+            .filter { !it.isDeleted && it.status == HabitStatus.ACTIVE }
         val names = habits.map { it.name }
 
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_single_choice, names)
@@ -110,7 +111,7 @@ class HabitWidgetConfigureActivity : DeadlinerComponentActivity() {
         binding.lvHabits.choiceMode = ListView.CHOICE_MODE_SINGLE
         binding.lvHabits.setOnItemClickListener { _, _, pos, _ ->
             binding.lvHabits.setItemChecked(pos, true)
-            selectedHabitId = habits[pos].id
+            selectedHabitUid = habits[pos].uid
             binding.addButton.isEnabled = true
         }
 
@@ -130,19 +131,19 @@ internal fun getProviderName(provider: ComponentName?): String? {
     }
 }
 
-internal fun saveIdPref(context: Context, appWidgetId: Int, id: Long, provider: ComponentName?) {
+internal fun saveUidPref(context: Context, appWidgetId: Int, uid: String, provider: ComponentName?) {
     val providerName = getProviderName(provider)?:""
     val prefsName = PREFS_NAME_BASE + providerName
     context.getSharedPreferences(prefsName, 0).edit {
-        putLong(PREF_PREFIX_KEY + appWidgetId, id)
+        putString(PREF_PREFIX_KEY + appWidgetId, uid)
     }
 }
 
-internal fun loadIdPref(context: Context, appWidgetId: Int, provider: ComponentName?): Long {
+internal fun loadUidPref(context: Context, appWidgetId: Int, provider: ComponentName?): String? {
     val providerName = getProviderName(provider)?:""
     val prefsName = PREFS_NAME_BASE + providerName
     val prefs = context.getSharedPreferences(prefsName, 0)
-    return prefs.getLong(PREF_PREFIX_KEY + appWidgetId, -1)
+    return prefs.getString(PREF_PREFIX_KEY + appWidgetId, null)
 }
 
 internal fun deleteIdPref(context: Context, appWidgetId: Int, provider: ComponentName?) {

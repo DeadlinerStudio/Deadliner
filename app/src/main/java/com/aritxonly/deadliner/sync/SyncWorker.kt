@@ -3,8 +3,8 @@ package com.aritxonly.deadliner.sync
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.aritxonly.deadliner.AppSingletons
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -21,7 +21,7 @@ class SyncWorker(appContext: Context, params: WorkerParameters)
             return@withContext Result.success()
         }
 
-        val ok = runCatching { AppSingletons.sync.syncOnce() }.getOrDefault(false)
-        if (ok) Result.success() else Result.retry()
+        val outcome = runCatching { KmpV6Runtime.syncOnce() }.getOrNull()
+        if (outcome?.succeeded == true) Result.success() else Result.retry()
     }
 }

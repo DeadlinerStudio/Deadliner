@@ -12,12 +12,11 @@ import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import com.aritxonly.deadliner.AddDDLActivity
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.LauncherActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.deadliner.domain.task.Task
+import com.deadliner.domain.task.TaskState
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -92,9 +91,8 @@ internal fun updateAppMultiDeadlineWidget(
 
     appWidgetManager.updateAppWidget(appWidgetId, views)
 
-    val dbHelper = DatabaseHelper.Companion.getInstance(context)
-    val activeTasks = dbHelper.getDDLsByType(DeadlineType.TASK)
-        .filter { it.state.isActionable() }
+    val activeTasks = KmpV6Runtime.database.tasks.list()
+        .filter { !it.isDeleted && it.state == TaskState.ACTIVE && it.dueAt != null }
 
     val color = getThemeColor(context, android.R.attr.textColorPrimary)
     views.setInt(R.id.widgetFinishIcon, "setColorFilter", color)
@@ -113,13 +111,11 @@ internal fun updateAppMultiDeadlineWidget(
     views.setViewVisibility(R.id.btn_add_ddl, addButtonVisibility)
 
     val now = LocalDateTime.now()
-    val parsedDDLs = activeTasks.map { ddl ->
-        val startTime = GlobalUtils.safeParseDateTime(ddl.startTime)
-        val endTime = GlobalUtils.safeParseDateTime(ddl.endTime)
+    val parsedDDLs = activeTasks.mapNotNull { task ->
+        val startTime = task.startAt?.let(::parseWidgetDateTime) ?: return@mapNotNull null
+        val endTime = task.dueAt?.let(::parseWidgetDateTime) ?: return@mapNotNull null
         val remainingMillis = ChronoUnit.MILLIS.between(now, endTime)
-        val isCompleted = ddl.isCompleted
-        val isStared = ddl.isStared
-        ParsedDDL(ddl, startTime, endTime, remainingMillis, isCompleted, isStared)
+        ParsedDDL(task, startTime, endTime, remainingMillis)
     }
 
     // 按剩余时间排序
@@ -171,7 +167,7 @@ internal fun updateAppMultiDeadlineWidget(
 
 
         views.setViewVisibility(containerId, View.VISIBLE)
-        views.setTextViewText(titleId, parsed.ddl.name)
+        views.setTextViewText(titleId, parsed.task.title)
 
         val progress = calculateProgress(parsed.startTime, parsed.endTime)
         views.setProgressBar(
@@ -219,13 +215,17 @@ internal fun updateAppMultiDeadlineWidget(
 }
 
 data class ParsedDDL(
-    val ddl: DDLItem,
+    val task: Task,
     val startTime: LocalDateTime,
     val endTime: LocalDateTime,
     val remainingMillis: Long,
-    val isCompleted: Boolean,
-    val isStared: Boolean
-)
+ ) {
+    val isStared: Boolean get() = task.isStarred
+}
+
+internal fun parseWidgetDateTime(raw: String): LocalDateTime? =
+    runCatching { LocalDateTime.parse(raw) }.getOrNull()
+        ?: runCatching { java.time.OffsetDateTime.parse(raw).toLocalDateTime() }.getOrNull()
 
 private fun calculateProgress(start: LocalDateTime, end: LocalDateTime): Int {
     val now = LocalDateTime.now()

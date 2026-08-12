@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.AppSingletons
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
@@ -118,8 +119,8 @@ fun BackupSettingsScreen(
                                     Toast.LENGTH_SHORT
                                 ).show()
 
-                                val ok = AppSingletons.sync.syncOnce()
-                                if (ok) {
+                                val outcome = KmpV6Runtime.syncOnce()
+                                if (outcome.succeeded) {
                                     Toast.makeText(
                                         context,
                                         context.getString(R.string.sync_done),

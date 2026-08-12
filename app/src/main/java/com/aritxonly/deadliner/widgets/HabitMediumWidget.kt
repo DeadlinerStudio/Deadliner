@@ -7,19 +7,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
-import android.widget.Toast
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.LauncherActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.HabitRepository
-import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineFrequency
-import com.aritxonly.deadliner.model.HabitMetaData
-import com.aritxonly.deadliner.model.HabitPeriod
-import com.aritxonly.deadliner.model.formatHint
-import com.aritxonly.deadliner.model.scheduleStateOn
-import java.time.LocalDate
+import com.deadliner.domain.habit.HabitPeriod
+import com.deadliner.viewmodel.habit.HabitScheduleHintKind
 
 class HabitMediumWidget : AppWidgetProvider() {
 
@@ -56,18 +47,16 @@ internal fun updateMediumAppWidget(
     appWidgetId: Int,
 ) {
     val provider = ComponentName(context, HabitMediumWidget::class.java)
-    val ddlId = loadIdPref(context, appWidgetId, provider)
+    val habitUid = loadUidPref(context, appWidgetId, provider)
 
     val views = RemoteViews(context.packageName, R.layout.habit_medium_widget)
 
-    val db = DatabaseHelper.getInstance(context)
-    val ddl = db.getDDLById(ddlId)
-    val habitRepo = HabitRepository(db)
-    val habit = habitRepo.getHabitByDdlId(ddlId)
+    val status = habitUid?.let(::habitWidgetStatus)
+    val habit = status?.habit
 
-    if (ddl != null && habit != null) {
+    if (habit != null) {
         // 标题 = DDL 名称
-        views.setTextViewText(R.id.medium_title, ddl.name)
+        views.setTextViewText(R.id.medium_title, habit.name)
 
         // 频率文案：沿用原本的 string 资源，但用 Habit 的字段
         val freqDesc = when (habit.period) {
@@ -102,18 +91,24 @@ internal fun updateMediumAppWidget(
                     )
             HabitPeriod.EBBINGHAUS ->
                 context.getString(R.string.editor_habit_period_ebbinghaus)
+            HabitPeriod.ONCE ->
+                context.getString(R.string.daily_frequency, 1)
         }
-        val scheduleHint = habit.scheduleStateOn(LocalDate.now())?.formatHint(context)
+        val scheduleHint = when (status.scheduleState?.hintKind) {
+            HabitScheduleHintKind.STARTS_IN -> status.scheduleState?.daysUntil?.let {
+                context.getString(R.string.habit_ebbinghaus_starts_in_days, it)
+            }
+            HabitScheduleHintKind.NEXT_REVIEW_IN -> status.scheduleState?.daysUntil?.let {
+                context.getString(R.string.habit_ebbinghaus_review_in_days, it)
+            }
+            HabitScheduleHintKind.COMPLETED_CYCLE -> context.getString(R.string.habit_ebbinghaus_cycle_completed)
+            null -> null
+        }
         views.setTextViewText(R.id.medium_description, scheduleHint?.let { "$freqDesc · $it" } ?: freqDesc)
 
         // 今天打卡次数 vs 每周期次数
-        val today = LocalDate.now()
-        val recordsToday = habitRepo.getRecordsForHabitOnDate(habit.id, today)
-        val doneToday = recordsToday.sumOf { it.count }
-        val targetPerDay = if (habit.period == HabitPeriod.EBBINGHAUS) 1 else habit.timesPerPeriod.coerceAtLeast(1)
-        val isDueToday = habit.scheduleStateOn(today)?.isDue != false
-
-        val canClick = isDueToday && doneToday < targetPerDay
+        val isDueToday = status.scheduleState?.isDue != false
+        val canClick = isDueToday && !status.isCompleted
         val label = if (canClick) {
             context.getString(R.string.check_habit)
         } else if (!isDueToday) {
@@ -130,7 +125,7 @@ internal fun updateMediumAppWidget(
                 Intent(context, HabitMiniWidget::class.java).apply {
                     action = ACTION_CHECK_IN
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                    putExtra("extra_habit_id", ddlId)      // 仍传 ddlId，下游按新系统改
+                    putExtra(EXTRA_HABIT_UID, habitUid)
                 },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
