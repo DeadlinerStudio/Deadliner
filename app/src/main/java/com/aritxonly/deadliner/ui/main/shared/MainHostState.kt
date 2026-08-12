@@ -26,14 +26,14 @@ class MainHostState(
     var showOverlay: Boolean by mutableStateOf(false)
     var selectionMode: Boolean by mutableStateOf(false)
 
-    val selectedIds: SnapshotStateList<Long> = mutableStateListOf()
+    val selectedIds: SnapshotStateList<String> = mutableStateListOf()
 
-    fun enterSelection(id: Long) {
+    fun enterSelection(id: String) {
         selectionMode = true
         if (!selectedIds.contains(id)) selectedIds.add(id)
     }
 
-    fun toggleSelection(id: Long) {
+    fun toggleSelection(id: String) {
         if (selectedIds.contains(id)) selectedIds.remove(id) else selectedIds.add(id)
         if (selectedIds.isEmpty()) selectionMode = false
     }
@@ -48,4 +48,3 @@ class MainHostState(
 fun rememberMainHostState(
     initialPage: DeadlineType,
 ): MainHostState = remember { MainHostState(initialPage = initialPage) }
-

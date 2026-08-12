@@ -20,15 +20,12 @@ import androidx.compose.ui.res.stringResource
 import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils.refreshCount
-import com.aritxonly.deadliner.model.DDLState
-import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DDLStatus
+import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.HabitMetaData
-import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.updateNoteWithDate
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.main.DDLItemCardSwipeable
@@ -42,16 +39,19 @@ import java.time.LocalDateTime
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
+import com.deadliner.domain.task.Task
+import com.deadliner.domain.task.TaskAction
+import com.deadliner.domain.task.TaskState
 
 @Composable
 fun AnimatedItem(
-    item: DDLItem,
+    item: Task,
     index: Int,
     content:  @Composable () -> Unit
 ) {
-    var visible by rememberSaveable(item.id) { mutableStateOf(false) }
+    var visible by rememberSaveable(item.uid) { mutableStateOf(false) }
 
-    LaunchedEffect(item.id) {
+    LaunchedEffect(item.uid) {
         delay(index * 70L)
         visible = true
     }
@@ -70,10 +70,31 @@ fun AnimatedItem(
 }
 
 @Composable
-fun TaskItem(
+fun AnimatedLegacyItem(
     item: DDLItem,
+    index: Int,
+    content: @Composable () -> Unit,
+) {
+    var visible by rememberSaveable(item.id) { mutableStateOf(false) }
+    LaunchedEffect(item.id) {
+        delay(index * 70L)
+        visible = true
+    }
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(380)) + slideInVertically(
+            initialOffsetY = { it / 3 },
+            animationSpec = tween(380),
+        ),
+        exit = fadeOut(animationSpec = tween(180)),
+    ) { content() }
+}
+
+@Composable
+fun TaskItem(
+    item: Task,
     activity: MainActivity,
-    applyTaskAction: (TaskStateAction, Boolean) -> Unit,
+    applyTaskAction: (TaskAction) -> Unit,
     celebrate: () -> Unit,
     selectionMode: Boolean = false,
     selected: Boolean = false,
@@ -82,14 +103,14 @@ fun TaskItem(
     onAbandonDialogVisibilityChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
-    var showGiveUpDialog by rememberSaveable(item.id) { mutableStateOf(false) }
+    var showGiveUpDialog by rememberSaveable(item.uid) { mutableStateOf(false) }
 
     LaunchedEffect(showGiveUpDialog) {
         onAbandonDialogVisibilityChange(showGiveUpDialog)
     }
 
-    val startTime = GlobalUtils.parseDateTime(item.startTime)
-    val endTime = GlobalUtils.parseDateTime(item.endTime)
+    val startTime = item.startAt?.let(GlobalUtils::parseDateTime)
+    val endTime = item.dueAt?.let(GlobalUtils::parseDateTime)
     val now = LocalDateTime.now()
 
     val remainingTimeText = formatTaskRemainingTime(
@@ -101,49 +122,49 @@ fun TaskItem(
     )
 
     val progress = computeProgress(startTime, endTime, now)
-    val status = if (item.state.isCompletedFamily() || item.state.isAbandonedFamily()) {
+    val status = if (item.state != TaskState.ACTIVE) {
         DDLStatus.COMPLETED
     } else {
         DDLStatus.calculateStatus(startTime, endTime, now, false)
     }
 
     val primaryAction = when (item.state) {
-        DDLState.ACTIVE -> TaskStateAction.MARK_COMPLETE
-        DDLState.COMPLETED, DDLState.ABANDONED -> TaskStateAction.RESTORE_ACTIVE
+        TaskState.ACTIVE -> TaskAction.MARK_COMPLETE
+        TaskState.COMPLETED, TaskState.ABANDONED -> TaskAction.RESTORE_ACTIVE
         else -> null
     }
     val secondaryAction = when (item.state) {
-        DDLState.ACTIVE -> TaskStateAction.MARK_GIVE_UP
-        DDLState.COMPLETED, DDLState.ABANDONED -> TaskStateAction.MARK_ARCHIVE
+        TaskState.ACTIVE -> TaskAction.MARK_GIVE_UP
+        TaskState.COMPLETED, TaskState.ABANDONED -> TaskAction.MARK_ARCHIVE
         else -> null
     }
     val primaryIcon = when (primaryAction) {
-        TaskStateAction.RESTORE_ACTIVE -> iconResource(R.drawable.ic_back)
+        TaskAction.RESTORE_ACTIVE -> iconResource(R.drawable.ic_back)
         else -> iconResource(R.drawable.ic_done)
     }
     val secondaryIcon = when (secondaryAction) {
-        TaskStateAction.MARK_ARCHIVE -> iconResource(R.drawable.ic_archiving)
-        TaskStateAction.MARK_GIVE_UP -> iconResource(R.drawable.ic_flag)
+        TaskAction.MARK_ARCHIVE -> iconResource(R.drawable.ic_archiving)
+        TaskAction.MARK_GIVE_UP -> iconResource(R.drawable.ic_flag)
         else -> iconResource(R.drawable.ic_delete)
     }
 
     DDLItemCardSwipeable(
-        title = item.name,
+        title = item.title,
         remainingTimeAlt = remainingTimeText,
         note = item.note,
         progress = progress,
-        isStarred = item.isStared,
+        isStarred = item.isStarred,
         status = status,
-        useDisabledCompletedStyle = item.state.isAbandonedFamily(),
+        useDisabledCompletedStyle = item.state == TaskState.ABANDONED,
         onClick = {
-            val intent = DeadlineDetailActivity.newIntent(context, item)
+            val intent = DeadlineDetailActivity.newIntent(context, item.uid)
             activity.startActivity(intent)
         },
         onComplete = {
             GlobalUtils.triggerVibration(activity, 100)
             val action = primaryAction ?: return@DDLItemCardSwipeable
-            applyTaskAction(action, true)
-            if (action == TaskStateAction.MARK_COMPLETE) {
+            applyTaskAction(action)
+            if (action == TaskAction.MARK_COMPLETE) {
                 celebrate()
                 Toast.makeText(activity, R.string.toast_finished, Toast.LENGTH_SHORT).show()
             } else {
@@ -153,10 +174,10 @@ fun TaskItem(
         onDelete = {
             GlobalUtils.triggerVibration(activity, 200)
             val action = secondaryAction ?: return@DDLItemCardSwipeable
-            if (action == TaskStateAction.MARK_GIVE_UP) {
+            if (action == TaskAction.MARK_GIVE_UP) {
                 showGiveUpDialog = true
             } else {
-                applyTaskAction(action, true)
+                applyTaskAction(action)
                 Toast.makeText(
                     activity,
                     activity.getString(R.string.toast_archived, 1),
@@ -184,7 +205,7 @@ fun TaskItem(
                 androidx.compose.material3.TextButton(
                     onClick = {
                         showGiveUpDialog = false
-                        applyTaskAction(TaskStateAction.MARK_GIVE_UP, true)
+                        applyTaskAction(TaskAction.MARK_GIVE_UP)
                         Toast.makeText(activity, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
                     }
                 ) {
@@ -202,23 +223,23 @@ fun TaskItem(
 
 private fun formatTaskRemainingTime(
     context: Context,
-    item: DDLItem,
+    item: Task,
     startTime: LocalDateTime?,
     endTime: LocalDateTime?,
     now: LocalDateTime,
 ): String {
-    if (item.state.isAbandonedFamily()) {
+    if (item.state == TaskState.ABANDONED) {
         return context.getString(R.string.abandoned)
     }
-    if (item.state.isCompletedFamily()) {
+    if (item.state == TaskState.COMPLETED) {
         return context.getString(R.string.completed)
     }
 
     val beforeStart = startTime?.isAfter(now) == true
     val targetTime = when {
-        beforeStart -> startTime ?: return item.endTime.ifBlank { item.startTime }
+        beforeStart -> startTime ?: return item.dueAt.orEmpty().ifBlank { item.startAt.orEmpty() }
         endTime != null -> endTime
-        else -> return item.endTime.ifBlank { item.startTime }
+        else -> return item.dueAt.orEmpty().ifBlank { item.startAt.orEmpty() }
     }
 
     val diffSeconds = Duration.between(now, targetTime).seconds.toDouble()

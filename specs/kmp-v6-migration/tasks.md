@@ -20,11 +20,11 @@
 
 - [x] 迁移 Intro wizard 状态机
 - [x] 接入 Capture 共享 ViewModel，并迁移旧 SharedPreferences 捕获项
-- [ ] 接入 Task list/detail/editor/archive/search 共享 ViewModel
-- [ ] 接入 Habit list、Overview、Settings 共享 ViewModel
+- [ ] 接入 Task list/detail/editor/archive/search 共享 ViewModel（list/detail/editor/archive 已完成，search 待切换）
+- [x] 接入 Habit list、Overview、Settings 共享 ViewModel
 - [ ] 用共享 Lifi API 替换 Android `AIUtils` 业务逻辑
 - [x] 将 Android LLM transport、配置验证、月度分析和 agent prompt/orchestration 收敛到既有 KMP Lifi API
-- [ ] 完成 SQLite v5 -> SQLDelight 一次性迁移并停止旧数据层读写
+- [ ] 完成 SQLite v5 -> SQLDelight 一次性迁移并停止旧数据层读写（主列表/新增/详情/归档已停止，搜索及后台组件待清理）
 - [ ] 删除 Android 重复的业务 ViewModel/repository/AI 实现
 - [ ] 大型改动完成后再统一编译
 

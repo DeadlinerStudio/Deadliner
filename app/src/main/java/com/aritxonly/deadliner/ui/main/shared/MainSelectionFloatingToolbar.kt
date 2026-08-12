@@ -22,9 +22,7 @@ fun MainSelectionFloatingToolbar(
     selectedPage: DeadlineType,
     onDoneClick: () -> Unit,
     onArchiveClick: () -> Unit,
-    onReminderClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     HorizontalFloatingToolbar(
@@ -44,10 +42,6 @@ fun MainSelectionFloatingToolbar(
             IconButton(onClick = onArchiveClick) {
                 Icon(iconResource(R.drawable.ic_archiving), contentDescription = null)
             }
-        } else {
-            IconButton(onClick = onReminderClick) {
-                Icon(iconResource(R.drawable.ic_notification_add), contentDescription = null)
-            }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -56,10 +50,5 @@ fun MainSelectionFloatingToolbar(
             Icon(iconResource(R.drawable.ic_delete), contentDescription = null)
         }
 
-        Spacer(modifier = Modifier.width(16.dp))
-
-        IconButton(onClick = onEditClick) {
-            Icon(iconResource(R.drawable.ic_edit), contentDescription = null)
-        }
     }
 }

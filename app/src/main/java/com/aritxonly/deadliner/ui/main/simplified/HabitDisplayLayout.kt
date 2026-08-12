@@ -1,6 +1,5 @@
 package com.aritxonly.deadliner.ui.main.simplified
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,39 +23,32 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.DDLRepository
-import com.aritxonly.deadliner.data.HabitViewModel
-import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLStatus
-import com.aritxonly.deadliner.model.DayOverview
-import com.aritxonly.deadliner.model.HabitWithDailyStatus
-import com.aritxonly.deadliner.model.formatHint
+import com.deadliner.viewmodel.habit.HabitDayStatus
+import com.deadliner.viewmodel.habit.HabitListViewModel
+import com.deadliner.viewmodel.habit.HabitScheduleHintKind
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 private data class HabitDisplayItem(
-    val habit: HabitWithDailyStatus,
+    val habit: HabitDayStatus,
     val status: DDLStatus,
     val remainingText: String?,
 )
 
 @Composable
 fun HabitScreen(
-    habitViewModel: HabitViewModel,
+    habitViewModel: HabitListViewModel,
     selectionMode: Boolean = false,
-    isSelected: (Long) -> Boolean = { false },
-    onItemLongPress: (Long) -> Unit = {},
-    onItemClickInSelection: (Long) -> Unit = {},
-    onToggleHabit: (Long) -> Unit = {}
+    isSelected: (String) -> Boolean = { false },
+    onItemLongPress: (String) -> Unit = {},
+    onItemClickInSelection: (String) -> Unit = {},
+    onToggleHabit: (String) -> Unit = {}
 ) {
-    val selectedDate by habitViewModel.selectedDate.collectAsState()
-    val weekOverview by habitViewModel.weekOverview.collectAsState()
-    val habits by habitViewModel.habitsForSelectedDate.collectAsState()
-    val searchQuery by habitViewModel.searchQuery.collectAsState()
+    val state by habitViewModel.uiState.collectAsState()
 
     HabitDisplayLayout(
-        weekOverview, selectedDate, habits, habitViewModel,
+        state.weekOverview, state.selectedDate, state.visibleHabits, habitViewModel,
         selectionMode = selectionMode,
         isSelected = isSelected,
         onItemLongPress = onItemLongPress,
@@ -68,16 +60,16 @@ fun HabitScreen(
 
 @Composable
 fun HabitDisplayLayout(
-    weekOverview: List<DayOverview>,
-    selectedDate: LocalDate,
-    habits: List<HabitWithDailyStatus>,
-    habitViewModel: HabitViewModel,
+    weekOverview: List<com.deadliner.viewmodel.habit.HabitDayOverview>,
+    selectedDate: String,
+    habits: List<HabitDayStatus>,
+    habitViewModel: HabitListViewModel,
     modifier: Modifier = Modifier,
     selectionMode: Boolean = false,
-    isSelected: (Long) -> Boolean = { false },
-    onItemLongPress: (Long) -> Unit = {},
-    onItemClickInSelection: (Long) -> Unit = {},
-    onToggleHabit: (Long) -> Unit = {},
+    isSelected: (String) -> Boolean = { false },
+    onItemLongPress: (String) -> Unit = {},
+    onItemClickInSelection: (String) -> Unit = {},
+    onToggleHabit: (String) -> Unit = {},
     isClassic: Boolean = false,
     listState: LazyListState = LazyListState()
 ) {
@@ -92,8 +84,7 @@ fun HabitDisplayLayout(
         val ratio = todayOverview?.completionRatio ?: 0f
 
         val context = LocalContext.current
-        val today = LocalDate.now()
-        val canToggleOnThisDate = !selectedDate.isAfter(today)
+        val canToggleOnThisDate = !LocalDate.parse(selectedDate).isAfter(LocalDate.now())
 
         if (!isClassic) {
             HabitCircleProgress(
@@ -113,41 +104,21 @@ fun HabitDisplayLayout(
         WeekRow(
             weekOverview = weekOverview,
             selectedDate = selectedDate,
-            onSelectDate = habitViewModel::onSelectDate
+            onSelectDate = habitViewModel::selectDate
         )
 
-        val displayHabits = remember(habits) {
-            habits.mapNotNull { item ->
-                val ddl = DDLRepository().getDDLById(item.habit.ddlId)
-                if (ddl == null) {
-                    Log.w(
-                        "HabitDisplayLayout",
-                        "Skipping orphan habit item: habitId=${item.habit.id}, ddlId=${item.habit.ddlId}"
-                    )
-                    return@mapNotNull null
+        val displayHabits = remember(habits, context) {
+            habits.map { item ->
+                val remainingText = when (item.scheduleState?.hintKind) {
+                    HabitScheduleHintKind.STARTS_IN -> item.scheduleState?.daysUntil?.let { "${it}d" }
+                    HabitScheduleHintKind.NEXT_REVIEW_IN -> item.scheduleState?.daysUntil?.let { "${it}d" }
+                    HabitScheduleHintKind.COMPLETED_CYCLE -> null
+                    null -> null
                 }
-
-                val startTime = GlobalUtils.parseDateTime(ddl.startTime)
-                val endTime = GlobalUtils.parseDateTime(ddl.endTime)
-                val status = DDLStatus.calculateStatus(
-                    startTime,
-                    endTime,
-                    isCompleted = ddl.isCompleted
-                )
-                val remainingText = endTime?.let {
-                    GlobalUtils.buildRemainingTime(
-                        context,
-                        startTime,
-                        endTime,
-                        false,
-                        LocalDateTime.now()
-                    )
-                }
-
                 HabitDisplayItem(
                     habit = item,
-                    status = status,
-                    remainingText = item.scheduleState?.formatHint(context) ?: remainingText,
+                    status = if (item.isCompleted) DDLStatus.COMPLETED else DDLStatus.UNDERGO,
+                    remainingText = remainingText,
                 )
             }
         }
@@ -166,9 +137,10 @@ fun HabitDisplayLayout(
         ) {
             itemsIndexed(
                 items = displayHabits,
-                key = { _, it -> it.habit.habit.id }
+                key = { _, it -> it.habit.habit.uid }
             ) { index, item ->
-                val selected = isSelected(item.habit.habit.ddlId)
+                val uid = item.habit.habit.uid
+                val selected = isSelected(uid)
 
                 if (!isClassic) {
                     HabitRow(
@@ -178,13 +150,13 @@ fun HabitDisplayLayout(
                         canToggle = canToggleOnThisDate && item.habit.scheduleState?.isDue != false,
                         onToggle = {
                             if (selectionMode) {
-                                onItemClickInSelection(item.habit.habit.ddlId)
+                                onItemClickInSelection(uid)
                             } else {
-                                onToggleHabit(item.habit.habit.id)
+                                onToggleHabit(uid)
                             }
                         },
                         onLongPress = {
-                            onItemLongPress(item.habit.habit.ddlId)
+                            onItemLongPress(uid)
                         },
                         remainingText = item.remainingText
                     )
@@ -195,13 +167,13 @@ fun HabitDisplayLayout(
                         canToggle = canToggleOnThisDate && item.habit.scheduleState?.isDue != false,
                         onToggle = {
                             if (selectionMode) {
-                                onItemClickInSelection(item.habit.habit.ddlId)
+                                onItemClickInSelection(uid)
                             } else {
-                                onToggleHabit(item.habit.habit.id)
+                                onToggleHabit(uid)
                             }
                         },
                         onLongPress = {
-                            onItemLongPress(item.habit.habit.ddlId)
+                            onItemLongPress(uid)
                         },
                         remainingText = item.remainingText
                     )

@@ -107,14 +107,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import com.aritxonly.deadliner.DeadlineAlarmScheduler
-import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.DDLRepository
-import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.localutils.SearchFilter
-import com.aritxonly.deadliner.data.MainViewModel
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils.refreshCount
 import com.aritxonly.deadliner.model.DDLItem
@@ -137,17 +132,21 @@ import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.math.max
+import com.deadliner.domain.task.Task
+import com.deadliner.domain.task.TaskAction
+import com.deadliner.viewmodel.habit.HabitListViewModel
+import com.deadliner.viewmodel.task.TaskListViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, FlowPreview::class)
 @Composable
 fun MainDisplay(
-    ddlList: List<DDLItem>,
-    habitViewModel: HabitViewModel,
-    refreshState: MainViewModel.RefreshState,
+    tasks: List<Task>,
+    habitViewModel: HabitListViewModel,
+    isRefreshing: Boolean,
     selectedPage: DeadlineType,
     activity: MainActivity,
     modifier: Modifier = Modifier,
-    vm: MainViewModel,
+    taskViewModel: TaskListViewModel,
     listState: LazyListState,
     moreExpanded: Boolean,
     moreAnchorRect: androidx.compose.ui.geometry.Rect?,
@@ -156,24 +155,21 @@ fun MainDisplay(
     avatarPainter: Painter?,
     onCloseMorePanel: () -> Unit,
     selectionMode: Boolean,
-    isSelected: (Long) -> Boolean,
-    onItemLongPress: (Long) -> Unit,
-    onItemClickInSelection: (Long) -> Unit,
+    isSelected: (String) -> Boolean,
+    onItemLongPress: (String) -> Unit,
+    onItemClickInSelection: (String) -> Unit,
     onRequestBackdropBlur: (Boolean) -> Unit = {},
-    onShowUndoSnackbar: (DDLItem) -> Unit = {},
     onCelebrate: (() -> Unit)? = null,
     topOverlayPadding: Dp = 0.dp,
 ) {
     val context = LocalContext.current
 
     val scope = rememberCoroutineScope()
-    var pendingDelete by remember { mutableStateOf<DDLItem?>(null) }
     var abandonDialogVisible by remember { mutableStateOf(false) }
     val pullToRefreshState = rememberPullToRefreshState()
-    val isRefreshing = refreshState is MainViewModel.RefreshState.Loading && !refreshState.silent
 
     val needsBlur by remember {
-        derivedStateOf { pendingDelete != null || abandonDialogVisible }
+        derivedStateOf { abandonDialogVisible }
     }
     LaunchedEffect(needsBlur) {
         onRequestBackdropBlur(needsBlur)
@@ -182,17 +178,15 @@ fun MainDisplay(
         onDispose { onRequestBackdropBlur(false) }
     }
 
-    val selectedDate by habitViewModel.selectedDate.collectAsState()
-    val weekOverview by habitViewModel.weekOverview.collectAsState()
-    val habits by habitViewModel.habitsForSelectedDate.collectAsState()
-    val searchQuery by habitViewModel.searchQuery.collectAsState()
+    val habitState by habitViewModel.uiState.collectAsState()
 
     Column(modifier) {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             state = pullToRefreshState,
             onRefresh = {
-                vm.refreshFromPull(selectedPage)
+                taskViewModel.loadNow()
+                habitViewModel.loadNow()
             },
             modifier = modifier.fillMaxSize(),
             indicator = {
@@ -221,8 +215,8 @@ fun MainDisplay(
                         state = listState
                     ) {
                         itemsIndexed(
-                            items = ddlList,
-                            key = { _, it -> it.id }
+                            items = tasks,
+                            key = { _, it -> it.uid }
                         ) { index, item ->
                             AnimatedItem(
                                 item = item,
@@ -231,21 +225,20 @@ fun MainDisplay(
                                 TaskItem(
                                     item = item,
                                     activity = activity,
-                                    applyTaskAction = { action, confirmed ->
-                                        DDLRepository().applyTaskAction(
-                                            itemId = item.id,
-                                            action = action,
-                                            confirmed = confirmed
+                                    applyTaskAction = { action ->
+                                        taskViewModel.applyTaskActionNow(
+                                            item.uid,
+                                            action,
+                                            java.time.Instant.now().toString(),
                                         )
-                                        vm.loadData(selectedPage)
                                     },
                                     celebrate = {
                                         if (GlobalUtils.fireworksOnFinish) onCelebrate?.invoke()
                                     },
                                     selectionMode = selectionMode,
-                                    selected = isSelected(item.id),
-                                    onLongPressSelect = { onItemLongPress(item.id) },
-                                    onToggleSelect = { onItemClickInSelection(item.id) },
+                                    selected = isSelected(item.uid),
+                                    onLongPressSelect = { onItemLongPress(item.uid) },
+                                    onToggleSelect = { onItemClickInSelection(item.uid) },
                                     onAbandonDialogVisibilityChange = { abandonDialogVisible = it },
                                 )
                             }
@@ -254,54 +247,24 @@ fun MainDisplay(
                 }
                 DeadlineType.HABIT -> {
                     HabitDisplayLayout(
-                        weekOverview, selectedDate,
+                        habitState.weekOverview, habitState.selectedDate,
                         habitViewModel = habitViewModel,
                         modifier = Modifier.padding(top = topOverlayPadding),
-                        habits = habits,
+                        habits = habitState.visibleHabits,
                         selectionMode = selectionMode,
                         isSelected = isSelected,
                         onItemLongPress = onItemLongPress,
                         onItemClickInSelection = onItemClickInSelection,
                         onToggleHabit = { id ->
-                            habitViewModel.onToggleHabit(id) {
-                                if (GlobalUtils.fireworksOnFinish) onCelebrate?.invoke()
-                                Toast.makeText(context, R.string.toast_all_habits_done, Toast.LENGTH_SHORT).show()
-                            }
+                            val before = habitViewModel.uiState.value.visibleHabits
+                                .firstOrNull { it.habit.uid == id }?.isCompleted == true
+                            habitViewModel.toggleHabitOnSelectedDate(id)
+                            if (!before && GlobalUtils.fireworksOnFinish) onCelebrate?.invoke()
                         }
                     )
                 }
             }
         }
-    }
-
-    if (pendingDelete != null) {
-        val target = pendingDelete!!
-        AlertDialog(
-            show = true,
-            onDismissRequest = {
-                pendingDelete = null
-            },
-            title = { Text(stringResource(R.string.alert_delete_title)) },
-            text = { Text(stringResource(R.string.alert_delete_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    DDLRepository().deleteDDL(target.id)
-                    DeadlineAlarmScheduler.cancelAlarm(activity.applicationContext, target.id)
-                    pendingDelete = null
-                    vm.loadData(selectedPage)
-                    Toast.makeText(context, R.string.toast_deletion, Toast.LENGTH_SHORT).show()
-                }) {
-                    Text(stringResource(R.string.accept))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    pendingDelete = null
-                }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
     }
 
     moreAnchorRect?.let {

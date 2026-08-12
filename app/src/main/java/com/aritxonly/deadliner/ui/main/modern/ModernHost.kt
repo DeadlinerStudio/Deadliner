@@ -164,12 +164,14 @@ fun ModernHost(
     val useFlattenedOverview = configuration.screenWidthDp >= FlattenedOverviewMinWidthDp
     val vm: MainViewModel = viewModel(factory = MainViewModelFactory(context))
     val habitVm: HabitViewModel = viewModel(factory = HabitViewModelFactory(context))
+    val taskVm = KmpV6Runtime.taskListViewModel
+    val sharedHabitVm = KmpV6Runtime.habitListViewModel
     val captureVm: CaptureViewModel = viewModel()
     val scope = rememberCoroutineScope()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val hostState = rememberMainHostState(vm.currentType)
+    val hostState = rememberMainHostState(DeadlineType.TASK)
     val uiState = rememberMainHostUiState()
     var overviewState by remember { mutableStateOf(KmpV6Runtime.overviewViewModel.loadNow()) }
     var showOverviewSettings by rememberSaveable { mutableStateOf(false) }
@@ -233,6 +235,8 @@ fun ModernHost(
         if (res.resultCode == Activity.RESULT_OK) {
             if (isWideLayout) vm.loadAllData() else vm.loadData(hostState.selectedPage)
             habitVm.refresh()
+            taskVm.loadNow()
+            sharedHabitVm.loadNow()
         }
     }
 
@@ -243,11 +247,15 @@ fun ModernHost(
             vm.selectType(page)
             if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(page)
             habitVm.refresh()
+            taskVm.loadNow()
+            sharedHabitVm.loadNow()
         },
         onResumed = { page ->
             vm.selectType(page)
             if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(page)
             habitVm.refresh()
+            taskVm.loadNow()
+            sharedHabitVm.loadNow()
             overviewState = KmpV6Runtime.overviewViewModel.loadNow()
         },
         onInitialExtra = {
@@ -382,13 +390,15 @@ fun ModernHost(
     val taskList by vm.taskListFlow.collectAsStateWithLifecycle()
     val habitList by vm.habitListFlow.collectAsStateWithLifecycle()
     val refreshState by vm.refreshState.collectAsStateWithLifecycle()
+    val taskState by taskVm.uiState.collectAsStateWithLifecycle()
+    val sharedHabitState by sharedHabitVm.uiState.collectAsStateWithLifecycle()
     val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
     val isShortBottomNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact ||
         navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium
     val selectionActions = rememberMainSelectionActionController(
         activity = activity,
-        vm = vm,
-        habitVm = habitVm,
+        taskViewModel = taskVm,
+        habitViewModel = sharedHabitVm,
         hostState = hostState,
     )
 
@@ -407,22 +417,13 @@ fun ModernHost(
         }
     }
 
-    LaunchedEffect(selectionActions.habitReminderTargetId) {
-        val targetId = selectionActions.habitReminderTargetId ?: return@LaunchedEffect
-        showHabitReminderDialog(context, targetId) {
-            selectionActions.clearHabitReminderTarget()
-        }
-    }
-
     val shouldBlur = hostState.showOverlay ||
         uiState.childRequestsBlur ||
         selectionActions.showDeleteDialog ||
-        (selectionActions.habitReminderTargetId != null) ||
         (hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings) ||
         (hostState.selectedSection == MainSection.CAPTURE && showCaptureMergeSheet)
     val advancedMaterialBlur = uiState.childRequestsBlur ||
         selectionActions.showDeleteDialog ||
-        (selectionActions.habitReminderTargetId != null) ||
         (hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings) ||
         (hostState.selectedSection == MainSection.CAPTURE && showCaptureMergeSheet)
     ProvideAdvancedMaterialDialogBlurHost {
@@ -524,7 +525,6 @@ fun ModernHost(
                                 actions = {
                                     IconButton(onClick = {
                                         selectionActions.onDoneClick(
-                                            ddlList = ddlList,
                                             onCelebrate = {
                                                 if (com.aritxonly.deadliner.localutils.GlobalUtils.fireworksOnFinish) {
                                                     celebrate()
@@ -538,17 +538,10 @@ fun ModernHost(
                                         )
                                     }
                                     if (hostState.selectedPage == DeadlineType.TASK) {
-                                        IconButton(onClick = { selectionActions.onArchiveClick(ddlList = ddlList) }) {
+                                        IconButton(onClick = { selectionActions.onArchiveClick() }) {
                                             Icon(
                                                 ImageVector.vectorResource(R.drawable.ic_archiving),
                                                 contentDescription = stringResource(R.string.archive)
-                                            )
-                                        }
-                                    } else {
-                                        IconButton(onClick = { selectionActions.onReminderClick(ddlList = ddlList) }) {
-                                            Icon(
-                                                ImageVector.vectorResource(R.drawable.ic_notification_add),
-                                                contentDescription = stringResource(R.string.settings_more)
                                             )
                                         }
                                     }
@@ -556,12 +549,6 @@ fun ModernHost(
                                         Icon(
                                             ImageVector.vectorResource(R.drawable.ic_delete),
                                             contentDescription = stringResource(R.string.delete)
-                                        )
-                                    }
-                                    IconButton(onClick = { selectionActions.onEditClick(ddlList = ddlList) }) {
-                                        Icon(
-                                            ImageVector.vectorResource(R.drawable.ic_edit),
-                                            contentDescription = stringResource(R.string.edit)
                                         )
                                     }
                                 },
@@ -679,12 +666,12 @@ fun ModernHost(
                             ) {
                                 Box(modifier = Modifier.weight(1f)) {
                                     MainDisplay(
-                                        ddlList = taskList,
-                                        habitViewModel = habitVm,
-                                        refreshState = refreshState,
+                                        tasks = taskState.tasks.filter { it.state != com.deadliner.domain.task.TaskState.ARCHIVED && it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED },
+                                        habitViewModel = sharedHabitVm,
+                                        isRefreshing = taskState.isLoading || sharedHabitState.isLoading,
                                         selectedPage = DeadlineType.TASK,
                                         activity = activity,
-                                        vm = vm,
+                                        taskViewModel = taskVm,
                                         listState = taskListState,
                                         modifier = Modifier.fillMaxSize(),
                                         moreExpanded = false,
@@ -711,7 +698,6 @@ fun ModernHost(
                                         onRequestBackdropBlur = { enable ->
                                             uiState.childRequestsBlur = enable
                                         },
-                                        onShowUndoSnackbar = onUndoSnackbar,
                                         onCelebrate = { celebrate() },
                                         topOverlayPadding = overlayTopBarPadding,
                                     )
@@ -729,12 +715,12 @@ fun ModernHost(
                                 }
                                 Box(modifier = Modifier.weight(1f)) {
                                     MainDisplay(
-                                        ddlList = habitList,
-                                        habitViewModel = habitVm,
-                                        refreshState = refreshState,
+                                        tasks = taskState.tasks,
+                                        habitViewModel = sharedHabitVm,
+                                        isRefreshing = taskState.isLoading || sharedHabitState.isLoading,
                                         selectedPage = DeadlineType.HABIT,
                                         activity = activity,
-                                        vm = vm,
+                                        taskViewModel = taskVm,
                                         listState = habitListState,
                                         modifier = Modifier.fillMaxSize(),
                                         moreExpanded = false,
@@ -761,7 +747,6 @@ fun ModernHost(
                                         onRequestBackdropBlur = { enable ->
                                             uiState.childRequestsBlur = enable
                                         },
-                                        onShowUndoSnackbar = onUndoSnackbar,
                                         onCelebrate = { celebrate() },
                                         topOverlayPadding = overlayTopBarPadding,
                                     )
@@ -780,12 +765,12 @@ fun ModernHost(
                             }
                         } else {
                             MainDisplay(
-                                ddlList = ddlList,
-                                habitViewModel = habitVm,
-                                refreshState = refreshState,
+                                tasks = taskState.tasks.filter { it.state != com.deadliner.domain.task.TaskState.ARCHIVED && it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED },
+                                habitViewModel = sharedHabitVm,
+                                isRefreshing = taskState.isLoading || sharedHabitState.isLoading,
                                 selectedPage = hostState.selectedPage,
                                 activity = activity,
-                                vm = vm,
+                                taskViewModel = taskVm,
                                 listState = if (hostState.selectedPage == DeadlineType.TASK) {
                                     taskListState
                                 } else {
@@ -804,7 +789,6 @@ fun ModernHost(
                                 onRequestBackdropBlur = { enable ->
                                     uiState.childRequestsBlur = enable
                                 },
-                                onShowUndoSnackbar = onUndoSnackbar,
                                 onCelebrate = { celebrate() },
                                 topOverlayPadding = overlayTopBarPadding,
                             )

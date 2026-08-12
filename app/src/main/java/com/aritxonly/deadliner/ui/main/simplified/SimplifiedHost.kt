@@ -118,10 +118,12 @@ fun SimplifiedHost(
     val scope = rememberCoroutineScope()
     val vm: MainViewModel = viewModel(factory = MainViewModelFactory(context))
     val habitVm: HabitViewModel = viewModel(factory = HabitViewModelFactory(context))
+    val taskVm = KmpV6Runtime.taskListViewModel
+    val sharedHabitVm = KmpV6Runtime.habitListViewModel
     val captureVm: CaptureViewModel = viewModel()
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val hostState = rememberMainHostState(vm.currentType)
+    val hostState = rememberMainHostState(DeadlineType.TASK)
 
     DeadlinerUrlIntake(
         activity = activity,
@@ -142,6 +144,8 @@ fun SimplifiedHost(
         if (res.resultCode == Activity.RESULT_OK) {
             vm.loadData(hostState.selectedPage)
             habitVm.refresh()
+            taskVm.loadNow()
+            sharedHabitVm.loadNow()
         }
     }
 
@@ -151,16 +155,22 @@ fun SimplifiedHost(
         onPageChanged = { page ->
             vm.loadData(page)
             habitVm.refresh()
+            taskVm.loadNow()
+            sharedHabitVm.loadNow()
         },
         onResumed = { page ->
             vm.loadData(page)
             habitVm.refresh()
+            taskVm.loadNow()
+            sharedHabitVm.loadNow()
         },
     )
 
     val ddlList by vm.ddlListFlow.collectAsStateWithLifecycle()
     val dueSoonCounts by vm.dueSoonCounts.observeAsState(emptyMap())
     val refreshState by vm.refreshState.collectAsStateWithLifecycle()
+    val taskState by taskVm.uiState.collectAsStateWithLifecycle()
+    val sharedHabitState by sharedHabitVm.uiState.collectAsStateWithLifecycle()
 
     val uiState = rememberMainHostUiState()
     val listState = rememberLazyListState()
@@ -217,28 +227,17 @@ fun SimplifiedHost(
 
     val selectionActions = rememberMainSelectionActionController(
         activity = activity,
-        vm = vm,
-        habitVm = habitVm,
+        taskViewModel = taskVm,
+        habitViewModel = sharedHabitVm,
         hostState = hostState,
     )
     val shouldBlur = uiState.showOverlay ||
         uiState.childRequestsBlur ||
         uiState.moreExpanded ||
-        selectionActions.showDeleteDialog ||
-        (selectionActions.habitReminderTargetId != null)
+        selectionActions.showDeleteDialog
     val advancedMaterialBlur = uiState.childRequestsBlur ||
         uiState.moreExpanded ||
-        selectionActions.showDeleteDialog ||
-        (selectionActions.habitReminderTargetId != null)
-
-    LaunchedEffect(selectionActions.habitReminderTargetId) {
-        val targetId = selectionActions.habitReminderTargetId ?: return@LaunchedEffect
-
-        // 这里已经发生了一次重组，背景会根据 shouldBlur 开始模糊
-        showHabitReminderDialog(context, targetId) {
-            selectionActions.clearHabitReminderTarget()
-        }
-    }
+        selectionActions.showDeleteDialog
 
     val jumpAnim = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
@@ -484,45 +483,16 @@ fun SimplifiedHost(
         ) {
             if (!searchActive) {
                 MainDisplay(
-                    ddlList = ddlList,
-                    habitViewModel = habitVm,
-                    refreshState = refreshState,
+                    tasks = taskState.tasks.filter { it.state != com.deadliner.domain.task.TaskState.ARCHIVED && it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED },
+                    habitViewModel = sharedHabitVm,
+                    isRefreshing = taskState.isLoading || sharedHabitState.isLoading,
                     selectedPage = hostState.selectedPage,
                     activity = activity,
                     modifier = Modifier
                         .fillMaxSize(),
-                    vm = vm,
+                    taskViewModel = taskVm,
                     listState = listState,
                     onRequestBackdropBlur = { enable -> uiState.childRequestsBlur = enable },
-                    onShowUndoSnackbar = { updatedHabit ->
-                        scope.launch {
-                            val result = snackbarHostState.showSnackbar(
-                                message = context.getString(R.string.habit_success),
-                                actionLabel = context.getString(R.string.undo),
-                                duration = SnackbarDuration.Long,
-                                withDismissAction = true
-                            )
-                            if (result == SnackbarResult.ActionPerformed) {
-                                val todayStr = LocalDate.now().toString()
-                                val json = JSONObject(updatedHabit.note)
-                                val datesArray = json.optJSONArray("completedDates") ?: JSONArray()
-                                for (i in datesArray.length() - 1 downTo 0) {
-                                    if (datesArray.optString(i) == todayStr) {
-                                        datesArray.remove(i)
-                                    }
-                                }
-                                json.put("completedDates", datesArray)
-                                val revertedNoteJson = json.toString()
-                                val revertedHabit = updatedHabit.copy(
-                                    note = revertedNoteJson,
-                                    habitCount = updatedHabit.habitCount - 1
-                                )
-                                DDLRepository().updateDDL(revertedHabit)
-                                vm.loadData(hostState.selectedPage)
-                                habitVm.refresh()
-                            }
-                        }
-                    },
                     onCelebrate = { celebrate() },
                     moreExpanded = uiState.moreExpanded,
                     moreAnchorRect = moreAnchorRect,
@@ -640,16 +610,13 @@ fun SimplifiedHost(
                                 selectedPage = hostState.selectedPage,
                                 onDoneClick = {
                                     selectionActions.onDoneClick(
-                                        ddlList = ddlList,
                                         onCelebrate = {
                                             if (GlobalUtils.fireworksOnFinish) celebrate()
                                         },
                                     )
                                 },
-                                onArchiveClick = { selectionActions.onArchiveClick(ddlList = ddlList) },
-                                onReminderClick = { selectionActions.onReminderClick(ddlList = ddlList) },
+                                onArchiveClick = { selectionActions.onArchiveClick() },
                                 onDeleteClick = { selectionActions.onDeleteClick() },
-                                onEditClick = { selectionActions.onEditClick(ddlList = ddlList) },
                             )
                         }
                     }

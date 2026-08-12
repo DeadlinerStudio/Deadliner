@@ -85,8 +85,8 @@ import com.aritxonly.deadliner.ui.base.AlertDialog as AppAlertDialog
 import com.aritxonly.deadliner.ui.base.TextButton as AppTextButton
 import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
-import com.aritxonly.deadliner.ui.main.simplified.AnimatedItem
-import com.aritxonly.deadliner.ui.main.simplified.HabitRow
+import com.aritxonly.deadliner.ui.main.simplified.AnimatedLegacyItem
+import com.aritxonly.deadliner.ui.main.simplified.HabitItem
 import com.aritxonly.deadliner.ui.settings.RoundedTextField
 import com.aritxonly.deadliner.ui.settings.RoundedTextFieldMetrics
 import java.time.Duration
@@ -244,7 +244,7 @@ fun MainSearchResultsContent(
                         items = section.items,
                         key = { "${section.titleRes}-${it.type}-${it.id}" },
                     ) { item ->
-                        AnimatedItem(
+                        AnimatedLegacyItem(
                             item = item,
                             index = 0,
                         ) {
@@ -854,31 +854,13 @@ private fun HabitSearchItem(
     statusByDdlId: Map<Long, com.aritxonly.deadliner.model.HabitWithDailyStatus>,
 ) {
     val data = statusByDdlId[item.id] ?: return
-    val context = LocalContext.current
-    val st = GlobalUtils.parseDateTime(item.startTime)
-    val et = GlobalUtils.parseDateTime(item.endTime)
-    val status = DDLStatus.calculateStatus(st, et, isCompleted = item.isCompleted)
-    val remainingText = et?.let {
-        GlobalUtils.buildRemainingTime(
-            context,
-            st,
-            et,
-            false,
-            LocalDateTime.now(),
-        )
-    }
-
-    HabitRow(
-        data = data,
-        status = status,
-        isSelected = false,
-        canToggle = canToggle && data.scheduleState?.isDue != false,
-        onToggle = onToggle,
-        onLongPress = {
-            val intent = DeadlineDetailActivity.newIntent(activity, item)
-            activity.startActivity(intent)
+    HabitItem(
+        item = item,
+        onRefresh = {},
+        updateDDL = { if (canToggle && data.scheduleState?.isDue != false) onToggle() },
+        onLongPressSelect = {
+            Unit
         },
-        remainingText = data.scheduleState?.formatHint(context) ?: remainingText,
     )
 }
 
@@ -950,9 +932,6 @@ private fun TaskSearchItem(
         isStarred = item.isStared,
         useDisabledCompletedStyle = item.state.isAbandonedFamily(),
         status = status,
-        onClick = {
-            val intent = DeadlineDetailActivity.newIntent(activity, item)
-            activity.startActivity(intent)
-        },
+        onClick = null,
     )
 }

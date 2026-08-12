@@ -1,7 +1,6 @@
 package com.aritxonly.deadliner.ui.detail
 
 import android.content.Context
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -70,15 +69,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.calendar.CalendarHelper
-import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DDLState
-import com.aritxonly.deadliner.model.SubTask
-import com.aritxonly.deadliner.model.TaskStateAction
+import com.deadliner.domain.task.Task
+import com.deadliner.domain.task.TaskAction
+import com.deadliner.domain.task.TaskState
+import com.deadliner.domain.task.TaskSubtask
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.RadioButton
@@ -96,7 +93,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
-import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -116,13 +112,13 @@ private enum class DetailAction(
     SAVE_TO_CALENDAR(R.drawable.ic_event, R.string.save_and_add_to_calendar)
 }
 
-private fun availableActions(state: DDLState): List<DetailAction> {
+private fun availableActions(state: TaskState): List<DetailAction> {
     val head = when (state) {
-        DDLState.ACTIVE -> listOf(DetailAction.MARK_COMPLETE, DetailAction.GIVE_UP)
-        DDLState.COMPLETED,
-        DDLState.ABANDONED -> listOf(DetailAction.RESTORE_ACTIVE, DetailAction.ARCHIVE)
-        DDLState.ARCHIVED,
-        DDLState.ABANDONED_ARCHIVED -> listOf(DetailAction.UNARCHIVE)
+        TaskState.ACTIVE -> listOf(DetailAction.MARK_COMPLETE, DetailAction.GIVE_UP)
+        TaskState.COMPLETED,
+        TaskState.ABANDONED -> listOf(DetailAction.RESTORE_ACTIVE, DetailAction.ARCHIVE)
+        TaskState.ARCHIVED,
+        TaskState.ABANDONED_ARCHIVED -> listOf(DetailAction.UNARCHIVE)
     }
 
     return head + listOf(DetailAction.DELETE, DetailAction.SAVE_TO_CALENDAR)
@@ -133,28 +129,31 @@ private fun availableActions(state: DDLState): List<DetailAction> {
 fun DeadlineDetailScreen(
     applicationContext: Context,
     activityContext: Context,
-    deadline: DDLItem,
+    deadline: Task,
     onClose: () -> Unit,
-    onEdit: () -> Unit,
-    onPersistDeadline: (DDLItem) -> Unit,
     onToggleStar: (Boolean) -> Unit,
-    onApplyTaskAction: (TaskStateAction, Boolean) -> DDLItem,
-    onDelete: (Long) -> Unit,
+    onApplyTaskAction: (TaskAction) -> Unit,
+    onDelete: () -> Unit,
+    onAddSubtask: (String) -> Unit,
+    onToggleSubtask: (String) -> Unit,
+    onDeleteSubtask: (String) -> Unit,
+    onUpdateSubtask: (String, String) -> Unit,
+    onCalendarEventCreated: (Long) -> Unit,
     finishActivity: () -> Unit
 ) {
-    var isStarred by remember(deadline.id) { mutableStateOf(deadline.isStared) }
-    var showPlanComposer by rememberSaveable(deadline.id) { mutableStateOf(false) }
-    var openComposerSignal by rememberSaveable(deadline.id) { mutableIntStateOf(0) }
-    var draftSubTask by rememberSaveable(deadline.id) { mutableStateOf("") }
-    var editingSubTaskId by rememberSaveable(deadline.id) { mutableStateOf<String?>(null) }
-    var editingSubTaskDraft by rememberSaveable(deadline.id) { mutableStateOf("") }
-    var isMutatingPlan by remember(deadline.id) { mutableStateOf(false) }
-    var showGiveUpDialog by rememberSaveable(deadline.id) { mutableStateOf(false) }
-    var showDeleteDialog by rememberSaveable(deadline.id) { mutableStateOf(false) }
+    var isStarred by remember(deadline.uid) { mutableStateOf(deadline.isStarred) }
+    var showPlanComposer by rememberSaveable(deadline.uid) { mutableStateOf(false) }
+    var openComposerSignal by rememberSaveable(deadline.uid) { mutableIntStateOf(0) }
+    var draftSubTask by rememberSaveable(deadline.uid) { mutableStateOf("") }
+    var editingSubTaskId by rememberSaveable(deadline.uid) { mutableStateOf<String?>(null) }
+    var editingSubTaskDraft by rememberSaveable(deadline.uid) { mutableStateOf("") }
+    var isMutatingPlan by remember(deadline.uid) { mutableStateOf(false) }
+    var showGiveUpDialog by rememberSaveable(deadline.uid) { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable(deadline.uid) { mutableStateOf(false) }
     val composerFocusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(deadline.isStared) {
-        isStarred = deadline.isStared
+    LaunchedEffect(deadline.isStarred) {
+        isStarred = deadline.isStarred
     }
 
     val scrollState = rememberScrollState()
@@ -166,20 +165,6 @@ fun DeadlineDetailScreen(
         composerFocusRequester.requestFocus()
     }
 
-    fun mutateSubTasks(transform: (List<SubTask>) -> List<SubTask>) {
-        if (isMutatingPlan) return
-        isMutatingPlan = true
-        try {
-            val updated = deadline.copy(
-                subTasks = transform(deadline.subTasks),
-                timeStamp = LocalDateTime.now().toString()
-            )
-            onPersistDeadline(updated)
-        } finally {
-            isMutatingPlan = false
-        }
-    }
-
     fun submitPlanComposer() {
         val content = draftSubTask.trim()
         if (content.isEmpty()) {
@@ -187,17 +172,7 @@ fun DeadlineDetailScreen(
             return
         }
 
-        mutateSubTasks { current ->
-            val nextOrder = (current.maxOfOrNull { it.sortOrder } ?: -1) + 1
-            current + SubTask(
-                id = UUID.randomUUID().toString(),
-                content = content,
-                isCompleted = 0,
-                sortOrder = nextOrder,
-                createdAt = LocalDateTime.now().toString(),
-                updatedAt = LocalDateTime.now().toString()
-            )
-        }
+        onAddSubtask(content)
 
         draftSubTask = ""
         showPlanComposer = false
@@ -206,7 +181,7 @@ fun DeadlineDetailScreen(
     fun executeAction(action: DetailAction) {
         when (action) {
             DetailAction.MARK_COMPLETE -> {
-                onApplyTaskAction(TaskStateAction.MARK_COMPLETE, true)
+                onApplyTaskAction(TaskAction.MARK_COMPLETE)
                 Toast.makeText(activityContext, R.string.toast_finished, Toast.LENGTH_SHORT).show()
                 finishActivity()
             }
@@ -216,13 +191,13 @@ fun DeadlineDetailScreen(
             }
 
             DetailAction.RESTORE_ACTIVE -> {
-                onApplyTaskAction(TaskStateAction.RESTORE_ACTIVE, true)
+                onApplyTaskAction(TaskAction.RESTORE_ACTIVE)
                 Toast.makeText(activityContext, R.string.toast_restored_active, Toast.LENGTH_SHORT).show()
                 finishActivity()
             }
 
             DetailAction.ARCHIVE -> {
-                onApplyTaskAction(TaskStateAction.MARK_ARCHIVE, true)
+                onApplyTaskAction(TaskAction.MARK_ARCHIVE)
                 Toast.makeText(
                     activityContext,
                     activityContext.getString(R.string.toast_archived, 1),
@@ -232,7 +207,7 @@ fun DeadlineDetailScreen(
             }
 
             DetailAction.UNARCHIVE -> {
-                onApplyTaskAction(TaskStateAction.UNARCHIVE, true)
+                onApplyTaskAction(TaskAction.UNARCHIVE)
                 Toast.makeText(activityContext, R.string.toast_unarchived, Toast.LENGTH_SHORT).show()
                 finishActivity()
             }
@@ -246,7 +221,7 @@ fun DeadlineDetailScreen(
                 CoroutineScope(Dispatchers.Main).launch {
                     try {
                         val eventId = calendarHelper.insertEvent(deadline)
-                        onPersistDeadline(deadline.copy(calendarEventId = eventId))
+                        onCalendarEventCreated(eventId)
                         Toast.makeText(
                             activityContext,
                             R.string.add_calendar_success,
@@ -264,11 +239,11 @@ fun DeadlineDetailScreen(
         }
     }
 
-    val sortedSubTasks = remember(deadline.subTasks) {
-        deadline.subTasks.sortedWith(
-            compareBy<SubTask> { it.isCompleted }
+    val sortedSubTasks = remember(deadline.subtasks) {
+        deadline.subtasks.sortedWith(
+            compareBy<TaskSubtask> { it.isCompleted }
                 .thenBy { it.sortOrder }
-                .thenBy { it.id }
+                .thenBy { it.uid }
         )
     }
 
@@ -278,7 +253,7 @@ fun DeadlineDetailScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
-                title = deadline.name,
+                title = deadline.title,
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(
@@ -293,32 +268,6 @@ fun DeadlineDetailScreen(
                 forceMaterial3 = true,
                 useParentMaterialContainer = true,
                 actions = {
-                    IconButton(onClick = onEdit) {
-                        Icon(
-                            imageVector = iconResource(R.drawable.ic_edit),
-                            contentDescription = stringResource(R.string.edit),
-                            modifier = expressiveTypeModifier
-                        )
-                    }
-                    IconButton(onClick = {
-                        val url = DeadlinerURLScheme.encodeWithPassphrase(
-                            deadline,
-                            "deadliner-2025".toCharArray()
-                        )
-                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, url)
-                        }
-                        activityContext.startActivity(
-                            Intent.createChooser(sendIntent, activityContext.getString(R.string.share))
-                        )
-                    }) {
-                        Icon(
-                            imageVector = iconResource(R.drawable.ic_share_alt),
-                            contentDescription = stringResource(R.string.share),
-                            modifier = expressiveTypeModifier
-                        )
-                    }
                     IconButton(onClick = {
                         isStarred = !isStarred
                         onToggleStar(isStarred)
@@ -390,40 +339,22 @@ fun DeadlineDetailScreen(
                     showPlanComposer = false
                 },
                 onToggleSubTask = { subTask ->
-                    mutateSubTasks { current ->
-                        current.map {
-                            if (it.id == subTask.id) {
-                                it.copy(
-                                    isCompleted = if (it.isCompleted == 0) 1 else 0,
-                                    updatedAt = LocalDateTime.now().toString()
-                                )
-                            } else it
-                        }
-                    }
+                    onToggleSubtask(subTask.uid)
                 },
                 onDeleteSubTask = { subTask ->
-                    mutateSubTasks { current -> current.filterNot { it.id == subTask.id } }
+                    onDeleteSubtask(subTask.uid)
                 },
                 editingSubTaskId = editingSubTaskId,
                 editingSubTaskDraft = editingSubTaskDraft,
                 onStartEditSubTask = { subTask ->
-                    editingSubTaskId = subTask.id
+                    editingSubTaskId = subTask.uid
                     editingSubTaskDraft = subTask.content
                 },
                 onEditingDraftChange = { editingSubTaskDraft = it },
                 onSubmitEditSubTask = { subTask ->
                     val updatedContent = editingSubTaskDraft.trim()
                     if (updatedContent.isNotEmpty() && updatedContent != subTask.content) {
-                        mutateSubTasks { current ->
-                            current.map {
-                                if (it.id == subTask.id) {
-                                    it.copy(
-                                        content = updatedContent,
-                                        updatedAt = LocalDateTime.now().toString()
-                                    )
-                                } else it
-                            }
-                        }
+                        onUpdateSubtask(subTask.uid, updatedContent)
                     }
                     editingSubTaskId = null
                     editingSubTaskDraft = ""
@@ -449,7 +380,7 @@ fun DeadlineDetailScreen(
                 TextButton(
                     onClick = {
                         showGiveUpDialog = false
-                        onApplyTaskAction(TaskStateAction.MARK_GIVE_UP, true)
+                        onApplyTaskAction(TaskAction.MARK_GIVE_UP)
                         Toast.makeText(activityContext, R.string.toast_give_up, Toast.LENGTH_SHORT)
                             .show()
                         finishActivity()
@@ -478,8 +409,7 @@ fun DeadlineDetailScreen(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-                        onDelete(deadline.id)
-                        DeadlineAlarmScheduler.cancelAlarm(applicationContext, deadline.id)
+                        onDelete()
                         Toast.makeText(activityContext, R.string.toast_deletion, Toast.LENGTH_SHORT)
                             .show()
                         finishActivity()
@@ -549,9 +479,9 @@ private fun DetailBottomActions(
 }
 
 @Composable
-private fun ProgressCard(deadline: DDLItem) {
-    val startTime = GlobalUtils.safeParseDateTime(deadline.startTime)
-    val endTime = GlobalUtils.safeParseDateTime(deadline.endTime)
+private fun ProgressCard(deadline: Task) {
+    val startTime = deadline.startAt?.let(GlobalUtils::safeParseDateTime) ?: LocalDateTime.now()
+    val endTime = deadline.dueAt?.let(GlobalUtils::safeParseDateTime) ?: startTime
     val now = LocalDateTime.now()
 
     val total = Duration.between(startTime, endTime).toMillis().coerceAtLeast(1L)
@@ -616,9 +546,9 @@ private fun ProgressCard(deadline: DDLItem) {
 }
 
 @Composable
-private fun TaskMetaCard(deadline: DDLItem) {
-    val startTime = GlobalUtils.safeParseDateTime(deadline.startTime)
-    val endTime = GlobalUtils.safeParseDateTime(deadline.endTime)
+private fun TaskMetaCard(deadline: Task) {
+    val startTime = deadline.startAt?.let(GlobalUtils::safeParseDateTime) ?: LocalDateTime.now()
+    val endTime = deadline.dueAt?.let(GlobalUtils::safeParseDateTime) ?: startTime
     val formatter = DateTimeFormatter
         .ofLocalizedDateTime(FormatStyle.MEDIUM)
         .withLocale(Locale.getDefault())
@@ -663,33 +593,33 @@ private fun TaskMetaCard(deadline: DDLItem) {
 }
 
 @Composable
-private fun StateBadge(state: DDLState) {
+private fun StateBadge(state: TaskState) {
     val (label, bg, fg) = when (state) {
-        DDLState.ACTIVE -> Triple(
+        TaskState.ACTIVE -> Triple(
             stringResource(R.string.state_active),
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer
         )
 
-        DDLState.COMPLETED -> Triple(
+        TaskState.COMPLETED -> Triple(
             stringResource(R.string.state_completed),
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer
         )
 
-        DDLState.ARCHIVED -> Triple(
+        TaskState.ARCHIVED -> Triple(
             stringResource(R.string.state_archived),
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer
         )
 
-        DDLState.ABANDONED -> Triple(
+        TaskState.ABANDONED -> Triple(
             stringResource(R.string.state_abandoned),
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer
         )
 
-        DDLState.ABANDONED_ARCHIVED -> Triple(
+        TaskState.ABANDONED_ARCHIVED -> Triple(
             stringResource(R.string.state_abandoned_archived),
             MaterialTheme.colorScheme.surfaceVariant,
             MaterialTheme.colorScheme.onSurfaceVariant
@@ -739,7 +669,7 @@ private fun NoteCard(note: String) {
 
 @Composable
 private fun PlanCard(
-    subTasks: List<SubTask>,
+    subTasks: List<TaskSubtask>,
     showComposer: Boolean,
     composerText: String,
     isMutating: Boolean,
@@ -747,16 +677,16 @@ private fun PlanCard(
     onComposerTextChange: (String) -> Unit,
     onComposerConfirm: () -> Unit,
     onComposerCancel: () -> Unit,
-    onToggleSubTask: (SubTask) -> Unit,
-    onDeleteSubTask: (SubTask) -> Unit,
+    onToggleSubTask: (TaskSubtask) -> Unit,
+    onDeleteSubTask: (TaskSubtask) -> Unit,
     editingSubTaskId: String?,
     editingSubTaskDraft: String,
-    onStartEditSubTask: (SubTask) -> Unit,
+    onStartEditSubTask: (TaskSubtask) -> Unit,
     onEditingDraftChange: (String) -> Unit,
-    onSubmitEditSubTask: (SubTask) -> Unit,
+    onSubmitEditSubTask: (TaskSubtask) -> Unit,
     onCancelEditSubTask: () -> Unit
 ) {
-    val completedCount = subTasks.count { it.isCompleted == 1 }
+    val completedCount = subTasks.count { it.isCompleted }
     val rowSpacing = 3.dp
 
     Card(
@@ -815,7 +745,7 @@ private fun PlanCard(
                     SubTaskRow(
                         item = subTask,
                         enabled = !isMutating,
-                        isEditing = editingSubTaskId == subTask.id,
+                        isEditing = editingSubTaskId == subTask.uid,
                         editingText = editingSubTaskDraft,
                         onEditingTextChange = onEditingDraftChange,
                         onToggle = { onToggleSubTask(subTask) },
@@ -918,7 +848,7 @@ private fun PlanComposerRow(
 
 @Composable
 private fun SubTaskRow(
-    item: SubTask,
+    item: TaskSubtask,
     enabled: Boolean,
     isEditing: Boolean,
     editingText: String,
@@ -949,7 +879,7 @@ private fun SubTaskRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
-                selected = item.isCompleted == 1,
+                selected = item.isCompleted,
                 onClick = if (enabled && !isEditing) onToggle else null,
                 enabled = enabled
             )
@@ -1007,7 +937,7 @@ private fun SubTaskRow(
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
-                    textDecoration = if (item.isCompleted == 1) TextDecoration.LineThrough else TextDecoration.None
+                    textDecoration = if (item.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
                 FilledIconButton(
                     onClick = onDelete,

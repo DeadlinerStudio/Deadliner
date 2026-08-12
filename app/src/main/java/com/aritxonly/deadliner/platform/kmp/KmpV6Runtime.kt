@@ -9,6 +9,8 @@ import com.deadliner.viewmodel.capture.CaptureViewModel
 import com.deadliner.viewmodel.overview.OverviewViewModel
 import com.deadliner.viewmodel.settings.SettingsViewModel
 import com.deadliner.viewmodel.task.ArchiveViewModel
+import com.deadliner.viewmodel.task.TaskListViewModel
+import com.deadliner.viewmodel.search.SearchViewModel
 import kotlinx.coroutines.runBlocking
 
 /** Android-private composition root for the v6 shared layer. */
@@ -31,6 +33,11 @@ internal object KmpV6Runtime {
         ArchiveViewModel(database.tasks)
     }
 
+    val taskListViewModel: TaskListViewModel by lazy {
+        check(::database.isInitialized) { "KmpV6Runtime is not initialized" }
+        TaskListViewModel(database.tasks)
+    }
+
     val habitListViewModel: HabitListViewModel by lazy {
         check(::database.isInitialized) { "KmpV6Runtime is not initialized" }
         HabitListViewModel(database.habits)
@@ -39,6 +46,11 @@ internal object KmpV6Runtime {
     val settingsViewModel: SettingsViewModel by lazy {
         check(::database.isInitialized) { "KmpV6Runtime is not initialized" }
         SettingsViewModel(database.profiles)
+    }
+
+    val searchViewModel: SearchViewModel by lazy {
+        check(::database.isInitialized) { "KmpV6Runtime is not initialized" }
+        SearchViewModel(database.tasks, database.habits)
     }
 
     fun initialize(
@@ -65,6 +77,9 @@ internal object KmpV6Runtime {
             legacyProfile = { runBlocking { context.applicationContext.readV5Profile() } },
         ).migrateIfNeeded()
 
+        taskListViewModel.initialize()
+        habitListViewModel.initialize()
+        searchViewModel.initialize()
         settingsViewModel.initialize()
     }
 }

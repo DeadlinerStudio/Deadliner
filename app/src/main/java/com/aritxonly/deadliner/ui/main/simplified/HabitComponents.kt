@@ -48,10 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.DDLStatus
-import com.aritxonly.deadliner.model.DayOverview
-import com.aritxonly.deadliner.model.HabitGoalType
-import com.aritxonly.deadliner.model.HabitPeriod
-import com.aritxonly.deadliner.model.HabitWithDailyStatus
+import com.deadliner.domain.habit.HabitGoalType
+import com.deadliner.domain.habit.HabitPeriod
+import com.deadliner.viewmodel.habit.HabitDayOverview
+import com.deadliner.viewmodel.habit.HabitDayStatus
 import com.aritxonly.deadliner.ui.theme.rememberTaskIndicatorColors
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -113,9 +113,9 @@ fun HabitLinearProgress(
 
 @Composable
 fun WeekRow(
-    weekOverview: List<DayOverview>,
-    selectedDate: LocalDate,
-    onSelectDate: (LocalDate) -> Unit
+    weekOverview: List<HabitDayOverview>,
+    selectedDate: String,
+    onSelectDate: (String) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -124,9 +124,10 @@ fun WeekRow(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         weekOverview.forEach { day ->
+            val date = LocalDate.parse(day.date)
             val isSelected = day.date == selectedDate
-            val label = day.date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-            val dayNum = day.date.dayOfMonth
+            val label = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+            val dayNum = date.dayOfMonth
 
             Column(
                 modifier = Modifier
@@ -180,7 +181,7 @@ fun WeekRow(
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HabitRow(
-    data: HabitWithDailyStatus,
+    data: HabitDayStatus,
     status: DDLStatus,
     isSelected: Boolean,
     canToggle: Boolean,
@@ -223,6 +224,7 @@ fun HabitRow(
 
     val rightLabel = when (data.habit.goalType) {
         HabitGoalType.PER_PERIOD -> when (data.habit.period) {
+            HabitPeriod.ONCE -> stringResource(R.string.frequency_daily)
             HabitPeriod.DAILY -> stringResource(R.string.frequency_daily)
             HabitPeriod.WEEKLY -> stringResource(R.string.frequency_weekly)
             HabitPeriod.MONTHLY -> stringResource(R.string.frequency_monthly)
@@ -346,7 +348,7 @@ fun HabitRow(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HabitRowClassic(
-    data: HabitWithDailyStatus,
+    data: HabitDayStatus,
     isSelected: Boolean,
     canToggle: Boolean,
     onToggle: () -> Unit,
@@ -386,6 +388,7 @@ fun HabitRowClassic(
 
     val rightLabel = when (data.habit.goalType) {
         HabitGoalType.PER_PERIOD -> when (data.habit.period) {
+            HabitPeriod.ONCE -> stringResource(R.string.frequency_daily)
             HabitPeriod.DAILY -> stringResource(R.string.frequency_daily)
             HabitPeriod.WEEKLY -> stringResource(R.string.frequency_weekly)
             HabitPeriod.MONTHLY -> stringResource(R.string.frequency_monthly)

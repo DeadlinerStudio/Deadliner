@@ -203,7 +203,7 @@ object NotificationUtil {
 
     private fun buildNotification(context: Context, ddl: DDLItem): Notification {
         // 点击打开详情页
-        val detailIntent = DeadlineDetailActivity.newIntent(context, ddl).apply {
+        val detailIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val detailPending = PendingIntent.getActivity(
@@ -344,7 +344,7 @@ object NotificationUtil {
         Log.d("DDLAlarm", "progress $progress | remainingTime $remainingTime | %1 ${GlobalUtils.liveUpdatesInAdvance * 60}")
 
         // 设置任务详情页面的 PendingIntent
-        val detailIntent = DeadlineDetailActivity.newIntent(context, ddl).apply {
+        val detailIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val detailPendingIntent = PendingIntent.getActivity(

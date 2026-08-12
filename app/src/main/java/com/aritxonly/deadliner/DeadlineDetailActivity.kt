@@ -8,87 +8,66 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.aritxonly.deadliner.data.DDLRepository
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
-import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.detail.DeadlineDetailScreen
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
+import com.deadliner.viewmodel.task.SubtaskCreateConfig
+import com.deadliner.viewmodel.task.TaskDetailViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
-
     companion object {
-        const val EXTRA_DEADLINE = "com.aritxonly.deadliner.deadline"
+        private const val EXTRA_TASK_UID = "task_uid"
 
-        fun newIntent(context: Context, deadline: DDLItem): Intent {
-            return Intent(context, DeadlineDetailActivity::class.java).apply {
-                putExtra(EXTRA_DEADLINE, deadline)
-            }
-        }
+        fun newIntent(context: Context, taskUid: String): Intent =
+            Intent(context, DeadlineDetailActivity::class.java).putExtra(EXTRA_TASK_UID, taskUid)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdgeForAllDevices()
         super.onCreate(savedInstanceState)
-
-        val initialDeadline = intent.getParcelableExtra<DDLItem>(EXTRA_DEADLINE)
-            ?: throw IllegalArgumentException("Missing Deadline parameter")
-
-        val repo = DDLRepository()
-        val latestDeadline = repo.getDDLById(initialDeadline.id) ?: initialDeadline
+        val taskUid = intent.getStringExtra(EXTRA_TASK_UID)
+            ?: throw IllegalArgumentException("Missing task UID")
+        val viewModel = TaskDetailViewModel(KmpV6Runtime.database.tasks, taskUid)
+        viewModel.initialize()
 
         setContent {
             DeadlinerTheme {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                val task = state.task
                 ProvideAdvancedMaterialDialogBlurHost {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .advancedMaterialDialogBlurHost()
-                    ) {
-                        var currentDeadline by remember { mutableStateOf(latestDeadline) }
-
-                        DeadlineDetailScreen(
-                            applicationContext = applicationContext,
-                            activityContext = this@DeadlineDetailActivity,
-                            deadline = currentDeadline,
-                            onClose = { finish() },
-                            onEdit = {
-                                val editDialog = EditDDLFragment(currentDeadline) { updatedDDL ->
-                                    repo.updateDDL(updatedDDL)
-                                    currentDeadline = repo.getDDLById(updatedDDL.id) ?: updatedDDL
-                                }
-                                editDialog.show(supportFragmentManager, "EditDDLFragment")
-                            },
-                            onPersistDeadline = { updated ->
-                                repo.updateDDL(updated)
-                                currentDeadline = repo.getDDLById(updated.id) ?: updated
-                            },
-                            onToggleStar = { isStarred ->
-                                val updated = currentDeadline.copy(isStared = isStarred)
-                                repo.updateDDL(updated)
-                                currentDeadline = repo.getDDLById(updated.id) ?: updated
-                            },
-                            onApplyTaskAction = { action, confirmed ->
-                                val updated = repo.applyTaskAction(
-                                    itemId = currentDeadline.id,
-                                    action = action,
-                                    confirmed = confirmed
-                                )
-                                currentDeadline = repo.getDDLById(updated.id) ?: updated
-                                currentDeadline
-                            },
-                            onDelete = { id ->
-                                repo.deleteDDL(id)
-                            },
-                            finishActivity = { finishAfterTransition() }
-                        )
+                    Box(Modifier.fillMaxSize().advancedMaterialDialogBlurHost()) {
+                        if (task != null) {
+                            DeadlineDetailScreen(
+                                applicationContext = applicationContext,
+                                activityContext = this@DeadlineDetailActivity,
+                                deadline = task,
+                                onClose = { finish() },
+                                onToggleStar = viewModel::setStarred,
+                                onApplyTaskAction = { action ->
+                                    when (action) {
+                                        com.deadliner.domain.task.TaskAction.MARK_COMPLETE -> viewModel.markComplete()
+                                        com.deadliner.domain.task.TaskAction.MARK_ARCHIVE -> viewModel.markArchive()
+                                        com.deadliner.domain.task.TaskAction.MARK_GIVE_UP -> viewModel.markGiveUp()
+                                        com.deadliner.domain.task.TaskAction.RESTORE_ACTIVE -> viewModel.restoreActive()
+                                        com.deadliner.domain.task.TaskAction.UNARCHIVE -> viewModel.unarchive()
+                                    }
+                                },
+                                onDelete = viewModel::deleteTask,
+                                onAddSubtask = { viewModel.addSubtask(SubtaskCreateConfig(it)) },
+                                onToggleSubtask = viewModel::toggleSubtask,
+                                onDeleteSubtask = viewModel::deleteSubtask,
+                                onUpdateSubtask = viewModel::updateSubtaskContent,
+                                onCalendarEventCreated = viewModel::setCalendarEventId,
+                                finishActivity = { finishAfterTransition() },
+                            )
+                        }
                     }
                 }
             }

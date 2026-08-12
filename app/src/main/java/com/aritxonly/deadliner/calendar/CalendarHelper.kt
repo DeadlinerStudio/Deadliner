@@ -16,6 +16,7 @@ import com.aritxonly.deadliner.model.CalendarEvent
 import com.aritxonly.deadliner.model.CalendarInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.deadliner.domain.task.Task
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.LocalDateTime
@@ -124,6 +125,34 @@ class CalendarHelper(private val context: Context) {
         }
         resolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
 
+        eventId
+    }
+
+    suspend fun insertEvent(task: Task): Long = withContext(Dispatchers.IO) {
+        val calendarId = getOrCreateCalendarId()
+        val resolver = context.contentResolver
+        val endMillis = parseToMillis(task.dueAt.orEmpty())
+        val values = ContentValues().apply {
+            put(CalendarContract.Events.CALENDAR_ID, calendarId)
+            put(CalendarContract.Events.TITLE, task.title)
+            put(CalendarContract.Events.DTSTART, endMillis)
+            put(CalendarContract.Events.DTEND, endMillis)
+            put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
+            put(CalendarContract.Events.DESCRIPTION, task.note)
+        }
+        val existingId = task.calendarEventId
+        if (existingId != null) {
+            resolver.update(ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, existingId), values, null, null)
+            return@withContext existingId
+        }
+        val uri = resolver.insert(CalendarContract.Events.CONTENT_URI, values)
+            ?: throw IllegalStateException("Failed to insert calendar event")
+        val eventId = ContentUris.parseId(uri)
+        resolver.insert(CalendarContract.Reminders.CONTENT_URI, ContentValues().apply {
+            put(CalendarContract.Reminders.EVENT_ID, eventId)
+            put(CalendarContract.Reminders.MINUTES, 10)
+            put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+        })
         eventId
     }
 

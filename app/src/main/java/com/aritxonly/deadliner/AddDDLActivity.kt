@@ -113,6 +113,12 @@ import com.aritxonly.deadliner.ui.editor.toModelPeriod
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.deadliner.domain.habit.HabitGoalType as SharedHabitGoalType
+import com.deadliner.domain.habit.HabitPeriod as SharedHabitPeriod
+import com.deadliner.domain.habit.HabitReminder
+import com.deadliner.viewmodel.habit.HabitEditorViewModel
+import com.deadliner.viewmodel.task.TaskEditorViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -877,56 +883,54 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     }
 
     private fun saveTask(name: String, toCalendar: Boolean) {
-        val ddlId = repo.insertDDL(
-            name = name,
-            startTime = taskDraft.startTime.toString(),
-            endTime = taskDraft.endTime.toString(),
-            note = taskDraft.note,
-            type = DeadlineType.TASK,
-            calendarEventId = calendarEventId
+        val editor = TaskEditorViewModel(
+            KmpV6Runtime.database.tasks,
+            KmpV6Runtime.database.categories,
         )
-
-        repo.getDDLById(ddlId)?.let { inserted ->
-            val item = if (inserted.isStared != taskDraft.isStarred) {
-                inserted.copy(isStared = taskDraft.isStarred)
-            } else {
-                inserted
-            }
-            if (item != inserted) {
-                repo.updateDDL(item)
-            }
-
-            if (GlobalUtils.deadlineNotification) {
-                DeadlineAlarmScheduler.scheduleExactAlarm(applicationContext, item)
-                DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(applicationContext, item)
-            }
-
-            if (toCalendar) {
-                val calendarHelper = CalendarHelper(this)
-                lifecycleScope.launch {
-                    try {
-                        val eventId = calendarHelper.insertEvent(item)
-                        item.calendarEventId = eventId
-                        repo.updateDDL(item)
-                        Toast.makeText(
-                            this@AddDDLActivity,
-                            getString(R.string.add_calendar_success),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } catch (e: Exception) {
-                        Log.e("Calendar", e.toString())
-                        Toast.makeText(
-                            this@AddDDLActivity,
-                            getString(R.string.add_calendar_failed, e.toString()),
-                            Toast.LENGTH_SHORT
-                        ).show()
+        editor.updateTitle(name)
+        editor.updateNote(taskDraft.note)
+        editor.updateStartAt(taskDraft.startTime.toString())
+        editor.updateDueAt(taskDraft.endTime.toString())
+        editor.updateIsStarred(taskDraft.isStarred)
+        editor.updateCalendarEventId(calendarEventId)
+        editor.save()
+        lifecycleScope.launch {
+            editor.uiState.collect { state ->
+                state.savedTask?.let { savedTask ->
+                    if (toCalendar) {
+                        try {
+                            val eventId = CalendarHelper(this@AddDDLActivity).insertEvent(savedTask)
+                            KmpV6Runtime.taskListViewModel.saveTaskNow(
+                                savedTask.copy(
+                                    calendarEventId = eventId,
+                                    updatedAt = java.time.Instant.now().toString(),
+                                )
+                            )
+                            Toast.makeText(
+                                this@AddDDLActivity,
+                                getString(R.string.add_calendar_success),
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        } catch (error: Exception) {
+                            Log.e("Calendar", "Could not create calendar event", error)
+                            Toast.makeText(
+                                this@AddDDLActivity,
+                                getString(R.string.add_calendar_failed, error.toString()),
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    } else {
+                        KmpV6Runtime.taskListViewModel.loadNow()
                     }
+                    setResult(RESULT_OK)
+                    finishAfterTransition()
+                    return@collect
+                }
+                if (!state.isSaving && state.error != null) {
+                    Toast.makeText(this@AddDDLActivity, state.error, Toast.LENGTH_SHORT).show()
                 }
             }
         }
-
-        setResult(RESULT_OK)
-        finishAfterTransition()
     }
 
     private fun saveHabit(name: String) {
@@ -942,53 +946,43 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         } else {
             null
         }
-        val frequencyType = if (isEbbinghaus) DeadlineFrequency.DAILY else habitDraft.toDeadlineFrequency()
-
-        val meta = HabitMetaData(
-            completedDates = emptySet(),
-            frequencyType = frequencyType,
-            frequency = if (goalType == HabitGoalType.TOTAL) 1 else frequency,
-            total = if (goalType == HabitGoalType.TOTAL) total ?: 0 else 0,
-            refreshDate = LocalDate.now().toString()
+        val editor = HabitEditorViewModel(
+            KmpV6Runtime.database.habits,
+            KmpV6Runtime.database.categories,
         )
-
-        val ddlId = repo.insertDDL(
-            name = name,
-            startTime = "",
-            endTime = "",
-            note = meta.toJson(),
-            type = DeadlineType.HABIT
+        editor.updateName(name)
+        editor.updatePeriod(
+            when (habitDraft.period) {
+                EditorHabitPeriod.DAILY -> SharedHabitPeriod.DAILY
+                EditorHabitPeriod.WEEKLY -> SharedHabitPeriod.WEEKLY
+                EditorHabitPeriod.MONTHLY -> SharedHabitPeriod.MONTHLY
+                EditorHabitPeriod.EBBINGHAUS -> SharedHabitPeriod.EBBINGHAUS
+            }
         )
-
-        habitRepo.createHabitForDdl(
-            ddlId = ddlId,
-            name = name,
-            period = habitDraft.period.toModelPeriod(),
-            timesPerPeriod = if (goalType == HabitGoalType.TOTAL) 1 else frequency,
-            goalType = goalType,
-            totalTarget = if (goalType == HabitGoalType.TOTAL) total else null,
-            description = null
+        editor.updateTimesPerPeriod(if (goalType == HabitGoalType.TOTAL) 1 else frequency)
+        editor.updateGoalType(
+            if (goalType == HabitGoalType.TOTAL) SharedHabitGoalType.TOTAL else SharedHabitGoalType.PER_PERIOD
         )
-
-        habitRepo.getHabitByDdlId(ddlId)?.let { habit ->
-            val updated = habit.copy(
-                alarmTime = if (habitDraft.reminderEnabled) {
-                    habitDraft.reminderTime.format(REMINDER_TIME_FORMATTER)
-                } else {
-                    null
-                }
-            )
-            habitRepo.updateHabit(updated)
-
+        editor.updateTotalTarget(if (goalType == HabitGoalType.TOTAL) total else null)
+        editor.updateReminder(
             if (habitDraft.reminderEnabled) {
-                DeadlineAlarmScheduler.scheduleHabitNotifyAlarm(applicationContext, ddlId)
-            } else {
-                DeadlineAlarmScheduler.cancelHabitNotifyAlarm(applicationContext, ddlId)
+                HabitReminder(habitDraft.reminderTime.format(REMINDER_TIME_FORMATTER))
+            } else null
+        )
+        editor.save()
+        lifecycleScope.launch {
+            editor.uiState.collect { state ->
+                if (state.savedHabit != null) {
+                    KmpV6Runtime.habitListViewModel.loadNow()
+                    setResult(RESULT_OK)
+                    finishAfterTransition()
+                    return@collect
+                }
+                if (!state.isSaving && state.error != null) {
+                    Toast.makeText(this@AddDDLActivity, state.error, Toast.LENGTH_SHORT).show()
+                }
             }
         }
-
-        setResult(RESULT_OK)
-        finishAfterTransition()
     }
 
     private fun onImportFromCalendarClick() {

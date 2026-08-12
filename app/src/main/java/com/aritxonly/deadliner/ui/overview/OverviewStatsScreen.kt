@@ -268,8 +268,7 @@ fun DeadlineItemXmlRow(item: DDLItem, modifier: Modifier = Modifier) {
             val progressBar = view.findViewById<ProgressBar>(R.id.item_progress)
 
             view.setOnClickListener {
-                val intent = DeadlineDetailActivity.newIntent(context, item)
-                context.startActivity(intent)
+                context.startActivity(android.content.Intent(context, com.aritxonly.deadliner.MainActivity::class.java))
             }
 
             // 3. 返回根 View
