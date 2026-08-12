@@ -73,8 +73,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.aritxonly.deadliner.ai.GeneratedDDL
 import com.aritxonly.deadliner.calendar.CalendarHelper
-import com.aritxonly.deadliner.data.DDLRepository
-import com.aritxonly.deadliner.data.HabitRepository
 import com.aritxonly.deadliner.localutils.DynamicColorsExtension
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils.toDateTimeString
@@ -85,7 +83,6 @@ import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.HabitGoalType
 import com.aritxonly.deadliner.model.HabitMetaData
-import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.toJson
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
@@ -132,9 +129,6 @@ import com.aritxonly.deadliner.ai.AIUtils
 
 @SuppressLint("SimpleDateFormat")
 class AddDDLActivity : DeadlinerAppCompatActivity() {
-
-    private val repo = DDLRepository()
-    private val habitRepo = HabitRepository()
 
     private var selectedPage by mutableIntStateOf(0)
 
@@ -274,29 +268,20 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                     selectedPage = 1
 
                     val meta = GlobalUtils.parseHabitMetaData(item.note)
-                    val habit = habitRepo.getHabitByDdlId(item.id)
-                    val reminderTime = parseReminderTime(habit?.alarmTime)
-                    val goalType = habit?.goalType
-                        ?: if (meta.frequencyType == DeadlineFrequency.TOTAL) HabitGoalType.TOTAL else HabitGoalType.PER_PERIOD
-                    val timesPerPeriod = habit?.timesPerPeriod?.toString()
-                        ?: meta.frequency.coerceAtLeast(1).toString()
-                    val totalTarget = habit?.totalTarget
-                        ?: meta.total.takeIf { it > 0 }
+                    val goalType = if (meta.frequencyType == DeadlineFrequency.TOTAL) {
+                        HabitGoalType.TOTAL
+                    } else {
+                        HabitGoalType.PER_PERIOD
+                    }
+                    val timesPerPeriod = meta.frequency.coerceAtLeast(1).toString()
+                    val totalTarget = meta.total.takeIf { it > 0 }
 
                     habitDraft = habitDraft.copy(
-                        period = habit?.period?.let { modelPeriod ->
-                            when (modelPeriod) {
-                                HabitPeriod.DAILY -> EditorHabitPeriod.DAILY
-                                HabitPeriod.WEEKLY -> EditorHabitPeriod.WEEKLY
-                                HabitPeriod.MONTHLY -> EditorHabitPeriod.MONTHLY
-                                HabitPeriod.EBBINGHAUS -> EditorHabitPeriod.EBBINGHAUS
-                            }
-                        } ?: meta.frequencyType.toEditorHabitPeriod(),
+                        period = meta.frequencyType.toEditorHabitPeriod(),
                         goalType = goalType,
                         timesPerPeriod = timesPerPeriod,
                         totalTarget = totalTarget?.toString().orEmpty(),
-                        reminderEnabled = reminderTime != null,
-                        reminderTime = reminderTime ?: habitDraft.reminderTime
+                        reminderEnabled = false,
                     )
                 }
             }
