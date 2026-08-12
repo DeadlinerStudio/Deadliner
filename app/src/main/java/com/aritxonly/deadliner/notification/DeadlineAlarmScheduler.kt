@@ -83,7 +83,6 @@ object DeadlineAlarmScheduler {
             cancelScheduledNotifications(context, ddlId)
         }
 
-        cancelDailyAlarm(context)
     }
 
     fun cancelAlarm(context: Context, ddlId: Long) {
@@ -159,97 +158,6 @@ object DeadlineAlarmScheduler {
             alarmManager.cancel(pi)
             pi.cancel()
             Log.d("AlarmDebug", "取消旧版本设定的闹钟：DDL_ID: $ddlId")
-        }
-    }
-
-    fun scheduleDailyAlarm(context: Context) {
-        if (!GlobalUtils.dailyStatsNotification) return
-
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-        if (!alarmManager.canScheduleExactAlarms()) {
-            return
-        }
-
-        val hour = GlobalUtils.dailyNotificationHour
-        val minute = GlobalUtils.dailyNotificationMinute
-
-        val now = LocalDateTime.now()
-        var nextTrigger = now
-            .withHour(hour)
-            .withMinute(minute)
-            .withSecond(0)
-            .withNano(0)
-        if (nextTrigger.isBefore(now) || nextTrigger.isEqual(now)) {
-            nextTrigger = nextTrigger.plusDays(1)
-        }
-        val triggerMillis = nextTrigger
-            .atZone(ZoneId.systemDefault())
-            .toInstant()
-            .toEpochMilli()
-
-        val intent = Intent(context, DailyAlarmReceiver::class.java).apply {
-            action = "com.aritxonly.deadliner.ACTION_DAILY_ALARM"
-            addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-        }
-        val magicNumber = 114514    // senpai
-        val pi = PendingIntent.getBroadcast(
-            context,
-            RC_ALARM_TRIGGER + magicNumber,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val showIntent = Intent(context, MainActivity::class.java)
-        val showPi = PendingIntent.getActivity(
-            context,
-            RC_ALARM_SHOW + magicNumber + 1,
-            showIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val info = AlarmManager.AlarmClockInfo(triggerMillis, showPi)
-        alarmManager.setAlarmClock(info, pi)
-
-        Log.d("AlarmDebug", "已调度每日通知，每天 ${hour}:${minute}，首次触发：${Date(triggerMillis)}")
-    }
-
-    fun cancelDailyAlarm(context: Context) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-        if (!alarmManager.canScheduleExactAlarms()) {
-            return
-        }
-
-        // 构造与 scheduleDailyAlarm 完全一致的 Intent 和 requestCode
-        val intent = Intent(context, DailyAlarmReceiver::class.java).apply {
-            action = "com.aritxonly.deadliner.ACTION_DAILY_ALARM"
-        }
-        val magicNumber = 114514
-
-        // 只尝试获取已存在的 PendingIntent，不创建新实例
-        PendingIntent.getBroadcast(
-            context,
-            RC_ALARM_TRIGGER + magicNumber,
-            intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-        )?.let { pi->
-            // 取消 AlarmManager 中的定时任务
-            alarmManager.cancel(pi)
-            // 取消掉 PendingIntent 本身
-            pi.cancel()
-            Log.d("AlarmDebug", "已取消每日通知闹钟")
-        }
-
-        PendingIntent.getBroadcast(
-            context,
-            magicNumber,
-            intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-        )?.let { pi->
-            alarmManager.cancel(pi)
-            pi.cancel()
-            Log.d("AlarmDebug", "已取消旧版本的每日通知闹钟")
         }
     }
 

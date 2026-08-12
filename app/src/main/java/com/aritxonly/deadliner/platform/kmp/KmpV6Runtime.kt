@@ -19,6 +19,7 @@ import com.deadliner.viewmodel.search.SearchViewModel
 import com.deadliner.domain.habit.Habit
 import com.deadliner.service.LifiToolExecutor
 import com.deadliner.service.NotificationOrchestrator
+import com.deadliner.platform.DailySummaryConfig
 import com.deadliner.sync.WebDavChangeLogSyncOutcome
 import com.deadliner.sync.webdav.WebDavCredentials
 import com.deadliner.sync.webdav.WebDavTransportConfiguration
@@ -104,6 +105,13 @@ internal object KmpV6Runtime {
 
     fun refreshNotifications() {
         notificationOrchestrator.refreshAll(database.tasks.list(), database.habits.list())
+        if (GlobalUtils.dailyStatsNotification) {
+            notificationGateway.setDailySummaryNotification(
+                DailySummaryConfig(
+                    "%02d:%02d".format(GlobalUtils.dailyNotificationHour, GlobalUtils.dailyNotificationMinute),
+                ),
+            )
+        }
     }
 
     fun cancelNotifications() {
@@ -112,6 +120,14 @@ internal object KmpV6Runtime {
 
     fun onHabitNotificationDelivered(habit: Habit) {
         notificationOrchestrator.onHabitUpdated(habit)
+    }
+
+    fun scheduleDailySummary() {
+        notificationGateway.setDailySummaryNotification(
+            DailySummaryConfig(
+                "%02d:%02d".format(GlobalUtils.dailyNotificationHour, GlobalUtils.dailyNotificationMinute),
+            ),
+        )
     }
 
     fun executeLifiTool(toolName: String, argumentsJson: String): String =

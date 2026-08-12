@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
@@ -82,6 +81,7 @@ fun NotificationSettingsScreen(
     val onDailyNotificationChange: (Boolean) -> Unit = {
         GlobalUtils.dailyStatsNotification = it
         dailyNotification = it
+        KmpV6Runtime.refreshNotifications()
         supportingTextDailyNotification = if (!dailyNotification)
             defaultText
         else formatDailyTime(dailyHour, dailyMinute)
@@ -198,7 +198,7 @@ private fun showDailyTimePicker(
         GlobalUtils.dailyNotificationHour = selectedHour
         GlobalUtils.dailyNotificationMinute = selectedMinute
         onChange(selectedHour, selectedMinute)
-        DeadlineAlarmScheduler.scheduleDailyAlarm(context)
+        KmpV6Runtime.scheduleDailySummary()
     }
     picker.addOnDismissListener {
         onDismiss()

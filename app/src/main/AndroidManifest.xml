@@ -170,6 +170,7 @@
             <intent-filter>
                 <action android:name="com.deadliner.kmp.notification.TASK" />
                 <action android:name="com.deadliner.kmp.notification.HABIT" />
+                <action android:name="com.deadliner.kmp.notification.DAILY" />
             </intent-filter>
         </receiver>
         <receiver
@@ -177,13 +178,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.aritxonly.deadliner.ACTION_DDL_ALARM" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".DailyAlarmReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.aritxonly.deadliner.ACTION_DAILY_ALARM" />
             </intent-filter>
         </receiver>
         <receiver

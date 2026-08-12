@@ -34,7 +34,10 @@ internal class AndroidNotificationGateway(context: Context) : NotificationGatewa
     override fun setHabitNotification(config: HabitNotificationConfig) = service.setHabitNotification(config)
     override fun cancelHabitNotification(habitUid: String) = service.cancelHabitNotification(habitUid)
     override fun cancelAllHabitNotifications() = service.cancelAllHabitNotifications()
-    override fun setDailySummaryNotification(config: DailySummaryConfig) = service.setDailySummaryNotification(config)
+    override fun setDailySummaryNotification(config: DailySummaryConfig) {
+        if (GlobalUtils.dailyStatsNotification) service.setDailySummaryNotification(config)
+        else service.cancelDailySummaryNotification()
+    }
     override fun cancelDailySummaryNotification() = service.cancelDailySummaryNotification()
     override fun setUpcomingLiveUpdate(config: UpcomingLiveUpdateConfig) = service.setUpcomingLiveUpdate(config)
     override fun cancelUpcomingLiveUpdate(taskUid: String) = service.cancelUpcomingLiveUpdate(taskUid)
