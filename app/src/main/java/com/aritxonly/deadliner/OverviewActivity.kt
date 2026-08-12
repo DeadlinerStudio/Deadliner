@@ -40,12 +40,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.localutils.OverviewUtils
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.Switch
@@ -56,6 +53,7 @@ import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.overview.DashboardScreen
 import com.aritxonly.deadliner.ui.overview.OverviewStatsScreen
 import com.aritxonly.deadliner.ui.overview.TrendAnalysisScreen
+import com.aritxonly.deadliner.ui.overview.KmpOverviewPresenter
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
@@ -81,9 +79,9 @@ class OverviewActivity : DeadlinerComponentActivity() {
 
         setContent {
             DeadlinerTheme {
-                val items = DDLRepository().getDDLsByType(DeadlineType.TASK)
+                val overviewState = remember { KmpV6Runtime.overviewViewModel.loadNow() }
                 OverviewScreen(
-                    items = items,
+                    overviewState = overviewState,
                     activity = this,
                     onClose = { finish() }
                 )
@@ -220,7 +218,7 @@ fun OverviewSettingsDialog(
 
 @Composable
 fun OverviewContent(
-    items: List<DDLItem>,
+    overviewState: com.deadliner.viewmodel.overview.OverviewUiState,
     activity: Activity,
     modifier: Modifier = Modifier,
     flattenedLayout: Boolean = false,
@@ -229,8 +227,8 @@ fun OverviewContent(
     showTabsInContent: Boolean = true,
     topContentPadding: Dp = 0.dp,
 ) {
-    val snapshot = remember(items) {
-        OverviewUtils.buildSnapshot(activity, items)
+    val snapshot = remember(overviewState) {
+        KmpOverviewPresenter.present(activity, overviewState)
     }
 
     if (flattenedLayout) {
@@ -402,7 +400,7 @@ private fun OverviewHeaderContainer(
 
 @Composable
 fun OverviewScreen(
-    items: List<DDLItem>,
+    overviewState: com.deadliner.viewmodel.overview.OverviewUiState,
     activity: Activity,
     showTopBar: Boolean = true,
     showNavigationIcon: Boolean = true,
@@ -452,7 +450,7 @@ fun OverviewScreen(
             Modifier.padding(paddingValues)
         }
         OverviewContent(
-            items = items,
+            overviewState = overviewState,
             activity = activity,
             modifier = contentModifier,
             flattenedLayout = flattenedLayout,

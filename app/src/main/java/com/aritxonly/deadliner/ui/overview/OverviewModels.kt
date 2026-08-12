@@ -1,6 +1,5 @@
 package com.aritxonly.deadliner.ui.overview
 
-import com.aritxonly.deadliner.model.DDLItem
 import java.time.LocalDate
 
 data class DailyStat(
@@ -44,7 +43,6 @@ data class OverviewSnapshot(
     val activeStats: LinkedHashMap<String, Int>,
     val historyStats: LinkedHashMap<String, Int>,
     val completionTimeStats: List<Pair<String, Int>>,
-    val overdueItems: List<DDLItem>,
     val dailyStats: List<DailyStat>,
     val monthlyStats: List<MonthlyStat>,
     val weeklyStats: List<WeeklyStat>,

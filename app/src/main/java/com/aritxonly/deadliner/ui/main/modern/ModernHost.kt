@@ -106,6 +106,7 @@ import com.aritxonly.deadliner.model.HabitStatus
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.UserProfile
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
 import com.aritxonly.deadliner.ui.base.AdaptiveNavItem
 import com.aritxonly.deadliner.ui.base.AdaptiveNavigationSuiteScaffold
@@ -174,7 +175,7 @@ fun ModernHost(
 
     val hostState = rememberMainHostState(vm.currentType)
     val uiState = rememberMainHostUiState()
-    var overviewItems by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
+    var overviewState by remember { mutableStateOf(KmpV6Runtime.overviewViewModel.loadNow()) }
     var showOverviewSettings by rememberSaveable { mutableStateOf(false) }
     var overviewSelectedTab by rememberSaveable { mutableIntStateOf(0) }
     var showCaptureMergeSheet by rememberSaveable { mutableStateOf(false) }
@@ -251,16 +252,16 @@ fun ModernHost(
             vm.selectType(page)
             if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(page)
             habitVm.refresh()
-            overviewItems = DDLRepository().getDDLsByType(DeadlineType.TASK)
+            overviewState = KmpV6Runtime.overviewViewModel.loadNow()
         },
         onInitialExtra = {
-            overviewItems = DDLRepository().getDDLsByType(DeadlineType.TASK)
+            overviewState = KmpV6Runtime.overviewViewModel.loadNow()
         },
     )
 
     LaunchedEffect(hostState.selectedSection) {
         if (hostState.selectedSection == MainSection.OVERVIEW) {
-            overviewItems = DDLRepository().getDDLsByType(DeadlineType.TASK)
+            overviewState = KmpV6Runtime.overviewViewModel.loadNow()
         }
     }
 
@@ -819,7 +820,7 @@ fun ModernHost(
                 }
                 MainSection.OVERVIEW -> {
                     OverviewContent(
-                        items = overviewItems,
+                        overviewState = overviewState,
                         activity = activity,
                         flattenedLayout = useFlattenedOverview,
                         selectedTab = overviewSelectedTab,
