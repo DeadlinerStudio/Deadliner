@@ -882,8 +882,6 @@
     <string name="ui_style_miuix_keyword_navigation">导航更完整</string>
     <string name="ui_style_miuix_keyword_entry">入口更丰富</string>
     <string name="ui_style_miuix_keyword_power">适合重度使用</string>
-    <string name="ui_style_classic_hidden_title">经典模式入口已暂时隐藏</string>
-    <string name="ui_style_classic_hidden_summary">如果你当前仍在使用经典模式，它会继续生效；切换到其他模式后，这里将不再显示经典模式入口。</string>
 
     <string name="intro_cover_title">重塑任务管理体验</string>
     <string name="intro_cover_desc">Deadliner v5 · 你的智能任务助手</string>
@@ -940,9 +938,6 @@
     <string name="intro_advanced_material_description">如果你喜欢更柔和、更有层次的界面，可以在这里提前打开高级材质并选择模糊强度。</string>
     <string name="intro_ui_style_title">最后选一个适合你的主界面</string>
     <string name="intro_ui_style_description">选择 Deadliner 的主界面风格，之后也可以在设置中随时更改。</string>
-    <string name="intro_ui_style_description_classic">经典模式会在这里正式谢幕。选好新的主界面之后，我们就继续往前走。</string>
-    <string name="intro_classic_farewell_title">向经典模式认真说一声再见</string>
-    <string name="intro_classic_farewell_description">它从 v2 一路陪你走到 v5，见证过很多任务被完成。现在，是时候把接力棒交给新的两种主界面风格了，请在下面选一个继续前进。</string>
     <string name="intro_get_started">开始使用</string>
 
     <string name="intro_theme_title">选择你喜欢的界面样式</string>

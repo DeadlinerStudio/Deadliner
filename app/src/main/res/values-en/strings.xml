@@ -801,8 +801,6 @@
     <string name="ui_style_miuix_keyword_navigation">Full navigation</string>
     <string name="ui_style_miuix_keyword_entry">More entry points</string>
     <string name="ui_style_miuix_keyword_power">For heavier use</string>
-    <string name="ui_style_classic_hidden_title">Classic mode is temporarily hidden</string>
-    <string name="ui_style_classic_hidden_summary">If you are still using Classic mode, it will keep working. Once you switch away, this entry will no longer appear here.</string>
 
     <string name="intro_cover_title">Reinvent Your Task Management</string>
     <string name="intro_cover_desc">Deadliner v5 · Your Intelligent Task Assistant</string>
@@ -868,9 +866,6 @@
     <string name="intro_advanced_material_description">If you prefer a softer interface with more depth, you can enable advanced material here and choose the blur strength up front.</string>
     <string name="intro_ui_style_title">Finally, pick your main screen style</string>
     <string name="intro_ui_style_description">Choose the main interface style you want to use in Deadliner. You can always change it later in Settings.</string>
-    <string name="intro_ui_style_description_classic">Classic mode takes its final bow here. Pick one of the new main screen styles, and we’ll keep moving forward.</string>
-    <string name="intro_classic_farewell_title">A proper goodbye to Classic mode</string>
-    <string name="intro_classic_farewell_description">It stayed with Deadliner from v2 through v5 and saw a lot of tasks get finished. Now it’s time to pass the baton to one of the two new main screen styles below.</string>
     <string name="intro_get_started">Get started</string>
 
     <string name="intro_theme_title">Choose Your Preferred Interface Style</string>

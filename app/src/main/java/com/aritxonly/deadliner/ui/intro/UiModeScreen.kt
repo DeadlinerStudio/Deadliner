@@ -226,20 +226,12 @@ fun UiModeScreen() {
     IntroPageColumn(
         pageKey = "intro_ui_style_page",
         title = R.string.intro_ui_style_title,
-        description = if (currentStyle == UiStyle.Classic) {
-            R.string.intro_ui_style_description_classic
-        } else {
-            R.string.intro_ui_style_description
-        },
+        description = R.string.intro_ui_style_description,
         contentSpacing = 12.dp,
         horizontalPadding = 16.dp,
         verticalPadding = 16.dp,
         bottomSpacer = 8.dp,
     ) {
-        if (currentStyle == UiStyle.Classic) {
-            ClassicFarewellCard()
-        }
-
         SettingsSection(
             topLabel = stringResource(R.string.settings_ui_mode_title),
             modifier = Modifier.padding(vertical = 0.dp),
@@ -296,29 +288,4 @@ private fun IntroPageColumn(
             Spacer(modifier = Modifier.height(bottomSpacer))
         }
     )
-}
-
-@Composable
-private fun ClassicFarewellCard() {
-    Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.intro_classic_farewell_title),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = stringResource(R.string.intro_classic_farewell_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.86f)
-            )
-        }
-    }
 }

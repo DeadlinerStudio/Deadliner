@@ -61,13 +61,6 @@ object IntroGuideScenes {
 
     fun forStyle(style: UiStyle): List<IntroGuideSceneConfig> {
         val ids = when (style) {
-            UiStyle.Classic -> listOf(
-                "guide_scene_1",
-                "guide_scene_2",
-                "guide_scene_4",
-                "guide_scene_5"
-            )
-
             UiStyle.Simplified -> listOf(
                 "guide_scene_1",
                 "guide_scene_3",

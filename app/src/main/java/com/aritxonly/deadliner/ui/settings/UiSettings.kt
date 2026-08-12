@@ -132,12 +132,6 @@ fun UiModeSelectionRow(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        if (currentStyle == UiStyle.Classic.key && !inIntroPage) {
-            HiddenClassicModeNotice(
-                modifier = Modifier.padding(horizontal = edgePadding)
-            )
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -152,33 +146,6 @@ fun UiModeSelectionRow(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun HiddenClassicModeNotice(
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)),
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.ui_style_classic_hidden_title),
-                style = MaterialTheme.typography.titleSmall,
-            )
-            Text(
-                text = stringResource(R.string.ui_style_classic_hidden_summary),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f)
-            )
         }
     }
 }

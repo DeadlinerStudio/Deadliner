@@ -95,7 +95,7 @@ fun IntroFlowScreen(
         label = "intro-progress-alpha"
     )
     val nextButtonVisible = currentPageType != IntroPageType.Final
-    val nextButtonEnabled = !(currentPageType == IntroPageType.UiStyleChoice && style == UiStyle.Classic)
+    val nextButtonEnabled = true
 
     LaunchedEffect(pages.size) {
         if (pagerState.currentPage > pages.lastIndex) {
