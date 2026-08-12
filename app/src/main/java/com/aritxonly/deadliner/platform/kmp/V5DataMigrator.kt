@@ -14,6 +14,8 @@ import com.google.gson.JsonParser
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.deadliner.domain.capture.CaptureItem
+import com.deadliner.domain.account.UserProfile
+import com.deadliner.domain.account.UserTier
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -23,6 +25,7 @@ internal class V5DataMigrator(
     private val target: DeadlinerDatabase,
     private val preferences: SharedPreferences,
     private val legacyCaptureJson: String? = null,
+    private val legacyProfile: () -> LegacyProfile = { LegacyProfile() },
 ) {
     fun migrateIfNeeded() {
         val currentVersion = preferences.getInt(KEY_DATA_VERSION, 0)
@@ -33,6 +36,9 @@ internal class V5DataMigrator(
         }
         if (currentVersion < CAPTURE_DATA_VERSION) {
             migrateCaptures()
+        }
+        if (currentVersion < PROFILE_DATA_VERSION) {
+            migrateProfile()
         }
 
         check(preferences.edit().putInt(KEY_DATA_VERSION, DATA_VERSION).commit()) {
@@ -67,6 +73,22 @@ internal class V5DataMigrator(
                 )
             }
         }
+    }
+
+    private fun migrateProfile() {
+        if (target.profiles.list().isNotEmpty()) return
+        val now = Instant.now().toString()
+        val profile = legacyProfile()
+        target.profiles.create(
+            UserProfile(
+                uid = LEGACY_PROFILE_UID,
+                nickname = profile.nickname,
+                avatarFileName = profile.avatarFileName,
+                tier = UserTier.FREE,
+                createdAt = now,
+                updatedAt = now,
+            ),
+        )
     }
 
     private fun buildTaskSnapshot(): JsonObject {
@@ -214,7 +236,9 @@ internal class V5DataMigrator(
         private const val KEY_DATA_VERSION = "data_version"
         private const val CORE_DATA_VERSION = 1
         private const val CAPTURE_DATA_VERSION = 2
-        private const val DATA_VERSION = CAPTURE_DATA_VERSION
+        private const val PROFILE_DATA_VERSION = 3
+        private const val DATA_VERSION = PROFILE_DATA_VERSION
+        private const val LEGACY_PROFILE_UID = "android-v5-primary-profile"
         private const val TAG = "V5DataMigrator"
     }
 
@@ -223,5 +247,10 @@ internal class V5DataMigrator(
         val text: String,
         val createdAt: Long,
         val updatedAt: Long,
+    )
+
+    data class LegacyProfile(
+        val nickname: String = "",
+        val avatarFileName: String? = null,
     )
 }

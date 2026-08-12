@@ -51,9 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
-import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.UserProfile
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.materialkolor.ktx.harmonizeWithPrimary
@@ -67,10 +66,11 @@ fun MainSettingsScreen(
 ) {
     val context = LocalContext.current
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
-    val profile by UserProfileRepository.profile.collectAsState(initial = UserProfile())
-    val avatarPainter: Painter? by remember(profile.avatarFileName) {
+    val settingsState by KmpV6Runtime.settingsViewModel.uiState.collectAsState()
+    val profile = settingsState.profile
+    val avatarPainter: Painter? by remember(profile?.avatarFileName) {
         mutableStateOf(
-            profile.avatarFileName?.let { name ->
+            profile?.avatarFileName?.let { name ->
                 val file = File(context.filesDir, "avatars/$name")
                 if (file.exists()) BitmapFactory.decodeFile(file.absolutePath)?.let { BitmapPainter(it.asImageBitmap()) } else null
             }
@@ -113,7 +113,8 @@ fun MainSettingsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { nav.navigate(SettingsRoute.Profile.route) },
-                        headlineText = if (profile.nickname.isBlank()) stringResource(R.string.edit_profile) else profile.nickname,
+                        headlineText = profile?.nickname?.takeIf { it.isNotBlank() }
+                            ?: stringResource(R.string.edit_profile),
                         supportingText = stringResource(R.string.settings_support_profile),
                         leadingContent = {
                             if (avatarPainter != null) {

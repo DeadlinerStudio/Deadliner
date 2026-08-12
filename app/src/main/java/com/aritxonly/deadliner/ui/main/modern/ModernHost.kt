@@ -93,7 +93,6 @@ import com.aritxonly.deadliner.data.MainViewModel
 import com.aritxonly.deadliner.data.MainViewModelFactory
 import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.data.HabitViewModelFactory
-import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils.showHabitReminderDialog
@@ -103,7 +102,6 @@ import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.HabitStatus
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.TaskStateAction
-import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
 import com.aritxonly.deadliner.ui.base.AdaptiveNavItem
@@ -220,10 +218,11 @@ fun ModernHost(
         }
     }
 
-    val profile by UserProfileRepository.profile.collectAsStateWithLifecycle(initialValue = UserProfile())
-    val avatarPainter: Painter? by remember(profile.avatarFileName) {
+    val settingsState by KmpV6Runtime.settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val profile = settingsState.profile
+    val avatarPainter: Painter? by remember(profile?.avatarFileName) {
         mutableStateOf(
-            profile.avatarFileName?.let { name ->
+            profile?.avatarFileName?.let { name ->
                 val file = File(context.filesDir, "avatars/$name")
                 if (file.exists()) BitmapFactory.decodeFile(file.absolutePath)?.let { BitmapPainter(it.asImageBitmap()) } else null
             }
@@ -691,7 +690,7 @@ fun ModernHost(
                                         moreExpanded = false,
                                         moreAnchorRect = null,
                                         useAvatar = false,
-                                        nickname = profile.nickname,
+                                        nickname = profile?.nickname.orEmpty(),
                                         avatarPainter = avatarPainter,
                                         onCloseMorePanel = {},
                                         selectionMode = hostState.selectionMode,
@@ -741,7 +740,7 @@ fun ModernHost(
                                         moreExpanded = false,
                                         moreAnchorRect = null,
                                         useAvatar = false,
-                                        nickname = profile.nickname,
+                                        nickname = profile?.nickname.orEmpty(),
                                         avatarPainter = avatarPainter,
                                         onCloseMorePanel = {},
                                         selectionMode = hostState.selectionMode,
@@ -795,7 +794,7 @@ fun ModernHost(
                                 moreExpanded = false,
                                 moreAnchorRect = null,
                                 useAvatar = avatarPainter != null,
-                                nickname = profile.nickname,
+                                nickname = profile?.nickname.orEmpty(),
                                 avatarPainter = avatarPainter,
                                 onCloseMorePanel = {},
                                 selectionMode = hostState.selectionMode,

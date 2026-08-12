@@ -41,7 +41,6 @@ import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.OverviewActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsActivity
-import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.iconResource

@@ -115,7 +115,6 @@ import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.data.MainViewModel
-import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils.refreshCount
 import com.aritxonly.deadliner.model.DDLItem
@@ -124,7 +123,6 @@ import com.aritxonly.deadliner.model.DayOverview
 import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
-import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.model.updateNoteWithDate
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified

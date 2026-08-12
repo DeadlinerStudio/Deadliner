@@ -14,7 +14,6 @@ import androidx.window.embedding.SplitPairFilter
 import androidx.window.embedding.SplitPairRule
 import androidx.window.embedding.SplitPlaceholderRule
 import androidx.window.embedding.SplitRule
-import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.localutils.AppIconManager
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.ApiKeystore
@@ -30,7 +29,6 @@ class DeadlinerApp : Application() {
         AIUtils.init(this)
         AppSingletons.init(this)
         KmpV6Runtime.initialize(this, AppSingletons.db)
-        UserProfileRepository.init(this)
         AppIconManager.applyCurrentMode(this)
         var startedActivityCount = 0
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {

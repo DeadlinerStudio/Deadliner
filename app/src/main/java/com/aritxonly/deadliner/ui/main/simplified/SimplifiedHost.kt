@@ -66,7 +66,6 @@ import com.aritxonly.deadliner.capture.CaptureViewModel
 import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.data.HabitRepository
 import com.aritxonly.deadliner.data.MainViewModel
-import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.data.MainViewModelFactory
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
@@ -75,7 +74,7 @@ import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.HabitStatus
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.TaskStateAction
-import com.aritxonly.deadliner.model.UserProfile
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
@@ -282,13 +281,15 @@ fun SimplifiedHost(
     val archiveTaskRepo = remember { DDLRepository() }
     val archiveHabitRepo = remember { HabitRepository() }
     
-    val profile by UserProfileRepository.profile.collectAsState(initial = UserProfile())
-    var nickname by remember(profile.nickname) { mutableStateOf(profile.nickname) }
+    val settingsState by KmpV6Runtime.settingsViewModel.uiState.collectAsState()
+    val profile = settingsState.profile
+    val nickname = profile?.nickname.orEmpty()
+    val avatarFileName = profile?.avatarFileName
 
-    val avatarPainter: Painter? by remember(profile.avatarFileName) {
+    val avatarPainter: Painter? by remember(avatarFileName) {
         mutableStateOf<Painter?>(
-            if (profile.avatarFileName != null) {
-                val file = File(context.filesDir, "avatars/${profile.avatarFileName}")
+            if (avatarFileName != null) {
+                val file = File(context.filesDir, "avatars/$avatarFileName")
                 if (file.exists()) {
                     // 读取文件并转为 Painter
                     val bitmap = BitmapFactory.decodeFile(file.absolutePath)

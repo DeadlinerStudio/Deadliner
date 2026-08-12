@@ -2,6 +2,7 @@ package com.aritxonly.deadliner.ui.main.simplified
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
@@ -55,8 +56,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.UserProfileRepository
-import com.aritxonly.deadliner.model.UserProfile
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.image.cropview.CropType
 import com.image.cropview.EdgeType
@@ -65,6 +65,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
+import java.util.UUID
 import kotlin.math.max
 import kotlin.math.min
 
@@ -74,8 +76,11 @@ fun ProfileEditor(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val profile by UserProfileRepository.profile.collectAsState(initial = UserProfile())
-    var nickname by remember(profile.nickname) { mutableStateOf(TextFieldValue(profile.nickname)) }
+    val settingsState by KmpV6Runtime.settingsViewModel.uiState.collectAsState()
+    val profile = settingsState.profile
+    var nickname by remember(profile?.nickname) {
+        mutableStateOf(TextFieldValue(profile?.nickname.orEmpty()))
+    }
 
     // 裁剪状态
     var showCropper by remember { mutableStateOf(false) }
@@ -97,11 +102,11 @@ fun ProfileEditor(
     }
 
     // 当前头像
-    val avatarFile = remember(profile.avatarFileName) {
-        profile.avatarFileName?.let { File(context.filesDir, "avatars/$it") }
+    val avatarFile = remember(profile?.avatarFileName) {
+        profile?.avatarFileName?.let { File(context.filesDir, "avatars/$it") }
     }
     var imageBitmap by remember(avatarFile?.absolutePath) { mutableStateOf<ImageBitmap?>(null) }
-    LaunchedEffect(profile.avatarFileName) {
+    LaunchedEffect(profile?.avatarFileName) {
         val f = avatarFile
         imageBitmap = if (f?.exists() == true) withContext(Dispatchers.IO) {
             decodeImageBitmapSized(f, 512)
@@ -180,18 +185,23 @@ fun ProfileEditor(
         Button(
             onClick = {
                 scope.launch {
-                    UserProfileRepository.setNickname(nickname.text.trim())
+                    KmpV6Runtime.settingsViewModel.updateNickname(nickname.text.trim())
                 }
             },
-            enabled = nickname.text.trim() != profile.nickname,
+            enabled = profile != null && nickname.text.trim() != profile.nickname,
             shape = RoundedCornerShape(16.dp),
         ) {
             Text(stringResource(R.string.save_change))
         }
 
         // 🗑️ 移除头像
-        if (profile.hasAvatar()) {
-            TextButton(onClick = { scope.launch { UserProfileRepository.removeAvatar(context) } }) {
+        if (!profile?.avatarFileName.isNullOrBlank()) {
+            TextButton(onClick = {
+                scope.launch(Dispatchers.IO) {
+                    removeAvatarFile(context, profile?.avatarFileName)
+                    KmpV6Runtime.settingsViewModel.updateAvatar(null)
+                }
+            }) {
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.ic_delete),
                     contentDescription = null
@@ -210,11 +220,33 @@ fun ProfileEditor(
             onDone = { cropped ->
                 showCropper = false
                 scope.launch(Dispatchers.IO) {
-                    UserProfileRepository.setAvatarFromBitmap(context, cropped)
+                    val previous = profile?.avatarFileName
+                    val fileName = saveAvatarFile(context, cropped)
+                    KmpV6Runtime.settingsViewModel.updateAvatar(fileName)
+                    removeAvatarFile(context, previous)
                 }
             }
         )
     }
+}
+
+private fun saveAvatarFile(context: Context, bitmap: Bitmap): String {
+    val directory = File(context.filesDir, "avatars").apply { mkdirs() }
+    val fileName = "${UUID.randomUUID()}.jpg"
+    FileOutputStream(File(directory, fileName)).use { output ->
+        val size = min(bitmap.width, bitmap.height)
+        val x = (bitmap.width - size) / 2
+        val y = (bitmap.height - size) / 2
+        val square = Bitmap.createBitmap(bitmap, x, y, size, size)
+        val scaled = if (square.width == 512) square else Bitmap.createScaledBitmap(square, 512, 512, true)
+        check(scaled.compress(Bitmap.CompressFormat.JPEG, 95, output)) { "Could not encode avatar" }
+    }
+    return fileName
+}
+
+private fun removeAvatarFile(context: Context, fileName: String?) {
+    if (fileName.isNullOrBlank()) return
+    File(context.filesDir, "avatars/$fileName").takeIf { it.exists() }?.delete()
 }
 
 @Composable

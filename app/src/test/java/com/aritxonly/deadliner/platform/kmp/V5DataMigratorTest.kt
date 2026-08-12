@@ -92,6 +92,10 @@ class V5DataMigratorTest {
                 Context.MODE_PRIVATE,
             ),
             legacyCaptureJson = legacyCaptureJson,
+            legacyProfile = { V5DataMigrator.LegacyProfile(
+                nickname = "KMP user",
+                avatarFileName = "avatar.jpg",
+            ) },
         )
 
         migrator.migrateIfNeeded()
@@ -105,6 +109,8 @@ class V5DataMigratorTest {
         assertEquals(1, target.habits.records(habitUid).size)
         assertEquals("old inspiration", target.captures.find("legacy-capture:99")?.text)
         assertEquals(1, target.captures.list().size)
+        assertEquals("KMP user", target.profiles.list().single().nickname)
+        assertEquals("avatar.jpg", target.profiles.list().single().avatarFileName)
         assertEquals(2, legacy.getAllDDLs().size)
         assertEquals(1, legacy.getAllHabits().size)
         target.close()
