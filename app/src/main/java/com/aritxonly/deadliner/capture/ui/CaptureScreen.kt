@@ -64,7 +64,7 @@ import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.capture.CaptureEffect
 import com.aritxonly.deadliner.capture.CaptureViewModel
-import com.aritxonly.deadliner.capture.model.InspirationItem
+import com.deadliner.domain.capture.CaptureItem
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
@@ -81,7 +81,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.absoluteValue
 
 private data class PendingCaptureDelete(
-    val itemId: Long,
+    val itemUid: String,
     val text: String,
 )
 
@@ -128,7 +128,7 @@ fun CaptureTopBar(
         )
     } else {
         TopAppBar(
-            title = stringResource(R.string.capture_selected_count, ui.selectedIds.size),
+            title = stringResource(R.string.capture_selected_count, ui.selectedUids.size),
             forceMaterial3 = forceMaterial3,
             navigationIcon = {
                 IconButton(onClick = vm::exitMultiSelect) {
@@ -142,15 +142,15 @@ fun CaptureTopBar(
             actions = {
                 TextButton(
                     onClick = { showDeleteSelectedConfirm = true },
-                    enabled = ui.selectedIds.isNotEmpty()
+                    enabled = ui.selectedUids.isNotEmpty()
                 ) {
                     Text(stringResource(R.string.capture_delete))
                 }
                 TextButton(
                     onClick = onRequestMerge,
-                    enabled = ui.selectedIds.isNotEmpty()
+                    enabled = ui.selectedUids.isNotEmpty()
                 ) {
-                    Text(stringResource(R.string.capture_merge_count, ui.selectedIds.size))
+                    Text(stringResource(R.string.capture_merge_count, ui.selectedUids.size))
                 }
             },
             useParentMaterialContainer = useParentMaterialContainer,
@@ -161,8 +161,8 @@ fun CaptureTopBar(
         AlertDialog(
             show = true,
             onDismissRequest = { showDeleteSelectedConfirm = false },
-            title = { Text(stringResource(R.string.capture_delete_selected_confirm_title, ui.selectedIds.size)) },
-            miuixTitle = stringResource(R.string.capture_delete_selected_confirm_title, ui.selectedIds.size),
+            title = { Text(stringResource(R.string.capture_delete_selected_confirm_title, ui.selectedUids.size)) },
+            miuixTitle = stringResource(R.string.capture_delete_selected_confirm_title, ui.selectedUids.size),
             text = { Text(stringResource(R.string.capture_delete_selected_confirm_message)) },
             confirmButton = {
                 TextButton(
@@ -229,7 +229,7 @@ fun CaptureContent(
     val context = LocalContext.current
     val layoutDirection = LocalLayoutDirection.current
     val ui by vm.uiState.collectAsState()
-    val selectedCount = ui.selectedIds.size
+    val selectedCount = ui.selectedUids.size
     var showDirectConvertMenu by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<PendingCaptureDelete?>(null) }
     val listContentPadding = remember(contentPadding, topOverlayPadding, bottomLiftPadding, layoutDirection) {
@@ -269,17 +269,17 @@ fun CaptureContent(
         }
     }
 
-    if (ui.editingItemId != null) {
+    if (ui.editingItemUid != null) {
         CaptureDetailSheet(
             text = ui.editingText,
-            loading = ui.loading,
+            loading = ui.isLoading,
             onTextChange = vm::updateEditingText,
             onClose = vm::closeDetail,
             onSave = vm::saveEditing,
             onDelete = {
-                val editingId = ui.editingItemId ?: return@CaptureDetailSheet
+                val editingUid = ui.editingItemUid ?: return@CaptureDetailSheet
                 pendingDelete = PendingCaptureDelete(
-                    itemId = editingId,
+                    itemUid = editingUid,
                     text = ui.editingText.trim()
                 )
                 vm.closeDetail()
@@ -376,7 +376,7 @@ fun CaptureContent(
 
     pendingDelete?.let { deleteRequest ->
         val deleteText = deleteRequest.text.ifBlank {
-            ui.items.firstOrNull { it.id == deleteRequest.itemId }?.text.orEmpty()
+            ui.items.firstOrNull { it.uid == deleteRequest.itemUid }?.text.orEmpty()
         }
         val previewTitle = if (deleteText.isBlank()) {
             stringResource(R.string.capture_delete_confirm_title)
@@ -392,7 +392,7 @@ fun CaptureContent(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        vm.deleteItem(deleteRequest.itemId)
+                        vm.deleteItem(deleteRequest.itemUid)
                         pendingDelete = null
                     }
                 ) {
@@ -453,25 +453,25 @@ fun CaptureContent(
 
                 items(
                     count = ui.filteredItems.size,
-                    key = { index -> ui.filteredItems[index].id }
+                    key = { index -> ui.filteredItems[index].uid }
                 ) { index ->
                     val item = ui.filteredItems[index]
                     InspirationLightCard(
                         item = item,
-                        selected = ui.selectedIds.contains(item.id),
+                        selected = ui.selectedUids.contains(item.uid),
                         inMultiSelectMode = ui.isMultiSelectMode,
                         useHorizontalPadding = false,
                         onClick = {
-                            if (ui.isMultiSelectMode) vm.toggleSelect(item.id) else vm.openDetail(item.id)
+                            if (ui.isMultiSelectMode) vm.toggleSelect(item.uid) else vm.openDetail(item.uid)
                         },
                         onDelete = {
                             pendingDelete = PendingCaptureDelete(
-                                itemId = item.id,
+                                itemUid = item.uid,
                                 text = item.text.trim()
                             )
                         },
-                        onAiTask = { vm.convertItemToTask(item.id, useAi = true) },
-                        onAiHabit = { vm.convertItemToHabit(item.id, useAi = true) }
+                        onAiTask = { vm.convertItemToTask(item.uid, useAi = true) },
+                        onAiHabit = { vm.convertItemToHabit(item.uid, useAi = true) }
                     )
                 }
             } else {
@@ -525,22 +525,22 @@ fun CaptureContent(
                     }
                 }
 
-                items(ui.filteredItems, key = { it.id }) { item ->
+                items(ui.filteredItems, key = { it.uid }) { item ->
                     InspirationLightCard(
                         item = item,
-                        selected = ui.selectedIds.contains(item.id),
+                        selected = ui.selectedUids.contains(item.uid),
                         inMultiSelectMode = ui.isMultiSelectMode,
                         onClick = {
-                            if (ui.isMultiSelectMode) vm.toggleSelect(item.id) else vm.openDetail(item.id)
+                            if (ui.isMultiSelectMode) vm.toggleSelect(item.uid) else vm.openDetail(item.uid)
                         },
                         onDelete = {
                             pendingDelete = PendingCaptureDelete(
-                                itemId = item.id,
+                                itemUid = item.uid,
                                 text = item.text.trim()
                             )
                         },
-                        onAiTask = { vm.convertItemToTask(item.id, useAi = true) },
-                        onAiHabit = { vm.convertItemToHabit(item.id, useAi = true) }
+                        onAiTask = { vm.convertItemToTask(item.uid, useAi = true) },
+                        onAiHabit = { vm.convertItemToHabit(item.uid, useAi = true) }
                     )
                 }
 
@@ -624,7 +624,7 @@ private fun CaptureInputCard(
 
 @Composable
 private fun InspirationLightCard(
-    item: InspirationItem,
+    item: CaptureItem,
     selected: Boolean,
     inMultiSelectMode: Boolean,
     modifier: Modifier = Modifier,
@@ -944,7 +944,8 @@ private fun copyToClipboard(context: Context, text: String) {
     Toast.makeText(context, context.getString(R.string.capture_clipboard_copied), Toast.LENGTH_SHORT).show()
 }
 
-private fun formatRelativeTime(context: Context, timestampMillis: Long): String {
+private fun formatRelativeTime(context: Context, timestamp: String): String {
+    val timestampMillis = runCatching { java.time.Instant.parse(timestamp).toEpochMilli() }.getOrDefault(0L)
     val nowMillis = System.currentTimeMillis()
     val diff = Duration.ofMillis((nowMillis - timestampMillis).absoluteValue)
     val minutes = diff.toMinutes()

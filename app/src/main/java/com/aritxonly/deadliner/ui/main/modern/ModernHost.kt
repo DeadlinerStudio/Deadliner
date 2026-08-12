@@ -85,8 +85,6 @@ import com.aritxonly.deadliner.OverviewTopBarWithTabs
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsActivity
 import com.aritxonly.deadliner.capture.CaptureViewModel
-import com.aritxonly.deadliner.capture.data.CaptureRepository
-import com.aritxonly.deadliner.capture.model.InspirationItem
 import com.aritxonly.deadliner.capture.ui.CaptureContent
 import com.aritxonly.deadliner.capture.ui.CaptureTopBar
 import com.aritxonly.deadliner.data.DDLRepository
@@ -188,13 +186,12 @@ fun ModernHost(
     val habitListState = rememberLazyListState()
     val textFieldState = rememberTextFieldState()
     var searchBase by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
-    var searchInspirations by remember { mutableStateOf<List<InspirationItem>>(emptyList()) }
+    val captureState by captureVm.uiState.collectAsStateWithLifecycle()
     var archivedHabitByDdlId by remember { mutableStateOf<Map<Long, Habit>>(emptyMap()) }
     val searchQuery = textFieldState.text.toString()
     var overlayTopBarHeightPx by remember { mutableIntStateOf(0) }
     val archiveTaskRepo = remember { DDLRepository() }
     val archiveHabitRepo = remember { HabitRepository() }
-    val captureRepo = remember(context) { CaptureRepository(context.applicationContext) }
 
     LaunchedEffect(isWideLayout) {
         if (isWideLayout && hostState.selectedPage != DeadlineType.TASK) {
@@ -398,9 +395,6 @@ fun ModernHost(
 
     suspend fun refreshSearchData() {
         searchBase = vm.getBaseList(DeadlineType.TASK) + vm.getBaseList(DeadlineType.HABIT)
-        searchInspirations = withContext(Dispatchers.IO) {
-            captureRepo.load()
-        }
         archivedHabitByDdlId = withContext(Dispatchers.IO) {
             archiveHabitRepo.getAllHabits()
                 .filter { it.status == HabitStatus.ARCHIVED }
@@ -882,7 +876,7 @@ fun ModernHost(
                     items = searchBase,
                     habitViewModel = habitVm,
                     activity = activity,
-                    inspirations = searchInspirations,
+                    inspirations = captureState.items,
                     archivedHabitByDdlId = archivedHabitByDdlId,
                     onCaptureChanged = {
                         scope.launch {

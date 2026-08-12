@@ -11,6 +11,9 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonNull
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.deadliner.domain.capture.CaptureItem
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -19,23 +22,51 @@ internal class V5DataMigrator(
     private val legacy: DatabaseHelper,
     private val target: DeadlinerDatabase,
     private val preferences: SharedPreferences,
+    private val legacyCaptureJson: String? = null,
 ) {
     fun migrateIfNeeded() {
-        if (preferences.getInt(KEY_DATA_VERSION, 0) >= DATA_VERSION) return
+        val currentVersion = preferences.getInt(KEY_DATA_VERSION, 0)
+        if (currentVersion >= DATA_VERSION) return
 
-        val taskPayload = buildTaskSnapshot().toString()
-        val habitPayload = buildCompleteHabitSnapshot().toString()
-        val result = target.legacyV2Sync.mergeRemotePayloads(
-            taskPayload = taskPayload,
-            habitPayload = habitPayload,
-            categoryPayload = null,
-        )
-        check(result.failureMessage == null) { result.failureMessage.orEmpty() }
+        if (currentVersion < CORE_DATA_VERSION) {
+            migrateCoreData()
+        }
+        if (currentVersion < CAPTURE_DATA_VERSION) {
+            migrateCaptures()
+        }
 
         check(preferences.edit().putInt(KEY_DATA_VERSION, DATA_VERSION).commit()) {
             "Could not persist v5 -> v6 migration marker"
         }
-        Log.i(TAG, "Imported v5 data into KMP: applied=${result.remoteApplied}")
+        Log.i(TAG, "Imported v5 data into KMP at version=$DATA_VERSION")
+    }
+
+    private fun migrateCoreData() {
+        val result = target.legacyV2Sync.mergeRemotePayloads(
+            taskPayload = buildTaskSnapshot().toString(),
+            habitPayload = buildCompleteHabitSnapshot().toString(),
+            categoryPayload = null,
+        )
+        check(result.failureMessage == null) { result.failureMessage.orEmpty() }
+    }
+
+    private fun migrateCaptures() {
+        val raw = legacyCaptureJson ?: return
+        val type = object : TypeToken<List<LegacyCapture>>() {}.type
+        val captures = Gson().fromJson<List<LegacyCapture>>(raw, type).orEmpty()
+        captures.forEach { legacyCapture ->
+            val uid = "legacy-capture:${legacyCapture.id}"
+            if (target.captures.find(uid) == null) {
+                target.captures.create(
+                    CaptureItem(
+                        uid = uid,
+                        text = legacyCapture.text,
+                        createdAt = Instant.ofEpochMilli(legacyCapture.createdAt).toString(),
+                        updatedAt = Instant.ofEpochMilli(legacyCapture.updatedAt).toString(),
+                    )
+                )
+            }
+        }
     }
 
     private fun buildTaskSnapshot(): JsonObject {
@@ -181,7 +212,16 @@ internal class V5DataMigrator(
     companion object {
         const val PREFERENCES_NAME = "kmp_v6_migration"
         private const val KEY_DATA_VERSION = "data_version"
-        private const val DATA_VERSION = 1
+        private const val CORE_DATA_VERSION = 1
+        private const val CAPTURE_DATA_VERSION = 2
+        private const val DATA_VERSION = CAPTURE_DATA_VERSION
         private const val TAG = "V5DataMigrator"
     }
+
+    private data class LegacyCapture(
+        val id: Long,
+        val text: String,
+        val createdAt: Long,
+        val updatedAt: Long,
+    )
 }

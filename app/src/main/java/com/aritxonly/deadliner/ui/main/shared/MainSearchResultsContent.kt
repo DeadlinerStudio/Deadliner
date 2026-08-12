@@ -48,6 +48,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -68,8 +69,8 @@ import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.capture.data.CaptureRepository
-import com.aritxonly.deadliner.capture.model.InspirationItem
+import com.aritxonly.deadliner.capture.CaptureViewModel
+import com.deadliner.domain.capture.CaptureItem
 import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
@@ -103,7 +104,7 @@ fun MainSearchResultsContent(
     items: List<DDLItem>,
     habitViewModel: HabitViewModel,
     activity: MainActivity,
-    inspirations: List<InspirationItem> = emptyList(),
+    inspirations: List<CaptureItem> = emptyList(),
     archivedHabitByDdlId: Map<Long, Habit> = emptyMap(),
     onCaptureChanged: () -> Unit = {},
     onRestoreArchivedTask: (DDLItem) -> Unit = {},
@@ -112,7 +113,7 @@ fun MainSearchResultsContent(
     onDeleteArchivedHabit: (Habit) -> Unit = {},
 ) {
     val context = LocalContext.current
-    val captureRepo = remember(context) { CaptureRepository(context.applicationContext) }
+    val captureViewModel: CaptureViewModel = viewModel()
     val selectedDate by habitViewModel.selectedDate.collectAsState()
     val habitsForSelectedDate by habitViewModel.habitsForSelectedDate.collectAsState()
     val statusByDdlId = habitsForSelectedDate.associateBy { it.habit.ddlId }
@@ -131,9 +132,9 @@ fun MainSearchResultsContent(
             inspirations = inspirations,
         )
     }
-    var selectedInspiration by remember { mutableStateOf<InspirationItem?>(null) }
+    var selectedInspiration by remember { mutableStateOf<CaptureItem?>(null) }
     var inspirationDraftText by rememberSaveable { mutableStateOf("") }
-    var pendingDeleteInspiration by remember { mutableStateOf<InspirationItem?>(null) }
+    var pendingDeleteInspiration by remember { mutableStateOf<CaptureItem?>(null) }
     var pendingDeleteArchivedTask by remember { mutableStateOf<DDLItem?>(null) }
     var pendingDeleteArchivedHabit by remember { mutableStateOf<Habit?>(null) }
 
@@ -148,27 +149,17 @@ fun MainSearchResultsContent(
         activity.startActivity(intent)
     }
 
-    fun updateInspirationText(item: InspirationItem, newText: String) {
+    fun updateInspirationText(item: CaptureItem, newText: String) {
         val trimmed = newText.trim()
         if (trimmed.isEmpty()) return
-        val updatedItems = captureRepo.load()
-            .map { current ->
-                if (current.id == item.id) {
-                    current.copy(
-                        text = trimmed,
-                        updatedAt = System.currentTimeMillis(),
-                    )
-                } else {
-                    current
-                }
-            }
-            .sortedByDescending { it.updatedAt }
-        captureRepo.save(updatedItems)
+        captureViewModel.openDetail(item.uid)
+        captureViewModel.updateEditingText(trimmed)
+        captureViewModel.saveEditing()
         onCaptureChanged()
     }
 
-    fun deleteInspiration(item: InspirationItem) {
-        captureRepo.save(captureRepo.load().filterNot { it.id == item.id })
+    fun deleteInspiration(item: CaptureItem) {
+        captureViewModel.deleteItem(item.uid)
         onCaptureChanged()
     }
 
@@ -222,7 +213,7 @@ fun MainSearchResultsContent(
 
                     items(
                         items = inspirationResults,
-                        key = { "inspiration-${it.id}" },
+                        key = { "inspiration-${it.uid}" },
                     ) { item ->
                         SearchInspirationCard(
                             item = item,
@@ -620,7 +611,7 @@ private fun SearchSectionHeader(
 
 @Composable
 private fun SearchInspirationCard(
-    item: InspirationItem,
+    item: CaptureItem,
     onOpen: () -> Unit,
     onDelete: () -> Unit,
     onAiTask: () -> Unit,
@@ -893,8 +884,9 @@ private fun HabitSearchItem(
 
 private fun formatInspirationRelativeTime(
     context: android.content.Context,
-    timestampMillis: Long,
+    timestamp: String,
 ): String {
+    val timestampMillis = runCatching { java.time.Instant.parse(timestamp).toEpochMilli() }.getOrDefault(0L)
     val nowMillis = System.currentTimeMillis()
     val diff = Duration.ofMillis((nowMillis - timestampMillis).absoluteValue)
     val minutes = diff.toMinutes()

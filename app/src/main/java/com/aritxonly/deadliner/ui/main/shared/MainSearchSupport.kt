@@ -3,7 +3,7 @@ package com.aritxonly.deadliner.ui.main.shared
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.capture.model.InspirationItem
+import com.deadliner.domain.capture.CaptureItem
 import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.model.DDLState
 import com.aritxonly.deadliner.model.DDLItem
@@ -118,8 +118,8 @@ fun buildMainSearchSections(
 fun buildInspirationSearchResults(
     query: String,
     scope: MainSearchScope,
-    inspirations: List<InspirationItem>,
-): List<InspirationItem> {
+    inspirations: List<CaptureItem>,
+): List<CaptureItem> {
     val trimmedQuery = query.trim()
     if (trimmedQuery.isEmpty() || !scope.allowsActive) return emptyList()
 
@@ -137,7 +137,7 @@ fun buildInspirationSearchResults(
             if (score > 0) item to score else null
         }
         .sortedWith(
-            compareByDescending<Pair<InspirationItem, Int>> { it.second }
+            compareByDescending<Pair<CaptureItem, Int>> { it.second }
                 .thenBy { it.first.text.lowercase() }
         )
         .map { it.first }

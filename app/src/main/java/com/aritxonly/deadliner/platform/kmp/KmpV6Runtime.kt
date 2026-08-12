@@ -5,6 +5,7 @@ import com.aritxonly.deadliner.data.DatabaseHelper
 import com.deadliner.db.AndroidDatabaseDriverFactory
 import com.deadliner.db.DeadlinerDatabase
 import com.deadliner.viewmodel.overview.OverviewViewModel
+import com.deadliner.viewmodel.capture.CaptureViewModel
 
 /** Android-private composition root for the v6 shared layer. */
 internal object KmpV6Runtime {
@@ -14,6 +15,11 @@ internal object KmpV6Runtime {
     val overviewViewModel: OverviewViewModel by lazy {
         check(::database.isInitialized) { "KmpV6Runtime is not initialized" }
         OverviewViewModel(database.tasks, database.habits)
+    }
+
+    val captureViewModel: CaptureViewModel by lazy {
+        check(::database.isInitialized) { "KmpV6Runtime is not initialized" }
+        CaptureViewModel(database.captures)
     }
 
     fun initialize(
@@ -33,6 +39,10 @@ internal object KmpV6Runtime {
                 V5DataMigrator.PREFERENCES_NAME,
                 Context.MODE_PRIVATE,
             ),
+            legacyCaptureJson = context.getSharedPreferences(
+                "capture_inspiration",
+                Context.MODE_PRIVATE,
+            ).getString("items_json", null),
         ).migrateIfNeeded()
     }
 }

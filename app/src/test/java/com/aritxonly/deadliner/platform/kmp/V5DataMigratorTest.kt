@@ -35,6 +35,10 @@ class V5DataMigratorTest {
             .edit()
             .clear()
             .commit()
+        context.getSharedPreferences("capture_inspiration", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
     }
 
     @After
@@ -75,6 +79,9 @@ class V5DataMigratorTest {
                 createdAt = LocalDateTime.parse("2026-08-12T09:30:00"),
             )
         )
+        val legacyCaptureJson = """
+            [{"id":99,"text":"old inspiration","createdAt":1723438800000,"updatedAt":1723438860000}]
+        """.trimIndent()
 
         val target = DeadlinerDatabase.create(AndroidDatabaseDriverFactory(context))
         val migrator = V5DataMigrator(
@@ -84,6 +91,7 @@ class V5DataMigratorTest {
                 V5DataMigrator.PREFERENCES_NAME,
                 Context.MODE_PRIVATE,
             ),
+            legacyCaptureJson = legacyCaptureJson,
         )
 
         migrator.migrateIfNeeded()
@@ -95,6 +103,8 @@ class V5DataMigratorTest {
         assertEquals(1, target.tasks.list().size)
         assertEquals("Read", target.habits.find(habitUid)?.name)
         assertEquals(1, target.habits.records(habitUid).size)
+        assertEquals("old inspiration", target.captures.find("legacy-capture:99")?.text)
+        assertEquals(1, target.captures.list().size)
         assertEquals(2, legacy.getAllDDLs().size)
         assertEquals(1, legacy.getAllHabits().size)
         target.close()

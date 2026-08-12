@@ -62,8 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.MainActivity
-import com.aritxonly.deadliner.capture.data.CaptureRepository
-import com.aritxonly.deadliner.capture.model.InspirationItem
+import com.aritxonly.deadliner.capture.CaptureViewModel
 import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.data.HabitRepository
 import com.aritxonly.deadliner.data.MainViewModel
@@ -120,6 +119,7 @@ fun SimplifiedHost(
     val scope = rememberCoroutineScope()
     val vm: MainViewModel = viewModel(factory = MainViewModelFactory(context))
     val habitVm: HabitViewModel = viewModel(factory = HabitViewModelFactory(context))
+    val captureVm: CaptureViewModel = viewModel()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val hostState = rememberMainHostState(vm.currentType)
@@ -276,12 +276,11 @@ fun SimplifiedHost(
     val textFieldState = rememberTextFieldState()
     var searchScope by rememberSaveable { mutableStateOf(MainSearchScope.ALL) }
     var searchBase by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
-    var searchInspirations by remember { mutableStateOf<List<InspirationItem>>(emptyList()) }
+    val captureState by captureVm.uiState.collectAsStateWithLifecycle()
     var archivedHabitByDdlId by remember { mutableStateOf<Map<Long, Habit>>(emptyMap()) }
     val searchQuery = textFieldState.text.toString()
     val archiveTaskRepo = remember { DDLRepository() }
     val archiveHabitRepo = remember { HabitRepository() }
-    val captureRepo = remember(context) { CaptureRepository(context.applicationContext) }
     
     val profile by UserProfileRepository.profile.collectAsState(initial = UserProfile())
     var nickname by remember(profile.nickname) { mutableStateOf(profile.nickname) }
@@ -307,9 +306,6 @@ fun SimplifiedHost(
 
     suspend fun refreshSearchData() {
         searchBase = vm.getBaseList(DeadlineType.TASK) + vm.getBaseList(DeadlineType.HABIT)
-        searchInspirations = withContext(Dispatchers.IO) {
-            captureRepo.load()
-        }
         archivedHabitByDdlId = withContext(Dispatchers.IO) {
             archiveHabitRepo.getAllHabits()
                 .filter { it.status == HabitStatus.ARCHIVED }
@@ -420,7 +416,7 @@ fun SimplifiedHost(
                             items = searchBase,
                             habitViewModel = habitVm,
                             activity = activity,
-                            inspirations = searchInspirations,
+                            inspirations = captureState.items,
                             archivedHabitByDdlId = archivedHabitByDdlId,
                             onCaptureChanged = {
                                 scope.launch {

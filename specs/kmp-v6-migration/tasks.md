@@ -19,7 +19,7 @@
 ## 阶段 3：功能实现
 
 - [x] 迁移 Intro wizard 状态机
-- [ ] 接入 Capture 共享 ViewModel
+- [x] 接入 Capture 共享 ViewModel，并迁移旧 SharedPreferences 捕获项
 - [ ] 接入 Task list/detail/editor/archive/search 共享 ViewModel
 - [ ] 接入 Habit list、Overview、Settings 共享 ViewModel
 - [ ] 用共享 Lifi API 替换 Android `AIUtils` 业务逻辑
