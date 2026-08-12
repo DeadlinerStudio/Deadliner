@@ -46,6 +46,7 @@ import com.aritxonly.deadliner.ArchiveActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsActivity
+import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
@@ -67,6 +68,7 @@ fun ModernMainHeader(
     showAiActionInTopBar: Boolean = false,
     forceMaterialTopAppBar: Boolean = false,
 ) {
+    val aiEnabled = GlobalUtils.deadlinerAIEnable
     val pageLabel = when (selectedPage) {
         DeadlineType.TASK -> stringResource(R.string.task)
         DeadlineType.HABIT -> stringResource(R.string.habit)
@@ -81,7 +83,7 @@ fun ModernMainHeader(
         TopAppBar(
             title = "Deadliner",
             navigationIcon = {
-                if (showAiActionInTopBar) {
+                if (showAiActionInTopBar && aiEnabled) {
                     FilledTonalButton(
                         onClick = onShowAiOverlay,
                         shape = RoundedCornerShape(24.dp),
@@ -220,7 +222,7 @@ fun ModernMainHeader(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                if (!showAiActionInTopBar) {
+                if (!showAiActionInTopBar && aiEnabled) {
                     FilledTonalButton(
                         onClick = onShowAiOverlay,
                         shape = RoundedCornerShape(24.dp),

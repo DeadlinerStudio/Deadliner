@@ -2,7 +2,6 @@ package com.aritxonly.deadliner
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
@@ -11,13 +10,7 @@ import android.content.res.Configuration
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
-import android.widget.ArrayAdapter
-import android.widget.Filter
-import android.widget.ListView
-import android.widget.RadioButton
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
@@ -35,11 +28,14 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -93,10 +89,15 @@ import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.toJson
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
+import com.aritxonly.deadliner.ui.base.Checkbox
+import com.aritxonly.deadliner.ui.base.OutlinedTextField
+import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
+import com.aritxonly.deadliner.ui.base.RadioButton
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.editor.DeadlineAiQuickAddCard
 import com.aritxonly.deadliner.ui.editor.DeadlineBottomActions
 import com.aritxonly.deadliner.ui.editor.DeadlineNameField
@@ -112,8 +113,6 @@ import com.aritxonly.deadliner.ui.editor.toModelPeriod
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -141,6 +140,14 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     private var aiAutoTriggered by mutableStateOf(false)
     private var showDonatePrompt by mutableStateOf(false)
     private var showPickerDialogBlur by mutableStateOf(false)
+    private var showCalendarEmptyDialog by mutableStateOf(false)
+    private var showCalendarImportDialog by mutableStateOf(false)
+    private var calendarImportEvents by mutableStateOf<List<CalendarEvent>>(emptyList())
+    private var calendarImportSearchQuery by mutableStateOf("")
+    private var selectedCalendarEventId by mutableStateOf<Long?>(null)
+    private var showCalendarAccountFilterDialog by mutableStateOf(false)
+    private var calendarAccountOptions by mutableStateOf<List<String>>(emptyList())
+    private var selectedCalendarAccounts by mutableStateOf<Set<String>>(emptySet())
     private var pendingPickerLaunchJob: Job? = null
 
     private var calendarEventId: Long? = null
@@ -323,6 +330,32 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         )
     }
 
+    private fun calendarEventDisplayText(event: CalendarEvent): String {
+        val time = GlobalUtils.parseDateTime(event.startMillis.toDateTimeString())
+        val formattedTime = time?.let(::formatLocalDateTime) ?: getString(R.string.parse_failed)
+        val title = event.title?.takeIf { it.isNotBlank() } ?: getString(R.string.untitled)
+        return "$title - $formattedTime"
+    }
+
+    private fun applySelectedCalendarEvent() {
+        val eventId = selectedCalendarEventId ?: return
+        val event = calendarImportEvents.firstOrNull { it.id == eventId } ?: return
+        updateSharedName(event.title.orEmpty())
+        taskDraft = taskDraft.copy(note = event.description.orEmpty())
+        GlobalUtils.parseDateTime(event.startMillis.toDateTimeString())?.let {
+            taskDraft = taskDraft.copy(endTime = it)
+        }
+        calendarEventId = event.id
+        showCalendarImportDialog = false
+    }
+
+    private fun saveCalendarAccountFilterSelection() {
+        GlobalUtils.filteredCalendars = selectedCalendarAccounts
+        showCalendarAccountFilterDialog = false
+        Toast.makeText(this, R.string.calendar_filter_saved, Toast.LENGTH_SHORT).show()
+        loadCalendarEventsAndShowDialog()
+    }
+
     private fun promptDeadlinerDonateIfNeeded() {
         if (!GlobalUtils.shouldShowDeadlinerDonatePrompt()) return
         GlobalUtils.markDeadlinerDonatePromptShown()
@@ -336,6 +369,14 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         val pageSurfaceColor = MaterialTheme.colorScheme.surface
         val advancedMaterial = LocalAdvancedMaterialSpec.current
         val layoutDirection = LocalLayoutDirection.current
+        val filteredCalendarEvents = calendarImportEvents.filter { event ->
+            val query = calendarImportSearchQuery.trim()
+            if (query.isBlank()) {
+                true
+            } else {
+                calendarEventDisplayText(event).contains(query, ignoreCase = true)
+            }
+        }
         LaunchedEffect(autoRunAiOnAppear, aiInputText, aiAutoTriggered) {
             if (autoRunAiOnAppear && !aiAutoTriggered && aiInputText.isNotBlank()) {
                 aiAutoTriggered = true
@@ -343,208 +384,395 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
             }
         }
 
-        if (showDonatePrompt) {
-            AlertDialog(
-                show = true,
-                onDismissRequest = { showDonatePrompt = false },
-                title = { Text(stringResource(R.string.deadliner_donate_plan_title)) },
-                text = { Text(stringResource(R.string.deadliner_donate_plan_message)) },
-                miuixTitle = getString(R.string.deadliner_donate_plan_title),
-                miuixSummary = getString(R.string.deadliner_donate_plan_message),
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showDonatePrompt = false
-                            startActivity(
-                                Intent(this@AddDDLActivity, SettingsActivity::class.java).apply {
-                                    putExtra(SettingsActivity.EXTRA_INITIAL_ROUTE, SettingsRoute.Donate.route)
-                                }
-                            )
-                        }
-                    ) {
-                        Text(stringResource(R.string.deadliner_donate_go))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDonatePrompt = false }) {
-                        Text(stringResource(R.string.later))
-                    }
-                }
-            )
-        }
-
-        if (showPickerDialogBlur) {
-            RegisterAdvancedMaterialDialogBlur()
-        }
-        PickerWindowBlurEffect(
-            active = showPickerDialogBlur,
-            surfaceColor = MaterialTheme.colorScheme.surface
-        )
-
-        AdaptiveMaterialScaffold(
-            containerColor = Color.Transparent,
-            contentColor = contentColorFor(Color.Transparent),
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            advancedMaterialTopBarTintColor = MaterialTheme.colorScheme.surface,
-            topBar = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(if (advancedMaterial.enabled) Color.Transparent else pageSurfaceColor)
-                ) {
-                    TopAppBar(
-                        title = stringResource(R.string.add_task),
-                        mode = TopAppBarStyle.CENTER,
-                        titleTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
-                        useParentMaterialContainer = advancedMaterial.enabled,
-                        navigationIcon = {
-                            IconButton(onClick = { finishAfterTransition() }) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_back),
-                                    contentDescription = stringResource(R.string.close),
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = expressiveTypeModifier
-                                )
-                            }
-                        },
-                        actions = {
-                            if (selectedPage == 0) {
-                                IconButton(onClick = { onImportFromCalendarClick() }) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_event),
-                                        contentDescription = stringResource(R.string.select_calendar_to_import),
-                                        tint = MaterialTheme.colorScheme.onSurface,
-                                        modifier = expressiveTypeModifier
-                                    )
-                                }
-                            }
-                        }
-                    )
-                    TabRow(
-                        tabs = tabs,
-                        selectedTabIndex = selectedPage,
-                        onTabSelected = { selectedPage = it },
-                        divider = { HorizontalDivider(color = Color.Transparent) },
-                        modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)
-                    )
-                }
-            },
-            bottomBar = {
-                DeadlineBottomActions(
-                    showSaveToCalendar = selectedPage == 0,
-                    onSave = { requestSave(SaveAction.SAVE) },
-                    onSaveToCalendar = { requestSave(SaveAction.SAVE_TO_CALENDAR) }
-                )
-            }
-        ) { padding ->
-            LazyColumn(
+        ProvideAdvancedMaterialDialogBlurHost {
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(pageSurfaceColor)
-                    .padding(
-                        start = padding.calculateStartPadding(layoutDirection),
-                        end = padding.calculateEndPadding(layoutDirection),
-                    ),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    top = padding.calculateTopPadding() + 8.dp,
-                    end = 16.dp,
-                    bottom = 160.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .advancedMaterialDialogBlurHost()
             ) {
-                item {
-                    DeadlineAiQuickAddCard(
-                        value = aiInputText,
-                        onValueChange = { aiInputText = it },
-                        isLoading = isAiLoading,
-                        onSubmit = { parseAiInput() }
-                    )
+                if (showPickerDialogBlur) {
+                    RegisterAdvancedMaterialDialogBlur()
                 }
+                PickerWindowBlurEffect(
+                    active = showPickerDialogBlur,
+                    surfaceColor = MaterialTheme.colorScheme.surface
+                )
 
-                item {
-                    DeadlineNameField(
-                        value = taskDraft.name,
-                        onValueChange = { updateSharedName(it) }
-                    )
-                }
-
-                if (selectedPage == 0) {
-                    item {
-                        DeadlineStarToggleCard(
-                            checked = taskDraft.isStarred,
-                            onCheckedChange = { updateSharedStarred(it) }
+                AdaptiveMaterialScaffold(
+                    containerColor = Color.Transparent,
+                    contentColor = contentColorFor(Color.Transparent),
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                    advancedMaterialTopBarTintColor = MaterialTheme.colorScheme.surface,
+                    topBar = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(if (advancedMaterial.enabled) Color.Transparent else pageSurfaceColor)
+                        ) {
+                            TopAppBar(
+                                title = stringResource(R.string.add_task),
+                                mode = TopAppBarStyle.CENTER,
+                                titleTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
+                                useParentMaterialContainer = advancedMaterial.enabled,
+                                navigationIcon = {
+                                    IconButton(onClick = { finishAfterTransition() }) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_back),
+                                            contentDescription = stringResource(R.string.close),
+                                            tint = MaterialTheme.colorScheme.onSurface,
+                                            modifier = expressiveTypeModifier
+                                        )
+                                    }
+                                },
+                                actions = {
+                                    if (selectedPage == 0) {
+                                        IconButton(onClick = { onImportFromCalendarClick() }) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_event),
+                                                contentDescription = stringResource(R.string.select_calendar_to_import),
+                                                tint = MaterialTheme.colorScheme.onSurface,
+                                                modifier = expressiveTypeModifier
+                                            )
+                                        }
+                                    }
+                                }
+                            )
+                            TabRow(
+                                tabs = tabs,
+                                selectedTabIndex = selectedPage,
+                                onTabSelected = { selectedPage = it },
+                                divider = { HorizontalDivider(color = Color.Transparent) },
+                                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)
+                            )
+                        }
+                    },
+                    bottomBar = {
+                        DeadlineBottomActions(
+                            showSaveToCalendar = selectedPage == 0,
+                            onSave = { requestSave(SaveAction.SAVE) },
+                            onSaveToCalendar = { requestSave(SaveAction.SAVE_TO_CALENDAR) }
                         )
                     }
+                ) { padding ->
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(pageSurfaceColor)
+                            .padding(
+                                start = padding.calculateStartPadding(layoutDirection),
+                                end = padding.calculateEndPadding(layoutDirection),
+                            ),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            top = padding.calculateTopPadding() + 8.dp,
+                            end = 16.dp,
+                            bottom = 160.dp,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (GlobalUtils.deadlinerAIEnable) {
+                            item {
+                                DeadlineAiQuickAddCard(
+                                    value = aiInputText,
+                                    onValueChange = { aiInputText = it },
+                                    isLoading = isAiLoading,
+                                    onSubmit = { parseAiInput() }
+                                )
+                            }
+                        }
 
-                    item {
-                        TaskEditorSection(
-                            draft = taskDraft,
-                            onDraftChange = { taskDraft = it },
-                            formatDateTime = ::formatLocalDateTime,
-                            onPickStartTime = {
-                                launchPickerWithBlur {
-                                    GlobalUtils.showDateTimePicker(
-                                        supportFragmentManager,
-                                        onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
-                                    ) { selected ->
-                                        taskDraft = taskDraft.copy(
-                                            startTime = selected,
-                                            endTime = if (taskDraft.endTime.isBefore(selected)) {
-                                                selected.plusHours(1)
-                                            } else {
-                                                taskDraft.endTime
+                        item {
+                            DeadlineNameField(
+                                value = taskDraft.name,
+                                onValueChange = { updateSharedName(it) }
+                            )
+                        }
+
+                        if (selectedPage == 0) {
+                            item {
+                                DeadlineStarToggleCard(
+                                    checked = taskDraft.isStarred,
+                                    onCheckedChange = { updateSharedStarred(it) }
+                                )
+                            }
+
+                            item {
+                                TaskEditorSection(
+                                    draft = taskDraft,
+                                    onDraftChange = { taskDraft = it },
+                                    formatDateTime = ::formatLocalDateTime,
+                                    onPickStartTime = {
+                                        launchPickerWithBlur {
+                                            GlobalUtils.showDateTimePicker(
+                                                supportFragmentManager,
+                                                onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
+                                            ) { selected ->
+                                                taskDraft = taskDraft.copy(
+                                                    startTime = selected,
+                                                    endTime = if (taskDraft.endTime.isBefore(selected)) {
+                                                        selected.plusHours(1)
+                                                    } else {
+                                                        taskDraft.endTime
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onPickEndTime = {
+                                        launchPickerWithBlur {
+                                            GlobalUtils.showDateTimePicker(
+                                                supportFragmentManager,
+                                                taskDraft.startTime,
+                                                { chosen ->
+                                                    Toast.makeText(
+                                                        this@AddDDLActivity,
+                                                        getString(R.string.please_choose_the_time_after, chosen),
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                },
+                                                onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
+                                            ) { selected ->
+                                                taskDraft = taskDraft.copy(endTime = selected)
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                        } else {
+                            item {
+                                HabitEditorSection(
+                                    draft = habitDraft,
+                                    onDraftChange = { habitDraft = it },
+                                    summaryText = buildHabitSummary(),
+                                    reminderTimeLabel = habitDraft.reminderTime.format(REMINDER_TIME_FORMATTER),
+                                    onPickReminderTime = {
+                                        launchPickerWithBlur {
+                                            GlobalUtils.showTimePicker(
+                                                supportFragmentManager,
+                                                initialTime = habitDraft.reminderTime,
+                                                onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
+                                            ) { selected ->
+                                                habitDraft = habitDraft.copy(
+                                                    reminderEnabled = true,
+                                                    reminderTime = selected.withSecond(0).withNano(0)
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onClearReminder = {
+                                        habitDraft = habitDraft.copy(reminderEnabled = false)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (showDonatePrompt) {
+                    AlertDialog(
+                        show = true,
+                        onDismissRequest = { showDonatePrompt = false },
+                        title = { Text(stringResource(R.string.deadliner_donate_plan_title)) },
+                        text = { Text(stringResource(R.string.deadliner_donate_plan_message)) },
+                        miuixTitle = getString(R.string.deadliner_donate_plan_title),
+                        miuixSummary = getString(R.string.deadliner_donate_plan_message),
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    showDonatePrompt = false
+                                    startActivity(
+                                        Intent(this@AddDDLActivity, SettingsActivity::class.java).apply {
+                                            putExtra(SettingsActivity.EXTRA_INITIAL_ROUTE, SettingsRoute.Donate.route)
+                                        }
+                                    )
+                                }
+                            ) {
+                                Text(stringResource(R.string.deadliner_donate_go))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDonatePrompt = false }) {
+                                Text(stringResource(R.string.later))
+                            }
+                        }
+                    )
+                }
+
+                if (showCalendarEmptyDialog) {
+                    AlertDialog(
+                        show = true,
+                        onDismissRequest = { showCalendarEmptyDialog = false },
+                        title = { Text(stringResource(R.string.select_calendar_to_import)) },
+                        text = { Text(stringResource(R.string.no_task_add_calendar)) },
+                        miuixTitle = getString(R.string.select_calendar_to_import),
+                        miuixSummary = getString(R.string.no_task_add_calendar),
+                        confirmButton = {
+                            TextButton(onClick = {
+                                showCalendarEmptyDialog = false
+                                showCalendarFilterDialog()
+                            }) {
+                                Text(stringResource(R.string.filter_calendar_account))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showCalendarEmptyDialog = false }) {
+                                Text(stringResource(R.string.close))
+                            }
+                        }
+                    )
+                }
+
+                if (showCalendarImportDialog) {
+                    AlertDialog(
+                        show = true,
+                        onDismissRequest = { showCalendarImportDialog = false },
+                        renderTextContentInMiuix = true,
+                        title = { Text(stringResource(R.string.select_calendar_to_import)) },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                TextButton(
+                                    onClick = { showCalendarFilterDialog() },
+                                    modifier = Modifier.align(Alignment.End)
+                                ) {
+                                    Text(stringResource(R.string.filter_calendar_account))
+                                }
+                                OutlinedTextField(
+                                    value = calendarImportSearchQuery,
+                                    onValueChange = { calendarImportSearchQuery = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    placeholder = { Text(stringResource(R.string.search)) },
+                                    miuixLabel = getString(R.string.search),
+                                    singleLine = true
+                                )
+                                if (filteredCalendarEvents.isEmpty()) {
+                                    Text(
+                                        text = stringResource(R.string.no_task_add_calendar),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(max = 320.dp)
+                                            .verticalScroll(rememberScrollState()),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        filteredCalendarEvents.forEach { event ->
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable { selectedCalendarEventId = event.id }
+                                                    .padding(vertical = 6.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = selectedCalendarEventId == event.id,
+                                                    onClick = { selectedCalendarEventId = event.id }
+                                                )
+                                                Text(
+                                                    text = calendarEventDisplayText(event),
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .padding(start = 8.dp),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        miuixTitle = getString(R.string.select_calendar_to_import),
+                        miuixSummary = getString(R.string.settings_import),
+                        confirmButton = {
+                            TextButton(onClick = {
+                                if (selectedCalendarEventId == null) {
+                                    Toast.makeText(
+                                        this@AddDDLActivity,
+                                        getString(R.string.no_event_select),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    applySelectedCalendarEvent()
+                                }
+                            }) {
+                                Text(stringResource(R.string.settings_import))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showCalendarImportDialog = false }) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                        }
+                    )
+                }
+
+                if (showCalendarAccountFilterDialog) {
+                    AlertDialog(
+                        show = true,
+                        onDismissRequest = { showCalendarAccountFilterDialog = false },
+                        renderTextContentInMiuix = true,
+                        title = { Text(stringResource(R.string.select_calendar_account_to_hide)) },
+                        text = {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 320.dp)
+                                    .verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                calendarAccountOptions.forEach { account ->
+                                    val checked = selectedCalendarAccounts.contains(account)
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                selectedCalendarAccounts = if (checked) {
+                                                    selectedCalendarAccounts - account
+                                                } else {
+                                                    selectedCalendarAccounts + account
+                                                }
+                                            }
+                                            .padding(vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Checkbox(
+                                            checked = checked,
+                                            onCheckedChange = { isChecked ->
+                                                selectedCalendarAccounts = if (isChecked) {
+                                                    selectedCalendarAccounts + account
+                                                } else {
+                                                    selectedCalendarAccounts - account
+                                                }
                                             }
                                         )
-                                    }
-                                }
-                            },
-                            onPickEndTime = {
-                                launchPickerWithBlur {
-                                    GlobalUtils.showDateTimePicker(
-                                        supportFragmentManager,
-                                        taskDraft.startTime,
-                                        { chosen ->
-                                            Toast.makeText(
-                                                this@AddDDLActivity,
-                                                getString(R.string.please_choose_the_time_after, chosen),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        },
-                                        onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
-                                    ) { selected ->
-                                        taskDraft = taskDraft.copy(endTime = selected)
-                                    }
-                                }
-                            }
-                        )
-                    }
-                } else {
-                    item {
-                        HabitEditorSection(
-                            draft = habitDraft,
-                            onDraftChange = { habitDraft = it },
-                            summaryText = buildHabitSummary(),
-                            reminderTimeLabel = habitDraft.reminderTime.format(REMINDER_TIME_FORMATTER),
-                            onPickReminderTime = {
-                                launchPickerWithBlur {
-                                    GlobalUtils.showTimePicker(
-                                        supportFragmentManager,
-                                        initialTime = habitDraft.reminderTime,
-                                        onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
-                                    ) { selected ->
-                                        habitDraft = habitDraft.copy(
-                                            reminderEnabled = true,
-                                            reminderTime = selected.withSecond(0).withNano(0)
+                                        Text(
+                                            text = account,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .padding(start = 8.dp),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                         )
                                     }
                                 }
-                            },
-                            onClearReminder = {
-                                habitDraft = habitDraft.copy(reminderEnabled = false)
                             }
-                        )
-                    }
+                        },
+                        miuixTitle = getString(R.string.select_calendar_account_to_hide),
+                        miuixSummary = getString(R.string.filter_calendar_account),
+                        confirmButton = {
+                            TextButton(onClick = { saveCalendarAccountFilterSelection() }) {
+                                Text(stringResource(R.string.accept))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showCalendarAccountFilterDialog = false }) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -815,107 +1043,16 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         }
         if (calendarEvents.isEmpty()) {
             Toast.makeText(this, getString(R.string.no_task_add_calendar), Toast.LENGTH_SHORT).show()
-            MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.select_calendar_to_import)
-                .setMessage(getString(R.string.no_task_add_calendar))
-                .setNeutralButton(R.string.filter_calendar_account) { _, _ -> showCalendarFilterDialog() }
-                .setNegativeButton(R.string.close, null)
-                .show()
+            showCalendarImportDialog = false
+            showCalendarEmptyDialog = true
             return
         }
 
-        data class EventItem(val event: CalendarEvent) {
-            val display: String
-                get() {
-                    val time = GlobalUtils.parseDateTime(event.startMillis.toDateTimeString())
-                    return "${event.title} - ${time?.let(::formatLocalDateTime) ?: getString(R.string.parse_failed)}"
-                }
-
-            override fun toString() = display
-        }
-
-        val items = calendarEvents.map { EventItem(it) }
-        val dialogView = layoutInflater.inflate(R.layout.dialog_calendar_events, null, false)
-        val etSearch = dialogView.findViewById<TextInputEditText>(R.id.searchEditText)
-        val lvEvents = dialogView.findViewById<ListView>(R.id.eventListView)
-
-        open class EventAdapter(
-            ctx: Context,
-            items: List<EventItem>
-        ) : ArrayAdapter<EventItem>(ctx, R.layout.dialog_single_choice_layout, android.R.id.text1, items) {
-            private val original = items.toList()
-            private val filtered = items.toMutableList()
-
-            override fun getFilter(): Filter = object : Filter() {
-                override fun performFiltering(constraint: CharSequence?) = FilterResults().apply {
-                    filtered.clear()
-                    if (constraint.isNullOrBlank()) {
-                        filtered.addAll(original)
-                    } else {
-                        val kw = constraint.toString().lowercase()
-                        filtered.addAll(original.filter { it.display.lowercase().contains(kw) })
-                    }
-                    values = filtered.toList()
-                    count = filtered.size
-                }
-
-                @Suppress("UNCHECKED_CAST")
-                override fun publishResults(c: CharSequence?, results: FilterResults) {
-                    clear()
-                    addAll(results.values as List<EventItem>)
-                    notifyDataSetChanged()
-                }
-            }
-
-            override fun getView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
-                val view = super.getView(position, convertView, parent)
-                val rb = view.findViewById<RadioButton>(R.id.radio)
-                rb.isChecked = (parent as ListView).isItemChecked(position)
-                return view
-            }
-        }
-
-        val adapter = EventAdapter(this, items)
-        lvEvents.adapter = adapter
-        lvEvents.choiceMode = ListView.CHOICE_MODE_SINGLE
-
-        etSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                adapter.filter.filter(s)
-            }
-            override fun afterTextChanged(s: Editable?) = Unit
-        })
-
-        var selectedPosition = -1
-        lvEvents.setOnItemClickListener { _, _, pos, _ ->
-            selectedPosition = pos
-            lvEvents.setItemChecked(pos, true)
-            adapter.notifyDataSetChanged()
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.select_calendar_to_import)
-            .setView(dialogView)
-            .setNeutralButton(R.string.filter_calendar_account) { _, _ -> showCalendarFilterDialog() }
-            .setPositiveButton(R.string.settings_import) { dialog, _ ->
-                if (selectedPosition >= 0) {
-                    val event = adapter.getItem(selectedPosition)?.event
-                    if (event != null) {
-                        updateSharedName(event.title.orEmpty())
-                        taskDraft = taskDraft.copy(note = event.description.orEmpty())
-                        GlobalUtils.parseDateTime(event.startMillis.toDateTimeString())?.let {
-                            taskDraft = taskDraft.copy(endTime = it)
-                        }
-                        calendarEventId = event.id
-                    }
-                } else {
-                    Toast.makeText(this, getString(R.string.no_event_select), Toast.LENGTH_SHORT).show()
-                }
-                dialog.dismiss()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+        calendarImportEvents = calendarEvents
+        calendarImportSearchQuery = ""
+        selectedCalendarEventId = null
+        showCalendarEmptyDialog = false
+        showCalendarImportDialog = true
     }
 
     private fun showCalendarFilterDialog() {
@@ -946,27 +1083,9 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
             return
         }
 
-        val names = accounts.map { it.accountName.ifEmpty { it.accountName } }.toTypedArray()
-        val savedSet = GlobalUtils.filteredCalendars ?: setOf()
-        val checked = names.map { savedSet.contains(it) }.toBooleanArray()
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.select_calendar_account_to_hide)
-            .setMultiChoiceItems(names, checked) { _, which, isChecked ->
-                checked[which] = isChecked
-            }
-            .setPositiveButton(R.string.accept) { _, _ ->
-                val newFiltered = names.zip(checked.toList())
-                    .filter { it.second }
-                    .map { it.first }
-                    .toSet()
-
-                GlobalUtils.filteredCalendars = newFiltered
-                Toast.makeText(this, R.string.calendar_filter_saved, Toast.LENGTH_SHORT).show()
-                loadCalendarEventsAndShowDialog()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+        calendarAccountOptions = accounts.map { it.accountName }.filter { it.isNotBlank() }
+        selectedCalendarAccounts = GlobalUtils.filteredCalendars?.filterNotNull()?.toSet() ?: emptySet()
+        showCalendarAccountFilterDialog = true
     }
 
     private fun formatLocalDateTime(dateTime: LocalDateTime): String {

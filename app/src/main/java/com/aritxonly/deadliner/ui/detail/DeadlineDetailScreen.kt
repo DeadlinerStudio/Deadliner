@@ -43,6 +43,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -79,6 +80,7 @@ import com.aritxonly.deadliner.model.DDLState
 import com.aritxonly.deadliner.model.SubTask
 import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.RadioButton
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
@@ -89,7 +91,6 @@ import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.iconResource
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -148,6 +149,8 @@ fun DeadlineDetailScreen(
     var editingSubTaskId by rememberSaveable(deadline.id) { mutableStateOf<String?>(null) }
     var editingSubTaskDraft by rememberSaveable(deadline.id) { mutableStateOf("") }
     var isMutatingPlan by remember(deadline.id) { mutableStateOf(false) }
+    var showGiveUpDialog by rememberSaveable(deadline.id) { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable(deadline.id) { mutableStateOf(false) }
     val composerFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(deadline.isStared) {
@@ -209,17 +212,7 @@ fun DeadlineDetailScreen(
             }
 
             DetailAction.GIVE_UP -> {
-                MaterialAlertDialogBuilder(activityContext)
-                    .setTitle(R.string.confirm_give_up_title)
-                    .setMessage(R.string.confirm_give_up_message)
-                    .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.accept) { _, _ ->
-                        onApplyTaskAction(TaskStateAction.MARK_GIVE_UP, true)
-                        Toast.makeText(activityContext, R.string.toast_give_up, Toast.LENGTH_SHORT)
-                            .show()
-                        finishActivity()
-                    }
-                    .show()
+                showGiveUpDialog = true
             }
 
             DetailAction.RESTORE_ACTIVE -> {
@@ -245,18 +238,7 @@ fun DeadlineDetailScreen(
             }
 
             DetailAction.DELETE -> {
-                MaterialAlertDialogBuilder(activityContext)
-                    .setTitle(R.string.alert_delete_title)
-                    .setMessage(R.string.alert_delete_message)
-                    .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.accept) { _, _ ->
-                        onDelete(deadline.id)
-                        DeadlineAlarmScheduler.cancelAlarm(applicationContext, deadline.id)
-                        Toast.makeText(activityContext, R.string.toast_deletion, Toast.LENGTH_SHORT)
-                            .show()
-                        finishActivity()
-                    }
-                    .show()
+                showDeleteDialog = true
             }
 
             DetailAction.SAVE_TO_CALENDAR -> {
@@ -454,6 +436,65 @@ fun DeadlineDetailScreen(
             Spacer(modifier = Modifier.height(88.dp))
         }
     }
+
+    if (showGiveUpDialog) {
+        AlertDialog(
+            show = true,
+            onDismissRequest = { showGiveUpDialog = false },
+            title = { Text(stringResource(R.string.confirm_give_up_title)) },
+            text = { Text(stringResource(R.string.confirm_give_up_message)) },
+            miuixTitle = activityContext.getString(R.string.confirm_give_up_title),
+            miuixSummary = activityContext.getString(R.string.confirm_give_up_message),
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showGiveUpDialog = false
+                        onApplyTaskAction(TaskStateAction.MARK_GIVE_UP, true)
+                        Toast.makeText(activityContext, R.string.toast_give_up, Toast.LENGTH_SHORT)
+                            .show()
+                        finishActivity()
+                    }
+                ) {
+                    Text(stringResource(R.string.accept))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGiveUpDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            show = true,
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.alert_delete_title)) },
+            text = { Text(stringResource(R.string.alert_delete_message)) },
+            miuixTitle = activityContext.getString(R.string.alert_delete_title),
+            miuixSummary = activityContext.getString(R.string.alert_delete_message),
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDelete(deadline.id)
+                        DeadlineAlarmScheduler.cancelAlarm(applicationContext, deadline.id)
+                        Toast.makeText(activityContext, R.string.toast_deletion, Toast.LENGTH_SHORT)
+                            .show()
+                        finishActivity()
+                    }
+                ) {
+                    Text(stringResource(R.string.accept))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -571,6 +612,7 @@ private fun ProgressCard(deadline: DDLItem) {
             )
         }
     }
+
 }
 
 @Composable

@@ -87,6 +87,8 @@ object IntroGuideScenes {
         return ids.mapNotNull { id -> allScenes.find { it.id == id } }
     }
 
+    fun findById(id: String): IntroGuideSceneConfig? = allScenes.firstOrNull { it.id == id }
+
     @RawRes
     fun resolveRawRes(fileName: String): Int = when (fileName) {
         "Scene-1-Harmony.json" -> R.raw.scene_1_harmony

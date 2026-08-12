@@ -35,7 +35,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -67,6 +66,7 @@ import com.aritxonly.deadliner.capture.CaptureEffect
 import com.aritxonly.deadliner.capture.CaptureViewModel
 import com.aritxonly.deadliner.capture.model.InspirationItem
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
@@ -158,10 +158,11 @@ fun CaptureTopBar(
     }
 
     if (showDeleteSelectedConfirm) {
-        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
+            show = true,
             onDismissRequest = { showDeleteSelectedConfirm = false },
             title = { Text(stringResource(R.string.capture_delete_selected_confirm_title, ui.selectedIds.size)) },
+            miuixTitle = stringResource(R.string.capture_delete_selected_confirm_title, ui.selectedIds.size),
             text = { Text(stringResource(R.string.capture_delete_selected_confirm_message)) },
             confirmButton = {
                 TextButton(
@@ -382,10 +383,11 @@ fun CaptureContent(
         } else {
             stringResource(R.string.capture_delete_confirm_title_with_text, deleteText)
         }
-        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
+            show = true,
             onDismissRequest = { pendingDelete = null },
             title = { Text(previewTitle) },
+            miuixTitle = previewTitle,
             text = { Text(stringResource(R.string.capture_delete_confirm_message)) },
             confirmButton = {
                 TextButton(
@@ -860,7 +862,7 @@ private fun CaptureDetailSheet(
                 )
                 IconButton(onClick = onSave) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_check),
+                        painter = painterResource(id = R.drawable.ic_ok),
                         contentDescription = stringResource(R.string.save)
                     )
                 }

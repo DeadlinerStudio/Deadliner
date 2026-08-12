@@ -72,12 +72,6 @@ fun AdvancedMaterialSettingsScreen(
             contentPadding = padding,
             modifier = Modifier,
         ) {
-            AdvancedMaterialPreviewCard(
-                level = appearance.advancedMaterialLevel,
-                enabled = appearance.useAdvancedMaterial,
-                modifier = Modifier.padding(vertical = 8.dp),
-            )
-
             SettingsSection(
                 mainContent = true,
                 enabled = appearance.useAdvancedMaterial,
@@ -93,6 +87,12 @@ fun AdvancedMaterialSettingsScreen(
                     mainSwitch = true
                 )
             }
+
+            AdvancedMaterialPreviewCard(
+                level = appearance.advancedMaterialLevel,
+                enabled = appearance.useAdvancedMaterial,
+                modifier = Modifier.padding(vertical = 8.dp),
+            )
 
             if (appearance.useAdvancedMaterial) {
                 SettingsSection(topLabel = stringResource(R.string.settings_advanced_material_blur_size)) {
@@ -112,7 +112,7 @@ fun AdvancedMaterialSettingsScreen(
 }
 
 @Composable
-private fun AdvancedMaterialPreviewCard(
+fun AdvancedMaterialPreviewCard(
     level: AdvancedMaterialLevel,
     enabled: Boolean,
     modifier: Modifier = Modifier,

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,7 +30,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.SvgCard
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
@@ -190,9 +189,8 @@ private fun DefaultBackButton(
 private fun AppearanceWelcomeOverlay(
     onDismiss: () -> Unit,
 ) {
-    RegisterAdvancedMaterialDialogBlur()
-
     AlertDialog(
+        show = true,
         onDismissRequest = onDismiss,
         title = {
             Text(

@@ -36,7 +36,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.setContent
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -48,7 +47,7 @@ import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.Switch
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TopAppBar
@@ -171,13 +170,13 @@ fun OverviewSettingsDialog(
     onDismiss: () -> Unit,
 ) {
     if (!visible) return
-    RegisterAdvancedMaterialDialogBlur()
 
     var showOverdueSeries by remember {
         mutableStateOf(GlobalUtils.OverviewSettings.showOverdueInDaily)
     }
 
     AlertDialog(
+        show = true,
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = onDismiss) {
@@ -185,8 +184,12 @@ fun OverviewSettingsDialog(
             }
         },
         title = {
-            Text(stringResource(R.string.settings_more))
+            Text(
+                text = stringResource(R.string.settings_more),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
         },
+        miuixTitle = stringResource(R.string.settings_more),
         text = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

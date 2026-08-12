@@ -132,7 +132,7 @@ fun UiModeSelectionRow(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        if (currentStyle == UiStyle.Classic.key) {
+        if (currentStyle == UiStyle.Classic.key && !inIntroPage) {
             HiddenClassicModeNotice(
                 modifier = Modifier.padding(horizontal = edgePadding)
             )

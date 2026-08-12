@@ -85,9 +85,12 @@ import com.aritxonly.deadliner.OverviewTopBarWithTabs
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsActivity
 import com.aritxonly.deadliner.capture.CaptureViewModel
+import com.aritxonly.deadliner.capture.data.CaptureRepository
+import com.aritxonly.deadliner.capture.model.InspirationItem
 import com.aritxonly.deadliner.capture.ui.CaptureContent
 import com.aritxonly.deadliner.capture.ui.CaptureTopBar
 import com.aritxonly.deadliner.data.DDLRepository
+import com.aritxonly.deadliner.data.HabitRepository
 import com.aritxonly.deadliner.data.MainViewModel
 import com.aritxonly.deadliner.data.MainViewModelFactory
 import com.aritxonly.deadliner.data.HabitViewModel
@@ -95,18 +98,20 @@ import com.aritxonly.deadliner.data.HabitViewModelFactory
 import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.localutils.GlobalUtils.showHabitReminderDialog
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.model.Habit
+import com.aritxonly.deadliner.model.HabitStatus
 import com.aritxonly.deadliner.model.PartyPresets
+import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
 import com.aritxonly.deadliner.ui.base.AdaptiveNavItem
 import com.aritxonly.deadliner.ui.base.AdaptiveNavigationSuiteScaffold
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.FloatingActionButton
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
@@ -115,14 +120,16 @@ import com.aritxonly.deadliner.ui.main.modern.components.ModernMainHeader
 import com.aritxonly.deadliner.ui.main.shared.DeadlinerUrlIntake
 import com.aritxonly.deadliner.ui.main.shared.MainDisplay
 import com.aritxonly.deadliner.ui.main.shared.MainHostLifecycleCoordinator
+import com.aritxonly.deadliner.ui.main.shared.MainSearchResultsContent
+import com.aritxonly.deadliner.ui.main.shared.MainSearchScope
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostUiState
 import com.aritxonly.deadliner.ui.main.shared.rememberMainSelectionActionController
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
 import com.aritxonly.deadliner.ui.main.simplified.MainSearchBar
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.withContext
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.core.Party
 import java.io.File
@@ -171,7 +178,7 @@ fun ModernHost(
     var showOverviewSettings by rememberSaveable { mutableStateOf(false) }
     var overviewSelectedTab by rememberSaveable { mutableIntStateOf(0) }
     var showCaptureMergeSheet by rememberSaveable { mutableStateOf(false) }
-    var showSearchPage by rememberSaveable { mutableStateOf(false) }
+    var searchScope by rememberSaveable { mutableStateOf(MainSearchScope.ALL) }
     var activeSelectionPane by rememberSaveable { mutableStateOf<DeadlineType?>(null) }
     var parties by remember { mutableStateOf<List<Party>>(emptyList()) }
     var fireKey by remember { mutableIntStateOf(0) }
@@ -179,9 +186,14 @@ fun ModernHost(
     val taskListState = rememberLazyListState()
     val habitListState = rememberLazyListState()
     val textFieldState = rememberTextFieldState()
-    var suggestions by rememberSaveable { mutableStateOf(emptyList<DDLItem>()) }
-    var base by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
+    var searchBase by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
+    var searchInspirations by remember { mutableStateOf<List<InspirationItem>>(emptyList()) }
+    var archivedHabitByDdlId by remember { mutableStateOf<Map<Long, Habit>>(emptyMap()) }
+    val searchQuery = textFieldState.text.toString()
     var overlayTopBarHeightPx by remember { mutableIntStateOf(0) }
+    val archiveTaskRepo = remember { DDLRepository() }
+    val archiveHabitRepo = remember { HabitRepository() }
+    val captureRepo = remember(context) { CaptureRepository(context.applicationContext) }
 
     LaunchedEffect(isWideLayout) {
         if (isWideLayout && hostState.selectedPage != DeadlineType.TASK) {
@@ -246,24 +258,10 @@ fun ModernHost(
         },
     )
 
-    LaunchedEffect(hostState.selectedPage) {
-        base = vm.getBaseList(DeadlineType.TASK) + vm.getBaseList(DeadlineType.HABIT)
-    }
-
     LaunchedEffect(hostState.selectedSection) {
         if (hostState.selectedSection == MainSection.OVERVIEW) {
             overviewItems = DDLRepository().getDDLsByType(DeadlineType.TASK)
         }
-    }
-
-    LaunchedEffect(textFieldState) {
-        snapshotFlow { textFieldState.text.toString() }
-            .distinctUntilChanged()
-            .debounce(250)
-            .collect { q ->
-                val f = SearchFilter.parse(q)
-                suggestions = if (q.isBlank()) emptyList() else base.filter { f.matches(it) }
-            }
     }
 
     DeadlinerUrlIntake(
@@ -279,12 +277,22 @@ fun ModernHost(
         },
     )
 
-    BackHandler(enabled = hostState.selectionMode || showSearchPage || hostState.showOverlay) {
+    fun closeSearch() {
+        textFieldState.edit { replace(0, length, "") }
+        searchScope = MainSearchScope.ALL
+        onSearchActiveChange(false)
+    }
+
+    fun openSearch() {
+        hostState.selectedSection = MainSection.LIST
+        onSearchActiveChange(true)
+    }
+
+    BackHandler(enabled = hostState.selectionMode || searchActive || hostState.showOverlay) {
         when {
             hostState.showOverlay -> hostState.showOverlay = false
-            showSearchPage -> {
-                showSearchPage = false
-                onSearchActiveChange(false)
+            searchActive -> {
+                closeSearch()
             }
             hostState.selectionMode -> {
                 hostState.clearSelection()
@@ -320,7 +328,7 @@ fun ModernHost(
         ),
     )
 
-    val selectedKey = if (showSearchPage) {
+    val selectedKey = if (searchActive) {
         "search"
     } else when (hostState.selectedSection) {
         MainSection.LIST -> "list"
@@ -328,7 +336,7 @@ fun ModernHost(
         MainSection.CAPTURE -> "capture"
     }
     val topBarState = when {
-        showSearchPage -> ModernTopBarState.HIDDEN
+        searchActive -> ModernTopBarState.HIDDEN
         hostState.selectedSection == MainSection.LIST && hostState.selectionMode ->
             ModernTopBarState.LIST_SELECTION
         hostState.selectedSection == MainSection.LIST -> ModernTopBarState.LIST_DEFAULT
@@ -336,7 +344,7 @@ fun ModernHost(
         else -> ModernTopBarState.CAPTURE
     }
     val useOverlayTopBar = when (hostState.selectedSection) {
-        MainSection.LIST -> !showSearchPage
+        MainSection.LIST -> !searchActive
         MainSection.OVERVIEW -> !useFlattenedOverview
         MainSection.CAPTURE -> true
     }
@@ -350,7 +358,7 @@ fun ModernHost(
         hostState.selectedSection,
         hostState.selectedPage,
         hostState.selectionMode,
-        showSearchPage,
+        searchActive,
         taskListState,
         habitListState,
     ) {
@@ -358,7 +366,7 @@ fun ModernHost(
             if (
                 hostState.selectedSection != MainSection.LIST ||
                 hostState.selectionMode ||
-                showSearchPage
+                searchActive
             ) {
                 false
             } else if (isWideLayout) {
@@ -386,6 +394,24 @@ fun ModernHost(
         habitVm = habitVm,
         hostState = hostState,
     )
+
+    suspend fun refreshSearchData() {
+        searchBase = vm.getBaseList(DeadlineType.TASK) + vm.getBaseList(DeadlineType.HABIT)
+        searchInspirations = withContext(Dispatchers.IO) {
+            captureRepo.load()
+        }
+        archivedHabitByDdlId = withContext(Dispatchers.IO) {
+            archiveHabitRepo.getAllHabits()
+                .filter { it.status == HabitStatus.ARCHIVED }
+                .associateBy { it.ddlId }
+        }
+    }
+
+    LaunchedEffect(refreshState) {
+        if (refreshState !is MainViewModel.RefreshState.Loading) {
+            refreshSearchData()
+        }
+    }
 
     LaunchedEffect(selectionActions.habitReminderTargetId) {
         val targetId = selectionActions.habitReminderTargetId ?: return@LaunchedEffect
@@ -419,22 +445,18 @@ fun ModernHost(
         onItemSelected = {
             when (it.key) {
                 "search" -> {
-                    hostState.selectedSection = MainSection.LIST
-                    showSearchPage = true
-                    onSearchActiveChange(true)
-                    textFieldState.edit { replace(0, length, "") }
-                    suggestions = emptyList()
+                    openSearch()
                 }
                 "overview" -> {
-                    showSearchPage = false
+                    closeSearch()
                     hostState.selectedSection = MainSection.OVERVIEW
                 }
                 "capture" -> {
-                    showSearchPage = false
+                    closeSearch()
                     hostState.selectedSection = MainSection.CAPTURE
                 }
                 else -> {
-                    showSearchPage = false
+                    closeSearch()
                     hostState.selectedSection = MainSection.LIST
                 }
             }
@@ -585,7 +607,7 @@ fun ModernHost(
         },
         floatingActionButton = {
             val shouldShowFab =
-                hostState.selectedSection == MainSection.LIST && !hostState.selectionMode && !showSearchPage
+                hostState.selectedSection == MainSection.LIST && !hostState.selectionMode && !searchActive
 
                 if (shouldShowFab) {
                     val onFabClick = {
@@ -620,7 +642,7 @@ fun ModernHost(
 
             when (hostState.selectedSection) {
                 MainSection.LIST -> {
-                    if (!showSearchPage) {
+                    if (!searchActive) {
                         val onUndoSnackbar: (DDLItem) -> Unit = { updatedHabit ->
                             scope.launch {
                                 val result = snackbarHostState.showSnackbar(
@@ -820,7 +842,7 @@ fun ModernHost(
             }
 
         AnimatedVisibility(
-            visible = showSearchPage,
+            visible = searchActive,
             enter = fadeIn(animationSpec = tween(durationMillis = 220)) +
                 expandVertically(
                     animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
@@ -839,24 +861,81 @@ fun ModernHost(
             MainSearchBar(
                 textFieldState = textFieldState,
                 onQueryChanged = { q ->
-                    val f = SearchFilter.parse(q)
-                    suggestions = if (q.isBlank()) emptyList() else base.filter { f.matches(it) }
+                    textFieldState.edit { replace(0, length, q) }
                 },
-                searchResults = suggestions,
                 activity = activity,
                 habitViewModel = habitVm,
                 expanded = true,
                 onExpandedChangeExternal = { expanded ->
                     if (!expanded) {
-                        showSearchPage = false
-                        onSearchActiveChange(false)
+                        closeSearch()
                     }
                 },
-                selectedPage = hostState.selectedPage,
+                useSurfaceColors = true,
                 miuixMode = false,
-                resultsHorizontalPadding = 0.dp,
-                mixedResultTypes = true,
-            )
+            ) {
+                MainSearchResultsContent(
+                    query = searchQuery,
+                    scope = searchScope,
+                    onScopeChange = { searchScope = it },
+                    items = searchBase,
+                    habitViewModel = habitVm,
+                    activity = activity,
+                    inspirations = searchInspirations,
+                    archivedHabitByDdlId = archivedHabitByDdlId,
+                    onCaptureChanged = {
+                        scope.launch {
+                            refreshSearchData()
+                        }
+                    },
+                    onRestoreArchivedTask = { item ->
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                archiveTaskRepo.applyTaskAction(
+                                    itemId = item.id,
+                                    action = TaskStateAction.UNARCHIVE,
+                                    confirmed = true,
+                                )
+                            }
+                            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(hostState.selectedPage)
+                            habitVm.refresh()
+                            refreshSearchData()
+                        }
+                    },
+                    onDeleteArchivedTask = { item ->
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                archiveTaskRepo.deleteDDL(item.id)
+                            }
+                            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(hostState.selectedPage)
+                            habitVm.refresh()
+                            refreshSearchData()
+                        }
+                    },
+                    onRestoreArchivedHabit = { habit ->
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                archiveHabitRepo.updateHabit(
+                                    habit.copy(status = HabitStatus.ACTIVE),
+                                )
+                            }
+                            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(hostState.selectedPage)
+                            habitVm.refresh()
+                            refreshSearchData()
+                        }
+                    },
+                    onDeleteArchivedHabit = { habit ->
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                archiveHabitRepo.deleteHabitByDdlId(habit.ddlId)
+                            }
+                            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(hostState.selectedPage)
+                            habitVm.refresh()
+                            refreshSearchData()
+                        }
+                    },
+                )
+            }
         }
 
         key(fireKey) {
@@ -873,12 +952,12 @@ fun ModernHost(
     OverviewSettingsDialog(
         visible = hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings,
         onDismiss = { showOverviewSettings = false },
-        )
+    )
     }
 
     if (selectionActions.showDeleteDialog) {
-        RegisterAdvancedMaterialDialogBlur()
-        androidx.compose.material3.AlertDialog(
+        AlertDialog(
+            show = true,
             onDismissRequest = { selectionActions.dismissDeleteDialog() },
             title = { Text(stringResource(R.string.alert_delete_title)) },
             text = { Text(stringResource(R.string.alert_delete_message)) },

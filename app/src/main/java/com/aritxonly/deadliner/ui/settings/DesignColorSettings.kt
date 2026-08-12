@@ -219,7 +219,7 @@ fun DesignColorSettingsScreen(
 }
 
 @Composable
-private fun ColorfulIndicatorStylePicker(
+fun ColorfulIndicatorStylePicker(
     selectedKey: ColorfulIndicatorStyle,
     onStyleSelected: (ColorfulIndicatorStyle) -> Unit,
 ) {
@@ -280,10 +280,11 @@ private fun ColorfulIndicatorStylePicker(
 }
 
 @Composable
-private fun DesignColorPreviewCard(
+fun DesignColorPreviewCard(
     designMode: AppearanceDesignMode,
     colorfulIndicator: Boolean,
     colorfulIndicatorStyle: ColorfulIndicatorStyle,
+    simpleColorPreview: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var previewSwitchChecked by remember(designMode) {
@@ -340,12 +341,14 @@ private fun DesignColorPreviewCard(
 
             ColorRoleShowcaseRow()
 
-            CompactTaskPreview(
-                status = if (colorfulIndicator) DDLStatus.NEAR else DDLStatus.UNDERGO,
-                colorfulIndicator = colorfulIndicator,
-                colorfulIndicatorStyle = colorfulIndicatorStyle,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            if (!simpleColorPreview) {
+                CompactTaskPreview(
+                    status = if (colorfulIndicator) DDLStatus.NEAR else DDLStatus.UNDERGO,
+                    colorfulIndicator = colorfulIndicator,
+                    colorfulIndicatorStyle = colorfulIndicatorStyle,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
             IndicatorPaletteShowcase(
                 colorfulIndicator = colorfulIndicator,
@@ -353,39 +356,41 @@ private fun DesignColorPreviewCard(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier.weight(1f)
+            if (!simpleColorPreview) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shape = RoundedCornerShape(18.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Text(
-                            text = stringResource(R.string.settings_design_preview_switch_label),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Switch(
-                            checked = previewSwitchChecked,
-                            onCheckedChange = { previewSwitchChecked = it }
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.settings_design_preview_switch_label),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Switch(
+                                checked = previewSwitchChecked,
+                                onCheckedChange = { previewSwitchChecked = it }
+                            )
+                        }
                     }
-                }
-                Button(
-                    onClick = {},
-                    modifier = Modifier.weight(0.72f)
-                ) {
-                    Text(text = stringResource(R.string.settings_design_preview_button_label))
+                    Button(
+                        onClick = {},
+                        modifier = Modifier.weight(0.72f)
+                    ) {
+                        Text(text = stringResource(R.string.settings_design_preview_button_label))
+                    }
                 }
             }
         }
@@ -803,7 +808,7 @@ private fun ModernColorPalette.summary(): String = when (this) {
 }
 
 @Composable
-private fun DynamicPaletteStylePicker(
+fun DynamicPaletteStylePicker(
     selectedStyle: DynamicPaletteStyle,
     onStyleSelected: (DynamicPaletteStyle) -> Unit,
 ) {

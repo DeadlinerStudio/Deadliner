@@ -25,9 +25,22 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +50,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.NavHost
@@ -76,11 +91,13 @@ import com.aritxonly.deadliner.localutils.DisplayScaleManager
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.ui.settings.UiSettingsScreen
+import com.aritxonly.deadliner.ui.base.AlertDialog
+import com.aritxonly.deadliner.ui.base.Checkbox
+import com.aritxonly.deadliner.ui.base.OutlinedTextField
+import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
+import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -173,6 +190,11 @@ private data class SettingsDesignModeTransition(
     val indicatorColorArgb: Int,
 )
 
+private data class CustomCalendarFilterDialogState(
+    val allItems: List<String>,
+    val selectedItems: Set<String>,
+)
+
 class SettingsActivity : DeadlinerAppCompatActivity() {
     companion object {
         private const val EXPORT_REQUEST_CODE = 1001
@@ -185,6 +207,12 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
     private var latestRoute: String = SettingsRoute.Main.route
     private var designModeTransitionOverlay: View? = null
     private var designModeTransitionInFlight: Boolean = false
+    private var customCalendarFilterDialogState by mutableStateOf<CustomCalendarFilterDialogState?>(null)
+    private var showCustomCalendarNewItemDialog by mutableStateOf(false)
+    private var customCalendarNewItemDraft by mutableStateOf("")
+    private var importConfirmUri by mutableStateOf<Uri?>(null)
+    private var showImportSuccessDialog by mutableStateOf(false)
+    private var showRestartAppDialog by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdgeForAllDevices()
@@ -242,18 +270,24 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
 
             DeadlinerTheme {
                 val colorScheme = MaterialTheme.colorScheme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = colorScheme.surface
-                ) {
-                    NavHost(
-                        navController,
-                        startDestination = SettingsRoute.Main.route,
-                        enterTransition = defaultEnter,
-                        exitTransition = defaultExit,
-                        popEnterTransition = defaultPopEnter,
-                        popExitTransition = defaultPopExit
+                ProvideAdvancedMaterialDialogBlurHost {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .advancedMaterialDialogBlurHost()
                     ) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = colorScheme.surface
+                        ) {
+                            NavHost(
+                                navController,
+                                startDestination = SettingsRoute.Main.route,
+                                enterTransition = defaultEnter,
+                                exitTransition = defaultExit,
+                                popEnterTransition = defaultPopEnter,
+                                popExitTransition = defaultPopExit
+                            ) {
                         composable(SettingsRoute.Main.route) {
                             MainSettingsScreen(navController, onClose = { finishAfterTransition() })
                         }
@@ -265,7 +299,7 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
                         }
                         composable(SettingsRoute.Behavior.route) {
                             BehaviorSettingsScreen(
-                                navController, handleRestart = { showDialogRestartAppTablet() }
+                                navController, handleRestart = { showRestartAppDialog = true }
                             ) { navController.navigateUp() }
                         }
                         composable(SettingsRoute.Profile.route) {
@@ -299,74 +333,7 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
                                     navController.navigate(SettingsRoute.DisplayScaleCustom.route)
                                 },
                                 onClickCustomFilter = {
-                                    val allItems =
-                                        GlobalUtils.customCalendarFilterList?.filterNotNull()
-                                            ?.toMutableList() ?: mutableListOf()
-                                    val selectedItems =
-                                        GlobalUtils.customCalendarFilterListSelected?.filterNotNull()
-                                            ?.toMutableSet() ?: allItems.toMutableSet()
-
-                                    fun showFilterDialog() {
-                                        val itemsArray = allItems.toTypedArray()
-                                        val checkedArray = BooleanArray(itemsArray.size) { index ->
-                                            if (selectedItems.isEmpty()) true
-                                            else selectedItems.contains(itemsArray[index])
-                                        }
-
-                                        MaterialAlertDialogBuilder(this@SettingsActivity)
-                                            .setTitle(R.string.select_filter_calendar)
-                                            .setMultiChoiceItems(
-                                                itemsArray,
-                                                checkedArray
-                                            ) { _, which, isChecked ->
-                                                val item = itemsArray[which]
-                                                if (isChecked) selectedItems.add(item)
-                                                else selectedItems.remove(item)
-                                            }
-                                            .setNeutralButton(R.string.filter_add_one) { dialog, _ ->
-                                                dialog.dismiss()
-                                                val inputLayout =
-                                                    TextInputLayout(this@SettingsActivity).apply {
-                                                        hint = getString(R.string.new_filter_name)
-                                                        setPadding(32, 0, 32, 0)
-                                                    }
-                                                val editText =
-                                                    TextInputEditText(inputLayout.context)
-                                                inputLayout.addView(editText)
-
-                                                MaterialAlertDialogBuilder(this@SettingsActivity)
-                                                    .setTitle(R.string.new_filter_title)
-                                                    .setView(inputLayout)
-                                                    .setPositiveButton(R.string.accept) { subDialog, _ ->
-                                                        val newItem =
-                                                            editText.text?.toString()?.trim()
-                                                        if (!newItem.isNullOrEmpty() && !allItems.contains(
-                                                                newItem
-                                                            )
-                                                        ) {
-                                                            allItems.add(newItem)
-                                                            selectedItems.add(newItem)
-                                                            GlobalUtils.customCalendarFilterList =
-                                                                allItems.toSet()
-                                                            GlobalUtils.customCalendarFilterListSelected =
-                                                                selectedItems.toSet()
-                                                        }
-                                                        subDialog.dismiss()
-                                                        showFilterDialog()
-                                                    }
-                                                    .setNegativeButton(R.string.cancel, null)
-                                                    .show()
-                                            }
-                                            .setPositiveButton(R.string.accept) { dialog, _ ->
-                                                GlobalUtils.customCalendarFilterListSelected =
-                                                    selectedItems.toSet()
-                                                dialog.dismiss()
-                                            }
-                                            .setNegativeButton(R.string.cancel, null)
-                                            .show()
-                                    }
-
-                                    showFilterDialog()
+                                    openCustomCalendarFilterDialog()
                                 },
                                 onClickCancelAll = {
                                     DeadlineAlarmScheduler.cancelAllAlarms(applicationContext)
@@ -422,6 +389,104 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
                         composable(SettingsRoute.License.route) { LicenseScreen { navController.navigateUp() } }
                         composable(SettingsRoute.Policy.route) { PolicyScreen { navController.navigateUp() } }
                         composable(SettingsRoute.Donate.route) { DonateScreen { navController.navigateUp() } }
+                            }
+                        }
+
+                        if (customCalendarFilterDialogState != null && !showCustomCalendarNewItemDialog) {
+                            CustomCalendarFilterDialog(
+                                state = customCalendarFilterDialogState!!,
+                                onDismiss = { customCalendarFilterDialogState = null },
+                                onAddFilter = {
+                                    customCalendarNewItemDraft = ""
+                                    showCustomCalendarNewItemDialog = true
+                                },
+                                onToggleItem = ::toggleCustomCalendarFilterItem,
+                                onConfirm = ::saveCustomCalendarFilterSelection
+                            )
+                        }
+
+                        if (showCustomCalendarNewItemDialog) {
+                            NewCustomCalendarFilterDialog(
+                                draft = customCalendarNewItemDraft,
+                                onDraftChange = { customCalendarNewItemDraft = it },
+                                onDismiss = { showCustomCalendarNewItemDialog = false },
+                                onConfirm = ::addCustomCalendarFilterItem
+                            )
+                        }
+
+                        importConfirmUri?.let { pendingUri ->
+                            AlertDialog(
+                                show = true,
+                                onDismissRequest = { importConfirmUri = null },
+                                title = { Text(stringResource(R.string.confirm_import)) },
+                                text = { Text(stringResource(R.string.confirm_import_message)) },
+                                miuixTitle = getString(R.string.confirm_import),
+                                miuixSummary = getString(R.string.confirm_import_message),
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            importConfirmUri = null
+                                            performImport(pendingUri)
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.accept))
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { importConfirmUri = null }) {
+                                        Text(stringResource(R.string.cancel))
+                                    }
+                                }
+                            )
+                        }
+
+                        if (showImportSuccessDialog) {
+                            AlertDialog(
+                                show = true,
+                                onDismissRequest = { showImportSuccessDialog = false },
+                                text = { Text(stringResource(R.string.import_success)) },
+                                miuixSummary = getString(R.string.import_success),
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            showImportSuccessDialog = false
+                                            restartApp()
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.restart_now))
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showImportSuccessDialog = false }) {
+                                        Text(stringResource(R.string.later))
+                                    }
+                                }
+                            )
+                        }
+
+                        if (showRestartAppDialog) {
+                            AlertDialog(
+                                show = true,
+                                onDismissRequest = { showRestartAppDialog = false },
+                                text = { Text(stringResource(R.string.embedded_activities_success)) },
+                                miuixSummary = getString(R.string.embedded_activities_success),
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            showRestartAppDialog = false
+                                            restartApp()
+                                        }
+                                    ) {
+                                        Text(stringResource(R.string.restart_now))
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showRestartAppDialog = false }) {
+                                        Text(stringResource(R.string.later))
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -499,14 +564,7 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
     private fun handleImportResult(resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
             data?.data?.let { uri ->
-                MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.confirm_import)
-                    .setMessage(R.string.confirm_import_message)
-                    .setPositiveButton(R.string.accept) { _, _ ->
-                        performImport(uri)
-                    }
-                    .setNegativeButton(R.string.cancel, null)
-                    .show()
+                importConfirmUri = uri
             }
         }
     }
@@ -527,14 +585,7 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
             // 重新初始化数据库
             DatabaseHelper.getInstance(this)
 
-            // 提示需要重启应用
-            MaterialAlertDialogBuilder(this)
-                .setMessage(R.string.import_success)
-                .setPositiveButton(R.string.restart_now) { _, _ ->
-                    restartApp()
-                }
-                .setNegativeButton(R.string.later, null)
-                .show()
+            showImportSuccessDialog = true
         } catch (e: Exception) {
             e.printStackTrace()
             showToast(getString(R.string.import_failed, e.localizedMessage))
@@ -668,14 +719,58 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
         return (color and 0x00FFFFFF) or (alpha shl 24)
     }
 
-    private fun showDialogRestartAppTablet() {
-        MaterialAlertDialogBuilder(this)
-            .setMessage(R.string.embedded_activities_success)
-            .setPositiveButton(R.string.restart_now) { _, _ ->
-                restartApp()
+    private fun openCustomCalendarFilterDialog() {
+        val allItems = GlobalUtils.customCalendarFilterList?.filterNotNull()?.distinct().orEmpty()
+        val persistedSelection = GlobalUtils.customCalendarFilterListSelected
+            ?.filterNotNull()
+            ?.toSet()
+        val selectedItems = if (persistedSelection.isNullOrEmpty()) {
+            allItems.toSet()
+        } else {
+            persistedSelection
+        }
+        customCalendarFilterDialogState = CustomCalendarFilterDialogState(
+            allItems = allItems,
+            selectedItems = selectedItems
+        )
+    }
+
+    private fun toggleCustomCalendarFilterItem(item: String, checked: Boolean) {
+        val state = customCalendarFilterDialogState ?: return
+        customCalendarFilterDialogState = state.copy(
+            selectedItems = if (checked) {
+                state.selectedItems + item
+            } else {
+                state.selectedItems - item
             }
-            .setNegativeButton(R.string.later, null)
-            .show()
+        )
+    }
+
+    private fun addCustomCalendarFilterItem() {
+        val state = customCalendarFilterDialogState ?: return
+        val newItem = customCalendarNewItemDraft.trim()
+        if (newItem.isEmpty() || state.allItems.contains(newItem)) {
+            showCustomCalendarNewItemDialog = false
+            return
+        }
+
+        val updatedItems = state.allItems + newItem
+        val updatedSelection = state.selectedItems + newItem
+        GlobalUtils.customCalendarFilterList = updatedItems.toSet()
+        GlobalUtils.customCalendarFilterListSelected = updatedSelection
+        customCalendarFilterDialogState = state.copy(
+            allItems = updatedItems,
+            selectedItems = updatedSelection
+        )
+        customCalendarNewItemDraft = ""
+        showCustomCalendarNewItemDialog = false
+    }
+
+    private fun saveCustomCalendarFilterSelection() {
+        val state = customCalendarFilterDialogState ?: return
+        GlobalUtils.customCalendarFilterList = state.allItems.toSet()
+        GlobalUtils.customCalendarFilterListSelected = state.selectedItems
+        customCalendarFilterDialogState = null
     }
 
     private fun restartApp() {
@@ -695,4 +790,105 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
         super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
         enableEdgeToEdgeForAllDevices()
     }
+}
+
+@Composable
+private fun CustomCalendarFilterDialog(
+    state: CustomCalendarFilterDialogState,
+    onDismiss: () -> Unit,
+    onAddFilter: () -> Unit,
+    onToggleItem: (String, Boolean) -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        show = true,
+        onDismissRequest = onDismiss,
+        renderTextContentInMiuix = true,
+        title = { Text(stringResource(R.string.select_filter_calendar)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                TextButton(onClick = onAddFilter) {
+                    Text(stringResource(R.string.filter_add_one))
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 320.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    state.allItems.forEach { item ->
+                        val checked = state.selectedItems.contains(item)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onToggleItem(item, !checked) }
+                                .padding(vertical = 6.dp),
+                        ) {
+                            Checkbox(
+                                checked = checked,
+                                onCheckedChange = { onToggleItem(item, it) }
+                            )
+                            Text(
+                                text = item,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 8.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        miuixTitle = stringResource(R.string.select_filter_calendar),
+        miuixSummary = stringResource(R.string.filter_add_one),
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.accept))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun NewCustomCalendarFilterDialog(
+    draft: String,
+    onDraftChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        show = true,
+        onDismissRequest = onDismiss,
+        renderTextContentInMiuix = true,
+        title = { Text(stringResource(R.string.new_filter_title)) },
+        text = {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = onDraftChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text(stringResource(R.string.new_filter_name)) },
+                miuixLabel = stringResource(R.string.new_filter_name),
+                singleLine = true
+            )
+        },
+        miuixTitle = stringResource(R.string.new_filter_title),
+        miuixSummary = stringResource(R.string.new_filter_name),
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.accept))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }

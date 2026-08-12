@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -67,8 +66,8 @@ import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.ui.TintedGradientImage
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.Button
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.poster.ExportDashboardData
 import com.aritxonly.deadliner.ui.poster.ShareDashboardPoster
@@ -653,7 +652,6 @@ fun ExportOptionsDialog(
     onConfirm: (TextTone, Bitmap?) -> Unit
 ) {
     if (!open) return
-    RegisterAdvancedMaterialDialogBlur()
 
     val context = LocalContext.current
     var tone by remember { mutableStateOf(TextTone.Light) }
@@ -670,6 +668,7 @@ fun ExportOptionsDialog(
     }
 
     AlertDialog(
+        show = true,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.export_settings)) },
         text = {

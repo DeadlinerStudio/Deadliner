@@ -145,6 +145,26 @@
     <string name="settings_ai_api_key">API Key</string>
     <string name="settings_ai_success">设置API Key成功！</string>
     <string name="settings_ai_incomplete">请填写API Key！</string>
+    <string name="settings_support_enable_ai">关闭后，主页和任务编辑器中的 AI 入口会隐藏。</string>
+    <string name="settings_ai_interaction_preferences">交互偏好</string>
+    <string name="settings_ai_auto_approve_read_tasks">自动确认读取任务列表</string>
+    <string name="settings_ai_auto_approve_read_tasks_support">当 Lifi AI 需要读取任务或习惯列表时，自动允许这类只读请求。</string>
+    <string name="settings_ai_silent_task_add">静默添加任务</string>
+    <string name="settings_ai_silent_task_add_support">开启后，创建任务类工具调用会直接执行，不再逐次确认。</string>
+    <string name="settings_ai_hide_thinking_process">隐藏思考过程</string>
+    <string name="settings_ai_hide_thinking_process_support">隐藏“正在思考”“等待工具结果”等过程提示，仅保留最终结果。</string>
+    <string name="settings_ai_byok_title">API 配置（BYOK）</string>
+    <string name="settings_ai_base_url">Base URL</string>
+    <string name="settings_ai_model_id">模型 ID（如 deepseek-chat）</string>
+    <string name="settings_ai_config_incomplete">请完整填写 API Key、Base URL 和模型 ID。</string>
+    <string name="settings_ai_save_and_validate">保存并验证 AI 设置</string>
+    <string name="settings_ai_validating">正在验证...</string>
+    <string name="settings_ai_saved_and_validated">AI 设置已保存并验证成功</string>
+    <string name="settings_ai_validation_failed">验证失败：%1$s</string>
+    <string name="settings_ai_validation_failed_fallback">请检查 API Key、Base URL 和模型名称是否正确。</string>
+    <string name="settings_ai_more">更多设置</string>
+    <string name="settings_ai_notes">说明</string>
+    <string name="settings_ai_byok_description">Lifi AI 现统一采用 BYOK 模式。你的 API Key 仅保存在本地设备，不会上传到 Deadliner 之外的第三方服务器；保存时会先进行一次在线验证。</string>
     <string name="settings_ai_custom_prompt">自定义提示词</string>
     <string name="settings_ai_custom_prompt_title">提示词</string>
     <string name="settings_support_ai_custom_prompt">自定义用户提示词 (不建议初级用户修改)</string>
@@ -188,7 +208,7 @@
 
     <!--下面是开始页面的内容-->
     <string name="welcome">让我们\n与AI同行</string>
-    <string name="welcome_version">全新Deadliner v4，诚邀您体验</string>
+    <string name="welcome_version">全新Deadliner v5，诚邀您体验</string>
 
     <string name="finish_notice">没有剩余的工作了</string>
     <string name="add_ddl_tile_label">添加新任务</string>
@@ -377,6 +397,31 @@
     <string name="archive_label_completed">完成归档</string>
     <string name="archive_label_abandoned">放弃归档</string>
     <string name="archive_time_with_state">%1$s · %2$s</string>
+    <string name="archive_search_tasks_hint">搜索归档任务</string>
+    <string name="archive_search_habits_hint">搜索归档习惯</string>
+    <string name="archive_controls_title">管理归档内容</string>
+    <string name="archive_controls_subtitle">在这里查找、恢复，或永久删除已经归档的任务和习惯。</string>
+    <string name="archive_count_label">%1$d 项</string>
+    <string name="archive_section_tasks">归档任务</string>
+    <string name="archive_section_habits">归档习惯</string>
+    <string name="archive_empty_tasks">没有归档的任务</string>
+    <string name="archive_empty_habits">没有归档的习惯</string>
+    <string name="archive_empty_tasks_description">完成或放弃后归档的任务会出现在这里。</string>
+    <string name="archive_empty_habits_description">被归档的习惯会集中收纳在这里，方便之后恢复。</string>
+    <string name="archive_delete_title">永久删除</string>
+    <string name="archive_delete_message">确定要永久删除“%1$s”吗？此操作不可恢复。</string>
+    <string name="archive_delete_message_fallback">确定要永久删除该项吗？此操作不可恢复。</string>
+    <string name="archive_delete_all_title">全部永久删除</string>
+    <string name="archive_delete_all_tasks_message">确定要永久删除所有归档任务吗？此操作不可恢复。</string>
+    <string name="archive_delete_all_habits_message">确定要永久删除所有归档习惯吗？此操作不可恢复。</string>
+    <string name="archive_state_archived">已归档</string>
+    <string name="archive_state_abandoned">已放弃归档</string>
+    <string name="archive_completed_at">完成于 %1$s</string>
+    <string name="archive_abandoned_at">放弃于 %1$s</string>
+    <string name="archive_archived_at">归档于 %1$s</string>
+    <string name="archive_habit_detail_template">%1$s · %2$s</string>
+    <string name="archive_habit_period_target">%1$d次</string>
+    <string name="archive_habit_total_target">总目标 %1$d</string>
 
     <string name="daily_frequency">每天%1$d次</string>
     <string name="daily_frequency_with_total">每天%1$d次/共%2$d次</string>
@@ -417,6 +462,13 @@
     <!-- 逾期 -->
     <string name="ddl_overdue_full">DDL逾期!!!</string>
     <string name="ddl_overdue_short">已逾期</string>
+    <string name="task_remaining_less_than_one_hour">不足1小时</string>
+    <string name="task_remaining_days_hours">%1$d天 %2$d小时</string>
+    <string name="task_remaining_hours">%1$d小时</string>
+    <string name="task_remaining_starts_in_less_than_one_hour">不足1小时后开始</string>
+    <string name="task_remaining_starts_in_days_hours">%1$d天 %2$d小时后开始</string>
+    <string name="task_remaining_starts_in_hours">%1$d小时后开始</string>
+    <string name="task_remaining_overdue_hours">已逾期 %1$d 小时</string>
 
     <string name="time_bucket_late_night">凌晨</string>
     <string name="time_bucket_morning">上午</string>
@@ -637,6 +689,18 @@
     <string name="user">用户</string>
 
     <string name="search_no_result_title">没有匹配的项</string>
+    <string name="search_no_result_hint">试试换个关键词，或者切换搜索范围。</string>
+    <string name="search_empty_query_title">开始搜索</string>
+    <string name="search_empty_query_hint">输入关键词后，即可搜索任务、习惯和归档内容。</string>
+    <string name="search_scope_all">全部</string>
+    <string name="search_scope_active">清单</string>
+    <string name="search_scope_archive">归档</string>
+    <string name="search_group_inspiration">灵感</string>
+    <string name="search_group_task">任务</string>
+    <string name="search_group_habit">习惯</string>
+    <string name="search_group_archived_task">归档任务</string>
+    <string name="search_group_archived_habit">归档习惯</string>
+    <string name="search_inspiration_hint">点击查看详情，或直接整理成任务 / 习惯。</string>
     <string name="search_no_result_suggestion_prefix">试试以下搜索示例：</string>
 
     <!-- 示例语义与正则逻辑匹配 -->
@@ -821,7 +885,7 @@
     <string name="ui_style_classic_hidden_summary">如果你当前仍在使用经典模式，它会继续生效；切换到其他模式后，这里将不再显示经典模式入口。</string>
 
     <string name="intro_cover_title">重塑任务管理体验</string>
-    <string name="intro_cover_desc">Deadliner v4 · 你的智能任务助手</string>
+    <string name="intro_cover_desc">Deadliner v5 · 你的智能任务助手</string>
     <string name="wizard_add_a_task">添加一个任务</string>
     <string name="wizard_add_a_task_desc">点击底部中间的「+」按钮，打开添加任务界面。</string>
     <string name="wizard_mark_as_complete">将任务标记为完成</string>
@@ -866,6 +930,19 @@
 
     <string name="permissions_wiki_title">权限设置向导</string>
     <string name="permissions_wiki_desc">如果你不确定如何设置上述权限，可以打开使用指南查看图文说明。</string>
+
+    <string name="intro_design_color_title">先把视觉风格调到顺眼</string>
+    <string name="intro_design_color_description">在开始使用前，先选好设计风格、强调色、颜色生成策略和多彩任务指示标。</string>
+    <string name="intro_color_title">再把色彩细节调顺手</string>
+    <string name="intro_color_description">在这里继续设置强调色、颜色生成策略和多彩任务指示标，让整套界面更贴近你的偏好。</string>
+    <string name="intro_advanced_material_title">再决定材质的轻重和氛围</string>
+    <string name="intro_advanced_material_description">如果你喜欢更柔和、更有层次的界面，可以在这里提前打开高级材质并选择模糊强度。</string>
+    <string name="intro_ui_style_title">最后选一个适合你的主界面</string>
+    <string name="intro_ui_style_description">选择 Deadliner 的主界面风格，之后也可以在设置中随时更改。</string>
+    <string name="intro_ui_style_description_classic">经典模式会在这里正式谢幕。选好新的主界面之后，我们就继续往前走。</string>
+    <string name="intro_classic_farewell_title">向经典模式认真说一声再见</string>
+    <string name="intro_classic_farewell_description">它从 v2 一路陪你走到 v5，见证过很多任务被完成。现在，是时候把接力棒交给新的两种主界面风格了，请在下面选一个继续前进。</string>
+    <string name="intro_get_started">开始使用</string>
 
     <string name="intro_theme_title">选择你喜欢的界面样式</string>
     <string name="intro_theme_description">你可以在这里预先选择 Deadliner 的主界面风格，之后也可以在设置中随时更改。</string>

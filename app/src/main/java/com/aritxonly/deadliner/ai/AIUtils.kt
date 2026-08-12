@@ -64,6 +64,25 @@ object AIUtils {
         coreBridge = DeadlinerCoreBridge(context.applicationContext, gson)
     }
 
+    suspend fun validateDirectConfig(
+        apiKey: String,
+        baseUrl: String,
+        modelId: String,
+    ) = withContext(Dispatchers.IO) {
+        val endpoint = normalizeDirectEndpoint(baseUrl)
+        val transport = DirectBearerTransport(baseUrl = endpoint, apiKey = apiKey)
+        val response = transport.chat(
+            ChatRequest(
+                model = modelId,
+                messages = listOf(Message(role = "user", content = "ping")),
+                stream = false,
+            )
+        )
+        if (response.choices.isEmpty()) {
+            error("API 没有返回可用消息")
+        }
+    }
+
     /**
      * 发送一次无状态的 Prompt 请求。
      */
@@ -355,6 +374,18 @@ JSON 结构固定为：
     private fun currentLangTag(context: Context): String {
         val loc = context.resources.configuration.locales[0]
         return loc.toLanguageTag() // e.g., "zh-CN" / "en-US"
+    }
+
+    fun normalizeDirectEndpoint(baseUrl: String): String {
+        var normalized = baseUrl.trim()
+        if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
+            normalized = "https://$normalized"
+        }
+        normalized = normalized.trimEnd('/')
+        if (!normalized.endsWith("/chat/completions")) {
+            normalized += "/chat/completions"
+        }
+        return normalized
     }
 
     private fun toBackendPreset(p: LlmPreset): BackendPreset {

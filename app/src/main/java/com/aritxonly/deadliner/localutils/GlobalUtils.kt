@@ -229,9 +229,9 @@ object GlobalUtils {
         }
 
     var showIntroPage: Boolean
-        get() = sharedPreferences.getBoolean("show_intro_page_v5.test3", true)
+        get() = sharedPreferences.getBoolean("show_intro_page_v5.test4", true)
         set(value) {
-            sharedPreferences.edit { putBoolean("show_intro_page_v5.test3", value) }
+            sharedPreferences.edit { putBoolean("show_intro_page_v5.test4", value) }
         }
 
     var appearanceRefactorIntroSeen: Boolean
@@ -570,10 +570,29 @@ object GlobalUtils {
     var hideDividerUi by mutableStateOf(false)
         private set
 
-    @Deprecated("Lifi AI is enable by default. This api would always return TRUE.")
     var deadlinerAIEnable: Boolean
-        get() = true
-        set(_) {  }
+        get() = sharedPreferences.getBoolean("deadliner_ai_enabled", true)
+        set(value) {
+            sharedPreferences.edit { putBoolean("deadliner_ai_enabled", value) }
+        }
+
+    var aiAutoApproveReadTasks: Boolean
+        get() = sharedPreferences.getBoolean("ai_auto_approve_read_tasks", false)
+        set(value) {
+            sharedPreferences.edit { putBoolean("ai_auto_approve_read_tasks", value) }
+        }
+
+    var aiSilentTaskAdd: Boolean
+        get() = sharedPreferences.getBoolean("ai_silent_task_add", true)
+        set(value) {
+            sharedPreferences.edit { putBoolean("ai_silent_task_add", value) }
+        }
+
+    var aiHideThinkingProcess: Boolean
+        get() = sharedPreferences.getBoolean("ai_hide_thinking_process", false)
+        set(value) {
+            sharedPreferences.edit { putBoolean("ai_hide_thinking_process", value) }
+        }
 
     var customPrompt: String?
         get() = sharedPreferences.getString("custom_prompt", null)

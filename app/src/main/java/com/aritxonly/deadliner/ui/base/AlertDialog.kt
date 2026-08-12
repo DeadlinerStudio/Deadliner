@@ -1,6 +1,7 @@
 package com.aritxonly.deadliner.ui.base
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -35,6 +37,7 @@ fun AlertDialog(
     text: @Composable (() -> Unit)? = null,
     shape: Shape = AlertDialogDefaults.shape,
     containerColor: Color = AlertDialogDefaults.containerColor,
+    renderTextContentInMiuix: Boolean = false,
 
     // ==========================================
     // MIUIX 专属辅助参数
@@ -63,6 +66,9 @@ fun AlertDialog(
         }
 
         AppDesignSystem.MIUIX -> {
+            val showInlineTitle = title != null && miuixTitle == null
+            val showInlineText = text != null && (renderTextContentInMiuix || miuixSummary == null)
+            val showInlineContent = showInlineTitle || showInlineText
 
             // MIUIX 分支：传入伪装好的 MutableState
             MiuixWindowDialog(
@@ -72,18 +78,28 @@ fun AlertDialog(
                 title = miuixTitle,
                 summary = miuixSummary,
             ) {
-                // 按钮排列逻辑保持不变
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    dismissButton?.invoke()
-                    if (dismissButton != null) {
-                        Spacer(modifier = Modifier.width(8.dp))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (showInlineTitle) {
+                        title?.invoke()
                     }
-                    confirmButton()
+                    if (showInlineText) {
+                        text?.invoke()
+                    }
+
+                    CompositionLocalProvider(LocalAppDesignSystem provides AppDesignSystem.MATERIAL3) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = if (showInlineContent) 16.dp else 0.dp),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            dismissButton?.invoke()
+                            if (dismissButton != null) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            confirmButton()
+                        }
+                    }
                 }
             }
         }

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +39,7 @@ import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ai.LlmPreset
 import com.aritxonly.deadliner.ai.AIUtils
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import java.util.UUID
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 
@@ -189,12 +189,12 @@ fun AddPresetDialog(
     onDismiss: () -> Unit,
     onConfirm: (name: String, model: String, endpoint: String) -> Unit
 ) {
-    RegisterAdvancedMaterialDialogBlur()
     var name by remember { mutableStateOf("") }
     var model by remember { mutableStateOf("") }
     var endpoint by remember { mutableStateOf("") }
 
     AlertDialog(
+        show = true,
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
@@ -241,11 +241,11 @@ fun EditPresetDialog(
     onDismiss: () -> Unit,
     onConfirm: (name: String, model: String, endpoint: String) -> Unit
 ) {
-    RegisterAdvancedMaterialDialogBlur()
     var name by remember { mutableStateOf(initial.name) }
     var model by remember { mutableStateOf(initial.model) }
     var endpoint by remember { mutableStateOf(initial.endpoint) }
     AlertDialog(
+        show = true,
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = { if (name.isNotBlank() && model.isNotBlank() && endpoint.isNotBlank()) onConfirm(name.trim(), model.trim(), endpoint.trim()) }) { Text(stringResource(R.string.save)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
@@ -313,8 +313,8 @@ fun ManagePresetsSheet(
 
     // 删除确认
     confirmDelete?.let { target ->
-        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
+            show = true,
             onDismissRequest = { confirmDelete = null },
             confirmButton = {
                 TextButton(onClick = { onDelete(target); confirmDelete = null }) { Text(stringResource(R.string.delete)) }

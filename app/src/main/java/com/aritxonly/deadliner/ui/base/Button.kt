@@ -4,26 +4,24 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
 // 为官方和 MIUIX 的组件起别名，防止重名冲突
 import androidx.compose.material3.Button as Material3Button
+import androidx.compose.material3.LocalContentColor as Material3LocalContentColor
 import androidx.compose.material3.TextButton as Material3TextButton
 import top.yukonga.miuix.kmp.basic.Button as MiuixButton
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.theme.LocalContentColor as MiuixLocalContentColor
 
 /**
  * Deadliner 基础 Button 组件 (实心按钮)
@@ -59,21 +57,21 @@ fun Button(
             )
         }
         AppDesignSystem.MIUIX -> {
-            val contentColor = if (enabled) {
-                MaterialTheme.colorScheme.onPrimary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            }
+            val resolvedContentColor = if (enabled) colors.contentColor else colors.disabledContentColor
             MiuixButton(
                 onClick = onClick,
                 modifier = modifier,
                 enabled = enabled,
                 colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.buttonColors(
                     color = colors.containerColor,
+                    contentColor = colors.contentColor,
+                    disabledColor = colors.disabledContainerColor,
+                    disabledContentColor = colors.disabledContentColor
                 ),
             ) {
                 CompositionLocalProvider(
-                    LocalContentColor provides contentColor
+                    Material3LocalContentColor provides resolvedContentColor,
+                    MiuixLocalContentColor provides resolvedContentColor,
                 ) {
                     content()
                 }

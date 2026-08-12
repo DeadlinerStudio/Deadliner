@@ -6,6 +6,9 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,6 +16,8 @@ import androidx.compose.runtime.setValue
 import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
+import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.detail.DeadlineDetailScreen
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 
@@ -41,43 +46,51 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
 
         setContent {
             DeadlinerTheme {
-                var currentDeadline by remember { mutableStateOf(latestDeadline) }
+                ProvideAdvancedMaterialDialogBlurHost {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .advancedMaterialDialogBlurHost()
+                    ) {
+                        var currentDeadline by remember { mutableStateOf(latestDeadline) }
 
-                DeadlineDetailScreen(
-                    applicationContext = applicationContext,
-                    activityContext = this,
-                    deadline = currentDeadline,
-                    onClose = { finish() },
-                    onEdit = {
-                        val editDialog = EditDDLFragment(currentDeadline) { updatedDDL ->
-                            repo.updateDDL(updatedDDL)
-                            currentDeadline = repo.getDDLById(updatedDDL.id) ?: updatedDDL
-                        }
-                        editDialog.show(supportFragmentManager, "EditDDLFragment")
-                    },
-                    onPersistDeadline = { updated ->
-                        repo.updateDDL(updated)
-                        currentDeadline = repo.getDDLById(updated.id) ?: updated
-                    },
-                    onToggleStar = { isStarred ->
-                        val updated = currentDeadline.copy(isStared = isStarred)
-                        repo.updateDDL(updated)
-                        currentDeadline = repo.getDDLById(updated.id) ?: updated
-                    },
-                    onApplyTaskAction = { action, confirmed ->
-                        val updated = repo.applyTaskAction(
-                            itemId = currentDeadline.id,
-                            action = action,
-                            confirmed = confirmed
+                        DeadlineDetailScreen(
+                            applicationContext = applicationContext,
+                            activityContext = this@DeadlineDetailActivity,
+                            deadline = currentDeadline,
+                            onClose = { finish() },
+                            onEdit = {
+                                val editDialog = EditDDLFragment(currentDeadline) { updatedDDL ->
+                                    repo.updateDDL(updatedDDL)
+                                    currentDeadline = repo.getDDLById(updatedDDL.id) ?: updatedDDL
+                                }
+                                editDialog.show(supportFragmentManager, "EditDDLFragment")
+                            },
+                            onPersistDeadline = { updated ->
+                                repo.updateDDL(updated)
+                                currentDeadline = repo.getDDLById(updated.id) ?: updated
+                            },
+                            onToggleStar = { isStarred ->
+                                val updated = currentDeadline.copy(isStared = isStarred)
+                                repo.updateDDL(updated)
+                                currentDeadline = repo.getDDLById(updated.id) ?: updated
+                            },
+                            onApplyTaskAction = { action, confirmed ->
+                                val updated = repo.applyTaskAction(
+                                    itemId = currentDeadline.id,
+                                    action = action,
+                                    confirmed = confirmed
+                                )
+                                currentDeadline = repo.getDDLById(updated.id) ?: updated
+                                currentDeadline
+                            },
+                            onDelete = { id ->
+                                repo.deleteDDL(id)
+                            },
+                            finishActivity = { finishAfterTransition() }
                         )
-                        currentDeadline = repo.getDDLById(updated.id) ?: updated
-                        currentDeadline
-                    },
-                    onDelete = { id ->
-                        repo.deleteDDL(id)
-                    },
-                    finishActivity = { finishAfterTransition() }
-                )
+                    }
+                }
             }
         }
     }

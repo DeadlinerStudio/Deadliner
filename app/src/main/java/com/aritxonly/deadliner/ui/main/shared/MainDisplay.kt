@@ -40,7 +40,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -127,7 +126,7 @@ import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.model.updateNoteWithDate
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
 import com.aritxonly.deadliner.ui.main.HabitItemCardSimplified
 import com.aritxonly.deadliner.ui.main.simplified.*
@@ -279,8 +278,8 @@ fun MainDisplay(
 
     if (pendingDelete != null) {
         val target = pendingDelete!!
-        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
+            show = true,
             onDismissRequest = {
                 pendingDelete = null
             },

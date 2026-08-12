@@ -62,18 +62,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.MainActivity
+import com.aritxonly.deadliner.capture.data.CaptureRepository
+import com.aritxonly.deadliner.capture.model.InspirationItem
 import com.aritxonly.deadliner.data.DDLRepository
+import com.aritxonly.deadliner.data.HabitRepository
 import com.aritxonly.deadliner.data.MainViewModel
 import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.data.MainViewModelFactory
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.model.Habit
+import com.aritxonly.deadliner.model.HabitStatus
 import com.aritxonly.deadliner.model.PartyPresets
+import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
@@ -82,14 +87,16 @@ import com.aritxonly.deadliner.ui.main.TextPageIndicator
 import com.aritxonly.deadliner.ui.main.shared.DeadlinerUrlIntake
 import com.aritxonly.deadliner.ui.main.shared.MainDisplay
 import com.aritxonly.deadliner.ui.main.shared.MainHostLifecycleCoordinator
+import com.aritxonly.deadliner.ui.main.shared.MainSearchResultsContent
+import com.aritxonly.deadliner.ui.main.shared.MainSearchScope
 import com.aritxonly.deadliner.ui.main.shared.MainSelectionFloatingToolbar
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostUiState
 import com.aritxonly.deadliner.ui.main.shared.rememberMainSelectionActionController
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.core.Party
 import org.json.JSONArray
@@ -267,23 +274,14 @@ fun SimplifiedHost(
     }
 
     val textFieldState = rememberTextFieldState()
-    var suggestions by rememberSaveable { mutableStateOf(emptyList<DDLItem>()) }
-    var base by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
-    LaunchedEffect(hostState.selectedPage) {
-        base = vm.getBaseList(hostState.selectedPage)
-    }
-    LaunchedEffect(textFieldState) {
-        snapshotFlow { textFieldState.text.toString() }
-            .distinctUntilChanged()
-            .debounce(250)
-            .collect { q ->
-                val f = SearchFilter.parse(q)
-                suggestions = if (q.isBlank()) emptyList()
-                else base.asSequence()
-                    .filter { f.matches(it) }
-                    .toList()
-            }
-    }
+    var searchScope by rememberSaveable { mutableStateOf(MainSearchScope.ALL) }
+    var searchBase by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
+    var searchInspirations by remember { mutableStateOf<List<InspirationItem>>(emptyList()) }
+    var archivedHabitByDdlId by remember { mutableStateOf<Map<Long, Habit>>(emptyMap()) }
+    val searchQuery = textFieldState.text.toString()
+    val archiveTaskRepo = remember { DDLRepository() }
+    val archiveHabitRepo = remember { HabitRepository() }
+    val captureRepo = remember(context) { CaptureRepository(context.applicationContext) }
     
     val profile by UserProfileRepository.profile.collectAsState(initial = UserProfile())
     var nickname by remember(profile.nickname) { mutableStateOf(profile.nickname) }
@@ -307,10 +305,34 @@ fun SimplifiedHost(
     val useAvatar = avatarPainter != null
     var moreAnchorRect by remember { mutableStateOf<Rect?>(null) }
 
+    suspend fun refreshSearchData() {
+        searchBase = vm.getBaseList(DeadlineType.TASK) + vm.getBaseList(DeadlineType.HABIT)
+        searchInspirations = withContext(Dispatchers.IO) {
+            captureRepo.load()
+        }
+        archivedHabitByDdlId = withContext(Dispatchers.IO) {
+            archiveHabitRepo.getAllHabits()
+                .filter { it.status == HabitStatus.ARCHIVED }
+                .associateBy { it.ddlId }
+        }
+    }
+
+    LaunchedEffect(refreshState) {
+        if (refreshState !is MainViewModel.RefreshState.Loading) {
+            refreshSearchData()
+        }
+    }
+
+    fun closeSearch() {
+        textFieldState.edit { replace(0, length, "") }
+        searchScope = MainSearchScope.ALL
+        onSearchActiveChange(false)
+    }
+
     BackHandler(enabled = hostState.selectionMode || searchActive) {
         when {
             searchActive -> {
-                onSearchActiveChange(false)
+                closeSearch()
             }
             hostState.selectionMode -> hostState.clearSelection()
         }
@@ -371,11 +393,8 @@ fun SimplifiedHost(
                 } else {
                     MainSearchBar(
                         textFieldState = textFieldState,
-                        searchResults = suggestions,
                         onQueryChanged = { q ->
-                            val f = SearchFilter.parse(q)
-                            suggestions = if (q.isBlank()) emptyList()
-                            else base.filter { f.matches(it) }.toList()
+                            textFieldState.edit { replace(0, length, q) }
                         },
                         onMoreClick = { uiState.moreExpanded = true },
                         onMoreAnchorChange = { rect -> moreAnchorRect = rect },
@@ -384,11 +403,78 @@ fun SimplifiedHost(
                         activity = activity,
                         habitViewModel = habitVm,
                         expanded = searchActive,
-                        onExpandedChangeExternal = onSearchActiveChange,
-                        selectedPage = hostState.selectedPage,
+                        onExpandedChangeExternal = { expanded ->
+                            if (expanded) {
+                                onSearchActiveChange(true)
+                            } else {
+                                closeSearch()
+                            }
+                        },
                         miuixMode = false,
                         modifier = Modifier.background(MaterialTheme.colorScheme.surface)
-                    )
+                    ) {
+                        MainSearchResultsContent(
+                            query = searchQuery,
+                            scope = searchScope,
+                            onScopeChange = { searchScope = it },
+                            items = searchBase,
+                            habitViewModel = habitVm,
+                            activity = activity,
+                            inspirations = searchInspirations,
+                            archivedHabitByDdlId = archivedHabitByDdlId,
+                            onCaptureChanged = {
+                                scope.launch {
+                                    refreshSearchData()
+                                }
+                            },
+                            onRestoreArchivedTask = { item ->
+                                scope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        archiveTaskRepo.applyTaskAction(
+                                            itemId = item.id,
+                                            action = TaskStateAction.UNARCHIVE,
+                                            confirmed = true,
+                                        )
+                                    }
+                                    vm.loadData(hostState.selectedPage)
+                                    habitVm.refresh()
+                                    refreshSearchData()
+                                }
+                            },
+                            onDeleteArchivedTask = { item ->
+                                scope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        archiveTaskRepo.deleteDDL(item.id)
+                                    }
+                                    vm.loadData(hostState.selectedPage)
+                                    habitVm.refresh()
+                                    refreshSearchData()
+                                }
+                            },
+                            onRestoreArchivedHabit = { habit ->
+                                scope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        archiveHabitRepo.updateHabit(
+                                            habit.copy(status = HabitStatus.ACTIVE),
+                                        )
+                                    }
+                                    vm.loadData(hostState.selectedPage)
+                                    habitVm.refresh()
+                                    refreshSearchData()
+                                }
+                            },
+                            onDeleteArchivedHabit = { habit ->
+                                scope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        archiveHabitRepo.deleteHabitByDdlId(habit.ddlId)
+                                    }
+                                    vm.loadData(hostState.selectedPage)
+                                    habitVm.refresh()
+                                    refreshSearchData()
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -399,58 +485,60 @@ fun SimplifiedHost(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.surface)
         ) {
-            MainDisplay(
-                ddlList = ddlList,
-                habitViewModel = habitVm,
-                refreshState = refreshState,
-                selectedPage = hostState.selectedPage,
-                activity = activity,
-                modifier = Modifier
-                    .fillMaxSize(),
-                vm = vm,
-                listState = listState,
-                onRequestBackdropBlur = { enable -> uiState.childRequestsBlur = enable },
-                onShowUndoSnackbar = { updatedHabit ->
-                    scope.launch {
-                        val result = snackbarHostState.showSnackbar(
-                            message = context.getString(R.string.habit_success),
-                            actionLabel = context.getString(R.string.undo),
-                            duration = SnackbarDuration.Long,
-                            withDismissAction = true
-                        )
-                        if (result == SnackbarResult.ActionPerformed) {
-                            val todayStr = LocalDate.now().toString()
-                            val json = JSONObject(updatedHabit.note)
-                            val datesArray = json.optJSONArray("completedDates") ?: JSONArray()
-                            for (i in datesArray.length() - 1 downTo 0) {
-                                if (datesArray.optString(i) == todayStr) {
-                                    datesArray.remove(i)
-                                }
-                            }
-                            json.put("completedDates", datesArray)
-                            val revertedNoteJson = json.toString()
-                            val revertedHabit = updatedHabit.copy(
-                                note = revertedNoteJson,
-                                habitCount = updatedHabit.habitCount - 1
+            if (!searchActive) {
+                MainDisplay(
+                    ddlList = ddlList,
+                    habitViewModel = habitVm,
+                    refreshState = refreshState,
+                    selectedPage = hostState.selectedPage,
+                    activity = activity,
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    vm = vm,
+                    listState = listState,
+                    onRequestBackdropBlur = { enable -> uiState.childRequestsBlur = enable },
+                    onShowUndoSnackbar = { updatedHabit ->
+                        scope.launch {
+                            val result = snackbarHostState.showSnackbar(
+                                message = context.getString(R.string.habit_success),
+                                actionLabel = context.getString(R.string.undo),
+                                duration = SnackbarDuration.Long,
+                                withDismissAction = true
                             )
-                            DDLRepository().updateDDL(revertedHabit)
-                            vm.loadData(hostState.selectedPage)
-                            habitVm.refresh()
+                            if (result == SnackbarResult.ActionPerformed) {
+                                val todayStr = LocalDate.now().toString()
+                                val json = JSONObject(updatedHabit.note)
+                                val datesArray = json.optJSONArray("completedDates") ?: JSONArray()
+                                for (i in datesArray.length() - 1 downTo 0) {
+                                    if (datesArray.optString(i) == todayStr) {
+                                        datesArray.remove(i)
+                                    }
+                                }
+                                json.put("completedDates", datesArray)
+                                val revertedNoteJson = json.toString()
+                                val revertedHabit = updatedHabit.copy(
+                                    note = revertedNoteJson,
+                                    habitCount = updatedHabit.habitCount - 1
+                                )
+                                DDLRepository().updateDDL(revertedHabit)
+                                vm.loadData(hostState.selectedPage)
+                                habitVm.refresh()
+                            }
                         }
-                    }
-                },
-                onCelebrate = { celebrate() },
-                moreExpanded = uiState.moreExpanded,
-                moreAnchorRect = moreAnchorRect,
-                useAvatar = useAvatar,
-                nickname = nickname,
-                avatarPainter = avatarPainter,
-                onCloseMorePanel = { uiState.moreExpanded = false },
-                selectionMode = hostState.selectionMode,
-                isSelected = { id -> hostState.selectedIds.contains(id) },
-                onItemLongPress = { id -> hostState.enterSelection(id) },
-                onItemClickInSelection = { id -> hostState.toggleSelection(id) }
-            )
+                    },
+                    onCelebrate = { celebrate() },
+                    moreExpanded = uiState.moreExpanded,
+                    moreAnchorRect = moreAnchorRect,
+                    useAvatar = useAvatar,
+                    nickname = nickname,
+                    avatarPainter = avatarPainter,
+                    onCloseMorePanel = { uiState.moreExpanded = false },
+                    selectionMode = hostState.selectionMode,
+                    isSelected = { id -> hostState.selectedIds.contains(id) },
+                    onItemLongPress = { id -> hostState.enterSelection(id) },
+                    onItemClickInSelection = { id -> hostState.toggleSelection(id) }
+                )
+            }
 
             key(fireKey) {
                 Box(Modifier.fillMaxSize()) {
@@ -541,7 +629,9 @@ fun SimplifiedHost(
                                         .width(56.dp)
                                         .detectSwipeUp {
                                             Log.d("SwipeUp", "Triggered")
-                                            uiState.showOverlay = true
+                                            if (GlobalUtils.deadlinerAIEnable) {
+                                                uiState.showOverlay = true
+                                            }
                                         }
                                 ) {
                                     Icon(ImageVector.vectorResource(R.drawable.ic_add), "")
@@ -572,7 +662,7 @@ fun SimplifiedHost(
     }
     }
 
-    if (uiState.showOverlay) {
+    if (uiState.showOverlay && GlobalUtils.deadlinerAIEnable) {
         AIOverlayHost(
             initialText = "",
             onAddDDL = { intent ->
@@ -586,8 +676,8 @@ fun SimplifiedHost(
     }
 
     if (selectionActions.showDeleteDialog) {
-        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
+            show = true,
             onDismissRequest = {
                 selectionActions.dismissDeleteDialog()
             },

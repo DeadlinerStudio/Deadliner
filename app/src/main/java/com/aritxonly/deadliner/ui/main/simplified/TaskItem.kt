@@ -1,11 +1,13 @@
 package com.aritxonly.deadliner.ui.main.simplified
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,15 +30,17 @@ import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.HabitMetaData
 import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.model.updateNoteWithDate
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.main.DDLItemCardSwipeable
 import com.aritxonly.deadliner.ui.main.HabitItemCardSimplified
 import com.aritxonly.deadliner.ui.main.shared.computeProgress
 import com.aritxonly.deadliner.ui.iconResource
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.max
 
 @Composable
@@ -78,23 +82,23 @@ fun TaskItem(
     onAbandonDialogVisibilityChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
+    var showGiveUpDialog by rememberSaveable(item.id) { mutableStateOf(false) }
+
+    LaunchedEffect(showGiveUpDialog) {
+        onAbandonDialogVisibilityChange(showGiveUpDialog)
+    }
 
     val startTime = GlobalUtils.parseDateTime(item.startTime)
     val endTime = GlobalUtils.parseDateTime(item.endTime)
     val now = LocalDateTime.now()
 
-    val remainingTimeText =
-        if (item.state == DDLState.ABANDONED)
-            stringResource(R.string.abandoned)
-        else if (!item.state.isCompletedFamily())
-            GlobalUtils.buildRemainingTime(
-                context,
-                startTime,
-                endTime,
-                true,
-                now
-            )
-        else stringResource(R.string.completed)
+    val remainingTimeText = formatTaskRemainingTime(
+        context = context,
+        item = item,
+        startTime = startTime,
+        endTime = endTime,
+        now = now,
+    )
 
     val progress = computeProgress(startTime, endTime, now)
     val status = if (item.state.isCompletedFamily() || item.state.isAbandonedFamily()) {
@@ -150,19 +154,7 @@ fun TaskItem(
             GlobalUtils.triggerVibration(activity, 200)
             val action = secondaryAction ?: return@DDLItemCardSwipeable
             if (action == TaskStateAction.MARK_GIVE_UP) {
-                onAbandonDialogVisibilityChange(true)
-                MaterialAlertDialogBuilder(activity)
-                    .setTitle(R.string.confirm_give_up_title)
-                    .setMessage(R.string.confirm_give_up_message)
-                    .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.accept) { _, _ ->
-                        applyTaskAction(action, true)
-                        Toast.makeText(activity, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
-                    }
-                    .setOnDismissListener {
-                        onAbandonDialogVisibilityChange(false)
-                    }
-                    .show()
+                showGiveUpDialog = true
             } else {
                 applyTaskAction(action, true)
                 Toast.makeText(
@@ -179,6 +171,81 @@ fun TaskItem(
         onLongPressSelect = onLongPressSelect,
         onToggleSelect = onToggleSelect,
     )
+
+    if (showGiveUpDialog) {
+        AlertDialog(
+            show = true,
+            onDismissRequest = { showGiveUpDialog = false },
+            title = { Text(stringResource(R.string.confirm_give_up_title)) },
+            text = { Text(stringResource(R.string.confirm_give_up_message)) },
+            miuixTitle = context.getString(R.string.confirm_give_up_title),
+            miuixSummary = context.getString(R.string.confirm_give_up_message),
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        showGiveUpDialog = false
+                        applyTaskAction(TaskStateAction.MARK_GIVE_UP, true)
+                        Toast.makeText(activity, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    Text(stringResource(R.string.accept))
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showGiveUpDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+}
+
+private fun formatTaskRemainingTime(
+    context: Context,
+    item: DDLItem,
+    startTime: LocalDateTime?,
+    endTime: LocalDateTime?,
+    now: LocalDateTime,
+): String {
+    if (item.state.isAbandonedFamily()) {
+        return context.getString(R.string.abandoned)
+    }
+    if (item.state.isCompletedFamily()) {
+        return context.getString(R.string.completed)
+    }
+
+    val beforeStart = startTime?.isAfter(now) == true
+    val targetTime = when {
+        beforeStart -> startTime ?: return item.endTime.ifBlank { item.startTime }
+        endTime != null -> endTime
+        else -> return item.endTime.ifBlank { item.startTime }
+    }
+
+    val diffSeconds = Duration.between(now, targetTime).seconds.toDouble()
+    val diffHours = floor(diffSeconds / 3600.0).toInt()
+
+    if (!beforeStart && diffSeconds < 0) {
+        return context.getString(R.string.task_remaining_overdue_hours, abs(diffHours))
+    }
+
+    val positiveHours = diffHours.coerceAtLeast(0)
+    val days = positiveHours / 24
+    val hours = positiveHours % 24
+
+    return when {
+        beforeStart && days > 0 ->
+            context.getString(R.string.task_remaining_starts_in_days_hours, days, hours)
+        beforeStart && positiveHours > 0 ->
+            context.getString(R.string.task_remaining_starts_in_hours, positiveHours)
+        beforeStart ->
+            context.getString(R.string.task_remaining_starts_in_less_than_one_hour)
+        days > 0 ->
+            context.getString(R.string.task_remaining_days_hours, days, hours)
+        positiveHours > 0 ->
+            context.getString(R.string.task_remaining_hours, positiveHours)
+        else ->
+            context.getString(R.string.task_remaining_less_than_one_hour)
+    }
 }
 
 @Composable

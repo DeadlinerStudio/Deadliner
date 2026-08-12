@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -224,6 +225,7 @@ private fun LegacyWideNavigationScaffold(
     ) {
         Box(
             modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
                 .statusBarsPadding()
                 .padding(top = 48.dp),
         ) {

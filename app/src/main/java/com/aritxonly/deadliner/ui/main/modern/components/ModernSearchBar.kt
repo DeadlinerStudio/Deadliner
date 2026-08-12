@@ -25,6 +25,7 @@ import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.main.shared.MainSearchResultsContent
+import com.aritxonly.deadliner.ui.main.shared.MainSearchScope
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
@@ -94,8 +95,10 @@ fun ModernSearchBar(
         onExpandedChange = onExpandedChange,
     ) {
         MainSearchResultsContent(
-            searchResults = searchResults,
-            selectedPage = selectedPage,
+            query = query,
+            scope = MainSearchScope.ALL,
+            onScopeChange = {},
+            items = searchResults,
             habitViewModel = habitViewModel,
             activity = activity,
         )

@@ -57,24 +57,16 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DDLState
-import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineType
-import com.aritxonly.deadliner.ui.base.TextButton
-import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
-import com.aritxonly.deadliner.ui.main.shared.MainSearchResultsContent
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import kotlinx.coroutines.delay
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainSearchBar(
     textFieldState: androidx.compose.foundation.text.input.TextFieldState,
     onQueryChanged: (String) -> Unit,
-    searchResults: List<DDLItem>,
     modifier: Modifier = Modifier,
     onMoreClick: () -> Unit = {},
     onMoreAnchorChange: (androidx.compose.ui.geometry.Rect) -> Unit = {},
@@ -84,12 +76,10 @@ fun MainSearchBar(
     habitViewModel: HabitViewModel,
     expanded: Boolean,
     onExpandedChangeExternal: (Boolean) -> Unit = {},
-    selectedPage: DeadlineType,
+    useSurfaceColors: Boolean = false,
     miuixMode: Boolean = LocalAppDesignSystem.current == AppDesignSystem.MIUIX,
-    resultsHorizontalPadding: Dp = 16.dp,
-    mixedResultTypes: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit = {},
 ) {
-    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
     val isEnabled = GlobalUtils.motivationalQuotes
@@ -98,7 +88,6 @@ fun MainSearchBar(
         mutableIntStateOf(if (excitementArray.isNotEmpty()) (0 until excitementArray.size).random() else 0)
     }
 
-    LaunchedEffect(expanded) { onExpandedChangeExternal(expanded) }
     LaunchedEffect(isEnabled, excitementArray) {
         if (!isEnabled || excitementArray.isEmpty()) return@LaunchedEffect
         while (true) {
@@ -121,6 +110,23 @@ fun MainSearchBar(
             targetValue = if (expanded) 0.dp else 16.dp,
             label = "Search bar padding"
         )
+        val searchBarColors = if (useSurfaceColors) {
+            SearchBarDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                dividerColor = MaterialTheme.colorScheme.surface,
+            )
+        } else {
+            SearchBarDefaults.colors()
+        }
+        val inputFieldColors = if (useSurfaceColors) {
+            SearchBarDefaults.inputFieldColors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                disabledContainerColor = MaterialTheme.colorScheme.surface,
+            )
+        } else {
+            SearchBarDefaults.inputFieldColors()
+        }
 
         Box(modifier = modifier.fillMaxWidth().semantics { isTraversalGroup = true }) {
             M3SearchBar(
@@ -171,23 +177,18 @@ fun MainSearchBar(
                                     }
                                 }
                             }
-                        }
+                        },
+                        colors = inputFieldColors,
                     )
                 },
                 expanded = expanded,
                 onExpandedChange = { exp ->
                     if (!exp) textFieldState.edit { replace(0, length, "") }
                     onExpandedChangeExternal(exp)
-                }
+                },
+                colors = searchBarColors,
             ) {
-                SearchResultContent(
-                    searchResults = searchResults,
-                    selectedPage = selectedPage,
-                    activity = activity,
-                    habitViewModel = habitViewModel,
-                    horizontalPadding = resultsHorizontalPadding,
-                    mixedResultTypes = mixedResultTypes,
-                )
+                content()
             }
         }
     } else {
@@ -221,34 +222,7 @@ fun MainSearchBar(
                 onExpandedChangeExternal(exp)
             }
         ) {
-            SearchResultContent(
-                searchResults = searchResults,
-                selectedPage = selectedPage,
-                activity = activity,
-                habitViewModel = habitViewModel,
-                horizontalPadding = resultsHorizontalPadding,
-                mixedResultTypes = mixedResultTypes,
-            )
+            content()
         }
     }
-}
-
-@Composable
-private fun SearchResultContent(
-    searchResults: List<DDLItem>,
-    selectedPage: DeadlineType,
-    activity: MainActivity?,
-    habitViewModel: HabitViewModel,
-    horizontalPadding: Dp,
-    mixedResultTypes: Boolean,
-) {
-    val targetActivity = activity ?: return
-    MainSearchResultsContent(
-        searchResults = searchResults,
-        selectedPage = selectedPage,
-        habitViewModel = habitViewModel,
-        activity = targetActivity,
-        horizontalPadding = horizontalPadding,
-        mixedResultTypes = mixedResultTypes,
-    )
 }

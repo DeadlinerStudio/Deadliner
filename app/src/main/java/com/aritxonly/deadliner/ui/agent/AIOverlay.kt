@@ -60,7 +60,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -124,7 +123,7 @@ import com.aritxonly.deadliner.ai.UserProfile
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.iconResource
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -262,8 +261,8 @@ fun AIOverlay(
     }
 
     if (showDonatePrompt) {
-        RegisterAdvancedMaterialDialogBlur()
         AlertDialog(
+            show = true,
             onDismissRequest = { showDonatePrompt = false },
             title = { Text(stringResource(R.string.deadliner_donate_plan_title)) },
             text = { Text(stringResource(R.string.deadliner_donate_plan_message)) },
@@ -405,6 +404,9 @@ fun AIOverlay(
         if (query.isBlank() || isLoading) return
         Log.d("AIOverlay", "submitQuery(core-only): $query")
         val submittedToolsThisTurn = mutableSetOf<String>()
+        val hideThinkingProcess = GlobalUtils.aiHideThinkingProcess
+        val autoApproveReadTasks = GlobalUtils.aiAutoApproveReadTasks
+        val silentTaskAdd = GlobalUtils.aiSilentTaskAdd
 
         // 防止上一轮遗留的待确认状态阻塞新一轮会话。
         pendingToolApproval?.deferred?.complete(ToolDecision.Reject("stale_session"))
@@ -414,8 +416,11 @@ fun AIOverlay(
         textState = TextFieldValue("")
         messages.add(ChatDisplayItem.UserQuery(query))
 
-        val thinking = ChatDisplayItem.AIThinking("Lifi AI 正在思考...")
-        messages.add(thinking)
+        val thinking = if (hideThinkingProcess) {
+            null
+        } else {
+            ChatDisplayItem.AIThinking("Lifi AI 正在思考...").also(messages::add)
+        }
 
         scope.launch {
             isLoading = true
@@ -440,6 +445,15 @@ fun AIOverlay(
                             .replace("_", "")
                             .lowercase()
 
+                        if (autoApproveReadTasks && (normalizedTool == "readtasks" || normalizedTool == "readhabits")) {
+                            submittedToolsThisTurn += normalizedTool
+                            return@generateAutoInteractive ToolDecision.Approve
+                        }
+                        if (silentTaskAdd && normalizedTool == "createtask") {
+                            submittedToolsThisTurn += normalizedTool
+                            return@generateAutoInteractive ToolDecision.Approve
+                        }
+
                         val deferred = CompletableDeferred<ToolDecision>()
                         withContext(Dispatchers.Main) {
                             messages.add(ChatDisplayItem.AIToolRequestCard(request))
@@ -462,11 +476,13 @@ fun AIOverlay(
                         decision
                     },
                     onThinking = { agent, phase, message ->
-                        withContext(Dispatchers.Main) {
-                            updateThinkingBubble(
-                                thinking.id,
-                                mapThinkingLabel(agent = agent, phase = phase, fallback = message)
-                            )
+                        if (thinking != null) {
+                            withContext(Dispatchers.Main) {
+                                updateThinkingBubble(
+                                    thinking.id,
+                                    mapThinkingLabel(agent = agent, phase = phase, fallback = message)
+                                )
+                            }
                         }
                     },
                     onLifecycle = { evt ->
@@ -474,9 +490,11 @@ fun AIOverlay(
                             "AIOverlay",
                             "core lifecycle: stage=${evt.stage}, status=${evt.status}, requestId=${evt.requestId}, state=${evt.state}"
                         )
-                        withContext(Dispatchers.Main) {
-                            mapLifecycleLabel(evt.stage, evt.status, evt.state)?.let { label ->
-                                updateThinkingBubble(thinking.id, label)
+                        if (thinking != null) {
+                            withContext(Dispatchers.Main) {
+                                mapLifecycleLabel(evt.stage, evt.status, evt.state)?.let { label ->
+                                    updateThinkingBubble(thinking.id, label)
+                                }
                             }
                         }
                     },
@@ -485,14 +503,14 @@ fun AIOverlay(
                 val mixed = AIUtils.parseMixedResult(json)
                 val (primary, cards0) = mapMixedToUiCards(mixed)
                 val shouldSuppressProposalCards = submittedToolsThisTurn.any {
-                    it == "readtasks" || it == "readhabits"
+                    it == "readtasks" || it == "readhabits" || it == "createtask"
                 }
                 val cards = if (shouldSuppressProposalCards) {
                     cards0.filterNot { it is UiCard.TaskCard }
                 } else {
                     cards0
                 }
-                removeThinkingBubble(thinking.id)
+                thinking?.let { removeThinkingBubble(it.id) }
                 val chat = mixed.chatResponse?.trim().orEmpty()
                 if (chat.isNotEmpty()) {
                     if (streamBubbleId != null) finalizeStreamBubble(chat) else messages.add(ChatDisplayItem.AIChat(chat))
@@ -508,7 +526,7 @@ fun AIOverlay(
                 }
                 appendAssistantCards(cards)
             } catch (t: Throwable) {
-                removeThinkingBubble(thinking.id)
+                thinking?.let { removeThinkingBubble(it.id) }
                 finalizeStreamBubble(null)
                 val err = t.message ?: context.getString(R.string.ai_parse_failed)
                 messages.add(ChatDisplayItem.AIError(err))

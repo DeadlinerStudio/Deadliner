@@ -296,10 +296,8 @@ private fun SimplifiedWizardTopBar() {
     MainSearchBar(
         textFieldState = textFieldState,
         onQueryChanged = {},
-        searchResults = listOf(),
         habitViewModel = habitViewModel,
         expanded = false,
-        selectedPage = DeadlineType.TASK,
     )
 }
 
