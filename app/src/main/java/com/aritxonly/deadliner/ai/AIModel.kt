@@ -8,40 +8,10 @@ import com.google.gson.JsonParseException
 import com.google.gson.JsonPrimitive
 import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
-import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
 import java.lang.reflect.Type
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
-data class Message(
-    val role: String,
-    val content: String
-)
-
-data class ChatRequest(
-    val model: String = "deepseek-chat",
-    val messages: List<Message>,
-    val stream: Boolean = false
-)
-
-data class ChatResponse(
-    val choices: List<Choice>,
-    val usage: Usage?
-)
-
-data class Choice(
-    val message: Message
-)
-
-data class Usage(
-    @SerializedName("prompt_tokens") val promptTokens: Int? = null,
-    @SerializedName("completion_tokens") val completionTokens: Int? = null,
-    @SerializedName("total_tokens") val totalTokens: Int? = null,
-
-    @SerializedName("prompt_cache_hit_tokens") val promptCacheHitTokens: Int? = null,
-    @SerializedName("prompt_cache_miss_tokens") val promptCacheMissTokens: Int? = null
-)
 
 @Parcelize
 data class GeneratedDDL(
@@ -87,27 +57,3 @@ val defaultLlmPreset = LlmPreset(
     model = "deepseek-chat",
     endpoint = "https://deadliner.aritxonly.top/api"
 )
-
-/** 后端类型：保持可扩展（将来可加 HMAC） */
-enum class BackendType { DirectBearer, DeadlinerProxy }
-
-/** 你的 LlmPreset 可以增加这几个字段（或用已有字段映射） */
-data class BackendPreset(
-    val type: BackendType,
-    val endpoint: String,
-    val model: String,
-)
-
-object LlmTransportFactory {
-    fun create(
-        preset: BackendPreset,
-        bearerKey: String,     // Direct 模式下使用
-        appSecret: String,     // Proxy 模式下使用
-        deviceId: String       // Proxy 模式下使用
-    ): LlmTransport = when (preset.type) {
-        BackendType.DirectBearer ->
-            DirectBearerTransport(preset.endpoint, bearerKey)
-        BackendType.DeadlinerProxy ->
-            DeadlinerProxyTransport(preset.endpoint, appSecret, deviceId)
-    }
-}

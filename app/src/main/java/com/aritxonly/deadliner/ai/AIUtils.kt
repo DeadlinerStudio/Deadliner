@@ -5,17 +5,16 @@ import android.util.Log
 import com.aritxonly.deadliner.localutils.ApiKeystore
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.overview.MonthlyAnalysisResult
+import com.deadliner.domain.ai.model.AIConfig
+import com.deadliner.lifi.llm.KtorLlmClient
+import com.deadliner.lifi.utility.AiUtilityService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 object AIUtils {
-    private var model: String = "deepseek-chat"
-    private var transport: LlmTransport? = null
     private var appContext: Context? = null
     private var coreBridge: DeadlinerCoreBridge? = null
     private val gson by lazy {
@@ -27,40 +26,12 @@ object AIUtils {
     /** 初始化：在 Application 或首次使用时调用 */
     fun init(context: Context) {
         appContext = context.applicationContext
-        val config = GlobalUtils.getDeadlinerAIConfig()
-        val preset0 = config.getCurrentPreset()?: defaultLlmPreset
-        val deviceId = GlobalUtils.getOrCreateDeviceId(context)
-
-        val bearerKey = try {
-            ApiKeystore.retrieveAndDecrypt(context).orEmpty()
-        } catch (t: Throwable) {
-            Log.e("AIUtils", "decrypt failed, fallback empty", t)
-            ApiKeystore.reset(context)
-            ""
-        }
-        val appSecret = GlobalUtils.getDeadlinerAppSecret(context)
-
-        val preset = toBackendPreset(preset0)
-
-        model = preset.model
-        transport = LlmTransportFactory.create(
-            preset = preset,
-            bearerKey = bearerKey,
-            appSecret = appSecret,
-            deviceId = deviceId
-        )
         coreBridge = DeadlinerCoreBridge(context.applicationContext, gson)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun setPreset(preset0: LlmPreset, context: Context) {
-        val bp = toBackendPreset(preset0)
-        model = bp.model
-
-        val bearerKey = ApiKeystore.retrieveAndDecrypt(context).orEmpty()
-        val appSecret = GlobalUtils.getDeadlinerAppSecret(context).orEmpty()
-        val deviceId = GlobalUtils.getOrCreateDeviceId(context)
-
-        transport = LlmTransportFactory.create(bp, bearerKey, appSecret, deviceId)
+        appContext = context.applicationContext
         coreBridge = DeadlinerCoreBridge(context.applicationContext, gson)
     }
 
@@ -69,146 +40,21 @@ object AIUtils {
         baseUrl: String,
         modelId: String,
     ) = withContext(Dispatchers.IO) {
-        val endpoint = normalizeDirectEndpoint(baseUrl)
-        val transport = DirectBearerTransport(baseUrl = endpoint, apiKey = apiKey)
-        val response = transport.chat(
-            ChatRequest(
-                model = modelId,
-                messages = listOf(Message(role = "user", content = "ping")),
-                stream = false,
-            )
-        )
-        if (response.choices.isEmpty()) {
-            error("API 没有返回可用消息")
-        }
+        createAiUtilityService(
+            apiKey = apiKey,
+            baseUrl = baseUrl,
+            modelId = modelId,
+        ).validateConfig()
     }
 
-    /**
-     * 发送一次无状态的 Prompt 请求。
-     */
-    private suspend fun sendPrompt(messages: List<Message>): String = withContext(Dispatchers.IO) {
-        val t = transport ?: error("AIUtils not initialized")
-        val req = ChatRequest(model = model, messages = messages, stream = false)
-        val resp = t.chat(req)
-        resp.choices.firstOrNull()?.message?.content ?: error("API 没有返回消息")
-    }
-
-    private fun buildMixedPrompt(
-        langTag: String,
-        tzId: String,
-        nowLocal: String,
-        timeFormatSpec: String,
-        profile: UserProfile?,
-        candidatePrimary: IntentType?,
-        withExample: Boolean = false
-    ): String {
-        val base = """
-你是 Lifi AI。仅输出**纯 JSON**，不允许多余文字/注释/代码块。
-所有时间必须使用 $timeFormatSpec（24小时制、零填充、不带时区），相对时间需基于 $tzId、当前 $nowLocal 解析为**具体时间**。
-name/note 使用设备语言（当前：$langTag）。若出现“晚上”等模糊表达，默认 ${profile?.defaultEveningHour ?: 20}:00。
-若无提醒偏好，默认 reminders=${profile?.defaultReminderMinutes ?: listOf(30)}（分钟）。
-输出**固定键**：primaryIntent, tasks, planBlocks, steps。若某类为空，给空数组。
-primaryIntent 只能为 "ExtractTasks" | "PlanDay" | "SplitToSteps"。${candidatePrimary?.let { "可优先考虑将 primaryIntent 设为 \"$it\"。" } ?: ""}
-""".trimIndent()
-
-        val schemaSkeleton = """
-只允许如下 JSON 结构（Skeleton）：
-{
-  "primaryIntent": "ExtractTasks|PlanDay|SplitToSteps",
-  "tasks": [
-    {
-      "name": "string(≤16)",
-      "dueTime": "$timeFormatSpec",
-      "note": "string"
-    }
-  ],
-  "planBlocks": [
-    {
-      "title": "string",
-      "start": "$timeFormatSpec",
-      "end": "$timeFormatSpec",
-      "location": "string",
-      "energy": "low|med|high",
-      "linkTask": "可关联任务名"
-    }
-  ],
-  "steps": [
-    {
-      "title": "string",
-      "checklist": ["步骤1","步骤2","步骤3"]
-    }
-  ]
-}
-""".trimIndent()
-
-        val fewshotMinimal = """
-示例（可同时包含三类）：
-输入：明天晚8点前交系统论作业；今晚安排两小时复习；并把复习拆成步骤。
-输出：
-{
-  "primaryIntent": "PlanDay",
-  "tasks": [
-    {"name":"提交系统论作业","dueTime":"${LocalDate.now().plusDays(1)} 20:00","note":""}
-  ],
-  "planBlocks": [
-    {"title":"晚间复习","start":"${LocalDate.now()} 20:00","end":"${LocalDate.now()} 22:00","energy":"med"}
-  ],
-  "steps": [
-    {"title":"复习流程","checklist":["过一遍讲义","做5题","整理错题"]}
-  ]
-}
-""".trimIndent()
-
-        return buildString {
-            append(base).append("\n\n")
-            append(schemaSkeleton)
-            if (withExample) {
-                append("\n\n")
-                append(fewshotMinimal)
-            }
-        }.trim()
-    }
-
-    // Legacy chain is kept only for AddDDLActivity (structured extraction to local cards).
+    @Suppress("UNUSED_PARAMETER")
     suspend fun generateMixed(
         context: Context,
         rawText: String,
         profile: UserProfile? = null,
         candidatePrimary: IntentType? = null
     ): String = withContext(Dispatchers.IO) {
-        if (candidatePrimary != IntentType.PlanDay && candidatePrimary != IntentType.SplitToSteps) {
-            val coreJson = runCatching {
-                val mixed = processByCore(context, rawText)
-                gson.toJson(withReservedCalendarToolCall(mixed))
-            }.getOrNull()
-            if (!coreJson.isNullOrBlank()) return@withContext coreJson
-        }
-
-        val langTag = profile?.preferredLang ?: currentLangTag(context)
-        val timeFormatSpec = "yyyy-MM-dd HH:mm"
-        val tzId = java.util.TimeZone.getDefault().id
-        val nowLocal = LocalDateTime.now().toString()
-        val today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-
-        val systemPrompt = buildMixedPrompt(
-            langTag = langTag,
-            tzId = tzId,
-            nowLocal = nowLocal,
-            timeFormatSpec = timeFormatSpec,
-            profile = profile,
-            candidatePrimary = candidatePrimary
-        )
-        val localeHint = "当前日期：$today；设备语言：$langTag；时区：$tzId。严格按上述固定键输出 JSON。"
-
-        val messages = listOfNotNull(
-            Message("system", systemPrompt),
-            Message("user", localeHint),
-            GlobalUtils.customPrompt?.let { Message("user", it) },
-            Message("user", rawText)
-        )
-
-        val raw = sendPrompt(messages)
-        val mixed = parseMixedResult(extractJsonFromMarkdown(raw), gson)
+        val mixed = processByCore(context, rawText)
         gson.toJson(withReservedCalendarToolCall(mixed))
     }
 
@@ -239,55 +85,23 @@ primaryIntent 只能为 "ExtractTasks" | "PlanDay" | "SplitToSteps"。${candidat
         metricsSummary: String,
         completedTaskNames: List<String>
     ): MonthlyAnalysisResult = withContext(Dispatchers.IO) {
-        val systemPrompt = """
-你是 Deadliner 的月度复盘助手。请基于用户上个月的任务统计输出简短、具体、有行动建议的总结。
-仅输出纯 JSON，不允许 Markdown、代码块或额外解释。
-JSON 结构固定为：
-{
-  "summary": "string",
-  "keywords": ["string", "string"]
-}
-
-要求：
-1. `summary` 使用当前输入语言，长度控制在 90-180 字。
-2. 总结要覆盖完成情况、风险或拖延信号、一个积极亮点，以及一个下月建议。
-3. `keywords` 返回 4-6 个简短关键词，每个关键词不超过 8 个汉字或 3 个英文单词。
-4. 如果已完成任务名较少，也不要编造不存在的任务内容。
-        """.trimIndent()
-
-        val userPrompt = buildString {
-            appendLine("月份：$monthName")
-            appendLine("指标：")
-            appendLine(metricsSummary.ifBlank { "暂无指标" })
-            appendLine()
-            appendLine("已完成任务：")
-            if (completedTaskNames.isEmpty()) {
-                append("无")
-            } else {
-                append(completedTaskNames.take(50).joinToString(separator = "、"))
-            }
-        }
-
-        val raw = sendPrompt(
-            messages = listOf(
-                Message(role = "system", content = systemPrompt),
-                Message(role = "user", content = userPrompt),
-            )
-        )
-        data class MonthlyAnalysisPayload(
-            val summary: String = "",
-            val keywords: List<String> = emptyList(),
-        )
-
-        val payload = gson.fromJson(
-            extractJsonFromMarkdown(raw),
-            MonthlyAnalysisPayload::class.java
+        val context = appContext ?: error("AIUtils not initialized")
+        val config = readCoreRuntimeConfig(context)
+        val sharedResult = createAiUtilityService(
+            apiKey = config.apiKey,
+            baseUrl = config.baseUrl,
+            modelId = config.modelId,
+        ).generateMonthlyAnalysis(
+            monthName = monthName,
+            metricsSummary = metricsSummary,
+            completedTaskNames = completedTaskNames,
+            preferredLang = currentLangTag(context),
         )
 
         MonthlyAnalysisResult(
             month = monthKey,
-            summary = payload.summary.trim(),
-            keywords = payload.keywords
+            summary = sharedResult.summary.trim(),
+            keywords = sharedResult.keywords
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
                 .distinct()
@@ -388,23 +202,6 @@ JSON 结构固定为：
         return normalized
     }
 
-    private fun toBackendPreset(p: LlmPreset): BackendPreset {
-        // 约定：如果 endpoint 以 "/api" 结尾，认为是 Deadliner 代理；否则是直连
-        return if (p.endpoint.contains("aritxonly.top/api")) {
-            BackendPreset(
-                type = BackendType.DeadlinerProxy,
-                endpoint = p.endpoint.trimEnd('/'),
-                model = p.model
-            )
-        } else {
-            BackendPreset(
-                type = BackendType.DirectBearer,
-                endpoint = p.endpoint,
-                model = p.model
-            )
-        }
-    }
-
     private suspend fun processByCore(
         context: Context,
         rawText: String,
@@ -501,4 +298,19 @@ JSON 结构固定为：
         val baseUrl: String,
         val modelId: String,
     )
+
+    private fun createAiUtilityService(
+        apiKey: String,
+        baseUrl: String,
+        modelId: String,
+    ): AiUtilityService {
+        val config = AIConfig(
+            apiKey = apiKey,
+            baseUrl = baseUrl,
+            model = modelId,
+            platform = "android",
+            timezone = java.util.TimeZone.getDefault().id,
+        )
+        return AiUtilityService(config, KtorLlmClient(config))
+    }
 }

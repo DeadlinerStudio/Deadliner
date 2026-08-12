@@ -23,6 +23,7 @@
 - [ ] 接入 Task list/detail/editor/archive/search 共享 ViewModel
 - [ ] 接入 Habit list、Overview、Settings 共享 ViewModel
 - [ ] 用共享 Lifi API 替换 Android `AIUtils` 业务逻辑
+- [x] 将 Android LLM transport、配置验证、月度分析和 agent prompt/orchestration 收敛到既有 KMP Lifi API
 - [ ] 完成 Room -> SQLDelight 数据迁移并停止双写
 - [ ] 删除 Android 重复的业务 ViewModel/repository/AI 实现
 - [ ] 大型改动完成后再统一编译

@@ -21,6 +21,7 @@
 - 若必须逃逸，先申请开发者批准
 - 每个 feature 独立定义 `*UiState`、`*Effect` 和 ViewModel；通用时间/映射逻辑放在 domain helper，避免 ViewModel 膨胀。
 - Android 适配器不得复制筛选、排序、统计、提示词或状态转换；只做生命周期、类型和平台回调转换。
+- 优先消费 Core 已有接口；现有公开类型/构造器保持源码与二进制语义，不用 Android 需求反向污染其他端。
 - Lifi 保持 `llm / prompt / pipeline / orchestrator / memory / skill / tool / utility` 现有拆分。
 
 ## 迁移切片

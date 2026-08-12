@@ -46,5 +46,6 @@
 - Android 当前 Room 模型与 KMP SQLDelight/领域模型并存，需要显式数据迁移和时间/ID/枚举映射，禁止静默丢字段。
 - KMP AAR 与现有 UniFFI/JNA 发布物并存，切换期间必须避免同名 API、重复 native 库和双写数据库。
 - `DeadlinerCore` 工作区在本任务开始前已有未提交的 repository-driven-sync 改动；所有 Core 修改必须增量兼容并单独核对 diff。
+- 不得为了 Android 迁移修改 iOS/HarmonyOS 已消费的既有 Core API 语义；新增公开 API 必须是明确的跨端上层抽象，而不是 Android 适配或测试便利接口。
 - 单个核心代码文件尽量不超过 1000 行有效代码；超过前需取得开发者批准。
 - 编译放在完成一个实质迁移批次后统一执行，避免小改动反复构建。
