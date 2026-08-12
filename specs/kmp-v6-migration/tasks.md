@@ -14,7 +14,7 @@
 - [x] 让 Android 显式依赖 `.deadliner-core/kmp/deadliner-core.aar`
 - [x] 统一本地 Core 路径与 runscript/Gradle 开关
 - [x] 以 Intro lifecycle wrapper 建立 Android 薄适配规则
-- [ ] 定义 Room -> SQLDelight 数据迁移映射与回滚策略
+- [x] 定义 SQLite v5 -> SQLDelight 单向迁移映射与失败策略（不运行时回退）
 
 ## 阶段 3：功能实现
 
@@ -24,7 +24,7 @@
 - [ ] 接入 Habit list、Overview、Settings 共享 ViewModel
 - [ ] 用共享 Lifi API 替换 Android `AIUtils` 业务逻辑
 - [x] 将 Android LLM transport、配置验证、月度分析和 agent prompt/orchestration 收敛到既有 KMP Lifi API
-- [ ] 完成 Room -> SQLDelight 数据迁移并停止双写
+- [ ] 完成 SQLite v5 -> SQLDelight 一次性迁移并停止旧数据层读写
 - [ ] 删除 Android 重复的业务 ViewModel/repository/AI 实现
 - [ ] 大型改动完成后再统一编译
 

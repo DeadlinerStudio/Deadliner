@@ -20,6 +20,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.ApiKeystore
 import com.aritxonly.deadliner.sync.SyncScheduler
 import com.aritxonly.deadliner.ai.AIUtils
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 
 class DeadlinerApp : Application() {
     override fun onCreate() {
@@ -28,6 +29,7 @@ class DeadlinerApp : Application() {
         ApiKeystore.createKeyIfNeeded()
         AIUtils.init(this)
         AppSingletons.init(this)
+        KmpV6Runtime.initialize(this, AppSingletons.db)
         UserProfileRepository.init(this)
         AppIconManager.applyCurrentMode(this)
         var startedActivityCount = 0

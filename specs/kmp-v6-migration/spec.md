@@ -14,7 +14,7 @@
 - Lifi 的配置契约、提示词、解析、编排、工具调用、记忆和 AI utility 全部由 KMP 共享层提供。
 - Android 通过 KMP Android AAR 接入共享层；平台代码仅负责 UI、生命周期适配和 Android 专属端口。
 - 迁移按垂直切片进行，每一阶段都能构建和回退，最终删除 Android 中重复的业务实现。
-- 保持 v5 用户数据可迁移、核心交互语义不回退。
+- 保持 v5 用户数据可一次性迁移、核心交互语义不回退；迁移后运行时不回落到 v5 数据层。
 
 ## 非目标
 
@@ -44,7 +44,8 @@
 
 - 这是 breaking change；每个跨仓库大批次前必须有可回退提交。
 - Android 当前 Room 模型与 KMP SQLDelight/领域模型并存，需要显式数据迁移和时间/ID/枚举映射，禁止静默丢字段。
-- KMP AAR 与现有 UniFFI/JNA 发布物并存，切换期间必须避免同名 API、重复 native 库和双写数据库。
+- KMP AAR 与现有 UniFFI/JNA 发布物在构建产物层面暂时并存，但 v6 业务运行时必须单向切到 KMP，禁止双写、失败回退和长期旧实现兼容。
+- 旧 SQLite 业务逻辑只允许保留一次性导入所需的最小读取投影；页面切到 KMP 后立即删除对应旧 repository、ViewModel 与同步逻辑。
 - `DeadlinerCore` 工作区在本任务开始前已有未提交的 repository-driven-sync 改动；所有 Core 修改必须增量兼容并单独核对 diff。
 - 不得为了 Android 迁移修改 iOS/HarmonyOS 已消费的既有 Core API 语义；新增公开 API 必须是明确的跨端上层抽象，而不是 Android 适配或测试便利接口。
 - 单个核心代码文件尽量不超过 1000 行有效代码；超过前需取得开发者批准。

@@ -30,7 +30,7 @@
 2. 无数据依赖状态：Intro wizard 与共享错误/effect 契约。
 3. 数据功能：Capture、Task list/detail/editor/archive/search、Habit list、Overview、Settings。
 4. Lifi：用共享 AI utility/orchestrator 替代 Android `AIUtils`，平台工具通过 ports 注入。
-5. 数据切换：Room 数据一次性迁入 SQLDelight，停止双写，删除重复 repository/ViewModel。
+5. 数据切换：SQLite v5 数据一次性迁入 SQLDelight；迁移失败阻止进入 v6，不回退旧数据层。页面完成切换后删除重复 repository/ViewModel/sync。
 
 ## 风险点
 
