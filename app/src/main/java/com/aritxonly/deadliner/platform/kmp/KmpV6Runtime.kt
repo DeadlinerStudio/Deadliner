@@ -4,8 +4,10 @@ import android.content.Context
 import com.aritxonly.deadliner.data.DatabaseHelper
 import com.deadliner.db.AndroidDatabaseDriverFactory
 import com.deadliner.db.DeadlinerDatabase
-import com.deadliner.viewmodel.overview.OverviewViewModel
+import com.deadliner.viewmodel.habit.HabitListViewModel
 import com.deadliner.viewmodel.capture.CaptureViewModel
+import com.deadliner.viewmodel.overview.OverviewViewModel
+import com.deadliner.viewmodel.task.ArchiveViewModel
 
 /** Android-private composition root for the v6 shared layer. */
 internal object KmpV6Runtime {
@@ -20,6 +22,16 @@ internal object KmpV6Runtime {
     val captureViewModel: CaptureViewModel by lazy {
         check(::database.isInitialized) { "KmpV6Runtime is not initialized" }
         CaptureViewModel(database.captures)
+    }
+
+    val archiveViewModel: ArchiveViewModel by lazy {
+        check(::database.isInitialized) { "KmpV6Runtime is not initialized" }
+        ArchiveViewModel(database.tasks)
+    }
+
+    val habitListViewModel: HabitListViewModel by lazy {
+        check(::database.isInitialized) { "KmpV6Runtime is not initialized" }
+        HabitListViewModel(database.habits)
     }
 
     fun initialize(

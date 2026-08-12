@@ -536,6 +536,7 @@
     <string name="frequency_daily">每天</string>
     <string name="frequency_weekly">每周</string>
     <string name="frequency_monthly">每月</string>
+    <string name="frequency_once">单次</string>
 
     <string name="habit_checkin">%1$s打卡 %2$d 次，%3$s</string>
     <string name="habit_total_unlimited">不计次数</string>

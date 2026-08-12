@@ -434,6 +434,7 @@
     <string name="frequency_daily">Daily</string>
     <string name="frequency_weekly">Weekly</string>
     <string name="frequency_monthly">Monthly</string>
+    <string name="frequency_once">Once</string>
     <string name="habit_checkin">%1$s check-in %2$d times, %3$s</string>
     <string name="habit_total_unlimited">Unlimited</string>
     <string name="habit_total_count">%1$d times in total</string>

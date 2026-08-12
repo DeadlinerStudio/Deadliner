@@ -30,8 +30,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,16 +51,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.DDLRepository
-import com.aritxonly.deadliner.data.HabitRepository
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.Habit
-import com.aritxonly.deadliner.model.HabitStatus
-import com.aritxonly.deadliner.model.TaskStateAction
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.Button
@@ -72,9 +64,17 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
+import com.deadliner.domain.habit.Habit
+import com.deadliner.domain.habit.HabitGoalType
+import com.deadliner.domain.habit.HabitPeriod
+import com.deadliner.domain.habit.HabitStatus
+import com.deadliner.domain.habit.HabitStatusAction
+import com.deadliner.domain.task.Task
+import com.deadliner.domain.task.TaskState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 
 private enum class ArchiveTab {
@@ -85,11 +85,11 @@ private enum class ArchiveTab {
 private sealed interface ArchiveDeleteTarget {
     val displayName: String
 
-    data class Task(val item: DDLItem) : ArchiveDeleteTarget {
-        override val displayName: String = item.name
+    data class TaskItem(val item: Task) : ArchiveDeleteTarget {
+        override val displayName: String = item.title
     }
 
-    data class Habit(val habit: com.aritxonly.deadliner.model.Habit) : ArchiveDeleteTarget {
+    data class HabitItem(val habit: Habit) : ArchiveDeleteTarget {
         override val displayName: String = habit.name
     }
 }
@@ -101,23 +101,29 @@ fun ArchiveScreen(
     onDataChanged: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
-    val taskRepo = remember { DDLRepository() }
-    val habitRepo = remember { HabitRepository() }
+    val taskViewModel = remember { KmpV6Runtime.archiveViewModel }
+    val habitViewModel = remember { KmpV6Runtime.habitListViewModel }
+    val taskState by taskViewModel.uiState.collectAsState()
+    val habitState by habitViewModel.uiState.collectAsState()
     val pageSurfaceColor = MaterialTheme.colorScheme.surface
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val layoutDirection = LocalLayoutDirection.current
 
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
-    var archivedTasks by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
-    var archivedHabits by remember { mutableStateOf<List<Habit>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
     var deleteTarget by remember { mutableStateOf<ArchiveDeleteTarget?>(null) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteAllDialog by rememberSaveable { mutableStateOf(false) }
 
     val selectedTab = ArchiveTab.entries[selectedTabIndex]
+    val archivedTasks = taskState.tasks
+    val archivedHabits = habitState.habits
+        .filter { it.status == HabitStatus.ARCHIVED }
+        .sortedByDescending { it.updatedAt }
+    val isLoading = when (selectedTab) {
+        ArchiveTab.TASK -> taskState.isLoading
+        ArchiveTab.HABIT -> habitState.isLoading
+    }
     val tabTitles = listOf(
         stringResource(R.string.task),
         stringResource(R.string.habit),
@@ -131,48 +137,9 @@ fun ArchiveScreen(
         ArchiveTab.HABIT -> archivedHabits.size
     }
 
-    suspend fun refreshData() {
-        isLoading = true
-        try {
-            when (selectedTab) {
-                ArchiveTab.TASK -> {
-                    archivedTasks = withContext(Dispatchers.IO) {
-                        taskRepo.getAllDDLs()
-                            .filter { it.state.isArchiveListVisible() }
-                            .sortedByDescending { it.completeTime.ifBlank { it.endTime } }
-                    }
-                }
-                ArchiveTab.HABIT -> {
-                    archivedHabits = withContext(Dispatchers.IO) {
-                        habitRepo.getAllHabits()
-                            .filter { it.status == HabitStatus.ARCHIVED }
-                            .sortedByDescending { it.updatedAt }
-                    }
-                }
-            }
-        } finally {
-            isLoading = false
-        }
-    }
-
-    fun reload() {
-        scope.launch { refreshData() }
-    }
-
-    LaunchedEffect(selectedTab) {
-        refreshData()
-    }
-
-    DisposableEffect(lifecycleOwner, selectedTab) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                reload()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+    LaunchedEffect(Unit) {
+        taskViewModel.initialize()
+        habitViewModel.initialize()
     }
 
     AdaptiveMaterialScaffold(
@@ -274,25 +241,16 @@ fun ArchiveScreen(
                     } else if (selectedTab == ArchiveTab.TASK) {
                         items(
                             items = archivedTasks,
-                            key = { it.id },
+                            key = { it.uid },
                         ) { item ->
                             ArchivedTaskCard(
-                                item = item,
+                                item = item.toArchiveCardModel(),
                                 onRestore = {
-                                    scope.launch {
-                                        withContext(Dispatchers.IO) {
-                                            taskRepo.applyTaskAction(
-                                                itemId = item.id,
-                                                action = TaskStateAction.UNARCHIVE,
-                                                confirmed = true,
-                                            )
-                                        }
-                                        onDataChanged()
-                                        refreshData()
-                                    }
+                                    taskViewModel.unarchiveTask(item.uid)
+                                    onDataChanged()
                                 },
                                 onDelete = {
-                                    deleteTarget = ArchiveDeleteTarget.Task(item)
+                                    deleteTarget = ArchiveDeleteTarget.TaskItem(item)
                                     showDeleteDialog = true
                                 },
                             )
@@ -300,23 +258,24 @@ fun ArchiveScreen(
                     } else {
                         items(
                             items = archivedHabits,
-                            key = { it.id },
+                            key = { it.uid },
                         ) { habit ->
                             ArchivedHabitCard(
-                                habit = habit,
+                                habit = habit.toArchiveCardModel(),
                                 onRestore = {
                                     scope.launch {
                                         withContext(Dispatchers.IO) {
-                                            habitRepo.updateHabit(
-                                                habit.copy(status = HabitStatus.ACTIVE),
+                                            habitViewModel.applyHabitStatusNow(
+                                                uid = habit.uid,
+                                                action = HabitStatusAction.RESTORE,
+                                                occurredAt = Instant.now().toString(),
                                             )
                                         }
                                         onDataChanged()
-                                        refreshData()
                                     }
                                 },
                                 onDelete = {
-                                    deleteTarget = ArchiveDeleteTarget.Habit(habit)
+                                    deleteTarget = ArchiveDeleteTarget.HabitItem(habit)
                                     showDeleteDialog = true
                                 },
                             )
@@ -373,14 +332,16 @@ fun ArchiveScreen(
                     scope.launch {
                         withContext(Dispatchers.IO) {
                             when (target) {
-                                is ArchiveDeleteTarget.Task -> taskRepo.deleteDDL(target.item.id)
-                                is ArchiveDeleteTarget.Habit -> habitRepo.deleteHabitByDdlId(target.habit.ddlId)
+                                is ArchiveDeleteTarget.TaskItem -> taskViewModel.deleteTask(target.item.uid)
+                                is ArchiveDeleteTarget.HabitItem -> habitViewModel.deleteHabitNow(
+                                    target.habit.uid,
+                                    Instant.now().toString(),
+                                )
                             }
                         }
                         onDataChanged()
                         showDeleteDialog = false
                         deleteTarget = null
-                        refreshData()
                     }
                 },
                 miuixText = stringResource(R.string.delete),
@@ -428,13 +389,14 @@ fun ArchiveScreen(
                     scope.launch {
                         withContext(Dispatchers.IO) {
                             when (selectedTab) {
-                                ArchiveTab.TASK -> archivedTasks.forEach { taskRepo.deleteDDL(it.id) }
-                                ArchiveTab.HABIT -> archivedHabits.forEach { habitRepo.deleteHabitByDdlId(it.ddlId) }
+                                ArchiveTab.TASK -> archivedTasks.forEach { taskViewModel.deleteTask(it.uid) }
+                                ArchiveTab.HABIT -> archivedHabits.forEach {
+                                    habitViewModel.deleteHabitNow(it.uid, Instant.now().toString())
+                                }
                             }
                         }
                         onDataChanged()
                         showDeleteAllDialog = false
-                        refreshData()
                     }
                 },
                 miuixText = stringResource(R.string.clear_all),
@@ -445,6 +407,50 @@ fun ArchiveScreen(
                 )
             }
         },
+    )
+}
+
+@Composable
+private fun Task.toArchiveCardModel(): ArchivedTaskCardModel {
+    val abandoned = state == TaskState.ABANDONED_ARCHIVED
+    val archivedAt = completedAt
+    return ArchivedTaskCardModel(
+        badgeText = stringResource(
+            if (abandoned) R.string.archive_label_abandoned else R.string.archive_label_completed,
+        ),
+        title = title,
+        primaryText = formatArchiveDate(startAt.orEmpty()),
+        secondaryText = when {
+            archivedAt.isNullOrBlank() && abandoned -> stringResource(R.string.archive_state_abandoned)
+            archivedAt.isNullOrBlank() -> stringResource(R.string.archive_state_archived)
+            abandoned -> stringResource(R.string.archive_abandoned_at, formatArchiveDate(archivedAt))
+            else -> stringResource(R.string.archive_completed_at, formatArchiveDate(archivedAt))
+        },
+        note = note,
+        isAbandoned = abandoned,
+    )
+}
+
+@Composable
+private fun Habit.toArchiveCardModel(): ArchivedHabitCardModel {
+    val periodLabel = stringResource(
+        when (period) {
+            HabitPeriod.DAILY -> R.string.frequency_daily
+            HabitPeriod.WEEKLY -> R.string.frequency_weekly
+            HabitPeriod.MONTHLY -> R.string.frequency_monthly
+            HabitPeriod.ONCE -> R.string.frequency_once
+            HabitPeriod.EBBINGHAUS -> R.string.editor_habit_period_ebbinghaus
+        },
+    )
+    val goalLabel = when (goalType) {
+        HabitGoalType.TOTAL -> stringResource(R.string.archive_habit_total_target, totalTarget ?: 0)
+        HabitGoalType.PER_PERIOD -> stringResource(R.string.archive_habit_period_target, timesPerPeriod)
+    }
+    return ArchivedHabitCardModel(
+        title = name,
+        primaryText = stringResource(R.string.archive_habit_detail_template, periodLabel, goalLabel),
+        secondaryText = stringResource(R.string.archive_archived_at, formatArchiveDate(updatedAt)),
+        note = description.orEmpty(),
     )
 }
 

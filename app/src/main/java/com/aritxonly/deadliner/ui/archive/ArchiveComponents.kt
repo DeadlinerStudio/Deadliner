@@ -48,65 +48,36 @@ fun formatArchiveDate(value: String): String {
 
 fun formatArchiveDate(value: LocalDateTime): String = value.format(ArchiveDateFormatter)
 
-fun buildArchivedTaskDetail(context: Context, item: DDLItem): String {
-    return when {
-        item.completeTime.isBlank() && item.state.isAbandonedFamily() ->
-            context.getString(R.string.archive_state_abandoned)
+internal data class ArchivedTaskCardModel(
+    val badgeText: String,
+    val title: String,
+    val primaryText: String,
+    val secondaryText: String,
+    val note: String,
+    val isAbandoned: Boolean,
+)
 
-        item.completeTime.isBlank() ->
-            context.getString(R.string.archive_state_archived)
-
-        item.state.isAbandonedFamily() ->
-            context.getString(R.string.archive_abandoned_at, formatArchiveDate(item.completeTime))
-
-        else ->
-            context.getString(R.string.archive_completed_at, formatArchiveDate(item.completeTime))
-    }
-}
-
-fun buildArchivedTaskLabel(context: Context, item: DDLItem): String {
-    return if (item.state.isAbandonedFamily()) {
-        context.getString(R.string.archive_label_abandoned)
-    } else {
-        context.getString(R.string.archive_label_completed)
-    }
-}
-
-fun buildArchivedHabitDetail(context: Context, habit: Habit): String {
-    val periodLabel = when (habit.period) {
-        HabitPeriod.DAILY -> context.getString(R.string.frequency_daily)
-        HabitPeriod.WEEKLY -> context.getString(R.string.frequency_weekly)
-        HabitPeriod.MONTHLY -> context.getString(R.string.frequency_monthly)
-        HabitPeriod.EBBINGHAUS -> context.getString(R.string.editor_habit_period_ebbinghaus)
-    }
-    val goalLabel = when (habit.goalType) {
-        HabitGoalType.TOTAL -> context.getString(
-            R.string.archive_habit_total_target,
-            habit.totalTarget ?: 0,
-        )
-        HabitGoalType.PER_PERIOD -> context.getString(
-            R.string.archive_habit_period_target,
-            habit.timesPerPeriod,
-        )
-    }
-    return context.getString(R.string.archive_habit_detail_template, periodLabel, goalLabel)
-}
+internal data class ArchivedHabitCardModel(
+    val title: String,
+    val primaryText: String,
+    val secondaryText: String,
+    val note: String,
+)
 
 @Composable
-fun ArchivedTaskCard(
-    item: DDLItem,
+internal fun ArchivedTaskCard(
+    item: ArchivedTaskCardModel,
     modifier: Modifier = Modifier,
     onRestore: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
     ArchivedItemCard(
-        badgeText = buildArchivedTaskLabel(context, item),
-        title = item.name,
-        primaryText = formatArchiveDate(item.startTime),
-        secondaryText = buildArchivedTaskDetail(context, item),
+        badgeText = item.badgeText,
+        title = item.title,
+        primaryText = item.primaryText,
+        secondaryText = item.secondaryText,
         note = item.note,
-        indicatorColor = if (item.state.isAbandonedFamily()) {
+        indicatorColor = if (item.isAbandoned) {
             MaterialTheme.colorScheme.outline
         } else {
             MaterialTheme.colorScheme.primary
@@ -118,7 +89,59 @@ fun ArchivedTaskCard(
 }
 
 @Composable
-fun ArchivedHabitCard(
+internal fun ArchivedHabitCard(
+    habit: ArchivedHabitCardModel,
+    modifier: Modifier = Modifier,
+    noteFallback: String = stringResource(R.string.detail_note_empty),
+    onRestore: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
+) {
+    ArchivedItemCard(
+        badgeText = stringResource(R.string.habit),
+        title = habit.title,
+        primaryText = habit.primaryText,
+        secondaryText = habit.secondaryText,
+        note = habit.note.takeIf { it.isNotBlank() } ?: noteFallback,
+        indicatorColor = MaterialTheme.colorScheme.primary,
+        onRestore = onRestore,
+        onDelete = onDelete,
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun LegacyArchivedTaskCard(
+    item: DDLItem,
+    modifier: Modifier = Modifier,
+    onRestore: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val isAbandoned = item.state.isAbandonedFamily()
+    ArchivedItemCard(
+        badgeText = if (isAbandoned) {
+            context.getString(R.string.archive_label_abandoned)
+        } else {
+            context.getString(R.string.archive_label_completed)
+        },
+        title = item.name,
+        primaryText = formatArchiveDate(item.startTime),
+        secondaryText = when {
+            item.completeTime.isBlank() && isAbandoned -> context.getString(R.string.archive_state_abandoned)
+            item.completeTime.isBlank() -> context.getString(R.string.archive_state_archived)
+            isAbandoned -> context.getString(R.string.archive_abandoned_at, formatArchiveDate(item.completeTime))
+            else -> context.getString(R.string.archive_completed_at, formatArchiveDate(item.completeTime))
+        },
+        note = item.note,
+        indicatorColor = if (isAbandoned) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.primary,
+        onRestore = onRestore,
+        onDelete = onDelete,
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun LegacyArchivedHabitCard(
     habit: Habit,
     modifier: Modifier = Modifier,
     noteFallback: String = stringResource(R.string.detail_note_empty),
@@ -126,14 +149,21 @@ fun ArchivedHabitCard(
     onDelete: (() -> Unit)? = null,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val periodLabel = when (habit.period) {
+        HabitPeriod.DAILY -> context.getString(R.string.frequency_daily)
+        HabitPeriod.WEEKLY -> context.getString(R.string.frequency_weekly)
+        HabitPeriod.MONTHLY -> context.getString(R.string.frequency_monthly)
+        HabitPeriod.EBBINGHAUS -> context.getString(R.string.editor_habit_period_ebbinghaus)
+    }
+    val goalLabel = when (habit.goalType) {
+        HabitGoalType.TOTAL -> context.getString(R.string.archive_habit_total_target, habit.totalTarget ?: 0)
+        HabitGoalType.PER_PERIOD -> context.getString(R.string.archive_habit_period_target, habit.timesPerPeriod)
+    }
     ArchivedItemCard(
         badgeText = stringResource(R.string.habit),
         title = habit.name,
-        primaryText = buildArchivedHabitDetail(context, habit),
-        secondaryText = context.getString(
-            R.string.archive_archived_at,
-            formatArchiveDate(habit.updatedAt),
-        ),
+        primaryText = context.getString(R.string.archive_habit_detail_template, periodLabel, goalLabel),
+        secondaryText = context.getString(R.string.archive_archived_at, formatArchiveDate(habit.updatedAt)),
         note = habit.description?.takeIf { it.isNotBlank() } ?: noteFallback,
         indicatorColor = MaterialTheme.colorScheme.primary,
         onRestore = onRestore,

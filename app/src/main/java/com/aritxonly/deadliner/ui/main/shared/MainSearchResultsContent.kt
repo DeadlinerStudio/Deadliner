@@ -79,8 +79,8 @@ import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.formatHint
-import com.aritxonly.deadliner.ui.archive.ArchivedHabitCard
-import com.aritxonly.deadliner.ui.archive.ArchivedTaskCard
+import com.aritxonly.deadliner.ui.archive.LegacyArchivedHabitCard
+import com.aritxonly.deadliner.ui.archive.LegacyArchivedTaskCard
 import com.aritxonly.deadliner.ui.base.AlertDialog as AppAlertDialog
 import com.aritxonly.deadliner.ui.base.TextButton as AppTextButton
 import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
@@ -250,7 +250,7 @@ fun MainSearchResultsContent(
                         ) {
                             when {
                                 item.state.isArchiveListVisible() && item.type == DeadlineType.TASK -> {
-                                    ArchivedTaskCard(
+                                    LegacyArchivedTaskCard(
                                         item = item,
                                         onRestore = { onRestoreArchivedTask(item) },
                                         onDelete = { pendingDeleteArchivedTask = item },
@@ -259,7 +259,7 @@ fun MainSearchResultsContent(
 
                                 item.state.isArchiveListVisible() && item.type == DeadlineType.HABIT -> {
                                     archivedHabitByDdlId[item.id]?.let { archivedHabit ->
-                                        ArchivedHabitCard(
+                                        LegacyArchivedHabitCard(
                                             habit = archivedHabit,
                                             onRestore = { onRestoreArchivedHabit(archivedHabit) },
                                             onDelete = { pendingDeleteArchivedHabit = archivedHabit },
