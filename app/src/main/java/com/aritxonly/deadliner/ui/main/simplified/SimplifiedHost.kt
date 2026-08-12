@@ -38,7 +38,6 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -63,17 +62,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.capture.CaptureViewModel
-import com.aritxonly.deadliner.data.DDLRepository
-import com.aritxonly.deadliner.data.HabitRepository
-import com.aritxonly.deadliner.data.MainViewModel
-import com.aritxonly.deadliner.data.MainViewModelFactory
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
-import com.aritxonly.deadliner.model.Habit
-import com.aritxonly.deadliner.model.HabitStatus
 import com.aritxonly.deadliner.model.PartyPresets
-import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
 import com.aritxonly.deadliner.ui.base.AlertDialog
@@ -91,19 +82,11 @@ import com.aritxonly.deadliner.ui.main.shared.MainSelectionFloatingToolbar
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostUiState
 import com.aritxonly.deadliner.ui.main.shared.rememberMainSelectionActionController
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.core.Party
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.File
-import java.time.LocalDate
-import java.time.LocalDateTime
-import com.aritxonly.deadliner.data.HabitViewModel
-import com.aritxonly.deadliner.data.HabitViewModelFactory
 import com.aritxonly.deadliner.localutils.GlobalUtils.showHabitReminderDialog
 
 @Composable
@@ -116,8 +99,6 @@ fun SimplifiedHost(
     val context = LocalContext.current
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
-    val vm: MainViewModel = viewModel(factory = MainViewModelFactory(context))
-    val habitVm: HabitViewModel = viewModel(factory = HabitViewModelFactory(context))
     val taskVm = KmpV6Runtime.taskListViewModel
     val sharedHabitVm = KmpV6Runtime.habitListViewModel
     val captureVm: CaptureViewModel = viewModel()
@@ -142,8 +123,6 @@ fun SimplifiedHost(
         ActivityResultContracts.StartActivityForResult()
     ) { res ->
         if (res.resultCode == Activity.RESULT_OK) {
-            vm.loadData(hostState.selectedPage)
-            habitVm.refresh()
             taskVm.loadNow()
             sharedHabitVm.loadNow()
         }
@@ -152,23 +131,16 @@ fun SimplifiedHost(
     MainHostLifecycleCoordinator(
         activity = activity,
         selectedPage = hostState.selectedPage,
-        onPageChanged = { page ->
-            vm.loadData(page)
-            habitVm.refresh()
+        onPageChanged = {
             taskVm.loadNow()
             sharedHabitVm.loadNow()
         },
-        onResumed = { page ->
-            vm.loadData(page)
-            habitVm.refresh()
+        onResumed = {
             taskVm.loadNow()
             sharedHabitVm.loadNow()
         },
     )
 
-    val ddlList by vm.ddlListFlow.collectAsStateWithLifecycle()
-    val dueSoonCounts by vm.dueSoonCounts.observeAsState(emptyMap())
-    val refreshState by vm.refreshState.collectAsStateWithLifecycle()
     val taskState by taskVm.uiState.collectAsStateWithLifecycle()
     val sharedHabitState by sharedHabitVm.uiState.collectAsStateWithLifecycle()
 
@@ -273,12 +245,8 @@ fun SimplifiedHost(
 
     val textFieldState = rememberTextFieldState()
     var searchScope by rememberSaveable { mutableStateOf(MainSearchScope.ALL) }
-    var searchBase by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
     val captureState by captureVm.uiState.collectAsStateWithLifecycle()
-    var archivedHabitByDdlId by remember { mutableStateOf<Map<Long, Habit>>(emptyMap()) }
     val searchQuery = textFieldState.text.toString()
-    val archiveTaskRepo = remember { DDLRepository() }
-    val archiveHabitRepo = remember { HabitRepository() }
     
     val settingsState by KmpV6Runtime.settingsViewModel.uiState.collectAsState()
     val profile = settingsState.profile
@@ -303,21 +271,6 @@ fun SimplifiedHost(
     }
     val useAvatar = avatarPainter != null
     var moreAnchorRect by remember { mutableStateOf<Rect?>(null) }
-
-    suspend fun refreshSearchData() {
-        searchBase = vm.getBaseList(DeadlineType.TASK) + vm.getBaseList(DeadlineType.HABIT)
-        archivedHabitByDdlId = withContext(Dispatchers.IO) {
-            archiveHabitRepo.getAllHabits()
-                .filter { it.status == HabitStatus.ARCHIVED }
-                .associateBy { it.ddlId }
-        }
-    }
-
-    LaunchedEffect(refreshState) {
-        if (refreshState !is MainViewModel.RefreshState.Loading) {
-            refreshSearchData()
-        }
-    }
 
     fun closeSearch() {
         textFieldState.edit { replace(0, length, "") }
@@ -397,7 +350,6 @@ fun SimplifiedHost(
                         useAvatar = useAvatar,
                         avatarPainter = avatarPainter,
                         activity = activity,
-                        habitViewModel = habitVm,
                         expanded = searchActive,
                         onExpandedChangeExternal = { expanded ->
                             if (expanded) {
@@ -413,62 +365,8 @@ fun SimplifiedHost(
                             query = searchQuery,
                             scope = searchScope,
                             onScopeChange = { searchScope = it },
-                            items = searchBase,
-                            habitViewModel = habitVm,
                             activity = activity,
                             inspirations = captureState.items,
-                            archivedHabitByDdlId = archivedHabitByDdlId,
-                            onCaptureChanged = {
-                                scope.launch {
-                                    refreshSearchData()
-                                }
-                            },
-                            onRestoreArchivedTask = { item ->
-                                scope.launch {
-                                    withContext(Dispatchers.IO) {
-                                        archiveTaskRepo.applyTaskAction(
-                                            itemId = item.id,
-                                            action = TaskStateAction.UNARCHIVE,
-                                            confirmed = true,
-                                        )
-                                    }
-                                    vm.loadData(hostState.selectedPage)
-                                    habitVm.refresh()
-                                    refreshSearchData()
-                                }
-                            },
-                            onDeleteArchivedTask = { item ->
-                                scope.launch {
-                                    withContext(Dispatchers.IO) {
-                                        archiveTaskRepo.deleteDDL(item.id)
-                                    }
-                                    vm.loadData(hostState.selectedPage)
-                                    habitVm.refresh()
-                                    refreshSearchData()
-                                }
-                            },
-                            onRestoreArchivedHabit = { habit ->
-                                scope.launch {
-                                    withContext(Dispatchers.IO) {
-                                        archiveHabitRepo.updateHabit(
-                                            habit.copy(status = HabitStatus.ACTIVE),
-                                        )
-                                    }
-                                    vm.loadData(hostState.selectedPage)
-                                    habitVm.refresh()
-                                    refreshSearchData()
-                                }
-                            },
-                            onDeleteArchivedHabit = { habit ->
-                                scope.launch {
-                                    withContext(Dispatchers.IO) {
-                                        archiveHabitRepo.deleteHabitByDdlId(habit.ddlId)
-                                    }
-                                    vm.loadData(hostState.selectedPage)
-                                    habitVm.refresh()
-                                    refreshSearchData()
-                                }
-                            },
                         )
                     }
                 }
@@ -563,7 +461,7 @@ fun SimplifiedHost(
                                             tag = DeadlineType.TASK.toString(),
                                             badgeConfig = Triple(
                                                 GlobalUtils.nearbyTasksBadge,
-                                                dueSoonCounts[DeadlineType.TASK] ?: 0,
+                                                0,
                                                 GlobalUtils.nearbyDetailedBadge
                                             )
                                         )
@@ -578,7 +476,7 @@ fun SimplifiedHost(
                                             tag = DeadlineType.HABIT.toString(),
                                             badgeConfig = Triple(
                                                 GlobalUtils.nearbyTasksBadge,
-                                                dueSoonCounts[DeadlineType.HABIT] ?: 0,
+                                                0,
                                                 GlobalUtils.nearbyDetailedBadge
                                             )
                                         )

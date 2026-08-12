@@ -35,10 +35,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
@@ -87,21 +85,11 @@ import com.aritxonly.deadliner.SettingsActivity
 import com.aritxonly.deadliner.capture.CaptureViewModel
 import com.aritxonly.deadliner.capture.ui.CaptureContent
 import com.aritxonly.deadliner.capture.ui.CaptureTopBar
-import com.aritxonly.deadliner.data.DDLRepository
-import com.aritxonly.deadliner.data.HabitRepository
-import com.aritxonly.deadliner.data.MainViewModel
-import com.aritxonly.deadliner.data.MainViewModelFactory
-import com.aritxonly.deadliner.data.HabitViewModel
-import com.aritxonly.deadliner.data.HabitViewModelFactory
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils.showHabitReminderDialog
-import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
-import com.aritxonly.deadliner.model.Habit
-import com.aritxonly.deadliner.model.HabitStatus
 import com.aritxonly.deadliner.model.PartyPresets
-import com.aritxonly.deadliner.model.TaskStateAction
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
 import com.aritxonly.deadliner.ui.base.AdaptiveNavItem
@@ -123,16 +111,11 @@ import com.aritxonly.deadliner.ui.main.shared.rememberMainHostUiState
 import com.aritxonly.deadliner.ui.main.shared.rememberMainSelectionActionController
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
 import com.aritxonly.deadliner.ui.main.simplified.MainSearchBar
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.withContext
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.core.Party
 import java.io.File
-import java.time.LocalDate
-import org.json.JSONArray
-import org.json.JSONObject
 
 private fun LazyListState.hasScrolledPastHeader(threshold: Int = 12): Boolean {
     return firstVisibleItemIndex > 0 || firstVisibleItemScrollOffset > threshold
@@ -162,8 +145,6 @@ fun ModernHost(
     val configuration = LocalConfiguration.current
     val isWideLayout = configuration.screenWidthDp >= WideLayoutMinWidthDp
     val useFlattenedOverview = configuration.screenWidthDp >= FlattenedOverviewMinWidthDp
-    val vm: MainViewModel = viewModel(factory = MainViewModelFactory(context))
-    val habitVm: HabitViewModel = viewModel(factory = HabitViewModelFactory(context))
     val taskVm = KmpV6Runtime.taskListViewModel
     val sharedHabitVm = KmpV6Runtime.habitListViewModel
     val captureVm: CaptureViewModel = viewModel()
@@ -185,18 +166,13 @@ fun ModernHost(
     val taskListState = rememberLazyListState()
     val habitListState = rememberLazyListState()
     val textFieldState = rememberTextFieldState()
-    var searchBase by remember { mutableStateOf<List<DDLItem>>(emptyList()) }
     val captureState by captureVm.uiState.collectAsStateWithLifecycle()
-    var archivedHabitByDdlId by remember { mutableStateOf<Map<Long, Habit>>(emptyMap()) }
     val searchQuery = textFieldState.text.toString()
     var overlayTopBarHeightPx by remember { mutableIntStateOf(0) }
-    val archiveTaskRepo = remember { DDLRepository() }
-    val archiveHabitRepo = remember { HabitRepository() }
 
     LaunchedEffect(isWideLayout) {
         if (isWideLayout && hostState.selectedPage != DeadlineType.TASK) {
             hostState.selectedPage = DeadlineType.TASK
-            vm.selectType(DeadlineType.TASK)
         }
     }
 
@@ -205,7 +181,6 @@ fun ModernHost(
             activeSelectionPane = null
             if (isWideLayout) {
                 hostState.selectedPage = DeadlineType.TASK
-                vm.selectType(DeadlineType.TASK)
             }
         }
     }
@@ -233,8 +208,6 @@ fun ModernHost(
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode == Activity.RESULT_OK) {
-            if (isWideLayout) vm.loadAllData() else vm.loadData(hostState.selectedPage)
-            habitVm.refresh()
             taskVm.loadNow()
             sharedHabitVm.loadNow()
         }
@@ -243,17 +216,11 @@ fun ModernHost(
     MainHostLifecycleCoordinator(
         activity = activity,
         selectedPage = hostState.selectedPage,
-        onPageChanged = { page ->
-            vm.selectType(page)
-            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(page)
-            habitVm.refresh()
+        onPageChanged = {
             taskVm.loadNow()
             sharedHabitVm.loadNow()
         },
-        onResumed = { page ->
-            vm.selectType(page)
-            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(page)
-            habitVm.refresh()
+        onResumed = {
             taskVm.loadNow()
             sharedHabitVm.loadNow()
             overviewState = KmpV6Runtime.overviewViewModel.loadNow()
@@ -386,10 +353,6 @@ fun ModernHost(
     }
     val forceMaterialTopBarsInMiuix = appearance.usesMiuixTheme && appearance.useMaterialTopAppBarInMiuix
 
-    val ddlList by vm.ddlListFlow.collectAsStateWithLifecycle()
-    val taskList by vm.taskListFlow.collectAsStateWithLifecycle()
-    val habitList by vm.habitListFlow.collectAsStateWithLifecycle()
-    val refreshState by vm.refreshState.collectAsStateWithLifecycle()
     val taskState by taskVm.uiState.collectAsStateWithLifecycle()
     val sharedHabitState by sharedHabitVm.uiState.collectAsStateWithLifecycle()
     val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
@@ -401,21 +364,6 @@ fun ModernHost(
         habitViewModel = sharedHabitVm,
         hostState = hostState,
     )
-
-    suspend fun refreshSearchData() {
-        searchBase = vm.getBaseList(DeadlineType.TASK) + vm.getBaseList(DeadlineType.HABIT)
-        archivedHabitByDdlId = withContext(Dispatchers.IO) {
-            archiveHabitRepo.getAllHabits()
-                .filter { it.status == HabitStatus.ARCHIVED }
-                .associateBy { it.ddlId }
-        }
-    }
-
-    LaunchedEffect(refreshState) {
-        if (refreshState !is MainViewModel.RefreshState.Loading) {
-            refreshSearchData()
-        }
-    }
 
     val shouldBlur = hostState.showOverlay ||
         uiState.childRequestsBlur ||
@@ -624,37 +572,6 @@ fun ModernHost(
             when (hostState.selectedSection) {
                 MainSection.LIST -> {
                     if (!searchActive) {
-                        val onUndoSnackbar: (DDLItem) -> Unit = { updatedHabit ->
-                            scope.launch {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = context.getString(R.string.habit_success),
-                                    actionLabel = context.getString(R.string.undo),
-                                    withDismissAction = true,
-                                    duration = SnackbarDuration.Long,
-                                )
-                                if (result == SnackbarResult.ActionPerformed) {
-                                    val todayStr = LocalDate.now().toString()
-                                    val json = JSONObject(updatedHabit.note)
-                                    val datesArray =
-                                        json.optJSONArray("completedDates") ?: JSONArray()
-                                    for (i in datesArray.length() - 1 downTo 0) {
-                                        if (datesArray.optString(i) == todayStr) {
-                                            datesArray.remove(i)
-                                        }
-                                    }
-                                    json.put("completedDates", datesArray)
-                                    val revertedHabit = updatedHabit.copy(
-                                        note = json.toString(),
-                                        habitCount = updatedHabit.habitCount - 1,
-                                    )
-                                    com.aritxonly.deadliner.data.DDLRepository()
-                                        .updateDDL(revertedHabit)
-                                    if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(hostState.selectedPage)
-                                    habitVm.refresh()
-                                }
-                            }
-                        }
-
                         if (isWideLayout) {
                             val taskPaneBlocked = hostState.selectionMode && activeSelectionPane == DeadlineType.HABIT
                             val habitPaneBlocked = hostState.selectionMode && activeSelectionPane == DeadlineType.TASK
@@ -686,7 +603,6 @@ fun ModernHost(
                                             if (!taskPaneBlocked && (activeSelectionPane == null || activeSelectionPane == DeadlineType.TASK)) {
                                                 activeSelectionPane = DeadlineType.TASK
                                                 hostState.selectedPage = DeadlineType.TASK
-                                                vm.selectType(DeadlineType.TASK)
                                                 hostState.enterSelection(id)
                                             }
                                         },
@@ -735,7 +651,6 @@ fun ModernHost(
                                             if (!habitPaneBlocked && (activeSelectionPane == null || activeSelectionPane == DeadlineType.HABIT)) {
                                                 activeSelectionPane = DeadlineType.HABIT
                                                 hostState.selectedPage = DeadlineType.HABIT
-                                                vm.selectType(DeadlineType.HABIT)
                                                 hostState.enterSelection(id)
                                             }
                                         },
@@ -842,7 +757,6 @@ fun ModernHost(
                     textFieldState.edit { replace(0, length, q) }
                 },
                 activity = activity,
-                habitViewModel = habitVm,
                 expanded = true,
                 onExpandedChangeExternal = { expanded ->
                     if (!expanded) {
@@ -856,62 +770,8 @@ fun ModernHost(
                     query = searchQuery,
                     scope = searchScope,
                     onScopeChange = { searchScope = it },
-                    items = searchBase,
-                    habitViewModel = habitVm,
                     activity = activity,
                     inspirations = captureState.items,
-                    archivedHabitByDdlId = archivedHabitByDdlId,
-                    onCaptureChanged = {
-                        scope.launch {
-                            refreshSearchData()
-                        }
-                    },
-                    onRestoreArchivedTask = { item ->
-                        scope.launch {
-                            withContext(Dispatchers.IO) {
-                                archiveTaskRepo.applyTaskAction(
-                                    itemId = item.id,
-                                    action = TaskStateAction.UNARCHIVE,
-                                    confirmed = true,
-                                )
-                            }
-                            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(hostState.selectedPage)
-                            habitVm.refresh()
-                            refreshSearchData()
-                        }
-                    },
-                    onDeleteArchivedTask = { item ->
-                        scope.launch {
-                            withContext(Dispatchers.IO) {
-                                archiveTaskRepo.deleteDDL(item.id)
-                            }
-                            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(hostState.selectedPage)
-                            habitVm.refresh()
-                            refreshSearchData()
-                        }
-                    },
-                    onRestoreArchivedHabit = { habit ->
-                        scope.launch {
-                            withContext(Dispatchers.IO) {
-                                archiveHabitRepo.updateHabit(
-                                    habit.copy(status = HabitStatus.ACTIVE),
-                                )
-                            }
-                            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(hostState.selectedPage)
-                            habitVm.refresh()
-                            refreshSearchData()
-                        }
-                    },
-                    onDeleteArchivedHabit = { habit ->
-                        scope.launch {
-                            withContext(Dispatchers.IO) {
-                                archiveHabitRepo.deleteHabitByDdlId(habit.ddlId)
-                            }
-                            if (isWideLayout) vm.loadAllData(silent = true) else vm.loadData(hostState.selectedPage)
-                            habitVm.refresh()
-                            refreshSearchData()
-                        }
-                    },
                 )
             }
         }

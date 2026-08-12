@@ -21,9 +21,6 @@ import top.yukonga.miuix.kmp.basic.InputField as MiuixInputField
 import top.yukonga.miuix.kmp.basic.SearchBar as MiuixSearchBar
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.HabitViewModel
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.main.shared.MainSearchResultsContent
 import com.aritxonly.deadliner.ui.main.shared.MainSearchScope
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
@@ -33,9 +30,6 @@ import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 @Composable
 fun ModernSearchBar(
     textFieldState: androidx.compose.foundation.text.input.TextFieldState,
-    searchResults: List<DDLItem>,
-    selectedPage: DeadlineType,
-    habitViewModel: HabitViewModel,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onQueryChanged: (String) -> Unit,
@@ -98,8 +92,6 @@ fun ModernSearchBar(
             query = query,
             scope = MainSearchScope.ALL,
             onScopeChange = {},
-            items = searchResults,
-            habitViewModel = habitViewModel,
             activity = activity,
         )
     }

@@ -14,9 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.HabitViewModel
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.main.shared.MainSearchResultsContent
 import com.aritxonly.deadliner.ui.main.shared.MainSearchScope
 import androidx.compose.ui.res.stringResource
@@ -27,9 +24,6 @@ import top.yukonga.miuix.kmp.basic.SearchBar as MiuixSearchBar
 fun ModernSearchPageContent(
     query: String,
     onQueryChange: (String) -> Unit,
-    searchResults: List<DDLItem>,
-    selectedPage: DeadlineType,
-    habitViewModel: HabitViewModel,
     activity: MainActivity,
     modifier: Modifier = Modifier,
 ) {
@@ -61,8 +55,6 @@ fun ModernSearchPageContent(
                 query = query,
                 scope = MainSearchScope.ALL,
                 onScopeChange = {},
-                items = searchResults,
-                habitViewModel = habitViewModel,
                 activity = activity,
             )
         }

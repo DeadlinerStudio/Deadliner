@@ -55,7 +55,6 @@ import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.MainActivity
-import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
@@ -73,7 +72,6 @@ fun MainSearchBar(
     useAvatar: Boolean = false,
     avatarPainter: Painter? = null,
     activity: MainActivity? = null,
-    habitViewModel: HabitViewModel,
     expanded: Boolean,
     onExpandedChangeExternal: (Boolean) -> Unit = {},
     useSurfaceColors: Boolean = false,
