@@ -868,10 +868,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     }
 
     private fun saveTask(name: String, toCalendar: Boolean) {
-        val editor = TaskEditorViewModel(
-            KmpV6Runtime.database.tasks,
-            KmpV6Runtime.database.categories,
-        )
+        val editor = KmpV6Runtime.createTaskEditorViewModel()
         editor.updateTitle(name)
         editor.updateNote(taskDraft.note)
         editor.updateStartAt(taskDraft.startTime.toString())
@@ -931,10 +928,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         } else {
             null
         }
-        val editor = HabitEditorViewModel(
-            KmpV6Runtime.database.habits,
-            KmpV6Runtime.database.categories,
-        )
+        val editor = KmpV6Runtime.createHabitEditorViewModel()
         editor.updateName(name)
         editor.updatePeriod(
             when (habitDraft.period) {

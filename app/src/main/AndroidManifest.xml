@@ -165,6 +165,14 @@
             </intent-filter>
         </receiver>
         <receiver
+            android:name=".notification.KmpNotificationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.deadliner.kmp.notification.TASK" />
+                <action android:name="com.deadliner.kmp.notification.HABIT" />
+            </intent-filter>
+        </receiver>
+        <receiver
             android:name=".DeadlineAlarmReceiver"
             android:exported="true">
             <intent-filter>

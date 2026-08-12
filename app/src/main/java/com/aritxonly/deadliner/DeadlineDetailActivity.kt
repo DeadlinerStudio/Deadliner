@@ -18,7 +18,6 @@ import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.detail.DeadlineDetailScreen
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.deadliner.viewmodel.task.SubtaskCreateConfig
-import com.deadliner.viewmodel.task.TaskDetailViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
@@ -34,7 +33,7 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
         super.onCreate(savedInstanceState)
         val taskUid = intent.getStringExtra(EXTRA_TASK_UID)
             ?: throw IllegalArgumentException("Missing task UID")
-        val viewModel = TaskDetailViewModel(KmpV6Runtime.database.tasks, taskUid)
+        val viewModel = KmpV6Runtime.createTaskDetailViewModel(taskUid)
         viewModel.initialize()
 
         setContent {

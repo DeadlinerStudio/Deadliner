@@ -1,7 +1,6 @@
 package com.aritxonly.deadliner.ai
 
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
-import com.deadliner.service.LifiToolExecutor
 
 internal data class ToolCallExecution(
     val id: String,
@@ -21,13 +20,6 @@ internal interface ToolCallAdapter {
 internal class AndroidToolCallAdapter(
     private val sharedExecute: ((toolName: String, argumentsJson: String) -> String)? = null,
 ) : ToolCallAdapter {
-    private val sharedExecutor by lazy {
-        LifiToolExecutor(
-            tasks = KmpV6Runtime.database.tasks,
-            habits = KmpV6Runtime.database.habits,
-        )
-    }
-
     override suspend fun execute(call: ToolCallExecution): ToolExecutionResult {
         if (call.toolName == DeadlinerCoreBridge.TOOL_ADD_TO_CALENDAR) {
             return ToolExecutionResult(
@@ -35,7 +27,7 @@ internal class AndroidToolCallAdapter(
             )
         }
         val result = sharedExecute?.invoke(call.toolName, call.argsJson)
-            ?: sharedExecutor.execute(call.toolName, call.argsJson)
+            ?: KmpV6Runtime.executeLifiTool(call.toolName, call.argsJson)
         return ToolExecutionResult(result)
     }
 }

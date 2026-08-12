@@ -3,10 +3,9 @@ package com.aritxonly.deadliner.notification
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.aritxonly.deadliner.data.DatabaseHelper
-import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.localutils.AppIconManager
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
@@ -16,12 +15,7 @@ class BootReceiver : BroadcastReceiver() {
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
                 AppIconManager.applyCurrentMode(context)
-                // 重新注册所有alarms
-                val allDDLs = DatabaseHelper.getInstance(context).getAllDDLs()
-                allDDLs.forEach {
-                    DeadlineAlarmScheduler.syncScheduledNotifications(context, it)
-                }
-                DeadlineAlarmScheduler.scheduleDailyAlarm(context)
+                KmpV6Runtime.refreshNotifications()
             }
         }
     }
