@@ -30,7 +30,7 @@ internal sealed class ToolDecision {
 internal class DeadlinerCoreBridge(
     private val appContext: Context,
     private val gson: Gson = Gson(),
-    private val toolCallAdapter: ToolCallAdapter = AndroidToolCallAdapter(gson),
+    private val toolCallAdapter: ToolCallAdapter = AndroidToolCallAdapter(),
 ) {
     private val gate = Mutex()
     private var core: DeadlinerCore? = null
@@ -289,7 +289,8 @@ internal class DeadlinerCoreBridge(
             }
             TOOL_CREATE_TASK,
             TOOL_CREATE_HABIT,
-            TOOL_READ_HABITS -> {
+            TOOL_READ_HABITS,
+            TOOL_UPDATE_DEADLINE -> {
                 AIToolRequest(
                     id = event.id,
                     tool = normalizedTool,
@@ -343,6 +344,7 @@ internal class DeadlinerCoreBridge(
             "readhabits", "readhabit", "listhabits", "gethabits" -> TOOL_READ_HABITS
             "createtask", "addtask", "newtask", "inserttask" -> TOOL_CREATE_TASK
             "createhabit", "addhabit", "newhabit", "inserthabit" -> TOOL_CREATE_HABIT
+            "updatedeadline" -> TOOL_UPDATE_DEADLINE
             "addtocalendar", "calendaradd", "createcalendar", "createevent", "addevent" -> TOOL_ADD_TO_CALENDAR
             else -> raw
         }
@@ -490,6 +492,7 @@ internal class DeadlinerCoreBridge(
         const val TOOL_READ_HABITS = "read_habits"
         const val TOOL_CREATE_TASK = "create_task"
         const val TOOL_CREATE_HABIT = "create_habit"
+        const val TOOL_UPDATE_DEADLINE = "update_deadline"
         const val TOOL_ADD_TO_CALENDAR = "addToCalendar"
 
         private const val DEFAULT_RANGE_DAYS = 7

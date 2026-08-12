@@ -214,16 +214,8 @@ object AIUtils {
             coreBridge = it
         }
         val config = readCoreRuntimeConfig(context)
-        val strictToolArgHint = """
-            [Adapter Contract]
-            Tool-call arguments must strictly match schema.
-            Never use null for integer fields.
-            If an optional integer is unknown, omit that field.
-            For create_habit.totalTarget: provide an integer only when goalType indicates total target; otherwise omit totalTarget.
-        """.trimIndent()
-        val composedInput = "$rawText\n\n$strictToolArgHint"
         val output = bridge.processInput(
-            text = composedInput,
+            text = rawText,
             apiKey = config.apiKey,
             baseUrl = config.baseUrl,
             modelId = config.modelId,
