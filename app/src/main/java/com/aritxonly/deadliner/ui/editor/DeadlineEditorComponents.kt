@@ -41,8 +41,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.DeadlineFrequency
-import com.aritxonly.deadliner.model.HabitGoalType
-import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.ui.base.Button
 import com.aritxonly.deadliner.ui.base.OutlinedTextField
 import com.aritxonly.deadliner.ui.base.Switch
@@ -53,6 +51,8 @@ import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import java.time.LocalDateTime
 import java.time.LocalTime
+import com.deadliner.domain.habit.HabitGoalType
+import com.deadliner.domain.habit.HabitPeriod
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 
 data class TaskEditorDraft(
@@ -65,20 +65,13 @@ data class TaskEditorDraft(
 
 data class HabitEditorDraft(
     val name: String = "",
-    val period: EditorHabitPeriod = EditorHabitPeriod.DAILY,
+    val period: HabitPeriod = HabitPeriod.DAILY,
     val goalType: HabitGoalType = HabitGoalType.PER_PERIOD,
     val timesPerPeriod: String = "1",
     val totalTarget: String = "",
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime = LocalTime.of(20, 0),
 )
-
-enum class EditorHabitPeriod {
-    DAILY,
-    WEEKLY,
-    MONTHLY,
-    EBBINGHAUS,
-}
 
 fun HabitEditorDraft.toDeadlineFrequency(): DeadlineFrequency {
     return when (goalType) {
@@ -87,30 +80,20 @@ fun HabitEditorDraft.toDeadlineFrequency(): DeadlineFrequency {
     }
 }
 
-fun DeadlineFrequency.toEditorHabitPeriod(default: EditorHabitPeriod = EditorHabitPeriod.DAILY): EditorHabitPeriod {
+fun DeadlineFrequency.toHabitPeriod(default: HabitPeriod = HabitPeriod.DAILY): HabitPeriod {
     return when (this) {
-        DeadlineFrequency.DAILY -> EditorHabitPeriod.DAILY
-        DeadlineFrequency.WEEKLY -> EditorHabitPeriod.WEEKLY
-        DeadlineFrequency.MONTHLY -> EditorHabitPeriod.MONTHLY
+        DeadlineFrequency.DAILY -> HabitPeriod.DAILY
+        DeadlineFrequency.WEEKLY -> HabitPeriod.WEEKLY
+        DeadlineFrequency.MONTHLY -> HabitPeriod.MONTHLY
         DeadlineFrequency.TOTAL -> default
     }
 }
 
-fun EditorHabitPeriod.toModelPeriod(): HabitPeriod {
+private fun HabitPeriod.toDeadlineFrequency(): DeadlineFrequency {
     return when (this) {
-        EditorHabitPeriod.DAILY -> HabitPeriod.DAILY
-        EditorHabitPeriod.WEEKLY -> HabitPeriod.WEEKLY
-        EditorHabitPeriod.MONTHLY -> HabitPeriod.MONTHLY
-        EditorHabitPeriod.EBBINGHAUS -> HabitPeriod.EBBINGHAUS
-    }
-}
-
-private fun EditorHabitPeriod.toDeadlineFrequency(): DeadlineFrequency {
-    return when (this) {
-        EditorHabitPeriod.DAILY -> DeadlineFrequency.DAILY
-        EditorHabitPeriod.WEEKLY -> DeadlineFrequency.WEEKLY
-        EditorHabitPeriod.MONTHLY -> DeadlineFrequency.MONTHLY
-        EditorHabitPeriod.EBBINGHAUS -> DeadlineFrequency.DAILY
+        HabitPeriod.DAILY, HabitPeriod.ONCE, HabitPeriod.EBBINGHAUS -> DeadlineFrequency.DAILY
+        HabitPeriod.WEEKLY -> DeadlineFrequency.WEEKLY
+        HabitPeriod.MONTHLY -> DeadlineFrequency.MONTHLY
     }
 }
 
@@ -269,7 +252,7 @@ fun HabitEditorSection(
             HabitPeriodRow(
                 selected = draft.period,
                 onSelect = {
-                    val normalizedDraft = if (it == EditorHabitPeriod.EBBINGHAUS) {
+                    val normalizedDraft = if (it == HabitPeriod.EBBINGHAUS) {
                         draft.copy(
                             period = it,
                             goalType = HabitGoalType.PER_PERIOD,
@@ -284,7 +267,7 @@ fun HabitEditorSection(
             )
         }
 
-        if (draft.period == EditorHabitPeriod.EBBINGHAUS) {
+        if (draft.period == HabitPeriod.EBBINGHAUS) {
             EditorSectionCard {
                 Text(
                     text = stringResource(R.string.editor_habit_ebbinghaus_title),
@@ -515,14 +498,14 @@ private fun HabitReminderSection(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HabitPeriodRow(
-    selected: EditorHabitPeriod,
-    onSelect: (EditorHabitPeriod) -> Unit,
+    selected: HabitPeriod,
+    onSelect: (HabitPeriod) -> Unit,
 ) {
     val options = listOf(
-        EditorHabitPeriod.DAILY to stringResource(R.string.frequency_daily),
-        EditorHabitPeriod.WEEKLY to stringResource(R.string.frequency_weekly),
-        EditorHabitPeriod.MONTHLY to stringResource(R.string.frequency_monthly),
-        EditorHabitPeriod.EBBINGHAUS to stringResource(R.string.editor_habit_period_ebbinghaus),
+        HabitPeriod.DAILY to stringResource(R.string.frequency_daily),
+        HabitPeriod.WEEKLY to stringResource(R.string.frequency_weekly),
+        HabitPeriod.MONTHLY to stringResource(R.string.frequency_monthly),
+        HabitPeriod.EBBINGHAUS to stringResource(R.string.editor_habit_period_ebbinghaus),
     )
 
     Row(

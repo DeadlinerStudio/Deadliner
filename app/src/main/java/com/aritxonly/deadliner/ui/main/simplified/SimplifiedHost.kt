@@ -112,7 +112,7 @@ fun SimplifiedHost(
         onPendingUrlChange = { hostState.pendingUrl = it },
         onDecodedItemReady = { item ->
             val intent = Intent(context, AddDDLActivity::class.java).apply {
-                putExtra("EXTRA_FULL_DDL", item)
+                putExtra("EXTRA_GENERATE_DDL", item)
             }
             activity.startActivity(intent)
         },

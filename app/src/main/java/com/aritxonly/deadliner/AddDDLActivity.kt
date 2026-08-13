@@ -78,12 +78,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils.toDateTimeString
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.model.CalendarEvent
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.DeadlineType
-import com.aritxonly.deadliner.model.HabitGoalType
-import com.aritxonly.deadliner.model.HabitMetaData
-import com.aritxonly.deadliner.model.toJson
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.Checkbox
@@ -99,20 +94,17 @@ import com.aritxonly.deadliner.ui.editor.DeadlineAiQuickAddCard
 import com.aritxonly.deadliner.ui.editor.DeadlineBottomActions
 import com.aritxonly.deadliner.ui.editor.DeadlineNameField
 import com.aritxonly.deadliner.ui.editor.DeadlineStarToggleCard
-import com.aritxonly.deadliner.ui.editor.EditorHabitPeriod
 import com.aritxonly.deadliner.ui.editor.HabitEditorDraft
 import com.aritxonly.deadliner.ui.editor.HabitEditorSection
 import com.aritxonly.deadliner.ui.editor.TaskEditorDraft
 import com.aritxonly.deadliner.ui.editor.TaskEditorSection
 import com.aritxonly.deadliner.ui.editor.toDeadlineFrequency
-import com.aritxonly.deadliner.ui.editor.toEditorHabitPeriod
-import com.aritxonly.deadliner.ui.editor.toModelPeriod
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
-import com.deadliner.domain.habit.HabitGoalType as SharedHabitGoalType
-import com.deadliner.domain.habit.HabitPeriod as SharedHabitPeriod
+import com.deadliner.domain.habit.HabitGoalType
+import com.deadliner.domain.habit.HabitPeriod
 import com.deadliner.domain.habit.HabitReminder
 import com.deadliner.viewmodel.habit.HabitEditorViewModel
 import com.deadliner.viewmodel.task.TaskEditorViewModel
@@ -219,11 +211,10 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         selectedPage = intent.getIntExtra("EXTRA_CURRENT_TYPE", 0).coerceIn(0, 1)
 
         val generatedDDL = intent.getParcelableExtra<GeneratedDDL>("EXTRA_GENERATE_DDL")
-        val fullDDL = intent.getParcelableExtra<DDLItem>("EXTRA_FULL_DDL")
         val prefillText = intent.getStringExtra(EXTRA_PREFILL_TEXT)
         val autoRunAi = intent.getBooleanExtra(EXTRA_AUTO_RUN_AI, false)
 
-        applyInitialData(generatedDDL, fullDDL, prefillText, autoRunAi)
+        applyInitialData(generatedDDL, prefillText, autoRunAi)
         promptDeadlinerDonateIfNeeded()
 
         setContent {
@@ -235,7 +226,6 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
 
     private fun applyInitialData(
         generatedDDL: GeneratedDDL?,
-        fullDDL: DDLItem?,
         prefillText: String?,
         autoRunAi: Boolean
     ) {
@@ -247,54 +237,12 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
             )
         }
 
-        fullDDL?.let { item ->
-            updateSharedName(item.name)
-            taskDraft = taskDraft.copy(isStarred = item.isStared)
-            calendarEventId = item.calendarEventId
-
-            val parsedStart = GlobalUtils.parseDateTime(item.startTime)
-            val parsedEnd = GlobalUtils.parseDateTime(item.endTime)
-
-            when (item.type) {
-                DeadlineType.TASK -> {
-                    selectedPage = 0
-                    taskDraft = taskDraft.copy(
-                        note = item.note,
-                        startTime = parsedStart ?: taskDraft.startTime,
-                        endTime = parsedEnd ?: taskDraft.endTime
-                    )
-                }
-                DeadlineType.HABIT -> {
-                    selectedPage = 1
-
-                    val meta = GlobalUtils.parseHabitMetaData(item.note)
-                    val goalType = if (meta.frequencyType == DeadlineFrequency.TOTAL) {
-                        HabitGoalType.TOTAL
-                    } else {
-                        HabitGoalType.PER_PERIOD
-                    }
-                    val timesPerPeriod = meta.frequency.coerceAtLeast(1).toString()
-                    val totalTarget = meta.total.takeIf { it > 0 }
-
-                    habitDraft = habitDraft.copy(
-                        period = meta.frequencyType.toEditorHabitPeriod(),
-                        goalType = goalType,
-                        timesPerPeriod = timesPerPeriod,
-                        totalTarget = totalTarget?.toString().orEmpty(),
-                        reminderEnabled = false,
-                    )
-                }
-            }
+        val safePrefill = prefillText?.trim().orEmpty()
+        if (safePrefill.isNotEmpty()) {
+            aiInputText = safePrefill
         }
-
-        if (fullDDL == null) {
-            val safePrefill = prefillText?.trim().orEmpty()
-            if (safePrefill.isNotEmpty()) {
-                aiInputText = safePrefill
-            }
-            if (autoRunAi && safePrefill.isNotEmpty()) {
-                autoRunAiOnAppear = true
-            }
+        if (autoRunAi && safePrefill.isNotEmpty()) {
+            autoRunAiOnAppear = true
         }
     }
 
@@ -916,7 +864,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     }
 
     private fun saveHabit(name: String) {
-        val isEbbinghaus = habitDraft.period == EditorHabitPeriod.EBBINGHAUS
+        val isEbbinghaus = habitDraft.period == HabitPeriod.EBBINGHAUS
         val goalType = if (isEbbinghaus) HabitGoalType.PER_PERIOD else habitDraft.goalType
         val frequency = if (isEbbinghaus) {
             1
@@ -930,18 +878,9 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         }
         val editor = KmpV6Runtime.createHabitEditorViewModel()
         editor.updateName(name)
-        editor.updatePeriod(
-            when (habitDraft.period) {
-                EditorHabitPeriod.DAILY -> SharedHabitPeriod.DAILY
-                EditorHabitPeriod.WEEKLY -> SharedHabitPeriod.WEEKLY
-                EditorHabitPeriod.MONTHLY -> SharedHabitPeriod.MONTHLY
-                EditorHabitPeriod.EBBINGHAUS -> SharedHabitPeriod.EBBINGHAUS
-            }
-        )
+        editor.updatePeriod(habitDraft.period)
         editor.updateTimesPerPeriod(if (goalType == HabitGoalType.TOTAL) 1 else frequency)
-        editor.updateGoalType(
-            if (goalType == HabitGoalType.TOTAL) SharedHabitGoalType.TOTAL else SharedHabitGoalType.PER_PERIOD
-        )
+        editor.updateGoalType(goalType)
         editor.updateTotalTarget(if (goalType == HabitGoalType.TOTAL) total else null)
         editor.updateReminder(
             if (habitDraft.reminderEnabled) {

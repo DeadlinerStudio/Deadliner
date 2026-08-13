@@ -2,7 +2,8 @@ package com.aritxonly.deadliner.localutils
 
 import android.net.Uri
 import android.util.Base64
-import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.ai.GeneratedDDL
+import com.aritxonly.deadliner.ai.LocalDateTimeAdapter
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import java.security.SecureRandom
@@ -22,15 +23,11 @@ import androidx.core.net.toUri
  */
 object DeadlinerURLScheme {
     const val DEADLINER_URL_SCHEME_PREFIX = "https://www.aritxonly.top/deadliner/share"
-    const val DEADLINER_URL_SCHEME_PREFIX_LEGACY = "deadliner://share"
 
     // —— 协议常量 —— //
     private const val HTTPS_SCHEME = "https"
     private const val HTTPS_HOST = "www.aritxonly.top"
     private const val HTTPS_PATH_PREFIX = "/deadliner/share"
-
-    private const val LEGACY_SCHEME = "deadliner"
-    private const val LEGACY_AUTHORITY = "share"
 
     private const val PARAM_V = "v"
     private const val PARAM_K = "k"
@@ -39,7 +36,7 @@ object DeadlinerURLScheme {
     private const val PARAM_I = "i"
     private const val PARAM_D = "d"
 
-    private const val PROTO_VERSION: Int = 1
+    private const val PROTO_VERSION: Int = 6
     private const val DEFAULT_KID: Int = 1
 
     private const val AES_KEY_LEN = 32      // 256-bit
@@ -49,14 +46,17 @@ object DeadlinerURLScheme {
     private const val DEFAULT_ITERS = 200_000
     private const val DEFAULT_SALT_BYTES = 16
 
-    private val gson: Gson = GsonBuilder().disableHtmlEscaping().create()
+    private val gson: Gson = GsonBuilder()
+        .registerTypeAdapter(java.time.LocalDateTime::class.java, LocalDateTimeAdapter())
+        .disableHtmlEscaping()
+        .create()
     private val rng = SecureRandom()
 
     // —— 公开 API（口令派生模式）—— //
 
     /** 用口令派生密钥并生成 deadliner:// URL；跨设备共享仅需同一口令 */
     fun encodeWithPassphrase(
-        item: DDLItem,
+        item: GeneratedDDL,
         passphrase: CharArray,
         iterations: Int = DEFAULT_ITERS,
         saltBytes: Int = DEFAULT_SALT_BYTES,
@@ -89,11 +89,11 @@ object DeadlinerURLScheme {
         return DEADLINER_URL_SCHEME_PREFIX + queryUri.toString()
     }
 
-    /** 使用口令解析 URL 并还原 DDLItem */
+    /** Decode the v6 task draft shared by the current KMP editor flow. */
     fun decodeWithPassphrase(
         url: String,
         passphrase: CharArray,
-    ): DDLItem {
+    ): GeneratedDDL {
         val uri = url.toUri()
 
         val isHttpsMatch =
@@ -101,11 +101,7 @@ object DeadlinerURLScheme {
                     uri.host == HTTPS_HOST &&
                     (uri.path ?: "").startsWith(HTTPS_PATH_PREFIX)
 
-        val isLegacyMatch =
-            uri.scheme == LEGACY_SCHEME &&
-                    uri.authority == LEGACY_AUTHORITY
-
-        require(isHttpsMatch || isLegacyMatch) { "invalid scheme/host/path: $uri" }
+        require(isHttpsMatch) { "invalid scheme/host/path: $uri" }
 
         val v = uri.getQueryParameter(PARAM_V)?.toIntOrNull() ?: error("missing v")
         require(v == PROTO_VERSION) { "unsupported version $v" }
@@ -127,7 +123,7 @@ object DeadlinerURLScheme {
         val json = inflate(compressed).decodeToString()
 
         key.fill(0)
-        return gson.fromJson(json, DDLItem::class.java)
+        return gson.fromJson(json, GeneratedDDL::class.java)
     }
 
     // —— PBKDF2（HMAC-SHA256）—— //

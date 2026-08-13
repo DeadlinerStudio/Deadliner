@@ -32,10 +32,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.Habit
-import com.aritxonly.deadliner.model.HabitGoalType
-import com.aritxonly.deadliner.model.HabitPeriod
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -102,69 +98,6 @@ internal fun ArchivedHabitCard(
         primaryText = habit.primaryText,
         secondaryText = habit.secondaryText,
         note = habit.note.takeIf { it.isNotBlank() } ?: noteFallback,
-        indicatorColor = MaterialTheme.colorScheme.primary,
-        onRestore = onRestore,
-        onDelete = onDelete,
-        modifier = modifier,
-    )
-}
-
-@Composable
-internal fun LegacyArchivedTaskCard(
-    item: DDLItem,
-    modifier: Modifier = Modifier,
-    onRestore: (() -> Unit)? = null,
-    onDelete: (() -> Unit)? = null,
-) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val isAbandoned = item.state.isAbandonedFamily()
-    ArchivedItemCard(
-        badgeText = if (isAbandoned) {
-            context.getString(R.string.archive_label_abandoned)
-        } else {
-            context.getString(R.string.archive_label_completed)
-        },
-        title = item.name,
-        primaryText = formatArchiveDate(item.startTime),
-        secondaryText = when {
-            item.completeTime.isBlank() && isAbandoned -> context.getString(R.string.archive_state_abandoned)
-            item.completeTime.isBlank() -> context.getString(R.string.archive_state_archived)
-            isAbandoned -> context.getString(R.string.archive_abandoned_at, formatArchiveDate(item.completeTime))
-            else -> context.getString(R.string.archive_completed_at, formatArchiveDate(item.completeTime))
-        },
-        note = item.note,
-        indicatorColor = if (isAbandoned) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.primary,
-        onRestore = onRestore,
-        onDelete = onDelete,
-        modifier = modifier,
-    )
-}
-
-@Composable
-internal fun LegacyArchivedHabitCard(
-    habit: Habit,
-    modifier: Modifier = Modifier,
-    noteFallback: String = stringResource(R.string.detail_note_empty),
-    onRestore: (() -> Unit)? = null,
-    onDelete: (() -> Unit)? = null,
-) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val periodLabel = when (habit.period) {
-        HabitPeriod.DAILY -> context.getString(R.string.frequency_daily)
-        HabitPeriod.WEEKLY -> context.getString(R.string.frequency_weekly)
-        HabitPeriod.MONTHLY -> context.getString(R.string.frequency_monthly)
-        HabitPeriod.EBBINGHAUS -> context.getString(R.string.editor_habit_period_ebbinghaus)
-    }
-    val goalLabel = when (habit.goalType) {
-        HabitGoalType.TOTAL -> context.getString(R.string.archive_habit_total_target, habit.totalTarget ?: 0)
-        HabitGoalType.PER_PERIOD -> context.getString(R.string.archive_habit_period_target, habit.timesPerPeriod)
-    }
-    ArchivedItemCard(
-        badgeText = stringResource(R.string.habit),
-        title = habit.name,
-        primaryText = context.getString(R.string.archive_habit_detail_template, periodLabel, goalLabel),
-        secondaryText = context.getString(R.string.archive_archived_at, formatArchiveDate(habit.updatedAt)),
-        note = habit.description?.takeIf { it.isNotBlank() } ?: noteFallback,
         indicatorColor = MaterialTheme.colorScheme.primary,
         onRestore = onRestore,
         onDelete = onDelete,

@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
-import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.ai.GeneratedDDL
 
 @Composable
 fun DeadlinerUrlIntake(
@@ -24,7 +24,7 @@ fun DeadlinerUrlIntake(
     snackbarHostState: SnackbarHostState,
     pendingUrl: String?,
     onPendingUrlChange: (String?) -> Unit,
-    onDecodedItemReady: (DDLItem) -> Unit,
+    onDecodedItemReady: (GeneratedDDL) -> Unit,
 ) {
     val context = LocalContext.current
     val clipboardManager = context.getSystemService(android.content.ClipboardManager::class.java)
@@ -102,6 +102,5 @@ private fun consumeDeadlinerUrl(activity: Activity): String? {
 
 private fun isDeadlinerUrl(text: String): Boolean {
     if (text.isBlank()) return false
-    return text.startsWith(DeadlinerURLScheme.DEADLINER_URL_SCHEME_PREFIX) ||
-        text.startsWith(DeadlinerURLScheme.DEADLINER_URL_SCHEME_PREFIX_LEGACY)
+    return text.startsWith(DeadlinerURLScheme.DEADLINER_URL_SCHEME_PREFIX)
 }

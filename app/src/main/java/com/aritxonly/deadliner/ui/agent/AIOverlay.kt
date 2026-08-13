@@ -117,11 +117,11 @@ import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.ai.IntentType
 import com.aritxonly.deadliner.ai.AIToolRequest
 import com.aritxonly.deadliner.ai.AgentLifecycleState
+import com.aritxonly.deadliner.ai.GeneratedDDL
 import com.aritxonly.deadliner.ai.TaskSummary
 import com.aritxonly.deadliner.ai.ToolDecision
 import com.aritxonly.deadliner.ai.UserProfile
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
-import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.iconResource
@@ -706,10 +706,9 @@ fun AIOverlay(
                             },
                             onCopy = {
                                 item.card.toGeneratedDDLOrNull()?.let { ddl ->
-                                    val ddlItem = DDLItem(
+                                    val ddlItem = GeneratedDDL(
                                         name = ddl.name,
-                                        startTime = LocalDateTime.now().toString(),
-                                        endTime = ddl.dueTime.toString(),
+                                        dueTime = ddl.dueTime,
                                         note = ddl.note
                                     )
                                     val url = DeadlinerURLScheme.encodeWithPassphrase(
