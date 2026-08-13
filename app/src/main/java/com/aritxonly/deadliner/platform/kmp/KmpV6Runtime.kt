@@ -139,7 +139,7 @@ internal object KmpV6Runtime {
     fun createLifiCore(config: AIConfig): DeadlinerCore {
         val component = LifiAIComponent(
             config = config,
-            memoryStore = KmpMemoryStoreAdapter(database.memory, database.profiles),
+            memoryStore = KmpMemoryStoreAdapter(database.memory),
         )
         return DeadlinerCore(config, component.orchestrator(), component.toolExecutor())
     }
