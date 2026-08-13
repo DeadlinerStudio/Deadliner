@@ -18,7 +18,6 @@ import com.aritxonly.deadliner.localutils.DynamicColorsExtension
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
-import com.deadliner.domain.habit.HabitStatus
 
 /**
  * The configuration screen for the [HabitMiniWidget] AppWidget.
@@ -100,9 +99,8 @@ class HabitWidgetConfigureActivity : DeadlinerComponentActivity() {
         val info = awm.getAppWidgetInfo(appWidgetId)
         provider = info.provider
 
-        val habits = KmpV6Runtime.database.habits.list()
-            .filter { !it.isDeleted && it.status == HabitStatus.ACTIVE }
-        val names = habits.map { it.name }
+        val habits = KmpV6Runtime.habitListViewModel.loadNow().visibleHabits
+        val names = habits.map { it.habit.name }
 
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_single_choice, names)
         binding.lvHabits.adapter = adapter
@@ -111,7 +109,7 @@ class HabitWidgetConfigureActivity : DeadlinerComponentActivity() {
         binding.lvHabits.choiceMode = ListView.CHOICE_MODE_SINGLE
         binding.lvHabits.setOnItemClickListener { _, _, pos, _ ->
             binding.lvHabits.setItemChecked(pos, true)
-            selectedHabitUid = habits[pos].uid
+            selectedHabitUid = habits[pos].habit.uid
             binding.addButton.isEnabled = true
         }
 
