@@ -240,6 +240,15 @@ internal class V5DataMigrator(
         private const val DATA_VERSION = PROFILE_DATA_VERSION
         private const val LEGACY_PROFILE_UID = "android-v5-primary-profile"
         private const val TAG = "V5DataMigrator"
+
+        fun isMigrationRequired(preferences: SharedPreferences): Boolean =
+            preferences.getInt(KEY_DATA_VERSION, 0) < DATA_VERSION
+
+        fun markMigrationNotApplicable(preferences: SharedPreferences) {
+            check(preferences.edit().putInt(KEY_DATA_VERSION, DATA_VERSION).commit()) {
+                "Could not persist v5 migration not-applicable marker"
+            }
+        }
     }
 
     private data class LegacyCapture(

@@ -86,7 +86,6 @@ import com.aritxonly.deadliner.ui.settings.VibrationSettingsScreen
 import com.aritxonly.deadliner.ui.settings.WebSettingsScreen
 import com.aritxonly.deadliner.ui.settings.WidgetSettingsScreen
 import com.aritxonly.deadliner.ui.settings.WikiScreen
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.DisplayScaleManager
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
@@ -99,8 +98,6 @@ import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -508,37 +505,32 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
         }
     }
 
-    // 导出数据库
+    // 导出 KMP v6 完整备份
     @SuppressLint("SimpleDateFormat")
     private fun createBackup() {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/x-sqlite3"
-            putExtra(Intent.EXTRA_TITLE, "deadliner_backup_${SimpleDateFormat("yyyyMMdd_HHmmss").format(
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, "deadliner_v6_backup_${SimpleDateFormat("yyyyMMdd_HHmmss").format(
                 Date()
-            )}.db")
+            )}.json")
         }
 
         startActivityForResult(intent, EXPORT_REQUEST_CODE)
     }
 
-    // 导入数据库
+    // 导入 KMP v6 完整备份
     private fun openBackup() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
+            type = "application/json"
             putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
-                "application/x-sqlite3",
-                "application/vnd.sqlite3",
-                "application/octet-stream",
-                "application/sqlite3",
-                "application/x-sql"
+                "application/json",
+                "text/json"
             ))
-            // 可选：限制文件扩展名
-            putExtra(Intent.EXTRA_TITLE, "*.db")
+            putExtra(Intent.EXTRA_TITLE, "*.json")
         }
 
-        // 兼容旧版本
         val chooser = Intent.createChooser(intent, getString(R.string.choose_backup))
         startActivityForResult(chooser, IMPORT_REQUEST_CODE)
     }
@@ -547,11 +539,11 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
         if (resultCode == Activity.RESULT_OK) {
             data?.data?.let { uri ->
                 try {
-                    val dbFile = getDatabasePath(DatabaseHelper.DATABASE_NAME)
-                    contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        FileInputStream(dbFile).use { inputStream ->
-                            inputStream.copyTo(outputStream)
-                        }
+                    val backup = KmpV6Runtime.exportBackup()
+                    val outputStream = contentResolver.openOutputStream(uri)
+                        ?: error("Unable to open backup destination")
+                    outputStream.bufferedWriter(Charsets.UTF_8).use { writer ->
+                        writer.write(backup)
                     }
                     showToast(getString(R.string.export_success))
                 } catch (e: Exception) {
@@ -572,19 +564,10 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
 
     private fun performImport(uri: Uri) {
         try {
-            // 关闭当前数据库连接
-            DatabaseHelper.closeInstance()
-
-            // 替换数据库文件
-            val dbFile = getDatabasePath(DatabaseHelper.DATABASE_NAME)
-            contentResolver.openInputStream(uri)?.use { inputStream ->
-                FileOutputStream(dbFile).use { outputStream ->
-                    inputStream.copyTo(outputStream)
-                }
-            }
-
-            // 重新初始化数据库
-            DatabaseHelper.getInstance(this)
+            val inputStream = contentResolver.openInputStream(uri)
+                ?: error("Unable to open backup source")
+            val backup = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+            KmpV6Runtime.restoreBackup(backup)
 
             showImportSuccessDialog = true
         } catch (e: Exception) {

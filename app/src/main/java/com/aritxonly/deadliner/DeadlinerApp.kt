@@ -28,7 +28,7 @@ class DeadlinerApp : Application() {
         ApiKeystore.createKeyIfNeeded()
         AIUtils.init(this)
         AppSingletons.init(this)
-        KmpV6Runtime.initialize(this, AppSingletons.db)
+        KmpV6Runtime.initialize(this)
         AppIconManager.applyCurrentMode(this)
         var startedActivityCount = 0
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {

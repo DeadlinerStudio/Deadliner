@@ -35,7 +35,7 @@
     <string name="settings_support_behavior">Interaction feedback · App background actions</string>
     <string name="settings_support_interface_display">Design &amp; color · Advanced material · Main screen layout</string>
     <string name="settings_support_notification">Deadline reminder · Daily scheduled notification</string>
-    <string name="settings_support_backup">Import &amp; export user database</string>
+    <string name="settings_support_backup">Import &amp; export V6 data backups</string>
     <string name="settings_support_deadliner_ai">Lifi AI · API integration · Custom prompt</string>
     <string name="settings_support_webdav">WebDAV cloud sync service</string>
     <string name="settings_support_lab">Debug options &amp; experimental features</string>
@@ -387,7 +387,7 @@
     <string name="new_filter_name">New filter name</string>
     <string name="new_filter_title">Add new filter</string>
     <string name="show_intro_next_time">The welcome page will be shown the next time you open Deadliner</string>
-    <string name="choose_backup">Select database backup file</string>
+    <string name="choose_backup">Select a V6 data backup</string>
     <string name="export_success">✅ Export successful</string>
     <string name="export_failed">❌ Export failed: %1$s</string>
     <string name="confirm_import">Confirm import</string>

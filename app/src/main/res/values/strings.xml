@@ -43,7 +43,7 @@
     <string name="settings_support_behavior">操作反馈方式 · 应用后台行为</string>
     <string name="settings_support_interface_display">设计与色彩 · 高级材质 · 主界面风格</string>
     <string name="settings_support_notification">DDL临近通知 · 每日定时通知</string>
-    <string name="settings_support_backup">导入与导出用户数据库</string>
+    <string name="settings_support_backup">导入与导出 V6 数据备份</string>
     <string name="settings_support_deadliner_ai">Lifi AI · API接入 · 自定义prompt</string>
     <string name="settings_support_webdav">WebDAV 云同步服务</string>
     <string name="settings_support_tombstone_retention">删除后的同步墓碑会保留一段时间，之后自动回收以减少 snapshot 体积和垃圾数据堆积</string>
@@ -486,7 +486,7 @@
     <string name="new_filter_name">新过滤器名称</string>
     <string name="new_filter_title">新增过滤器</string>
     <string name="show_intro_next_time">即将在下次打开Deadliner时显示欢迎页面</string>
-    <string name="choose_backup">选择数据库备份文件</string>
+    <string name="choose_backup">选择 V6 数据备份文件</string>
     <string name="export_success">✅ 导出成功</string>
     <string name="export_failed">❌ 导出失败: %1$s</string>
     <string name="confirm_import">确认导入</string>

@@ -133,6 +133,25 @@ internal object KmpV6Runtime {
     fun executeLifiTool(toolName: String, argumentsJson: String): String =
         lifiToolExecutor.execute(toolName, argumentsJson)
 
+    fun exportBackup(): String = database.backups.export()
+
+    fun restoreBackup(raw: String) {
+        database.disableAutomaticSync()
+        try {
+            database.backups.restore(raw)
+            taskListViewModel.initialize()
+            habitListViewModel.initialize()
+            captureViewModel.initialize()
+            archiveViewModel.initialize()
+            overviewViewModel.initialize()
+            searchViewModel.initialize()
+            settingsViewModel.initialize()
+            refreshNotifications()
+        } finally {
+            updateAutomaticSync()
+        }
+    }
+
     suspend fun syncOnce(): WebDavChangeLogSyncOutcome {
         val configuration = webDavConfiguration()
             ?: return WebDavChangeLogSyncOutcome(
@@ -164,7 +183,6 @@ internal object KmpV6Runtime {
 
     fun initialize(
         context: Context,
-        legacyDatabase: DatabaseHelper,
     ) {
         if (::database.isInitialized) return
 
@@ -173,19 +191,7 @@ internal object KmpV6Runtime {
         )
         notificationGateway = AndroidNotificationGateway(context.applicationContext)
 
-        V5DataMigrator(
-            legacy = legacyDatabase,
-            target = database,
-            preferences = context.getSharedPreferences(
-                V5DataMigrator.PREFERENCES_NAME,
-                Context.MODE_PRIVATE,
-            ),
-            legacyCaptureJson = context.getSharedPreferences(
-                "capture_inspiration",
-                Context.MODE_PRIVATE,
-            ).getString("items_json", null),
-            legacyProfile = { runBlocking { context.applicationContext.readV5Profile() } },
-        ).migrateIfNeeded()
+        migrateV5IfPresent(context.applicationContext)
 
         taskListViewModel.initialize()
         habitListViewModel.initialize()
@@ -193,5 +199,33 @@ internal object KmpV6Runtime {
         settingsViewModel.initialize()
         refreshNotifications()
         updateAutomaticSync()
+    }
+
+    private fun migrateV5IfPresent(context: Context) {
+        val preferences = context.getSharedPreferences(
+            V5DataMigrator.PREFERENCES_NAME,
+            Context.MODE_PRIVATE,
+        )
+        if (!V5DataMigrator.isMigrationRequired(preferences)) return
+        if (!context.getDatabasePath(DatabaseHelper.DATABASE_NAME).exists()) {
+            V5DataMigrator.markMigrationNotApplicable(preferences)
+            return
+        }
+
+        val legacyDatabase = DatabaseHelper.getInstance(context)
+        try {
+            V5DataMigrator(
+                legacy = legacyDatabase,
+                target = database,
+                preferences = preferences,
+                legacyCaptureJson = context.getSharedPreferences(
+                    "capture_inspiration",
+                    Context.MODE_PRIVATE,
+                ).getString("items_json", null),
+                legacyProfile = { runBlocking { context.readV5Profile() } },
+            ).migrateIfNeeded()
+        } finally {
+            DatabaseHelper.closeInstance()
+        }
     }
 }

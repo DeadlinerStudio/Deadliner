@@ -18,7 +18,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.fragment.app.FragmentManager
 import com.aritxonly.deadliner.BuildConfig
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.AppIconMode
