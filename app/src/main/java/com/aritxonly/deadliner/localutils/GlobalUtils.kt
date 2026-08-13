@@ -19,7 +19,6 @@ import androidx.core.content.edit
 import androidx.fragment.app.FragmentManager
 import com.aritxonly.deadliner.BuildConfig
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.AppIconMode
 import com.aritxonly.deadliner.model.AppThemeStyle
 import com.aritxonly.deadliner.model.AdvancedMaterialLevel
@@ -29,9 +28,7 @@ import com.aritxonly.deadliner.model.AppearancePreferences
 import com.aritxonly.deadliner.model.ColorfulIndicatorStyle
 import com.aritxonly.deadliner.model.DynamicPaletteStyle
 import com.aritxonly.deadliner.model.DisplayScalePreset
-import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.DeadlineType
-import com.aritxonly.deadliner.model.HabitMetaData
 import com.aritxonly.deadliner.model.ModernColorPalette
 import com.aritxonly.deadliner.model.UiStyle
 import com.google.android.material.datepicker.CalendarConstraints
@@ -40,8 +37,6 @@ import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -929,17 +924,6 @@ object GlobalUtils {
         }
     }
 
-    fun filterArchived(item: DDLItem): Boolean {
-        try {
-            if (!autoArchiveEnable) return true
-            val completeTime = safeParseDateTime(item.completeTime)
-            val daysSinceCompletion = Duration.between(completeTime, LocalDateTime.now()).toDays()
-            return daysSinceCompletion <= autoArchiveTime
-        } catch (e: Exception) {
-            return true // 如果解析失败，默认保留
-        }
-    }
-
     /**
      * 显示日期和时间选择器
      * @param afterDateTime 若不为 null，则限制只能选择该时间之后（含当天）的日期和时间
@@ -1088,30 +1072,6 @@ object GlobalUtils {
         timePicker.show(fragmentManager, "timePicker_only_${initialTime.hour}:${initialTime.minute}")
     }
 
-    /**
-     * v2.0新增
-     * 过滤功能相关API
-     */
-
-    fun parseHabitMetaData(note: String): HabitMetaData {
-        val gson = Gson()
-        val type = object : TypeToken<HabitMetaData>() {}.type
-        val habitMeta: HabitMetaData = try {
-            gson.fromJson(note, type)
-                ?: HabitMetaData(
-                    emptySet(),
-                    DeadlineFrequency.DAILY,
-                    1,
-                    0,
-                    LocalDate.now().toString()
-                )
-        } catch (e: Exception) {
-            HabitMetaData(emptySet(), DeadlineFrequency.DAILY, 1, 0, LocalDate.now().toString())
-        }
-
-        return habitMeta
-    }
-
     fun decideHideFromRecent(context: Context, activity: Activity) {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val myTaskId = activity.taskId
@@ -1134,48 +1094,6 @@ object GlobalUtils {
         Log.d("WikiGenerate", manufacturer)
 
         return baseWikiUrl
-    }
-
-    fun generateHabitNote(context: Context, frequency: Int?, total: Int?, type: DeadlineFrequency): String {
-        val typeString = when (type) {
-            DeadlineFrequency.DAILY -> context.getString(R.string.frequency_daily)
-            DeadlineFrequency.WEEKLY -> context.getString(R.string.frequency_weekly)
-            DeadlineFrequency.MONTHLY -> context.getString(R.string.frequency_monthly)
-            else -> context.getString(R.string.frequency_daily)
-        }
-
-        val frequencyValue = frequency ?: 1
-
-        val totalString = if (total == null) {
-            context.getString(R.string.habit_total_unlimited)
-        } else {
-            context.getString(R.string.habit_total_count, total)
-        }
-
-        return context.getString(R.string.habit_checkin, typeString, frequencyValue, totalString)
-    }
-
-    fun canHabitBeDone(item: DDLItem, metaData: HabitMetaData): Boolean {
-        val endTime = parseDateTime(item.endTime)
-        if (endTime == null) {
-            return true
-        }
-
-        val remainingTime = Duration.between(LocalDateTime.now(), endTime).toDays()
-        val remainingTasks = metaData.total - item.habitTotalCount
-        return when (metaData.frequencyType) {
-            DeadlineFrequency.TOTAL ->
-                true
-
-            DeadlineFrequency.DAILY ->
-                (remainingTime * metaData.frequency >= remainingTasks)
-
-            DeadlineFrequency.WEEKLY ->
-                ((remainingTime / 7) * metaData.frequency >= remainingTasks)
-
-            DeadlineFrequency.MONTHLY ->
-                ((remainingTime / 30) * metaData.frequency >= remainingTasks)
-        }
     }
 
     fun showRetroactiveDatePicker(fragmentManager: FragmentManager, onDatePicked: (Long) -> Unit) {

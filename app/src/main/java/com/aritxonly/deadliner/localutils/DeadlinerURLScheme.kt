@@ -19,7 +19,7 @@ import androidx.core.net.toUri
 /**
  * 口令派生模式 Deadliner URL 工具（AES-GCM + Deflate + Base64URL）。
  * URL 形如：
- * deadliner://share?v=1&k=1&m=pass&s=<salt_b64url>&i=<iters>&d=<payload>
+ * https://www.aritxonly.top/deadliner/share?v=6&k=1&m=pass&s=<salt_b64url>&i=<iters>&d=<payload>
  */
 object DeadlinerURLScheme {
     const val DEADLINER_URL_SCHEME_PREFIX = "https://www.aritxonly.top/deadliner/share"

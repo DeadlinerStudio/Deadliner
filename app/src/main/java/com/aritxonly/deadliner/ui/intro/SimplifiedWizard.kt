@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.intro.IntroWizardViewModel
 import com.deadliner.viewmodel.intro.IntroWizardStep as WizardStep
-import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.iconResource

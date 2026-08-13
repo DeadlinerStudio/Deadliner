@@ -40,7 +40,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.ui.base.Button
 import com.aritxonly.deadliner.ui.base.OutlinedTextField
 import com.aritxonly.deadliner.ui.base.Switch
@@ -72,30 +71,6 @@ data class HabitEditorDraft(
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime = LocalTime.of(20, 0),
 )
-
-fun HabitEditorDraft.toDeadlineFrequency(): DeadlineFrequency {
-    return when (goalType) {
-        HabitGoalType.TOTAL -> DeadlineFrequency.TOTAL
-        HabitGoalType.PER_PERIOD -> period.toDeadlineFrequency()
-    }
-}
-
-fun DeadlineFrequency.toHabitPeriod(default: HabitPeriod = HabitPeriod.DAILY): HabitPeriod {
-    return when (this) {
-        DeadlineFrequency.DAILY -> HabitPeriod.DAILY
-        DeadlineFrequency.WEEKLY -> HabitPeriod.WEEKLY
-        DeadlineFrequency.MONTHLY -> HabitPeriod.MONTHLY
-        DeadlineFrequency.TOTAL -> default
-    }
-}
-
-private fun HabitPeriod.toDeadlineFrequency(): DeadlineFrequency {
-    return when (this) {
-        HabitPeriod.DAILY, HabitPeriod.ONCE, HabitPeriod.EBBINGHAUS -> DeadlineFrequency.DAILY
-        HabitPeriod.WEEKLY -> DeadlineFrequency.WEEKLY
-        HabitPeriod.MONTHLY -> DeadlineFrequency.MONTHLY
-    }
-}
 
 @Composable
 fun DeadlineAiQuickAddCard(

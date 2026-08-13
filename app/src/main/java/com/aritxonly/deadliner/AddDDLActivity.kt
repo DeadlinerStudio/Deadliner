@@ -98,7 +98,6 @@ import com.aritxonly.deadliner.ui.editor.HabitEditorDraft
 import com.aritxonly.deadliner.ui.editor.HabitEditorSection
 import com.aritxonly.deadliner.ui.editor.TaskEditorDraft
 import com.aritxonly.deadliner.ui.editor.TaskEditorSection
-import com.aritxonly.deadliner.ui.editor.toDeadlineFrequency
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
@@ -261,11 +260,22 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     }
 
     private fun buildHabitSummary(): String {
-        return GlobalUtils.generateHabitNote(
-            this,
-            habitDraft.timesPerPeriod.toIntOrNull(),
-            habitDraft.totalTarget.toIntOrNull(),
-            habitDraft.toDeadlineFrequency()
+        val periodLabel = when (habitDraft.period) {
+            HabitPeriod.DAILY, HabitPeriod.ONCE, HabitPeriod.EBBINGHAUS -> getString(R.string.frequency_daily)
+            HabitPeriod.WEEKLY -> getString(R.string.frequency_weekly)
+            HabitPeriod.MONTHLY -> getString(R.string.frequency_monthly)
+        }
+        val target = if (habitDraft.goalType == HabitGoalType.TOTAL) {
+            habitDraft.totalTarget.toIntOrNull()?.let { getString(R.string.habit_total_count, it) }
+                ?: getString(R.string.habit_total_unlimited)
+        } else {
+            getString(R.string.habit_total_unlimited)
+        }
+        return getString(
+            R.string.habit_checkin,
+            periodLabel,
+            habitDraft.timesPerPeriod.toIntOrNull() ?: 1,
+            target,
         )
     }
 

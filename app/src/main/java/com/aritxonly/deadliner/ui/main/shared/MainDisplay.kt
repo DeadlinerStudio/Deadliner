@@ -109,16 +109,11 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DDLStatus
-import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
-import com.aritxonly.deadliner.model.updateNoteWithDate
 import com.aritxonly.deadliner.ui.base.AlertDialog
-import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
 import com.aritxonly.deadliner.ui.main.HabitItemCardSimplified
 import com.aritxonly.deadliner.ui.main.simplified.*
 import kotlinx.coroutines.FlowPreview

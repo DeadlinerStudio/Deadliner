@@ -2,7 +2,6 @@ package com.aritxonly.deadliner.platform.kmp
 
 import android.content.SharedPreferences
 import android.util.Log
-import com.aritxonly.deadliner.model.DDLState
 import com.deadliner.db.DeadlinerDatabase
 import com.google.gson.JsonArray
 import com.google.gson.JsonNull
@@ -91,11 +90,7 @@ internal class V5DataMigrator(
     private fun buildTaskSnapshot(): JsonObject {
         val items = JsonArray()
         legacy.tasks().forEach { task ->
-                val state = DDLState.fromStoredValue(
-                    rawState = task.state,
-                    isCompleted = task.isCompleted,
-                    isArchived = task.isArchived,
-                )
+                val state = canonicalV5State(task.state, task.isCompleted, task.isArchived)
                 items.add(JsonObject().apply {
                     addProperty("uid", task.uid)
                     add("ver", JsonObject().apply {
@@ -109,7 +104,7 @@ internal class V5DataMigrator(
                         addProperty("name", task.name)
                         addProperty("start_time", canonicalInstantOrBlank(task.startTime))
                         addProperty("end_time", canonicalInstantOrBlank(task.endTime))
-                        addProperty("state", state.toWire())
+                        addProperty("state", state)
                         addProperty("complete_time", canonicalInstantOrBlank(task.completeTime))
                         addProperty("note", task.note)
                         addProperty("is_stared", task.isStarred)
@@ -201,6 +196,20 @@ internal class V5DataMigrator(
                 }
             }
         }
+    }
+
+    private fun canonicalV5State(raw: String, isCompleted: Boolean, isArchived: Boolean): String {
+        val legacyFlags = when {
+            isArchived -> "archived"
+            isCompleted -> "completed"
+            else -> "active"
+        }
+        val stored = when (raw.trim().lowercase()) {
+            "active", "completed", "archived", "abandoned" -> raw.trim().lowercase()
+            "abandonedarchived", "abandoned_archived" -> "abandoned_archived"
+            else -> legacyFlags
+        }
+        return if (stored == "active" && legacyFlags != "active") legacyFlags else stored
     }
 
     private fun canonicalInstantOrBlank(raw: String?): String = raw?.takeIf { it.isNotBlank() }

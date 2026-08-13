@@ -1,9 +1,5 @@
 package com.aritxonly.deadliner.ui.overview
 
-import android.annotation.SuppressLint
-import android.view.LayoutInflater
-import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
@@ -33,15 +29,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
-import java.time.Duration
-import java.time.LocalDateTime
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -248,51 +239,4 @@ fun ActiveStatsCard(
             }
         }
     }
-}
-
-@SuppressLint("SetTextI18n")
-@Composable
-fun DeadlineItemXmlRow(item: DDLItem, modifier: Modifier = Modifier) {
-    AndroidView(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
-        factory = { context ->
-            // 1. Inflate XML
-            val view = LayoutInflater.from(context)
-                .inflate(R.layout.deadline_item, null, false)
-
-            // 2. 找到子 View
-            val titleTv = view.findViewById<TextView>(R.id.item_title)
-            val progressTv = view.findViewById<TextView>(R.id.item_progress_text)
-            val progressBar = view.findViewById<ProgressBar>(R.id.item_progress)
-
-            view.setOnClickListener {
-                context.startActivity(android.content.Intent(context, com.aritxonly.deadliner.MainActivity::class.java))
-            }
-
-            // 3. 返回根 View
-            view
-        },
-        update = { view ->
-            // 4. 每次 Compose 重组时，更新数据
-            val titleTv = view.findViewById<TextView>(R.id.item_title)
-            val progressTv = view.findViewById<TextView>(R.id.item_progress_text)
-            val progressBar = view.findViewById<ProgressBar>(R.id.item_progress)
-
-            titleTv.text = item.name
-
-            // 计算进度百分比
-            val start = GlobalUtils.safeParseDateTime(item.startTime)
-            val end = GlobalUtils.safeParseDateTime(item.endTime)
-            val total = Duration.between(start, end).toMillis().coerceAtLeast(1L)
-            val elapsed = Duration.between(start, LocalDateTime.now()).toMillis().coerceIn(0, total)
-            val percent = (elapsed * 100 / total).toInt()
-
-            val remaining = Duration.between(LocalDateTime.now(), end).toMinutes().toFloat() / 60
-
-            progressBar.progress = if (GlobalUtils.progressDir) percent else (100 - percent)
-            progressTv.text = "%.1f".format(remaining) + "h $percent%"
-        }
-    )
 }

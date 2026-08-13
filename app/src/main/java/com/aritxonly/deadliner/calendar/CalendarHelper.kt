@@ -8,8 +8,6 @@ import android.provider.CalendarContract
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.GlobalUtils.toDateTimeString
 import com.aritxonly.deadliner.model.CalendarEvent
@@ -25,7 +23,7 @@ import java.util.*
 import kotlin.math.abs
 
 /**
- * Helper for creating, updating, and deleting calendar events from DDLItem instances.
+ * Android calendar adapter for shared KMP tasks.
  */
 class CalendarHelper(private val context: Context) {
 
@@ -78,54 +76,6 @@ class CalendarHelper(private val context: Context) {
         val result: Uri = resolver.insert(insertUri, values)
             ?: throw IllegalStateException("Failed to create calendar account")
         return ContentUris.parseId(result)
-    }
-
-    /**
-     * Inserts a DDLItem as a calendar event and returns the event ID.
-     */
-    suspend fun insertEvent(item: DDLItem): Long = withContext(Dispatchers.IO) {
-        val calendarId = getOrCreateCalendarId()
-        val resolver = context.contentResolver
-
-        val endMillis = parseToMillis(item.endTime)
-
-        val values = ContentValues().apply {
-            put(CalendarContract.Events.CALENDAR_ID, calendarId)
-            put(CalendarContract.Events.TITLE, item.name)
-            put(CalendarContract.Events.DTSTART, endMillis)
-            put(CalendarContract.Events.DTEND, endMillis)
-            put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
-            put(CalendarContract.Events.DESCRIPTION, item.note)
-            if (item.type == DeadlineType.HABIT && item.habitCount > 1) {
-                put(CalendarContract.Events.RRULE, "FREQ=DAILY;COUNT=${item.habitCount}")
-            }
-        }
-
-        val uri: Uri = if (item.calendarEventId != null) {
-            // 如果已有 calendarEventId，则更新事件
-            val updateUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, item.calendarEventId!!)
-            resolver.update(updateUri, values, null, null)
-            return@withContext item.calendarEventId!!
-        } else {
-            // 否则插入新事件
-            resolver.insert(CalendarContract.Events.CONTENT_URI, values)
-                ?: throw IllegalStateException("Failed to insert calendar event")
-        }
-
-        val eventId = ContentUris.parseId(uri)
-
-        // 更新 DDLItem 的 calendarEventId 字段
-        item.calendarEventId = eventId
-
-        // 添加默认提醒
-        val reminderValues = ContentValues().apply {
-            put(CalendarContract.Reminders.EVENT_ID, eventId)
-            put(CalendarContract.Reminders.MINUTES, 10)
-            put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
-        }
-        resolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
-
-        eventId
     }
 
     suspend fun insertEvent(task: Task): Long = withContext(Dispatchers.IO) {
