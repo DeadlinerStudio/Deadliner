@@ -20,6 +20,10 @@ import com.deadliner.domain.habit.Habit
 import com.deadliner.service.LifiToolExecutor
 import com.deadliner.service.NotificationOrchestrator
 import com.deadliner.platform.DailySummaryConfig
+import com.deadliner.domain.ai.model.AIConfig
+import com.deadliner.interfaces.DeadlinerCore
+import com.deadliner.lifi.LifiAIComponent
+import com.deadliner.lifi.memory.KmpMemoryStoreAdapter
 import com.deadliner.sync.WebDavChangeLogSyncOutcome
 import com.deadliner.sync.webdav.WebDavCredentials
 import com.deadliner.sync.webdav.WebDavTransportConfiguration
@@ -132,6 +136,14 @@ internal object KmpV6Runtime {
 
     fun executeLifiTool(toolName: String, argumentsJson: String): String =
         lifiToolExecutor.execute(toolName, argumentsJson)
+
+    fun createLifiCore(config: AIConfig): DeadlinerCore {
+        val component = LifiAIComponent(
+            config = config,
+            memoryStore = KmpMemoryStoreAdapter(database.memory, database.profiles),
+        )
+        return DeadlinerCore(config, component.orchestrator(), component.toolExecutor())
+    }
 
     fun exportBackup(): String = database.backups.export()
 

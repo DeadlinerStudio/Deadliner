@@ -9,22 +9,6 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val deadlinerCoreSyncMode = providers
-    .gradleProperty("deadliner.core.sync.mode")
-    .orElse(
-        providers.environmentVariable("DEADLINER_CORE_SOURCE")
-            .orElse("release")
-    )
-val deadlinerCoreSyncEnabled = providers
-    .gradleProperty("deadliner.core.sync.enabled")
-    .orElse("true")
-    .map { it.equals("true", ignoreCase = true) }
-val deadlinerCoreGithubToken = providers
-    .gradleProperty("deadliner.core.github.token")
-    .orElse(
-        providers.environmentVariable("DEADLINER_CORE_GITHUB_TOKEN")
-            .orElse(providers.environmentVariable("GITHUB_TOKEN"))
-    )
 val deadlinerCoreKmpAar = rootProject.file(".deadliner-core/kmp/deadliner-core.aar")
 
 val verifyDeadlinerCoreKmpAar by tasks.registering {
@@ -37,23 +21,6 @@ val verifyDeadlinerCoreKmpAar by tasks.registering {
                 "Run DeadlinerCore/runscript/buildAndDeploy.sh --skip-ios --skip-harmony first."
         }
     }
-}
-
-val syncDeadlinerCoreAndroid by tasks.registering(Exec::class) {
-    group = "deadliner"
-    description = "Sync Android JNI libs and Kotlin bindings for Deadliner core."
-
-    val syncScript = rootProject.file("scripts/sync_deadliner_core_android.sh")
-    commandLine("bash", syncScript.absolutePath, deadlinerCoreSyncMode.get())
-    environment(
-        "DEADLINER_CORE_GITHUB_TOKEN",
-        deadlinerCoreGithubToken.orNull ?: ""
-    )
-
-    inputs.file(syncScript)
-    outputs.dir(rootProject.file(".deadliner-core/android"))
-    outputs.upToDateWhen { false }
-    onlyIf { deadlinerCoreSyncEnabled.get() }
 }
 
 android {
@@ -125,17 +92,10 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    sourceSets {
-        getByName("main") {
-            java.srcDir(rootProject.file(".deadliner-core/android/bindings"))
-            jniLibs.srcDir(rootProject.file(".deadliner-core/android/jniLibs"))
-        }
-    }
     ndkVersion = "26.1.10909125"
 }
 
 tasks.named("preBuild") {
-    dependsOn(syncDeadlinerCoreAndroid)
     dependsOn(verifyDeadlinerCoreKmpAar)
 }
 
@@ -153,7 +113,6 @@ dependencies {
     implementation("nl.dionsegijn:konfetti-compose:2.0.4")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.11.0")
-    implementation("net.java.dev.jna:jna:5.14.0@aar")
     implementation("io.noties.markwon:core:4.6.2")
     implementation("androidx.compose.material3:material3-window-size-class:1.4.0-beta02")
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.4.0-beta02")

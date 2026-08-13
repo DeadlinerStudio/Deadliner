@@ -26,13 +26,13 @@ object AIUtils {
     /** 初始化：在 Application 或首次使用时调用 */
     fun init(context: Context) {
         appContext = context.applicationContext
-        coreBridge = DeadlinerCoreBridge(context.applicationContext, gson)
+        coreBridge = DeadlinerCoreBridge(gson)
     }
 
     @Suppress("UNUSED_PARAMETER")
     fun setPreset(preset0: LlmPreset, context: Context) {
         appContext = context.applicationContext
-        coreBridge = DeadlinerCoreBridge(context.applicationContext, gson)
+        coreBridge = DeadlinerCoreBridge(gson)
     }
 
     suspend fun validateDirectConfig(
@@ -210,7 +210,7 @@ object AIUtils {
         onThinking: (suspend (agent: String, phase: String, message: String?) -> Unit)? = null,
         onLifecycle: (suspend (AgentLifecycleEvent) -> Unit)? = null,
     ): MixedResult {
-        val bridge = coreBridge ?: DeadlinerCoreBridge(context.applicationContext, gson).also {
+        val bridge = coreBridge ?: DeadlinerCoreBridge(gson).also {
             coreBridge = it
         }
         val config = readCoreRuntimeConfig(context)
