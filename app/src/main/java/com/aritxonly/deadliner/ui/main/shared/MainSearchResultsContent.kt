@@ -60,6 +60,9 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.aritxonly.deadliner.ui.archive.ArchivedHabitCard
+import com.aritxonly.deadliner.ui.archive.ArchivedTaskCard
+import com.aritxonly.deadliner.ui.archive.toArchiveCardModel
 import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
 import com.deadliner.domain.capture.CaptureItem
 import com.deadliner.domain.habit.Habit
@@ -161,24 +164,30 @@ fun MainSearchResultsContent(
                 if (archivedTasks.isNotEmpty()) {
                     item { SearchSectionHeader(stringResource(R.string.search_group_archived_task), R.drawable.ic_archive) }
                     items(archivedTasks, key = Task::uid) { task ->
-                        SearchTaskCard(task, activity) {
-                            KmpV6Runtime.archiveViewModel.unarchiveTask(task.uid)
-                            KmpV6Runtime.taskListViewModel.loadNow()
-                            searchViewModel.initialize()
-                        }
+                        ArchivedTaskCard(
+                            item = task.toArchiveCardModel(),
+                            onRestore = {
+                                KmpV6Runtime.archiveViewModel.unarchiveTask(task.uid)
+                                KmpV6Runtime.taskListViewModel.loadNow()
+                                searchViewModel.initialize()
+                            },
+                        )
                     }
                 }
                 if (archivedHabits.isNotEmpty()) {
                     item { SearchSectionHeader(stringResource(R.string.search_group_archived_habit), R.drawable.ic_archive) }
                     items(archivedHabits, key = Habit::uid) { habit ->
-                        SearchHabitCard(habit = habit, progress = null) {
-                            habitViewModel.applyHabitStatusNow(
-                                habit.uid,
-                                HabitStatusAction.RESTORE,
-                                Instant.now().toString(),
-                            )
-                            searchViewModel.initialize()
-                        }
+                        ArchivedHabitCard(
+                            habit = habit.toArchiveCardModel(),
+                            onRestore = {
+                                habitViewModel.applyHabitStatusNow(
+                                    habit.uid,
+                                    HabitStatusAction.RESTORE,
+                                    Instant.now().toString(),
+                                )
+                                searchViewModel.initialize()
+                            },
+                        )
                     }
                 }
             }
@@ -380,7 +389,7 @@ private fun SearchCaptureMenuItem(labelRes: Int, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SearchTaskCard(task: Task, activity: MainActivity, onRestore: (() -> Unit)? = null) {
+private fun SearchTaskCard(task: Task, activity: MainActivity) {
     val start = task.startAt?.let(GlobalUtils::parseDateTime)
     val end = task.dueAt?.let(GlobalUtils::parseDateTime)
     val now = LocalDateTime.now()
@@ -394,23 +403,16 @@ private fun SearchTaskCard(task: Task, activity: MainActivity, onRestore: (() ->
         TaskState.COMPLETED, TaskState.ARCHIVED -> stringResource(R.string.completed)
         else -> GlobalUtils.buildRemainingTime(activity, start, end, true, now)
     }
-    Box {
-        DDLItemCardSimplified(
-            title = task.title,
-            remainingTimeAlt = remaining,
-            note = task.note,
-            progress = computeProgress(start, end, now),
-            isStarred = task.isStarred,
-            status = status,
-            useDisabledCompletedStyle = task.state in setOf(TaskState.ABANDONED, TaskState.ABANDONED_ARCHIVED),
-            onClick = { activity.startActivity(DeadlineDetailActivity.newIntent(activity, task.uid)) },
-        )
-        if (onRestore != null) {
-            IconButton(onClick = onRestore, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)) {
-                Icon(painterResource(R.drawable.ic_back), contentDescription = stringResource(R.string.unarchive))
-            }
-        }
-    }
+    DDLItemCardSimplified(
+        title = task.title,
+        remainingTimeAlt = remaining,
+        note = task.note,
+        progress = computeProgress(start, end, now),
+        isStarred = task.isStarred,
+        status = status,
+        useDisabledCompletedStyle = task.state in setOf(TaskState.ABANDONED, TaskState.ABANDONED_ARCHIVED),
+        onClick = { activity.startActivity(DeadlineDetailActivity.newIntent(activity, task.uid)) },
+    )
 }
 
 @Composable

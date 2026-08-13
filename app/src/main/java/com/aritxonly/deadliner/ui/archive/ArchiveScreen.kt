@@ -65,12 +65,9 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.deadliner.domain.habit.Habit
-import com.deadliner.domain.habit.HabitGoalType
-import com.deadliner.domain.habit.HabitPeriod
 import com.deadliner.domain.habit.HabitStatus
 import com.deadliner.domain.habit.HabitStatusAction
 import com.deadliner.domain.task.Task
-import com.deadliner.domain.task.TaskState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -410,49 +407,6 @@ fun ArchiveScreen(
     )
 }
 
-@Composable
-private fun Task.toArchiveCardModel(): ArchivedTaskCardModel {
-    val abandoned = state == TaskState.ABANDONED_ARCHIVED
-    val archivedAt = completedAt
-    return ArchivedTaskCardModel(
-        badgeText = stringResource(
-            if (abandoned) R.string.archive_label_abandoned else R.string.archive_label_completed,
-        ),
-        title = title,
-        primaryText = formatArchiveDate(startAt.orEmpty()),
-        secondaryText = when {
-            archivedAt.isNullOrBlank() && abandoned -> stringResource(R.string.archive_state_abandoned)
-            archivedAt.isNullOrBlank() -> stringResource(R.string.archive_state_archived)
-            abandoned -> stringResource(R.string.archive_abandoned_at, formatArchiveDate(archivedAt))
-            else -> stringResource(R.string.archive_completed_at, formatArchiveDate(archivedAt))
-        },
-        note = note,
-        isAbandoned = abandoned,
-    )
-}
-
-@Composable
-private fun Habit.toArchiveCardModel(): ArchivedHabitCardModel {
-    val periodLabel = stringResource(
-        when (period) {
-            HabitPeriod.DAILY -> R.string.frequency_daily
-            HabitPeriod.WEEKLY -> R.string.frequency_weekly
-            HabitPeriod.MONTHLY -> R.string.frequency_monthly
-            HabitPeriod.ONCE -> R.string.frequency_once
-            HabitPeriod.EBBINGHAUS -> R.string.editor_habit_period_ebbinghaus
-        },
-    )
-    val goalLabel = when (goalType) {
-        HabitGoalType.TOTAL -> stringResource(R.string.archive_habit_total_target, totalTarget ?: 0)
-        HabitGoalType.PER_PERIOD -> stringResource(R.string.archive_habit_period_target, timesPerPeriod)
-    }
-    return ArchivedHabitCardModel(
-        title = name,
-        primaryText = stringResource(R.string.archive_habit_detail_template, periodLabel, goalLabel),
-        secondaryText = stringResource(R.string.archive_archived_at, formatArchiveDate(updatedAt)),
-        note = description.orEmpty(),
-    )
-}
 
 @Composable
 private fun ArchiveEmptyState(
