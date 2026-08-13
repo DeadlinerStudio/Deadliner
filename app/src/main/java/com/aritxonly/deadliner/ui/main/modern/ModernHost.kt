@@ -353,6 +353,10 @@ fun ModernHost(
     val forceMaterialTopBarsInMiuix = appearance.usesMiuixTheme && appearance.useMaterialTopAppBarInMiuix
 
     val taskState by taskVm.uiState.collectAsStateWithLifecycle()
+    val displayedTasks = taskVm.getFilteredTasks().filter {
+        it.state != com.deadliner.domain.task.TaskState.ARCHIVED &&
+            it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED
+    }
     val sharedHabitState by sharedHabitVm.uiState.collectAsStateWithLifecycle()
     val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
     val isShortBottomNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact ||
@@ -582,7 +586,7 @@ fun ModernHost(
                             ) {
                                 Box(modifier = Modifier.weight(1f)) {
                                     MainDisplay(
-                                        tasks = taskState.tasks.filter { it.state != com.deadliner.domain.task.TaskState.ARCHIVED && it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED },
+                                        tasks = displayedTasks,
                                         habitViewModel = sharedHabitVm,
                                         isRefreshing = taskState.isLoading || sharedHabitState.isLoading,
                                         selectedPage = DeadlineType.TASK,
@@ -630,7 +634,7 @@ fun ModernHost(
                                 }
                                 Box(modifier = Modifier.weight(1f)) {
                                     MainDisplay(
-                                        tasks = taskState.tasks,
+                                        tasks = displayedTasks,
                                         habitViewModel = sharedHabitVm,
                                         isRefreshing = taskState.isLoading || sharedHabitState.isLoading,
                                         selectedPage = DeadlineType.HABIT,
@@ -679,7 +683,7 @@ fun ModernHost(
                             }
                         } else {
                             MainDisplay(
-                                tasks = taskState.tasks.filter { it.state != com.deadliner.domain.task.TaskState.ARCHIVED && it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED },
+                                tasks = displayedTasks,
                                 habitViewModel = sharedHabitVm,
                                 isRefreshing = taskState.isLoading || sharedHabitState.isLoading,
                                 selectedPage = hostState.selectedPage,
