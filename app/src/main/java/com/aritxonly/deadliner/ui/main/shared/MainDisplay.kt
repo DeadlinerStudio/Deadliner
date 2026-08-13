@@ -113,7 +113,6 @@ import com.aritxonly.deadliner.localutils.SearchFilter
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DDLStatus
-import com.aritxonly.deadliner.model.DayOverview
 import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets

@@ -1,7 +1,6 @@
 package com.aritxonly.deadliner.platform.kmp
 
 import android.content.Context
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.notification.AndroidNotificationGateway
 import com.deadliner.db.AndroidDatabaseDriverFactory
@@ -219,13 +218,13 @@ internal object KmpV6Runtime {
             Context.MODE_PRIVATE,
         )
         if (!V5DataMigrator.isMigrationRequired(preferences)) return
-        if (!context.getDatabasePath(DatabaseHelper.DATABASE_NAME).exists()) {
+        val v5DatabaseFile = context.getDatabasePath(V5MigrationReader.DATABASE_NAME)
+        if (!v5DatabaseFile.exists()) {
             V5DataMigrator.markMigrationNotApplicable(preferences)
             return
         }
 
-        val legacyDatabase = DatabaseHelper.getInstance(context)
-        try {
+        V5MigrationReader.open(v5DatabaseFile).use { legacyDatabase ->
             V5DataMigrator(
                 legacy = legacyDatabase,
                 target = database,
@@ -236,8 +235,6 @@ internal object KmpV6Runtime {
                 ).getString("items_json", null),
                 legacyProfile = { runBlocking { context.readV5Profile() } },
             ).migrateIfNeeded()
-        } finally {
-            DatabaseHelper.closeInstance()
         }
     }
 }

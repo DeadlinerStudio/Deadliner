@@ -2,10 +2,7 @@ package com.aritxonly.deadliner.platform.kmp
 
 import android.content.SharedPreferences
 import android.util.Log
-import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.model.DDLState
-import com.aritxonly.deadliner.model.Habit
-import com.aritxonly.deadliner.model.HabitRecord
 import com.deadliner.db.DeadlinerDatabase
 import com.google.gson.JsonArray
 import com.google.gson.JsonNull
@@ -21,7 +18,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 internal class V5DataMigrator(
-    private val legacy: DatabaseHelper,
+    private val legacy: V5MigrationReader,
     private val target: DeadlinerDatabase,
     private val preferences: SharedPreferences,
     private val legacyCaptureJson: String? = null,
@@ -93,57 +90,42 @@ internal class V5DataMigrator(
 
     private fun buildTaskSnapshot(): JsonObject {
         val items = JsonArray()
-        legacy.readableDatabase.rawQuery(
-            """
-            SELECT uid, COALESCE(deleted, 0), COALESCE(ver_ts, '1970-01-01T00:00:00Z'),
-                   COALESCE(ver_ctr, 0), COALESCE(ver_dev, ''), id, name, start_time,
-                   end_time, state, is_completed, is_archived, complete_time, note,
-                   is_stared, type, habit_count, habit_total_count, calendar_event,
-                   timestamp, sub_tasks_json
-              FROM ddl_items
-            """.trimIndent(),
-            null,
-        ).use { cursor ->
-            while (cursor.moveToNext()) {
-                val uid = cursor.getString(0)
-                    ?: throw IllegalStateException("v5 DDL id=${cursor.getLong(5)} has no stable uid")
-                val deleted = cursor.getInt(1) != 0
+        legacy.tasks().forEach { task ->
+                val state = DDLState.fromStoredValue(
+                    rawState = task.state,
+                    isCompleted = task.isCompleted,
+                    isArchived = task.isArchived,
+                )
                 items.add(JsonObject().apply {
-                    addProperty("uid", uid)
+                    addProperty("uid", task.uid)
                     add("ver", JsonObject().apply {
-                        addProperty("ts", cursor.getString(2))
-                        addProperty("ctr", cursor.getInt(3))
-                        addProperty("dev", cursor.getString(4))
+                        addProperty("ts", task.version.timestamp)
+                        addProperty("ctr", task.version.counter)
+                        addProperty("dev", task.version.deviceId)
                     })
-                    addProperty("deleted", deleted)
-                    add("doc", if (deleted) JsonNull.INSTANCE else JsonObject().apply {
-                        val state = DDLState.fromStoredValue(
-                            rawState = cursor.getString(9),
-                            isCompleted = cursor.getInt(10) != 0,
-                            isArchived = cursor.getInt(11) != 0,
-                        )
-                        addProperty("id", cursor.getLong(5))
-                        addProperty("name", cursor.getString(6))
-                        addProperty("start_time", canonicalInstantOrBlank(cursor.getString(7)))
-                        addProperty("end_time", canonicalInstantOrBlank(cursor.getString(8)))
+                    addProperty("deleted", task.deleted)
+                    add("doc", if (task.deleted) JsonNull.INSTANCE else JsonObject().apply {
+                        addProperty("id", task.id)
+                        addProperty("name", task.name)
+                        addProperty("start_time", canonicalInstantOrBlank(task.startTime))
+                        addProperty("end_time", canonicalInstantOrBlank(task.endTime))
                         addProperty("state", state.toWire())
-                        addProperty("complete_time", canonicalInstantOrBlank(cursor.getString(12)))
-                        addProperty("note", cursor.getString(13))
-                        addProperty("is_stared", cursor.getInt(14))
-                        addProperty("type", cursor.getString(15))
-                        addProperty("habit_count", cursor.getInt(16))
-                        addProperty("habit_total_count", cursor.getInt(17))
-                        addProperty("calendar_event", cursor.getLong(18))
-                        addProperty("timestamp", canonicalInstant(cursor.getString(19)))
-                        add("sub_tasks", canonicalSubtasks(cursor.getString(20)))
+                        addProperty("complete_time", canonicalInstantOrBlank(task.completeTime))
+                        addProperty("note", task.note)
+                        addProperty("is_stared", task.isStarred)
+                        addProperty("type", task.type)
+                        addProperty("habit_count", task.habitCount)
+                        addProperty("habit_total_count", task.habitTotalCount)
+                        addProperty("calendar_event", task.calendarEvent)
+                        addProperty("timestamp", canonicalInstant(task.timestamp))
+                        add("sub_tasks", canonicalSubtasks(task.subTasksJson))
                     })
                 })
-            }
         }
         return JsonObject().apply {
             add("version", JsonObject().apply {
                 addProperty("ts", Instant.now().toString())
-                addProperty("dev", legacy.getDeviceId())
+                addProperty("dev", legacy.deviceId())
             })
             add("items", items)
         }
@@ -151,14 +133,14 @@ internal class V5DataMigrator(
 
     private fun buildCompleteHabitSnapshot(): JsonObject {
         val items = JsonArray()
-        legacy.getHabitCarrierSyncRows().forEach { carrier ->
-            val habit = legacy.getHabitByDdlId(carrier.ddlId)
+        legacy.habitCarriers().forEach { carrier ->
+            val habit = carrier.habit
             items.add(JsonObject().apply {
                 addProperty("uid", carrier.uid)
                 add("ver", JsonObject().apply {
-                    addProperty("ts", carrier.ver.ts)
-                    addProperty("ctr", carrier.ver.ctr)
-                    addProperty("dev", carrier.ver.dev)
+                    addProperty("ts", carrier.version.timestamp)
+                    addProperty("ctr", carrier.version.counter)
+                    addProperty("dev", carrier.version.deviceId)
                 })
                 addProperty("deleted", carrier.deleted || habit == null)
                 add("doc", if (carrier.deleted || habit == null) {
@@ -171,38 +153,38 @@ internal class V5DataMigrator(
         return JsonObject().apply {
             add("version", JsonObject().apply {
                 addProperty("ts", Instant.now().toString())
-                addProperty("dev", legacy.getDeviceId())
+                addProperty("dev", legacy.deviceId())
             })
             add("items", items)
         }
     }
 
-    private fun habitDocument(uid: String, habit: Habit): JsonObject = JsonObject().apply {
+    private fun habitDocument(uid: String, habit: V5MigrationReader.Habit): JsonObject = JsonObject().apply {
         addProperty("ddl_uid", uid)
         add("habit", JsonObject().apply {
             addProperty("name", habit.name)
             habit.description?.let { addProperty("description", it) } ?: add("description", JsonNull.INSTANCE)
             habit.color?.let { addProperty("color", it) } ?: add("color", JsonNull.INSTANCE)
             habit.iconKey?.let { addProperty("icon_key", it) } ?: add("icon_key", JsonNull.INSTANCE)
-            addProperty("period", habit.period.name)
+            addProperty("period", habit.period)
             addProperty("times_per_period", habit.timesPerPeriod)
-            addProperty("goal_type", habit.goalType.name)
+            addProperty("goal_type", habit.goalType)
             habit.totalTarget?.let { addProperty("total_target", it) } ?: add("total_target", JsonNull.INSTANCE)
             addProperty("created_at", canonicalInstant(habit.createdAt.toString()))
             addProperty("updated_at", canonicalInstant(habit.updatedAt.toString()))
-            addProperty("status", habit.status.name)
+            addProperty("status", habit.status)
             addProperty("sort_order", habit.sortOrder)
             habit.alarmTime?.let { addProperty("alarm_time", it) } ?: add("alarm_time", JsonNull.INSTANCE)
         })
         add("records", JsonArray().apply {
-            legacy.getAllHabitRecordsForHabit(habit.id)
-                .sortedWith(compareBy<HabitRecord> { it.date }.thenBy { it.createdAt })
+            habit.records
+                .sortedWith(compareBy<V5MigrationReader.HabitRecord> { it.date }.thenBy { it.createdAt })
                 .forEach { record ->
                     add(JsonObject().apply {
-                        addProperty("date", record.date.toString())
+                        addProperty("date", record.date)
                         addProperty("count", record.count)
-                        addProperty("status", record.status.name)
-                        addProperty("created_at", canonicalInstant(record.createdAt.toString()))
+                        addProperty("status", record.status)
+                        addProperty("created_at", canonicalInstant(record.createdAt))
                     })
                 }
         })
