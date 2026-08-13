@@ -24,12 +24,24 @@ internal class AndroidNotificationGateway(context: Context) : NotificationGatewa
                         .toInt(),
                 ),
             )
+            service.setUpcomingLiveUpdate(
+                UpcomingLiveUpdateConfig(
+                    taskUid = config.taskUid,
+                    title = config.title,
+                    dueAt = config.dueAt,
+                    advanceMinutes = GlobalUtils.liveUpdatesInAdvance,
+                ),
+            )
         } else {
             service.cancelTaskNotification(config.taskUid)
+            service.cancelUpcomingLiveUpdate(config.taskUid)
         }
     }
 
-    override fun cancelTaskNotification(taskUid: String) = service.cancelTaskNotification(taskUid)
+    override fun cancelTaskNotification(taskUid: String) {
+        service.cancelTaskNotification(taskUid)
+        service.cancelUpcomingLiveUpdate(taskUid)
+    }
     override fun cancelAllTaskNotifications() = service.cancelAllTaskNotifications()
     override fun setHabitNotification(config: HabitNotificationConfig) = service.setHabitNotification(config)
     override fun cancelHabitNotification(habitUid: String) = service.cancelHabitNotification(habitUid)

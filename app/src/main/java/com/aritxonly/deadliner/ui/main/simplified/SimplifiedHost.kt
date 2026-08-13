@@ -87,7 +87,6 @@ import kotlinx.coroutines.launch
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.core.Party
 import java.io.File
-import com.aritxonly.deadliner.localutils.GlobalUtils.showHabitReminderDialog
 
 @Composable
 fun SimplifiedHost(

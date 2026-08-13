@@ -21,7 +21,6 @@ import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.localutils.GlobalUtils.refreshCount
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineFrequency
@@ -283,12 +282,6 @@ fun HabitItem(
 ) {
     val now = LocalDateTime.now()
     val habitMeta = remember(item.note) { GlobalUtils.parseHabitMetaData(item.note) }
-
-    LaunchedEffect(item.id, habitMeta.refreshDate) {
-        refreshCount(item, habitMeta) {
-            onRefresh()
-        }
-    }
 
     val startTime = GlobalUtils.safeParseDateTime(item.startTime)
     val endTime = GlobalUtils.safeParseDateTime(item.endTime)

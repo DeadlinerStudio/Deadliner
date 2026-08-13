@@ -171,37 +171,9 @@
                 <action android:name="com.deadliner.kmp.notification.TASK" />
                 <action android:name="com.deadliner.kmp.notification.HABIT" />
                 <action android:name="com.deadliner.kmp.notification.DAILY" />
+                <action android:name="com.deadliner.kmp.notification.LIVE" />
             </intent-filter>
         </receiver>
-        <receiver
-            android:name=".DeadlineAlarmReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.aritxonly.deadliner.ACTION_DDL_ALARM" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".notification.NotificationActionReceiver"
-            android:exported="false" />
-        <receiver
-            android:name=".notification.UpcomingLiveUpdatesReceiver"
-            android:enabled="true"
-            android:exported="false"
-            android:permission="android.permission.WAKE_LOCK">
-            <intent-filter>
-                <action android:name="com.aritxonly.deadliner.ACTION_UPCOMING_DDL" />
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".notification.HabitNotifyReceiver"
-            android:enabled="true"
-            android:exported="false"
-            android:permission="android.permission.WAKE_LOCK">
-            <intent-filter>
-                <action android:name="com.aritxonly.deadliner.ACTION_HABIT_NOTIFY" />
-            </intent-filter>
-        </receiver>
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

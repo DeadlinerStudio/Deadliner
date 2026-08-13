@@ -64,6 +64,7 @@ fun NotificationSettingsScreen(
     val onLiveUpdatesChange: (Float) -> Unit = {
         liveUpdatesInAdvance = it.toInt().coerceIn(1, 60)
         GlobalUtils.liveUpdatesInAdvance = liveUpdatesInAdvance
+        KmpV6Runtime.refreshNotifications()
     }
 
     val defaultText = stringResource(R.string.settings_support_daily_notification)

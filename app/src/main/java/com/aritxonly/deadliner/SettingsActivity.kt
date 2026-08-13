@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -310,7 +311,7 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
                             BackupSettingsScreen(
                                 handleExport = { createBackup() },
                                 handleImport = {
-                                    DeadlineAlarmScheduler.cancelAllAlarms(applicationContext)
+                                    KmpV6Runtime.cancelNotifications()
                                     GlobalUtils.NotificationStatusManager.clearAllNotified()
                                     Toast.makeText(
                                         this@SettingsActivity,
@@ -336,7 +337,7 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
                                     openCustomCalendarFilterDialog()
                                 },
                                 onClickCancelAll = {
-                                    DeadlineAlarmScheduler.cancelAllAlarms(applicationContext)
+                                    KmpV6Runtime.cancelNotifications()
                                     GlobalUtils.NotificationStatusManager.clearAllNotified()
                                     Toast.makeText(
                                         this@SettingsActivity,

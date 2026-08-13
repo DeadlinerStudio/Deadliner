@@ -1,142 +1,132 @@
 package com.aritxonly.deadliner.notification
 
-import android.app.*
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.*
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.aritxonly.deadliner.DeadlineAlarmScheduler
-import com.aritxonly.deadliner.data.DatabaseHelper
-import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DDLItem
-import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.DeadlineDetailActivity
+import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.deadliner.domain.task.Task
+import com.deadliner.domain.task.TaskState
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
+/** Android renderer for the live-update schedule owned by KMP NotificationService. */
 class UpcomingLiveUpdateService : Service() {
-
-    companion object {
-        @Volatile
-        private var activeDdlId: Long? = null
-
-        fun start(context: Context, ddl: DDLItem) {
-            val i = Intent(context, UpcomingLiveUpdateService::class.java)
-                .putExtra("DDL_ID", ddl.id)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(i)
-            } else context.startService(i)
-        }
-
-        fun stop(context: Context, ddlId: Long) {
-            NotificationManagerCompat.from(context).cancel(ddlId.hashCode())
-            if (activeDdlId == ddlId) {
-                context.stopService(Intent(context, UpcomingLiveUpdateService::class.java))
-            }
-        }
-    }
-
     private val handler = Handler(Looper.getMainLooper())
-    private var ddl: DDLItem? = null
-    private var notificationId = 0
+    private var taskUid: String? = null
+    private var intervalMillis = 30_000L
 
     private val tick = object : Runnable {
         override fun run() {
-            val d = ddl ?: return
-            val latest = DatabaseHelper.getInstance(this@UpcomingLiveUpdateService)
-                .getDDLById(d.id) ?: return stopSelf()
-
-            ddl = latest
-            val remaining = calculateRemainingSeconds(latest)
-            val liveWindowSeconds = GlobalUtils.liveUpdatesInAdvance * 60L
-
-            if (latest.type != DeadlineType.TASK || !latest.state.isActionable()) {
-                stopLiveUpdate(latest.id)
+            val uid = taskUid ?: return stopSelf()
+            val task = KmpV6Runtime.database.tasks.find(uid)
+            if (task == null || task.isDeleted || task.state != TaskState.ACTIVE) {
+                stopLiveUpdate(uid)
                 return
             }
-
-            if (remaining > liveWindowSeconds) {
-                DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(this@UpcomingLiveUpdateService, latest)
-                stopLiveUpdate(latest.id)
-                return
-            }
-
-            if (remaining <= -300) {
-                stopLiveUpdate(latest.id)
-                return
-            }
-
-            // 到期或完成就做最后一版并退出
-            if (remaining <= 0) {
-                NotificationUtil.sendUpcomingDDLNotification(this@UpcomingLiveUpdateService, latest, remaining)
+            val remaining = remainingSeconds(task) ?: return stopLiveUpdate(uid)
+            if (remaining <= 0L) {
+                publish(task, remaining, ongoing = false)
+                stopForeground(STOP_FOREGROUND_DETACH)
                 stopSelf()
                 return
             }
-
-            // 常规 30s 刷新
-            NotificationUtil.sendUpcomingDDLNotification(this@UpcomingLiveUpdateService, latest, remaining)
-            handler.postDelayed(this, 30_000L)
+            publish(task, remaining, ongoing = true)
+            handler.postDelayed(this, intervalMillis)
         }
     }
 
     override fun onCreate() {
         super.onCreate()
-        NotificationUtil.createNotificationChannels(this) // 你项目里已有的话保留
+        NotificationUtil.createNotificationChannels(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val ddlId = intent?.getLongExtra("DDL_ID", -1L) ?: -1L
-        if (ddlId <= 0) return START_NOT_STICKY
+        val uid = intent?.getStringExtra(EXTRA_TASK_UID) ?: return START_NOT_STICKY
+        val task = KmpV6Runtime.database.tasks.find(uid) ?: return START_NOT_STICKY
+        if (task.isDeleted || task.state != TaskState.ACTIVE) return START_NOT_STICKY
+        val remaining = remainingSeconds(task) ?: return START_NOT_STICKY
+        if (remaining <= 0L) return START_NOT_STICKY
 
-        // 拉取最新 DDL
-        val d = DatabaseHelper.getInstance(this).getDDLById(ddlId) ?: return START_NOT_STICKY
-        val remaining = calculateRemainingSeconds(d)
-        val liveWindowSeconds = GlobalUtils.liveUpdatesInAdvance * 60L
-
-        if (d.type != DeadlineType.TASK || !d.state.isActionable()) {
-            stopLiveUpdate(ddlId)
-            return START_NOT_STICKY
-        }
-        if (remaining <= 0L || remaining > liveWindowSeconds) {
-            if (remaining > liveWindowSeconds) {
-                DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(this, d)
-            }
-            stopLiveUpdate(ddlId)
-            return START_NOT_STICKY
-        }
-
-        ddl = d
-        activeDdlId = d.id
-        notificationId = d.id.hashCode()
-
-        // 首帧：用 NotificationUtil 构建通知并前台化
-        val first = NotificationUtil.createUpcomingDDLNotification(this, d, remaining)
-        startForeground(notificationId, first)
-
-        // 周期刷新
+        taskUid = uid
+        intervalMillis = intent.getIntExtra(EXTRA_INTERVAL_SECONDS, 30).coerceAtLeast(1) * 1_000L
+        startForeground(uid.hashCode(), buildNotification(task, remaining, ongoing = true))
         handler.removeCallbacksAndMessages(null)
-        handler.postDelayed(tick, 30_000L)
-        return START_STICKY
+        handler.postDelayed(tick, intervalMillis)
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
-        if (activeDdlId == ddl?.id) {
-            activeDdlId = null
-        }
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent?) = null
 
-    private fun calculateRemainingSeconds(d: DDLItem): Long {
-        val now = LocalDateTime.now()
-        val end = GlobalUtils.safeParseDateTime(d.endTime)
-        return Duration.between(now, end).seconds
+    private fun publish(task: Task, remaining: Long, ongoing: Boolean) {
+        NotificationManagerCompat.from(this).notify(
+            task.uid.hashCode(),
+            buildNotification(task, remaining, ongoing),
+        )
     }
 
-    private fun stopLiveUpdate(ddlId: Long) {
+    private fun buildNotification(task: Task, remaining: Long, ongoing: Boolean): android.app.Notification {
+        val minutes = (remaining.coerceAtLeast(0L) / 60L).toInt()
+        val content = when {
+            remaining <= 0L -> getString(R.string.notification_upcoming_task_overdue)
+            remaining <= 60L -> getString(R.string.notification_upcoming_task_soon)
+            else -> getString(R.string.notification_upcoming_task, minutes)
+        }
+        val open = PendingIntent.getActivity(
+            this,
+            task.uid.hashCode(),
+            DeadlineDetailActivity.newIntent(this, task.uid),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(getString(R.string.notification_upcoming_task_title, task.title))
+            .setContentText(content)
+            .setContentIntent(open)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setOnlyAlertOnce(true)
+            .setOngoing(ongoing)
+            .build()
+    }
+
+    private fun remainingSeconds(task: Task): Long? {
+        val due = task.dueAt?.let { raw ->
+            runCatching { LocalDateTime.parse(raw) }.getOrNull()
+                ?: runCatching { OffsetDateTime.parse(raw).toLocalDateTime() }.getOrNull()
+        } ?: return null
+        return Duration.between(LocalDateTime.now(), due).seconds
+    }
+
+    private fun stopLiveUpdate(uid: String) {
         stopForeground(STOP_FOREGROUND_REMOVE)
-        NotificationManagerCompat.from(this).cancel(ddlId.hashCode())
+        NotificationManagerCompat.from(this).cancel(uid.hashCode())
         stopSelf()
+    }
+
+    companion object {
+        private const val EXTRA_TASK_UID = "task_uid"
+        private const val EXTRA_INTERVAL_SECONDS = "interval_seconds"
+
+        fun start(context: Context, taskUid: String, updateIntervalSeconds: Int) {
+            val intent = Intent(context, UpcomingLiveUpdateService::class.java)
+                .putExtra(EXTRA_TASK_UID, taskUid)
+                .putExtra(EXTRA_INTERVAL_SECONDS, updateIntervalSeconds)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
+            else context.startService(intent)
+        }
     }
 }

@@ -22,6 +22,15 @@ import com.deadliner.platform.NotificationService
 /** Renders notifications for schedules created by the KMP NotificationOrchestrator. */
 class KmpNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == NotificationService.ACTION_LIVE) {
+            if (!canPostNotifications(context)) return
+            UpcomingLiveUpdateService.start(
+                context = context,
+                taskUid = intent.getStringExtra(NotificationService.EXTRA_UID) ?: return,
+                updateIntervalSeconds = intent.getIntExtra(NotificationService.EXTRA_INTERVAL_SECONDS, 30),
+            )
+            return
+        }
         if (intent.action == NotificationService.ACTION_DAILY) {
             KmpV6Runtime.scheduleDailySummary()
             showDailySummary(context)

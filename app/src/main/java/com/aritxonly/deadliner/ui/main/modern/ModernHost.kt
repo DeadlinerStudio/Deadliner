@@ -87,7 +87,6 @@ import com.aritxonly.deadliner.capture.ui.CaptureContent
 import com.aritxonly.deadliner.capture.ui.CaptureTopBar
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.localutils.GlobalUtils.showHabitReminderDialog
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime

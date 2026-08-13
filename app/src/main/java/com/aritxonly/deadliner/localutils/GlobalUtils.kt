@@ -9,9 +9,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.provider.Settings
 import android.util.Log
-import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,13 +16,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import com.aritxonly.deadliner.BuildConfig
 import com.aritxonly.deadliner.data.DatabaseHelper
-import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.data.DDLRepository
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.AppIconMode
 import com.aritxonly.deadliner.model.AppThemeStyle
@@ -41,15 +35,10 @@ import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.HabitMetaData
 import com.aritxonly.deadliner.model.ModernColorPalette
 import com.aritxonly.deadliner.model.UiStyle
-import com.aritxonly.deadliner.model.toJson
-import com.aritxonly.deadliner.model.updateNoteWithDate
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.DateValidatorPointBackward
 import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import com.google.gson.Gson
@@ -1124,13 +1113,6 @@ object GlobalUtils {
         return habitMeta
     }
 
-    fun setAlarms(databaseHelper: DatabaseHelper, context: Context) {
-        val allDdls = databaseHelper.getAllDDLs()
-        allDdls.forEach { ddlItem ->
-            DeadlineAlarmScheduler.syncScheduledNotifications(context, ddlItem)
-        }
-    }
-
     fun decideHideFromRecent(context: Context, activity: Activity) {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val myTaskId = activity.taskId
@@ -1213,30 +1195,6 @@ object GlobalUtils {
         }
 
         picker.show(fragmentManager, "retro_date_picker")
-    }
-
-    interface OnWidgetCheckInGlobalListener {
-        fun onCheckInFailedGlobal(context: Context, habitItem: DDLItem)
-        fun onCheckInSuccessGlobal(context: Context, habitItem: DDLItem, habitMeta: HabitMetaData)
-    }
-
-    fun checkInFromWidget(context: Context, habitItem: DDLItem, habitMeta: HabitMetaData, canPerformClick: Boolean, listener: OnWidgetCheckInGlobalListener?) {
-        if (!canPerformClick) {
-            listener?.onCheckInFailedGlobal(context, habitItem)
-            return
-        }
-
-        val today = LocalDate.now()
-        val updatedNote = updateNoteWithDate(habitItem, today)
-        val updatedHabit = habitItem.copy(
-            note = updatedNote,
-            habitCount = habitItem.habitCount + 1,
-            habitTotalCount = habitItem.habitTotalCount + 1
-        )
-
-        listener?.onCheckInSuccessGlobal(context, updatedHabit, habitMeta)
-
-        DDLRepository().updateDDL(updatedHabit)
     }
 
     fun triggerVibration(context: Context, duration: Long = 100) {
@@ -1346,137 +1304,6 @@ object GlobalUtils {
     }
 
 
-
-    /**
-     * 辅助函数：自动清零
-     */
-    fun refreshCount(habitItem: DDLItem, habitMeta: HabitMetaData, onRefresh: () -> Unit) {
-        val month = YearMonth.now()
-        val presetDuration = when (habitMeta.frequencyType) {
-            DeadlineFrequency.DAILY -> 1    // 1天清空一次
-            DeadlineFrequency.WEEKLY -> 7
-            DeadlineFrequency.MONTHLY -> month.lengthOfMonth()
-            DeadlineFrequency.TOTAL -> return
-        }
-
-        val duration = ChronoUnit.DAYS.between(LocalDate.parse(habitMeta.refreshDate), LocalDate.now())
-        if (duration >= presetDuration) {
-            // refresh
-            val updatedNote = habitMeta.copy(
-                refreshDate = LocalDate.now().toString()
-            ).toJson()
-
-            val updatedHabit = habitItem.copy(
-                note = updatedNote,
-                habitCount = 0
-            )
-
-            DDLRepository().updateDDL(updatedHabit)
-
-            onRefresh()
-        }
-    }
-
-    private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-
-    fun showHabitReminderDialog(context: Context, ddlId: Long, onCancel: () -> Unit = {}) {
-        val activity = context as? FragmentActivity ?: return
-        val repo = com.aritxonly.deadliner.data.HabitRepository()
-        val habit = repo.getHabitByDdlId(ddlId) ?: return
-
-        // 当前是否已开启提醒
-        var enabled = !habit.alarmTime.isNullOrBlank()
-        // 当前时间：已有则解析，否则给个默认 20:00
-        var pickedTime: LocalTime = try {
-            habit.alarmTime?.let { LocalTime.parse(it) } ?: LocalTime.of(20, 0)
-        } catch (_: Exception) {
-            LocalTime.of(20, 0)
-        }
-
-        // 简单构建一个纵向布局：Switch + 时间 + 修改按钮
-        val root = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 24, 32, 8)
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
-
-        val switch = MaterialSwitch(context).apply {
-            textSize = 16f
-            text = context.getString(R.string.habit_enable_notification)
-            isChecked = enabled
-            thumbIconDrawable = ContextCompat.getDrawable(context, R.drawable.switch_thumb_icon)
-            setPadding(16, 0, 16, 0)
-        }
-
-        val timeText = TextView(context).apply {
-            textSize = 16f
-            text = context.getString(R.string.habit_notify_at, pickedTime.format(TIME_FORMATTER))
-            setPadding(16, 24, 16, 8)
-        }
-
-        val changeButton = MaterialButton(context, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-            text = context.getString(R.string.set_time)
-            setOnClickListener {
-                // 只在“开启”时弹时间选择器；未开启时先打开再选
-                if (!switch.isChecked) {
-                    switch.isChecked = true
-                }
-
-                val picker = MaterialTimePicker.Builder()
-                    .setTimeFormat(TimeFormat.CLOCK_24H)
-                    .setHour(pickedTime.hour)
-                    .setMinute(pickedTime.minute)
-                    .setTitleText(R.string.habit_set_notification_time)
-                    .build()
-
-                picker.addOnPositiveButtonClickListener {
-                    pickedTime = LocalTime.of(picker.hour, picker.minute)
-                    timeText.text = context.getString(R.string.habit_notify_at, pickedTime.format(TIME_FORMATTER))
-                }
-
-                picker.show(activity.supportFragmentManager, "habit_alarm_time_$ddlId")
-            }
-            setPadding(16, 0, 16, 0)
-        }
-
-        root.addView(switch)
-        root.addView(timeText)
-        root.addView(changeButton)
-
-        switch.setOnCheckedChangeListener { _, isChecked ->
-            enabled = isChecked
-        }
-
-        MaterialAlertDialogBuilder(context)
-            .setTitle(context.getString(R.string.habit_notification_title, habit.name))
-            .setView(root)
-            .setPositiveButton(R.string.accept) { _, _ ->
-                val updated = habit.copy(
-                    alarmTime = if (enabled) pickedTime.format(TIME_FORMATTER) else null
-                )
-                repo.updateHabit(updated)
-
-                if (enabled) {
-                    DeadlineAlarmScheduler
-                        .scheduleHabitNotifyAlarm(context, ddlId)
-                } else {
-                    DeadlineAlarmScheduler
-                        .cancelHabitNotifyAlarm(context, ddlId)
-                }
-
-                onCancel()
-            }
-            .setNegativeButton(R.string.cancel) { _, _ ->
-                onCancel()
-            }
-            .setOnCancelListener {
-                onCancel()
-            }
-            .show()
-    }
 
     fun getCurrentDeviceColorPalette(): ModernColorPalette {
         return ModernColorPaletteResolver.resolveCurrentDevice()
