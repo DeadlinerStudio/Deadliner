@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -45,7 +48,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.window.core.layout.WindowSizeClass
+import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBar
+import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBarDefaults
+import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabItem
+import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabLayout
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
@@ -75,6 +84,8 @@ data class AdaptiveNavItem(
 private val CompactNavigationShape = RoundedCornerShape(0.dp)
 private val RailNavigationShape = RoundedCornerShape(12.dp)
 private val CompactOverlayHostPadding = 92.dp
+private val FloatingCompactOverlayHostPadding = 92.dp
+private val FloatingNavigationBottomSpacing = 4.dp
 private val RailSlotWidth = 92.dp
 
 @Composable
@@ -82,6 +93,7 @@ fun AdaptiveNavigationSuiteScaffold(
     items: List<AdaptiveNavItem>,
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
+    useMiuixFloatingTabBar: Boolean = false,
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
     legacyTopBar: @Composable () -> Unit = {},
@@ -95,6 +107,30 @@ fun AdaptiveNavigationSuiteScaffold(
     val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(adaptiveInfo)
     val isShortBottomNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact ||
         navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium
+    val isCompactWidth = !adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(
+        WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND,
+    )
+    val shouldUseMiuixFloatingTabBar = useMiuixFloatingTabBar &&
+        designSystem == AppDesignSystem.MIUIX &&
+        isCompactWidth &&
+        navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
+
+    if (shouldUseMiuixFloatingTabBar) {
+        val backdrop = if (advancedMaterial.enabled) rememberLayerBackdrop() else null
+        FloatingMiuixCompactNavigationScaffold(
+            items = items,
+            selectedKey = selectedKey,
+            onItemSelected = onItemSelected,
+            backdrop = backdrop,
+            modifier = modifier,
+            topBar = topBar,
+            legacyTopBar = legacyTopBar,
+            snackbarHost = snackbarHost,
+            floatingActionButton = floatingActionButton,
+            content = content,
+        )
+        return
+    }
 
     if (!isShortBottomNavigation) {
         LegacyWideNavigationScaffold(
@@ -144,6 +180,132 @@ fun AdaptiveNavigationSuiteScaffold(
         snackbarHost = snackbarHost,
         floatingActionButton = floatingActionButton,
         content = content,
+    )
+}
+
+@Composable
+private fun FloatingMiuixCompactNavigationScaffold(
+    items: List<AdaptiveNavItem>,
+    selectedKey: String,
+    onItemSelected: (AdaptiveNavItem) -> Unit,
+    backdrop: LayerBackdrop?,
+    modifier: Modifier,
+    topBar: @Composable () -> Unit,
+    legacyTopBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+    floatingActionButton: @Composable () -> Unit,
+    content: @Composable (PaddingValues) -> Unit,
+) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            if (backdrop != null) {
+                CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                    legacyTopBar()
+                }
+            } else {
+                legacyTopBar()
+            }
+        },
+        snackbarHost = {
+            Box(modifier = Modifier.padding(bottom = FloatingCompactOverlayHostPadding)) {
+                snackbarHost()
+            }
+        },
+        floatingActionButton = {
+            Box(modifier = Modifier.padding(bottom = FloatingCompactOverlayHostPadding)) {
+                floatingActionButton()
+            }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .let { contentModifier ->
+                        if (backdrop != null) {
+                            contentModifier.layerBackdrop(backdrop)
+                        } else {
+                            contentModifier
+                        }
+                    },
+            ) {
+                content(PaddingValues())
+            }
+
+            if (backdrop != null) {
+                CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                    Box(modifier = Modifier.align(Alignment.TopCenter)) {
+                        topBar()
+                    }
+                }
+            } else {
+                Box(modifier = Modifier.align(Alignment.TopCenter)) {
+                    topBar()
+                }
+            }
+
+            FloatingNavigationEdgeMask(
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(
+                        start = 16.dp,
+                        top = 12.dp,
+                        end = 16.dp,
+                        bottom = FloatingNavigationBottomSpacing,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                MiuixFloatingTabBar(
+                    items = items.map { item ->
+                        MiuixFloatingTabItem(
+                            key = item.key,
+                            label = item.label,
+                            selectedIcon = item.selectedIcon,
+                            unselectedIcon = item.unselectedIcon,
+                        )
+                    },
+                    selectedKey = selectedKey,
+                    onItemSelected = { selectedItem ->
+                        items.firstOrNull { it.key == selectedItem.key }?.let(onItemSelected)
+                    },
+                    layout = MiuixFloatingTabLayout.Stacked,
+                    backdrop = backdrop,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FloatingNavigationEdgeMask(
+    modifier: Modifier = Modifier,
+) {
+    val density = LocalDensity.current
+    val navigationBarHeight = with(density) {
+        WindowInsets.navigationBars.getBottom(this).toDp()
+    }
+    val coverageHeight = MiuixFloatingTabBarDefaults.Height +
+        FloatingNavigationBottomSpacing +
+        navigationBarHeight
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(coverageHeight)
+            .edgeFade(top = coverageHeight, bottom = 0.dp)
+            .background(MiuixTheme.colorScheme.surface),
     )
 }
 

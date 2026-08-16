@@ -63,7 +63,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -80,14 +79,12 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
@@ -124,6 +121,7 @@ import com.aritxonly.deadliner.ai.UserProfile
 import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.base.AlertDialog
+import com.aritxonly.deadliner.ui.base.edgeFade
 import com.aritxonly.deadliner.ui.iconResource
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -665,7 +663,6 @@ fun AIOverlay(
                     .padding(start = 16.dp, end = 16.dp)
                     .padding(top = topSafePadding, bottom = bottomSafePadding)
                     .fillMaxSize()
-                    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                     .edgeFade(top = 16.dp, bottom = 16.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     top = 8.dp,
@@ -1346,34 +1343,3 @@ fun rememberTimeSeconds(): State<Float> {
     }
     return time
 }
-
-@SuppressLint("SuspiciousModifierThen")
-@Stable
-fun Modifier.edgeFade(top: Dp = 16.dp, bottom: Dp = 16.dp) = this.then(
-    drawWithContent {
-        drawContent()
-
-        val h = size.height.coerceAtLeast(1f)
-        val topPx = top.toPx().coerceAtMost(h / 2f)
-        val bottomPx = bottom.toPx().coerceAtMost(h / 2f)
-
-        val c0 = Color.Black.copy(alpha = 0f)
-        val c1 = Color.Black.copy(alpha = 1f)
-
-        val sTop = (topPx / h).coerceIn(0f, 0.33f)
-        val sBot = (1f - bottomPx / h).coerceIn(0.67f, 1f)
-
-        val brush = Brush.verticalGradient(
-            colorStops = arrayOf(
-                0f to c0,
-                sTop to c1,
-                sBot to c1,
-                1f to c0
-            ),
-            startY = 0f,
-            endY = h
-        )
-
-        drawRect(brush = brush, blendMode = BlendMode.DstIn)
-    }
-)

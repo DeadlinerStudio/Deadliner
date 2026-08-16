@@ -3,8 +3,13 @@
     android:height="24dp"
     android:viewportWidth="960"
     android:viewportHeight="960"
-    android:tint="?attr/colorControlNormal">
-  <path
-      android:fillColor="@android:color/white"
-      android:pathData="M233,520L840,520Q857,520 868.5,508.5Q880,497 880,480Q880,463 868.5,451.5Q857,440 840,440L233,440L388,284Q399,273 399.5,256.5Q400,240 388,228Q377,217 360,217Q343,217 332,228L108,452Q102,458 99.5,465Q97,472 97,480Q97,488 99.5,495Q102,502 108,508L332,732Q343,743 359.5,743Q376,743 388,732Q400,720 400,703.5Q400,687 388,675L233,520Z"/>
+    android:tint="?attr/colorControlNormal"
+    android:autoMirrored="true">
+  <group
+      android:translateX="200"
+      android:translateY="0">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M142,480L436,774Q451,789 450.5,809Q450,829 435,844Q420,859 400,859Q380,859 365,844L57,537Q45,525 39,510Q33,495 33,480Q33,465 39,450Q45,435 57,423L365,115Q380,100 400.5,100.5Q421,101 436,116Q451,131 451,151Q451,171 436,186L142,480Z" />
+  </group>
 </vector>

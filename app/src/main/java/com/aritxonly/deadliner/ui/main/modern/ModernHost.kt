@@ -361,6 +361,9 @@ fun ModernHost(
     val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
     val isShortBottomNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact ||
         navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium
+    val isFloatingMiuixBottomNavigation = appearance.usesMiuixTheme &&
+        appearance.useMiuixFloatingTabBar &&
+        navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
     val selectionActions = rememberMainSelectionActionController(
         activity = activity,
         taskViewModel = taskVm,
@@ -388,6 +391,7 @@ fun ModernHost(
                 ),
         items = navItems,
         selectedKey = selectedKey,
+        useMiuixFloatingTabBar = appearance.useMiuixFloatingTabBar,
         onItemSelected = {
             when (it.key) {
                 "search" -> {
@@ -731,7 +735,11 @@ fun ModernHost(
                         showMergeSheet = showCaptureMergeSheet,
                         onShowMergeSheetChange = { showCaptureMergeSheet = it },
                         topOverlayPadding = overlayTopBarPadding,
-                        bottomLiftPadding = if (isShortBottomNavigation) 96.dp else 28.dp,
+                        bottomLiftPadding = when {
+                            isFloatingMiuixBottomNavigation -> 96.dp
+                            isShortBottomNavigation -> 96.dp
+                            else -> 28.dp
+                        },
                     )
                 }
             }

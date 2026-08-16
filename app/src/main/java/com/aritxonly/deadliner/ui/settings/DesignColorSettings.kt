@@ -138,6 +138,19 @@ fun DesignColorSettingsScreen(
                     }
                 )
                 SettingsSectionDivider()
+                if (appearance.designMode == AppearanceDesignMode.Modern) {
+                    SettingsDetailSwitchItem(
+                        headline = R.string.settings_miuix_floating_tab_bar,
+                        supportingText = R.string.settings_support_miuix_floating_tab_bar,
+                        checked = appearance.useMiuixFloatingTabBar,
+                        onCheckedChange = { checked ->
+                            GlobalUtils.updateAppearance { current ->
+                                current.copy(useMiuixFloatingTabBar = checked)
+                            }
+                        },
+                    )
+                    SettingsSectionDivider()
+                }
                 SettingsDetailSwitchItem(
                     headline = R.string.settings_colored_settings_home_icons,
                     supportingText = R.string.settings_support_colored_settings_home_icons,

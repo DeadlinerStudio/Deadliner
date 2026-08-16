@@ -311,6 +311,7 @@ object GlobalUtils {
             .coerceIn(0.85f, 1.25f)
         val miuixNeutralSurfaces = sharedPreferences.getBoolean("miuix_neutral_surfaces", true)
         val useMaterialTopAppBarInMiuix = sharedPreferences.getBoolean("miuix_material_top_bar", true)
+        val useMiuixFloatingTabBar = sharedPreferences.getBoolean("miuix_floating_tab_bar", false)
         val advancedMaterial = sharedPreferences.getBoolean("advanced_material", false)
         val advancedMaterialLevel = sharedPreferences.getString("advanced_material_level", null)
             ?.let(AdvancedMaterialLevel::fromKey)
@@ -356,6 +357,7 @@ object GlobalUtils {
             usePureMiuixAccent = false,
             useMiuixNeutralSurfaces = miuixNeutralSurfaces,
             useMaterialTopAppBarInMiuix = useMaterialTopAppBarInMiuix,
+            useMiuixFloatingTabBar = useMiuixFloatingTabBar,
             useAdvancedMaterial = advancedMaterial,
             advancedMaterialLevel = advancedMaterialLevel,
             modernHideDivider = modernHideDivider,
@@ -382,6 +384,7 @@ object GlobalUtils {
             putBoolean("miuix_color", false)
             putBoolean("miuix_neutral_surfaces", appearance.useMiuixNeutralSurfaces)
             putBoolean("miuix_material_top_bar", appearance.useMaterialTopAppBarInMiuix)
+            putBoolean("miuix_floating_tab_bar", appearance.useMiuixFloatingTabBar)
             putBoolean("advanced_material", appearance.useAdvancedMaterial)
             putString("advanced_material_level", appearance.advancedMaterialLevel.key)
             putBoolean("modern_hide_divider", appearance.modernHideDivider)

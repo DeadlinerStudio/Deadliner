@@ -879,6 +879,8 @@
     <string name="settings_support_miuix_mode">Enable HyperOS style themes and components.（Experimental）</string>
     <string name="settings_miuix_material_top_bar">Use Material 3 top bar in ModernHost</string>
     <string name="settings_support_miuix_material_top_bar">Keep the MIUIX theme, but switch ModernHost top app bars back to the Material 3 style</string>
+    <string name="settings_miuix_floating_tab_bar">Use floating bottom tabs on phones</string>
+    <string name="settings_support_miuix_floating_tab_bar">Use stacked floating tabs in Compact Modern windows; wider windows keep the existing navigation</string>
     <string name="settings_miuix_color">MIUIX color</string>
     <string name="settings_modern_palette_title">Modern color palette</string>
     <string name="settings_modern_palette_support">Switch the neutral surface style. Missing tonal layers fall back to the default HyperOS palette.</string>
