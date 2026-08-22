@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -32,9 +33,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.main.simplified.presentationLabel
 import com.deadliner.domain.habit.Habit
-import com.deadliner.domain.habit.HabitGoalType
-import com.deadliner.domain.habit.HabitPeriod
+import com.deadliner.domain.habit.HabitGoalWindow
 import com.deadliner.domain.task.Task
 import com.deadliner.domain.task.TaskState
 import java.time.LocalDateTime
@@ -88,22 +89,15 @@ internal fun Task.toArchiveCardModel(): ArchivedTaskCardModel {
 
 @Composable
 internal fun Habit.toArchiveCardModel(): ArchivedHabitCardModel {
-    val periodLabel = stringResource(
-        when (period) {
-            HabitPeriod.DAILY -> R.string.frequency_daily
-            HabitPeriod.WEEKLY -> R.string.frequency_weekly
-            HabitPeriod.MONTHLY -> R.string.frequency_monthly
-            HabitPeriod.ONCE -> R.string.frequency_once
-            HabitPeriod.EBBINGHAUS -> R.string.editor_habit_period_ebbinghaus
-        },
-    )
-    val goalLabel = when (goalType) {
-        HabitGoalType.TOTAL -> stringResource(R.string.archive_habit_total_target, totalTarget ?: 0)
-        HabitGoalType.PER_PERIOD -> stringResource(R.string.archive_habit_period_target, timesPerPeriod)
+    val context = LocalContext.current
+    val goalLabel = when (goal.window) {
+        HabitGoalWindow.LIFETIME -> null
+        else -> tracking.unit?.takeIf(String::isNotBlank)?.let { "${goal.targetCount} $it" }
+            ?: stringResource(R.string.archive_habit_period_target, goal.targetCount)
     }
     return ArchivedHabitCardModel(
         title = name,
-        primaryText = stringResource(R.string.archive_habit_detail_template, periodLabel, goalLabel),
+        primaryText = listOfNotNull(presentationLabel(context), goalLabel).distinct().joinToString(" · "),
         secondaryText = stringResource(R.string.archive_archived_at, formatArchiveDate(updatedAt)),
         note = description.orEmpty(),
     )

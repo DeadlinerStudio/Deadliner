@@ -948,12 +948,19 @@ private fun parseCreateRequestItems(rawArgsJson: String?, toolKey: String): List
                 if (!node.isJsonObject) return@mapNotNull null
                 val habit = node.asJsonObject
                 val name = habit.getString("name")
-                val period = habit.getString("period")
-                val times = habit.getString("timesPerPeriod")
-                val goalType = habit.getString("goalType")
-                val totalTarget = habit.getString("totalTarget")
-                val totalText = if (goalType.trim().equals("total", true)) " ｜ totalTarget：${totalTarget.ifBlank { "-" }}" else ""
-                "• ${name.ifBlank { "(未命名)" }} ｜ 周期：${period.ifBlank { "-" }} ｜ 频次：${times.ifBlank { "-" }} ｜ 目标：${goalType.ifBlank { "-" }}$totalText"
+                val schedule = habit.getObject("schedule")
+                val goal = habit.getObject("goal")
+                val tracking = habit.getObject("tracking")
+                val scheduleKind = schedule?.getString("kind").orEmpty().ifBlank { habit.getString("period") }
+                val weekdays = schedule?.getString("weekdaysMask").orEmpty()
+                val scheduleText = if (weekdays.isBlank()) scheduleKind else "$scheduleKind($weekdays)"
+                val target = goal?.getString("targetCount").orEmpty().ifBlank { habit.getString("timesPerPeriod") }
+                val window = goal?.getString("window").orEmpty().ifBlank { habit.getString("goalType") }
+                val trackingMode = tracking?.getString("mode").orEmpty()
+                val unit = tracking?.getString("unit").orEmpty()
+                val trackingText = listOf(trackingMode, unit).filter(String::isNotBlank).joinToString("/")
+                val trackingSuffix = trackingText.takeIf(String::isNotBlank)?.let { " ｜ 记录：$it" }.orEmpty()
+                "• ${name.ifBlank { "(未命名)" }} ｜ 计划：${scheduleText.ifBlank { "-" }} ｜ 目标：${target.ifBlank { "-" }} / ${window.ifBlank { "-" }}$trackingSuffix"
             }
         }
         else -> emptyList()
@@ -965,6 +972,10 @@ private fun JsonObject.getString(field: String): String {
         if (has(field) && !get(field).isJsonNull) get(field).asString else ""
     }.getOrDefault("")
 }
+
+private fun JsonObject.getObject(field: String): JsonObject? = runCatching {
+    if (has(field) && get(field).isJsonObject) getAsJsonObject(field) else null
+}.getOrNull()
 
 @Composable
 private fun ToolResultBubble(summary: TaskSummary) {

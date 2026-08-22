@@ -28,7 +28,6 @@ import com.deadliner.viewmodel.habit.HabitDayStatus
 import com.deadliner.viewmodel.habit.HabitListViewModel
 import com.deadliner.viewmodel.habit.HabitScheduleHintKind
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
-import java.time.LocalDate
 
 private data class HabitDisplayItem(
     val habit: HabitDayStatus,
@@ -83,9 +82,6 @@ fun HabitDisplayLayout(
         val todayOverview = weekOverview.firstOrNull { it.date == selectedDate }
         val ratio = todayOverview?.completionRatio ?: 0f
 
-        val context = LocalContext.current
-        val canToggleOnThisDate = !LocalDate.parse(selectedDate).isAfter(LocalDate.now())
-
         if (!isClassic) {
             HabitCircleProgress(
                 progress = ratio,
@@ -109,9 +105,9 @@ fun HabitDisplayLayout(
 
         val displayHabits = remember(habits, context) {
             habits.map { item ->
-                val remainingText = when (item.scheduleState?.hintKind) {
-                    HabitScheduleHintKind.STARTS_IN -> item.scheduleState?.daysUntil?.let { "${it}d" }
-                    HabitScheduleHintKind.NEXT_REVIEW_IN -> item.scheduleState?.daysUntil?.let { "${it}d" }
+                val remainingText = when (item.scheduleState.hintKind) {
+                    HabitScheduleHintKind.STARTS_IN -> item.scheduleState.daysUntil?.let { "${it}d" }
+                    HabitScheduleHintKind.NEXT_REVIEW_IN -> item.scheduleState.daysUntil?.let { "${it}d" }
                     HabitScheduleHintKind.COMPLETED_CYCLE -> null
                     null -> null
                 }
@@ -147,7 +143,7 @@ fun HabitDisplayLayout(
                         data = item.habit,
                         status = item.status,
                         isSelected = selected,
-                        canToggle = canToggleOnThisDate && item.habit.scheduleState?.isDue != false,
+                        canToggle = item.habit.canApplyPrimaryAction,
                         onToggle = {
                             if (selectionMode) {
                                 onItemClickInSelection(uid)
@@ -164,7 +160,7 @@ fun HabitDisplayLayout(
                     HabitRowClassic(
                         data = item.habit,
                         isSelected = selected,
-                        canToggle = canToggleOnThisDate && item.habit.scheduleState?.isDue != false,
+                        canToggle = item.habit.canApplyPrimaryAction,
                         onToggle = {
                             if (selectionMode) {
                                 onItemClickInSelection(uid)

@@ -45,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -64,12 +65,16 @@ import com.aritxonly.deadliner.ui.archive.ArchivedHabitCard
 import com.aritxonly.deadliner.ui.archive.ArchivedTaskCard
 import com.aritxonly.deadliner.ui.archive.toArchiveCardModel
 import com.aritxonly.deadliner.ui.main.DDLItemCardSimplified
+import com.aritxonly.deadliner.ui.main.simplified.presentationLabel
+import com.aritxonly.deadliner.ui.main.simplified.progressText
+import com.aritxonly.deadliner.ui.main.simplified.scheduleHintText
 import com.deadliner.domain.capture.CaptureItem
 import com.deadliner.domain.habit.Habit
 import com.deadliner.domain.habit.HabitStatus
 import com.deadliner.domain.habit.HabitStatusAction
 import com.deadliner.domain.task.Task
 import com.deadliner.domain.task.TaskState
+import com.deadliner.viewmodel.habit.HabitDayStatus
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -88,7 +93,6 @@ fun MainSearchResultsContent(
     val searchViewModel = KmpV6Runtime.searchViewModel
     val habitViewModel = KmpV6Runtime.habitListViewModel
     val state by searchViewModel.uiState.collectAsState()
-    val habitState by habitViewModel.uiState.collectAsState()
 
     LaunchedEffect(searchViewModel) { searchViewModel.initialize() }
     LaunchedEffect(query) { searchViewModel.search(query) }
@@ -104,6 +108,9 @@ fun MainSearchResultsContent(
     }
     val archivedHabits = state.matchedHabits.filter {
         scope != MainSearchScope.ACTIVE && it.status == HabitStatus.ARCHIVED
+    }
+    val habitStatusesByUid = remember(state.matchedHabitStatuses) {
+        state.matchedHabitStatuses.associateBy { it.habit.uid }
     }
     val captures = buildInspirationSearchResults(query, scope, inspirations)
     val resultCount = activeTasks.size + archivedTasks.size + activeHabits.size + archivedHabits.size + captures.size
@@ -153,12 +160,12 @@ fun MainSearchResultsContent(
                 if (activeHabits.isNotEmpty()) {
                     item { SearchSectionHeader(stringResource(R.string.search_group_habit), R.drawable.ic_habit) }
                     items(activeHabits, key = Habit::uid) { habit ->
-                        val status = habitState.visibleHabits.firstOrNull { it.habit.uid == habit.uid }
-                        SearchHabitCard(
-                            habit = habit,
-                            progress = status?.let { "${it.doneCount}/${it.targetCount}" },
-                            onClick = { habitViewModel.toggleHabitOnSelectedDate(habit.uid) },
-                        )
+                        habitStatusesByUid[habit.uid]?.let { status ->
+                            SearchHabitCard(
+                                status = status,
+                                onClick = { habitViewModel.toggleHabitOnSelectedDate(habit.uid) },
+                            )
+                        }
                     }
                 }
                 if (archivedTasks.isNotEmpty()) {
@@ -416,9 +423,17 @@ private fun SearchTaskCard(task: Task, activity: MainActivity) {
 }
 
 @Composable
-private fun SearchHabitCard(habit: Habit, progress: String?, onClick: () -> Unit) {
+private fun SearchHabitCard(status: HabitDayStatus, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val habit = status.habit
+    val statusText = if (status.scheduleState.isDue) {
+        status.progressText()
+    } else {
+        status.scheduleHintText(context) ?: habit.presentationLabel(context)
+    }
+    val actionEnabled = status.canApplyPrimaryAction
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(enabled = actionEnabled, onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         shape = RoundedCornerShape(24.dp),
     ) {
@@ -435,15 +450,17 @@ private fun SearchHabitCard(habit: Habit, progress: String?, onClick: () -> Unit
             )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(habit.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                val supporting = habit.description?.takeIf(String::isNotBlank) ?: progress.orEmpty()
-                if (supporting.isNotBlank()) {
-                    Text(supporting, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                habit.description?.takeIf(String::isNotBlank)?.let { description ->
+                    Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
+                Text(statusText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Icon(
-                painter = painterResource(if (habit.status == HabitStatus.ARCHIVED) R.drawable.ic_back else R.drawable.ic_done),
+                painter = painterResource(
+                    if (status.isCompleted || actionEnabled) R.drawable.ic_done else R.drawable.ic_habit,
+                ),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = if (actionEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

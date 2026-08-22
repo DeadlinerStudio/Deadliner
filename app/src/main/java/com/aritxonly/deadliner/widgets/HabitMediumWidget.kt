@@ -9,8 +9,9 @@ import android.content.Intent
 import android.widget.RemoteViews
 import com.aritxonly.deadliner.LauncherActivity
 import com.aritxonly.deadliner.R
-import com.deadliner.domain.habit.HabitPeriod
-import com.deadliner.viewmodel.habit.HabitScheduleHintKind
+import com.aritxonly.deadliner.ui.main.simplified.presentationLabel
+import com.aritxonly.deadliner.ui.main.simplified.progressText
+import com.aritxonly.deadliner.ui.main.simplified.scheduleHintText
 
 class HabitMediumWidget : AppWidgetProvider() {
 
@@ -58,61 +59,20 @@ internal fun updateMediumAppWidget(
         // 标题 = DDL 名称
         views.setTextViewText(R.id.medium_title, habit.name)
 
-        // 频率文案：沿用原本的 string 资源，但用 Habit 的字段
-        val freqDesc = when (habit.period) {
-            HabitPeriod.DAILY ->
-                if (habit.totalTarget == null || habit.totalTarget == 0)
-                    context.getString(R.string.daily_frequency, habit.timesPerPeriod)
-                else
-                    context.getString(
-                        R.string.daily_frequency_with_total,
-                        habit.timesPerPeriod,
-                        habit.totalTarget
-                    )
-
-            HabitPeriod.WEEKLY ->
-                if (habit.totalTarget == null || habit.totalTarget == 0)
-                    context.getString(R.string.weekly_frequency, habit.timesPerPeriod)
-                else
-                    context.getString(
-                        R.string.weekly_frequency_with_total,
-                        habit.timesPerPeriod,
-                        habit.totalTarget
-                    )
-
-            HabitPeriod.MONTHLY ->
-                if (habit.totalTarget == null || habit.totalTarget == 0)
-                    context.getString(R.string.monthly_frequency, habit.timesPerPeriod)
-                else
-                    context.getString(
-                        R.string.monthly_frequency_with_total,
-                        habit.timesPerPeriod,
-                        habit.totalTarget
-                    )
-            HabitPeriod.EBBINGHAUS ->
-                context.getString(R.string.editor_habit_period_ebbinghaus)
-            HabitPeriod.ONCE ->
-                context.getString(R.string.daily_frequency, 1)
-        }
-        val scheduleHint = when (status.scheduleState?.hintKind) {
-            HabitScheduleHintKind.STARTS_IN -> status.scheduleState?.daysUntil?.let {
-                context.getString(R.string.habit_ebbinghaus_starts_in_days, it)
-            }
-            HabitScheduleHintKind.NEXT_REVIEW_IN -> status.scheduleState?.daysUntil?.let {
-                context.getString(R.string.habit_ebbinghaus_review_in_days, it)
-            }
-            HabitScheduleHintKind.COMPLETED_CYCLE -> context.getString(R.string.habit_ebbinghaus_cycle_completed)
-            null -> null
-        }
-        views.setTextViewText(R.id.medium_description, scheduleHint?.let { "$freqDesc · $it" } ?: freqDesc)
+        val summary = listOfNotNull(
+            habit.presentationLabel(context),
+            status.progressText(),
+            status.scheduleHintText(context),
+        ).filter(String::isNotBlank).joinToString(" · ")
+        views.setTextViewText(R.id.medium_description, summary)
 
         // 今天打卡次数 vs 每周期次数
-        val isDueToday = status.scheduleState?.isDue != false
-        val canClick = isDueToday && !status.isCompleted
+        val isDueToday = status.scheduleState.isDue
+        val canClick = status.canApplyPrimaryAction
         val label = if (canClick) {
             context.getString(R.string.check_habit)
         } else if (!isDueToday) {
-            scheduleHint ?: context.getString(R.string.editor_habit_period_ebbinghaus)
+            status.scheduleHintText(context) ?: habit.presentationLabel(context)
         } else {
             context.getString(R.string.completed)   // 或 R.string.complete，看你现有资源
         }

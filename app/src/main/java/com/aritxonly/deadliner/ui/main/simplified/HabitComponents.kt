@@ -43,13 +43,13 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.DDLStatus
-import com.deadliner.domain.habit.HabitGoalType
-import com.deadliner.domain.habit.HabitPeriod
 import com.deadliner.viewmodel.habit.HabitDayOverview
 import com.deadliner.viewmodel.habit.HabitDayStatus
 import com.aritxonly.deadliner.ui.theme.rememberTaskIndicatorColors
@@ -190,6 +190,7 @@ fun HabitRow(
     modifier: Modifier = Modifier,
     remainingText: String? = null
 ) {
+    val context = LocalContext.current
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
     val progress = (data.doneCount.toFloat() / data.targetCount.coerceAtLeast(1)).coerceIn(0f, 1f)
 
@@ -201,45 +202,22 @@ fun HabitRow(
     val baseBgColor = indicatorColors.baseBackgroundColor
     val overlayBgColor = indicatorColors.overlayBackgroundColor
 
-    val bottomLine = when (data.habit.goalType) {
-        HabitGoalType.PER_PERIOD -> {
-            val progressText = "${data.doneCount}/${data.targetCount}"
-            if (!remainingText.isNullOrBlank()) {
-                "$remainingText · $progressText"
-            } else {
-                progressText
-            }
+    val progressText = data.progressText()
+    val bottomLine = remainingText?.takeIf(String::isNotBlank)?.let { "$it · $progressText" } ?: progressText
+    val rightLabel = data.habit.presentationLabel(context)
+    val accessibilityState = stringResource(
+        when {
+            data.isCompleted -> R.string.habit_accessibility_completed
+            !canToggle -> R.string.habit_accessibility_unavailable
+            else -> R.string.habit_accessibility_pending
         }
-
-        HabitGoalType.TOTAL -> {
-            val totalTargetText = data.habit.totalTarget?.toString() ?: "∞"
-            val progressText = "${data.doneCount}/$totalTargetText"
-            if (!remainingText.isNullOrBlank()) {
-                "$remainingText · $progressText"
-            } else {
-                progressText
-            }
-        }
-    }
-
-    val rightLabel = when (data.habit.goalType) {
-        HabitGoalType.PER_PERIOD -> when (data.habit.period) {
-            HabitPeriod.ONCE -> stringResource(R.string.frequency_daily)
-            HabitPeriod.DAILY -> stringResource(R.string.frequency_daily)
-            HabitPeriod.WEEKLY -> stringResource(R.string.frequency_weekly)
-            HabitPeriod.MONTHLY -> stringResource(R.string.frequency_monthly)
-            HabitPeriod.EBBINGHAUS -> stringResource(R.string.editor_habit_period_ebbinghaus)
-        }
-
-        HabitGoalType.TOTAL -> data.habit.totalTarget?.let {
-            stringResource(R.string.habit_goal_total_with_target, it)
-        } ?: stringResource(R.string.habit_goal_total_open)
-    }
+    )
 
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
+            .semantics { stateDescription = accessibilityState }
             .combinedClickable(
                 onClick = { if (canToggle) onToggle() },
                 onLongClick = onLongPress
@@ -365,40 +343,16 @@ fun HabitRowClassic(
         R.drawable.item_background
     }
 
-    val bottomLine = when (data.habit.goalType) {
-        HabitGoalType.PER_PERIOD -> {
-            val progressText = "${data.doneCount}/${data.targetCount}"
-            if (!remainingText.isNullOrBlank()) {
-                "$remainingText · $progressText"
-            } else {
-                progressText
-            }
+    val progressText = data.progressText()
+    val bottomLine = remainingText?.takeIf(String::isNotBlank)?.let { "$it · $progressText" } ?: progressText
+    val rightLabel = data.habit.presentationLabel(context)
+    val accessibilityState = stringResource(
+        when {
+            data.isCompleted -> R.string.habit_accessibility_completed
+            !canToggle -> R.string.habit_accessibility_unavailable
+            else -> R.string.habit_accessibility_pending
         }
-
-        HabitGoalType.TOTAL -> {
-            val totalTargetText = data.habit.totalTarget?.toString() ?: "∞"
-            val progressText = "${data.doneCount}/$totalTargetText"
-            if (!remainingText.isNullOrBlank()) {
-                "$remainingText · $progressText"
-            } else {
-                progressText
-            }
-        }
-    }
-
-    val rightLabel = when (data.habit.goalType) {
-        HabitGoalType.PER_PERIOD -> when (data.habit.period) {
-            HabitPeriod.ONCE -> stringResource(R.string.frequency_daily)
-            HabitPeriod.DAILY -> stringResource(R.string.frequency_daily)
-            HabitPeriod.WEEKLY -> stringResource(R.string.frequency_weekly)
-            HabitPeriod.MONTHLY -> stringResource(R.string.frequency_monthly)
-            HabitPeriod.EBBINGHAUS -> stringResource(R.string.editor_habit_period_ebbinghaus)
-        }
-
-        HabitGoalType.TOTAL -> data.habit.totalTarget?.let {
-            stringResource(R.string.habit_goal_total_with_target, it)
-        } ?: stringResource(R.string.habit_goal_total_open)
-    }
+    )
 
     Box(
         modifier = modifier
@@ -410,6 +364,7 @@ fun HabitRowClassic(
                 shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
             )
             .clip(RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)))
+            .semantics { stateDescription = accessibilityState }
             .combinedClickable(
                 onClick = { if (canToggle) onToggle() },
                 onLongClick = onLongPress

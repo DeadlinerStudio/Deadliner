@@ -1,5 +1,10 @@
 package com.aritxonly.deadliner.ai
 
+import com.deadliner.domain.habit.HabitGoal
+import com.deadliner.domain.habit.HabitReminder
+import com.deadliner.domain.habit.HabitSchedule
+import com.deadliner.domain.habit.HabitTracking
+
 enum class IntentType { ExtractTasks, PlanDay, SplitToSteps }
 
 fun String.toIntentTypeOrDefault(default: IntentType = IntentType.ExtractTasks): IntentType =
@@ -76,7 +81,11 @@ data class AIHabit(
     val period: String,
     val timesPerPeriod: Int,
     val goalType: String = "",
-    val totalTarget: Int? = null
+    val totalTarget: Int? = null,
+    val schedule: HabitSchedule? = null,
+    val goal: HabitGoal? = null,
+    val tracking: HabitTracking? = null,
+    val reminder: HabitReminder? = null,
 )
 
 data class ReadTasksArgs(

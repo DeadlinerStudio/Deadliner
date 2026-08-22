@@ -76,7 +76,7 @@ class HabitMiniWidget : AppWidgetProvider() {
                 return
             }
 
-            val canClick = status.scheduleState?.isDue != false && !status.isCompleted
+            val canClick = status.canApplyPrimaryAction
 
             if (!canClick) {
                 // 今天已经到上限了，提示一下，然后刷新 UI
@@ -89,7 +89,7 @@ class HabitMiniWidget : AppWidgetProvider() {
                 return
             }
 
-            // 可以打卡：追加一条记录（每天可多次，直到 timesPerPeriod）
+            // shared ViewModel 决定执行勾选还是按 defaultIncrement 增量记录。
             KmpV6Runtime.habitListViewModel.toggleHabitRecordNow(
                 habitUid,
                 LocalDate.now().toString(),
@@ -184,7 +184,7 @@ internal fun updateAppMiniHabitWidget(
             setFloat(R.id.btn_check_in, "setAlpha", 0.6f)
         } else {
             setTextViewText(R.id.mini_text, status.habit.name)
-            val canClick = status.scheduleState?.isDue != false && !status.isCompleted
+            val canClick = status.canApplyPrimaryAction
 
             setFloat(R.id.btn_check_in, "setAlpha", if (canClick) 1f else 0.6f)
         }

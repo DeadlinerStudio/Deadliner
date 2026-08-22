@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,6 +66,7 @@ data class TaskEditorDraft(
 data class HabitEditorDraft(
     val name: String = "",
     val period: HabitPeriod = HabitPeriod.DAILY,
+    val weekdaysMask: Int = 0b1111111,
     val goalType: HabitGoalType = HabitGoalType.PER_PERIOD,
     val timesPerPeriod: String = "1",
     val totalTarget: String = "",
@@ -257,6 +259,25 @@ fun HabitEditorSection(
                 )
             }
         } else {
+            EditorSectionCard {
+                Text(
+                    text = stringResource(R.string.editor_habit_schedule_days),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                HabitWeekdayRow(
+                    selectedMask = draft.weekdaysMask,
+                    onSelectMask = { onDraftChange(draft.copy(weekdaysMask = it)) },
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = stringResource(R.string.editor_habit_schedule_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
             val textFieldShape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
             EditorSectionCard {
                 Text(
@@ -307,6 +328,78 @@ fun HabitEditorSection(
             onPickTime = onPickReminderTime,
             onClearReminder = onClearReminder,
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun HabitWeekdayRow(
+    selectedMask: Int,
+    onSelectMask: (Int) -> Unit,
+) {
+    val allDaysMask = 0b1111111
+    val workdaysMask = 0b0011111
+    val weekendMask = 0b1100000
+    val presets = listOf(
+        allDaysMask to stringResource(R.string.editor_habit_schedule_daily),
+        workdaysMask to stringResource(R.string.editor_habit_schedule_workdays),
+        weekendMask to stringResource(R.string.editor_habit_schedule_weekend),
+    )
+    val weekdays = listOf(
+        stringResource(R.string.weekday_monday_short) to stringResource(R.string.weekday_monday),
+        stringResource(R.string.weekday_tuesday_short) to stringResource(R.string.weekday_tuesday),
+        stringResource(R.string.weekday_wednesday_short) to stringResource(R.string.weekday_wednesday),
+        stringResource(R.string.weekday_thursday_short) to stringResource(R.string.weekday_thursday),
+        stringResource(R.string.weekday_friday_short) to stringResource(R.string.weekday_friday),
+        stringResource(R.string.weekday_saturday_short) to stringResource(R.string.weekday_saturday),
+        stringResource(R.string.weekday_sunday_short) to stringResource(R.string.weekday_sunday),
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+        ) {
+            presets.forEachIndexed { index, (mask, label) ->
+                ToggleButton(
+                    checked = selectedMask == mask,
+                    onCheckedChange = { if (it) onSelectMask(mask) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .semantics { role = Role.RadioButton },
+                    shapes = connectedButtonShapes(index, presets.lastIndex),
+                    colors = editorConnectedToggleButtonColors(),
+                    contentPadding = editorConnectedToggleContentPadding(),
+                ) {
+                    Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+        ) {
+            weekdays.forEachIndexed { index, (shortLabel, fullLabel) ->
+                val bit = 1 shl index
+                val selected = selectedMask and bit != 0
+                ToggleButton(
+                    checked = selected,
+                    onCheckedChange = {
+                        val updated = selectedMask xor bit
+                        if (updated != 0) onSelectMask(updated)
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .semantics { contentDescription = fullLabel },
+                    shapes = connectedButtonShapes(index, weekdays.lastIndex),
+                    colors = editorConnectedToggleButtonColors(),
+                    contentPadding = PaddingValues(horizontal = 2.dp),
+                ) {
+                    Text(shortLabel, maxLines = 1)
+                }
+            }
+        }
     }
 }
 

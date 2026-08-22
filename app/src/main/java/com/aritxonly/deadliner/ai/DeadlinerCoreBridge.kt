@@ -6,6 +6,9 @@ import com.deadliner.domain.ai.model.AIConfig
 import com.deadliner.domain.ai.model.CoreEvent
 import com.deadliner.domain.ai.model.ToolCall
 import com.deadliner.domain.ai.port.ToolResult
+import com.deadliner.domain.habit.HabitAlgorithms
+import com.deadliner.domain.habit.HabitGoalWindow
+import com.deadliner.domain.habit.HabitScheduleKind
 import com.deadliner.interfaces.DeadlinerCore
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineStart
@@ -173,7 +176,7 @@ internal class DeadlinerCoreBridge(
     )
 
     private fun CoreEvent.OnToolRequest.toAndroidRequest(): AIToolRequest {
-        val rawArgs = tool.toArgumentsJson()
+        val rawArgs = serializeToolArguments(tool, gson)
         val readArgs = (tool as? ToolCall.ReadTasks)?.let {
             ReadTasksArgs(it.timeRangeDays, it.status, it.keywords, it.limit, it.sort)
         } ?: ReadTasksArgs()
@@ -186,28 +189,6 @@ internal class DeadlinerCoreBridge(
             rawArgsJson = rawArgs,
         )
     }
-
-    private fun ToolCall.toArgumentsJson(): String = gson.toJson(
-        when (this) {
-            is ToolCall.ReadTasks -> mapOf(
-                "timeRangeDays" to timeRangeDays,
-                "status" to status,
-                "keywords" to keywords,
-                "limit" to limit,
-                "sort" to sort,
-            )
-            is ToolCall.CreateTask -> mapOf("name" to name, "dueTime" to dueTime, "note" to note)
-            is ToolCall.UpdateDeadline -> mapOf("taskId" to taskId, "newDueTime" to newDueTime)
-            is ToolCall.ReadHabits -> mapOf("keywords" to keywords)
-            is ToolCall.CreateHabit -> mapOf(
-                "name" to name,
-                "period" to period,
-                "timesPerPeriod" to timesPerPeriod,
-                "goalType" to goalType,
-                "totalTarget" to totalTarget,
-            )
-        },
-    )
 
     private fun ToolCall.toAndroidToolCall(): AIToolCall = AIToolCall(
         tool = toolName(),
@@ -231,11 +212,31 @@ internal class DeadlinerCoreBridge(
         primaryIntent = primaryIntent ?: "ExtractTasks",
         tasks = tasks.map { AITask(it.title, it.dueAt.orEmpty(), it.note.orEmpty()) },
         habits = habits.map {
-            AIHabit(it.name, it.period.name, it.timesPerPeriod, it.goalType.name, it.totalTarget)
+            AIHabit(
+                name = it.name,
+                period = it.schedule.legacyPeriod(it.goal.window),
+                timesPerPeriod = it.goal.targetCount,
+                goalType = it.goal.window.legacyGoalType(),
+                totalTarget = it.goal.targetCount.takeIf { _ -> it.goal.window == HabitGoalWindow.LIFETIME },
+                schedule = it.schedule,
+                goal = it.goal,
+                tracking = it.tracking,
+                reminder = it.reminder,
+            )
         },
         retrievedTasks = retrievedTasks.map { AITask(it.title, it.dueAt.orEmpty(), it.note.orEmpty()) },
         retrievedHabits = retrievedHabits.map {
-            AIHabit(it.name, it.period.name, it.timesPerPeriod, it.goalType.name, it.totalTarget)
+            AIHabit(
+                name = it.name,
+                period = it.schedule.legacyPeriod(it.goal.window),
+                timesPerPeriod = it.goal.targetCount,
+                goalType = it.goal.window.legacyGoalType(),
+                totalTarget = it.goal.targetCount.takeIf { _ -> it.goal.window == HabitGoalWindow.LIFETIME },
+                schedule = it.schedule,
+                goal = it.goal,
+                tracking = it.tracking,
+                reminder = it.reminder,
+            )
         },
         newMemories = newMemories,
         chatResponse = chatResponse,
@@ -253,3 +254,37 @@ internal class DeadlinerCoreBridge(
         const val TOOL_ADD_TO_CALENDAR = "addToCalendar"
     }
 }
+
+internal fun serializeToolArguments(tool: ToolCall, gson: Gson = Gson()): String = gson.toJson(
+    when (tool) {
+        is ToolCall.ReadTasks -> mapOf(
+            "timeRangeDays" to tool.timeRangeDays,
+            "status" to tool.status,
+            "keywords" to tool.keywords,
+            "limit" to tool.limit,
+            "sort" to tool.sort,
+        )
+        is ToolCall.CreateTask -> mapOf("name" to tool.name, "dueTime" to tool.dueTime, "note" to tool.note)
+        is ToolCall.UpdateDeadline -> mapOf("taskId" to tool.taskId, "newDueTime" to tool.newDueTime)
+        is ToolCall.ReadHabits -> mapOf("keywords" to tool.keywords)
+        is ToolCall.CreateHabit -> mapOf(
+            "name" to tool.name,
+            "schedule" to tool.schedule,
+            "goal" to tool.goal,
+            "tracking" to tool.tracking,
+            "reminder" to tool.reminder,
+            "compatibilityWarning" to tool.compatibilityWarning,
+        )
+    },
+)
+
+private fun com.deadliner.domain.habit.HabitSchedule.legacyPeriod(window: HabitGoalWindow): String = when {
+    kind == HabitScheduleKind.ONCE -> "ONCE"
+    algorithmKey == HabitAlgorithms.EBBINGHAUS_CLASSIC_V1 -> "EBBINGHAUS"
+    window == HabitGoalWindow.WEEK -> "WEEKLY"
+    window == HabitGoalWindow.MONTH -> "MONTHLY"
+    else -> "DAILY"
+}
+
+private fun HabitGoalWindow.legacyGoalType(): String =
+    if (this == HabitGoalWindow.LIFETIME) "TOTAL" else "PER_PERIOD"

@@ -889,6 +889,9 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         val editor = KmpV6Runtime.createHabitEditorViewModel()
         editor.updateName(name)
         editor.updatePeriod(habitDraft.period)
+        if (!isEbbinghaus) {
+            editor.updateWeekdaysMask(habitDraft.weekdaysMask)
+        }
         editor.updateTimesPerPeriod(if (goalType == HabitGoalType.TOTAL) 1 else frequency)
         editor.updateGoalType(goalType)
         editor.updateTotalTarget(if (goalType == HabitGoalType.TOTAL) total else null)
