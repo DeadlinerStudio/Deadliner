@@ -39,7 +39,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
@@ -48,6 +47,8 @@ import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.Switch
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TopAppBar
+import com.aritxonly.deadliner.ui.base.TopBarIconButton
+import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveTopBarEnabled
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.overview.DashboardScreen
@@ -136,7 +137,7 @@ fun OverviewTopBar(
         useParentMaterialContainer = useParentMaterialContainer,
         navigationIcon = if (showNavigationIcon) {
             {
-                IconButton(onClick = onClose) {
+                TopBarIconButton(onClick = onClose) {
                     Icon(
                         painterResource(R.drawable.ic_back),
                         contentDescription = stringResource(R.string.close),
@@ -149,7 +150,7 @@ fun OverviewTopBar(
             null
         },
         actions = {
-            IconButton(onClick = onShowSettings) {
+            TopBarIconButton(onClick = onShowSettings) {
                 Icon(
                     painterResource(R.drawable.ic_pref),
                     contentDescription = stringResource(R.string.settings_more),
@@ -338,7 +339,8 @@ fun OverviewTopBarWithTabs(
     )
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
-    val advancedMaterialBlurred = advancedMaterial.enabled && backdrop != null
+    val immersiveTopBar = LocalImmersiveTopBarEnabled.current
+    val advancedMaterialBlurred = advancedMaterial.enabled && backdrop != null && !immersiveTopBar
     val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.topBarTintAlpha)
 
     OverviewHeaderContainer(
@@ -350,7 +352,14 @@ fun OverviewTopBarWithTabs(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(if (advancedMaterialBlurred) Color.Transparent else if (advancedMaterial.enabled) surfaceTint else MaterialTheme.colorScheme.surface),
+                .background(
+                    when {
+                        immersiveTopBar -> Color.Transparent
+                        advancedMaterialBlurred -> Color.Transparent
+                        advancedMaterial.enabled -> surfaceTint
+                        else -> MaterialTheme.colorScheme.surface
+                    },
+                ),
         ) {
             OverviewTopBar(
                 showNavigationIcon = showNavigationIcon,

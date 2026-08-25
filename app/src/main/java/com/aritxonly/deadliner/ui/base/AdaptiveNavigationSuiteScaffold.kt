@@ -55,6 +55,7 @@ import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBar
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBarDefaults
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabItem
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabLayout
+import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
@@ -94,7 +95,7 @@ fun AdaptiveNavigationSuiteScaffold(
     items: List<AdaptiveNavItem>,
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
-    useMiuixFloatingTabBar: Boolean = false,
+    useImmersiveExperience: Boolean = false,
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
     legacyTopBar: @Composable () -> Unit = {},
@@ -111,14 +112,14 @@ fun AdaptiveNavigationSuiteScaffold(
     val isCompactWidth = !adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(
         WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND,
     )
-    val shouldUseMiuixFloatingTabBar = useMiuixFloatingTabBar &&
+    val shouldUseImmersiveExperience = useImmersiveExperience &&
         designSystem == AppDesignSystem.MIUIX &&
         isCompactWidth &&
         navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
 
-    if (shouldUseMiuixFloatingTabBar) {
+    if (shouldUseImmersiveExperience) {
         val backdrop = if (advancedMaterial.enabled) rememberLayerBackdrop() else null
-        FloatingMiuixCompactNavigationScaffold(
+        ImmersiveMiuixCompactNavigationScaffold(
             items = items,
             selectedKey = selectedKey,
             onItemSelected = onItemSelected,
@@ -185,7 +186,7 @@ fun AdaptiveNavigationSuiteScaffold(
 }
 
 @Composable
-private fun FloatingMiuixCompactNavigationScaffold(
+private fun ImmersiveMiuixCompactNavigationScaffold(
     items: List<AdaptiveNavItem>,
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
@@ -241,12 +242,24 @@ private fun FloatingMiuixCompactNavigationScaffold(
 
             if (backdrop != null) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
-                    Box(modifier = Modifier.align(Alignment.TopCenter)) {
+                    ProgressiveTopBarMaterial(
+                        enabled = true,
+                        backdrop = backdrop,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth(),
+                    ) {
                         topBar()
                     }
                 }
             } else {
-                Box(modifier = Modifier.align(Alignment.TopCenter)) {
+                ProgressiveTopBarMaterial(
+                    enabled = true,
+                    backdrop = null,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth(),
+                ) {
                     topBar()
                 }
             }

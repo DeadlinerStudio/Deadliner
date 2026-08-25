@@ -19,7 +19,7 @@ data class AppearancePreferences(
     val usePureMiuixAccent: Boolean = false,
     val useMiuixNeutralSurfaces: Boolean = true,
     val useMaterialTopAppBarInMiuix: Boolean = false,
-    val useMiuixFloatingTabBar: Boolean = false,
+    val useImmersiveExperience: Boolean = false,
     val useAdvancedMaterial: Boolean = false,
     val advancedMaterialLevel: AdvancedMaterialLevel = AdvancedMaterialLevel.Light,
     val advancedMaterialBlurRadius: Float = AdvancedMaterialTuning.DefaultBlurRadius,

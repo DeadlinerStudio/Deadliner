@@ -140,12 +140,12 @@ fun DesignColorSettingsScreen(
                 SettingsSectionDivider()
                 if (appearance.designMode == AppearanceDesignMode.Modern) {
                     SettingsDetailSwitchItem(
-                        headline = R.string.settings_miuix_floating_tab_bar,
-                        supportingText = R.string.settings_support_miuix_floating_tab_bar,
-                        checked = appearance.useMiuixFloatingTabBar,
+                        headline = R.string.settings_immersive_experience,
+                        supportingText = R.string.settings_support_immersive_experience,
+                        checked = appearance.useImmersiveExperience,
                         onCheckedChange = { checked ->
                             GlobalUtils.updateAppearance { current ->
-                                current.copy(useMiuixFloatingTabBar = checked)
+                                current.copy(useImmersiveExperience = checked)
                             }
                         },
                     )

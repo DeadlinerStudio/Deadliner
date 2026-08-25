@@ -27,6 +27,7 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
+import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveTopBarEnabled
 import top.yukonga.miuix.kmp.basic.ScrollBehavior as MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
@@ -58,17 +59,24 @@ fun TopAppBar(
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
+    val immersiveTopBar = LocalImmersiveTopBarEnabled.current
     val advancedMaterialBlurred =
-        allowAdvancedMaterialBlur && advancedMaterial.enabled && backdrop != null && !useParentMaterialContainer
+        allowAdvancedMaterialBlur &&
+            !immersiveTopBar &&
+            advancedMaterial.enabled &&
+            backdrop != null &&
+            !useParentMaterialContainer
     val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.topBarTintAlpha)
     val topBarColors = TopAppBarDefaults.topAppBarColors(
         containerColor = when {
+            immersiveTopBar -> Color.Transparent
             useParentMaterialContainer -> Color.Transparent
             advancedMaterialBlurred -> Color.Transparent
             advancedMaterial.enabled -> surfaceTint
             else -> MaterialTheme.colorScheme.surface
         },
         scrolledContainerColor = when {
+            immersiveTopBar -> Color.Transparent
             useParentMaterialContainer -> Color.Transparent
             advancedMaterialBlurred -> Color.Transparent
             advancedMaterial.enabled -> surfaceTint
@@ -178,6 +186,7 @@ fun TopAppBar(
             surfaceTint = surfaceTint,
         ) {
             val miuixContainerColor = when {
+                immersiveTopBar -> Color.Transparent
                 useParentMaterialContainer -> Color.Transparent
                 advancedMaterialBlurred -> Color.Transparent
                 advancedMaterial.enabled -> surfaceTint

@@ -1024,8 +1024,8 @@
     <string name="settings_support_miuix_mode">开启 HyperOS 风格的主题与组件库（实验性）</string>
     <string name="settings_miuix_material_top_bar">现代主页顶栏使用 Material 3</string>
     <string name="settings_support_miuix_material_top_bar">在 MIUIX 主题下，将 ModernHost 的顶部栏样式切回 Material 3</string>
-    <string name="settings_miuix_floating_tab_bar">手机使用悬浮底栏</string>
-    <string name="settings_support_miuix_floating_tab_bar">在现代设计的 Compact 手机窗口中使用图标在上、文字在下的悬浮 Tab；较宽窗口保持原导航</string>
+    <string name="settings_immersive_experience">启用沉浸体验</string>
+    <string name="settings_support_immersive_experience">在现代设计的 Compact 手机窗口中启用柔光玻璃悬浮底栏和渐进模糊顶栏；较宽窗口保持原布局</string>
     <string name="settings_miuix_color">MIUIX 颜色</string>
     <string name="settings_modern_palette_title">现代色彩方案</string>
     <string name="settings_modern_palette_support">切换中性色表面风格。缺失层级色会自动回退到 HyperOS 默认方案。</string>

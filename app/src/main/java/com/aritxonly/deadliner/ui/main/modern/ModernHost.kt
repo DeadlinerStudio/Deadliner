@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -97,6 +96,7 @@ import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.FloatingActionButton
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.base.TopAppBar
+import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.main.shared.MainSection
@@ -361,8 +361,8 @@ fun ModernHost(
     val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
     val isShortBottomNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact ||
         navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium
-    val isFloatingMiuixBottomNavigation = appearance.usesMiuixTheme &&
-        appearance.useMiuixFloatingTabBar &&
+    val isImmersiveCompactNavigation = appearance.usesMiuixTheme &&
+        appearance.useImmersiveExperience &&
         navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
     val selectionActions = rememberMainSelectionActionController(
         activity = activity,
@@ -391,7 +391,7 @@ fun ModernHost(
                 ),
         items = navItems,
         selectedKey = selectedKey,
-        useMiuixFloatingTabBar = appearance.useMiuixFloatingTabBar,
+        useImmersiveExperience = appearance.useImmersiveExperience,
         onItemSelected = {
             when (it.key) {
                 "search" -> {
@@ -467,7 +467,7 @@ fun ModernHost(
                                 titleTextStyle = MaterialTheme.typography.titleLarge,
                                 forceMaterial3 = forceMaterialTopBarsInMiuix,
                                 navigationIcon = {
-                                    IconButton(onClick = {
+                                    TopBarIconButton(onClick = {
                                         hostState.clearSelection()
                                         activeSelectionPane = null
                                     }) {
@@ -478,7 +478,7 @@ fun ModernHost(
                                     }
                                 },
                                 actions = {
-                                    IconButton(onClick = {
+                                    TopBarIconButton(onClick = {
                                         selectionActions.onDoneClick(
                                             onCelebrate = {
                                                 if (com.aritxonly.deadliner.localutils.GlobalUtils.fireworksOnFinish) {
@@ -493,14 +493,14 @@ fun ModernHost(
                                         )
                                     }
                                     if (hostState.selectedPage == DeadlineType.TASK) {
-                                        IconButton(onClick = { selectionActions.onArchiveClick() }) {
+                                        TopBarIconButton(onClick = { selectionActions.onArchiveClick() }) {
                                             Icon(
                                                 ImageVector.vectorResource(R.drawable.ic_archiving),
                                                 contentDescription = stringResource(R.string.archive)
                                             )
                                         }
                                     }
-                                    IconButton(onClick = { selectionActions.onDeleteClick() }) {
+                                    TopBarIconButton(onClick = { selectionActions.onDeleteClick() }) {
                                         Icon(
                                             ImageVector.vectorResource(R.drawable.ic_delete),
                                             contentDescription = stringResource(R.string.delete)
@@ -736,7 +736,7 @@ fun ModernHost(
                         onShowMergeSheetChange = { showCaptureMergeSheet = it },
                         topOverlayPadding = overlayTopBarPadding,
                         bottomLiftPadding = when {
-                            isFloatingMiuixBottomNavigation -> 96.dp
+                            isImmersiveCompactNavigation -> 96.dp
                             isShortBottomNavigation -> 96.dp
                             else -> 28.dp
                         },

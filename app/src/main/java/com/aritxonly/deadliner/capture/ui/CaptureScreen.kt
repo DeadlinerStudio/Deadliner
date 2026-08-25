@@ -69,6 +69,7 @@ import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TopAppBar
+import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
@@ -105,7 +106,7 @@ fun CaptureTopBar(
             forceMaterial3 = forceMaterial3,
             navigationIcon = if (showNavigationIcon) {
                 {
-                    IconButton(onClick = onClose) {
+                    TopBarIconButton(onClick = onClose) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_close),
                             contentDescription = stringResource(R.string.close),
@@ -131,7 +132,7 @@ fun CaptureTopBar(
             title = stringResource(R.string.capture_selected_count, ui.selectedUids.size),
             forceMaterial3 = forceMaterial3,
             navigationIcon = {
-                IconButton(onClick = vm::exitMultiSelect) {
+                TopBarIconButton(onClick = vm::exitMultiSelect) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_close),
                         contentDescription = stringResource(R.string.close),
