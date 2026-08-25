@@ -55,7 +55,6 @@ import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBar
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBarDefaults
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabItem
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabLayout
-import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
@@ -135,11 +134,21 @@ fun AdaptiveNavigationSuiteScaffold(
     }
 
     if (!isShortBottomNavigation) {
+        val backdrop = if (
+            useImmersiveExperience &&
+            designSystem == AppDesignSystem.MIUIX &&
+            advancedMaterial.enabled
+        ) {
+            rememberLayerBackdrop()
+        } else {
+            null
+        }
         LegacyWideNavigationScaffold(
             items = items,
             selectedKey = selectedKey,
             onItemSelected = onItemSelected,
             designSystem = designSystem,
+            backdrop = backdrop,
             modifier = modifier,
             topBar = topBar,
             legacyTopBar = legacyTopBar,
@@ -242,24 +251,12 @@ private fun ImmersiveMiuixCompactNavigationScaffold(
 
             if (backdrop != null) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
-                    ProgressiveTopBarMaterial(
-                        enabled = true,
-                        backdrop = backdrop,
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .fillMaxWidth(),
-                    ) {
+                    Box(modifier = Modifier.align(Alignment.TopCenter)) {
                         topBar()
                     }
                 }
             } else {
-                ProgressiveTopBarMaterial(
-                    enabled = true,
-                    backdrop = null,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth(),
-                ) {
+                Box(modifier = Modifier.align(Alignment.TopCenter)) {
                     topBar()
                 }
             }
@@ -390,6 +387,7 @@ private fun LegacyWideNavigationScaffold(
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
     designSystem: AppDesignSystem,
+    backdrop: LayerBackdrop?,
     modifier: Modifier,
     topBar: @Composable () -> Unit,
     legacyTopBar: @Composable () -> Unit,
@@ -451,7 +449,15 @@ private fun LegacyWideNavigationScaffold(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight(),
-            topBar = legacyTopBar,
+            topBar = {
+                if (backdrop != null) {
+                    CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                        legacyTopBar()
+                    }
+                } else {
+                    legacyTopBar()
+                }
+            },
             snackbarHost = snackbarHost,
             floatingActionButton = floatingActionButton,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -461,9 +467,29 @@ private fun LegacyWideNavigationScaffold(
                     .fillMaxSize()
                     .padding(innerPadding),
             ) {
-                content(PaddingValues())
-                Box(modifier = Modifier.align(Alignment.TopCenter)) {
-                    topBar()
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .let { contentModifier ->
+                            if (backdrop != null) {
+                                contentModifier.layerBackdrop(backdrop)
+                            } else {
+                                contentModifier
+                            }
+                        },
+                ) {
+                    content(PaddingValues())
+                }
+                if (backdrop != null) {
+                    CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                        Box(modifier = Modifier.align(Alignment.TopCenter)) {
+                            topBar()
+                        }
+                    }
+                } else {
+                    Box(modifier = Modifier.align(Alignment.TopCenter)) {
+                        topBar()
+                    }
                 }
             }
         }

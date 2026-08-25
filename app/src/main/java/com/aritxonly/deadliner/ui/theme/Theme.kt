@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.UiStyle
+import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 enum class AppDesignSystem {
@@ -60,6 +61,9 @@ fun DeadlinerTheme(
     CompositionLocalProvider(
         LocalAppDesignSystem provides designSystem,
         LocalAdvancedMaterialSpec provides advancedMaterialSpec,
+        LocalImmersiveExperienceEnabled provides (
+            appearance.useImmersiveExperience && designSystem == AppDesignSystem.MIUIX
+        ),
     ) {
         when (designSystem) {
             AppDesignSystem.MATERIAL3 -> {

@@ -10,6 +10,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -350,6 +351,11 @@ fun ModernHost(
             }
         }
     }
+    val mainTopBarButtonMaterialProgress by animateFloatAsState(
+        targetValue = if (shouldCollapseHeaderAccessories) 1f else 0f,
+        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        label = "main-topbar-button-material",
+    )
     val forceMaterialTopBarsInMiuix = appearance.usesMiuixTheme && appearance.useMaterialTopAppBarInMiuix
 
     val taskState by taskVm.uiState.collectAsStateWithLifecycle()
@@ -458,6 +464,7 @@ fun ModernHost(
                                 showAccessoryRow = !isWideLayout && !shouldCollapseHeaderAccessories,
                                 showAiActionInTopBar = isWideLayout,
                                 forceMaterialTopAppBar = forceMaterialTopBarsInMiuix,
+                                buttonMaterialRevealProgress = mainTopBarButtonMaterialProgress,
                             )
                         }
                         ModernTopBarState.LIST_SELECTION -> {
@@ -466,6 +473,7 @@ fun ModernHost(
                                 mode = TopAppBarStyle.SMALL,
                                 titleTextStyle = MaterialTheme.typography.titleLarge,
                                 forceMaterial3 = forceMaterialTopBarsInMiuix,
+                                buttonMaterialRevealProgress = 1f,
                                 navigationIcon = {
                                     TopBarIconButton(onClick = {
                                         hostState.clearSelection()

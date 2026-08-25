@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -38,6 +39,7 @@ fun SoftGlassSurface(
     recipe: GlassMaterialRecipe? = null,
     tint: Color? = null,
     interaction: GlassMaterialInteraction = GlassMaterialInteraction(),
+    materialAlpha: Float = 1f,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
     contentAlignment: Alignment = Alignment.Center,
     content: @Composable BoxScope.() -> Unit,
@@ -58,20 +60,27 @@ fun SoftGlassSurface(
         )
 
     Box(
-        modifier = modifier
-            .clip(shape)
-            .deadlinerGlassMaterial(
-                advancedMaterial = advancedMaterial,
-                backdrop = backdrop,
-                shape = shape,
-                tint = resolvedTint,
-                isDark = isDark,
-                recipe = resolvedRecipe,
-                interaction = interaction,
-            ),
+        modifier = modifier.clip(shape),
         contentAlignment = contentAlignment,
-        content = content,
-    )
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer {
+                    alpha = materialAlpha.coerceIn(0f, 1f)
+                }
+                .deadlinerGlassMaterial(
+                    advancedMaterial = advancedMaterial,
+                    backdrop = backdrop,
+                    shape = shape,
+                    tint = resolvedTint,
+                    isDark = isDark,
+                    recipe = resolvedRecipe,
+                    interaction = interaction,
+                ),
+        )
+        content()
+    }
 }
 
 /** A circular soft-glass host for icon-only top-bar actions. */
@@ -83,6 +92,7 @@ fun SoftGlassIconButton(
     size: Dp = SoftGlassDefaults.IconButtonSize,
     recipe: GlassMaterialRecipe? = null,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
+    materialAlpha: Float = 1f,
     content: @Composable () -> Unit,
 ) {
     SoftGlassSurface(
@@ -90,6 +100,7 @@ fun SoftGlassIconButton(
         shape = SoftGlassDefaults.Shape,
         recipe = recipe,
         backdrop = backdrop,
+        materialAlpha = materialAlpha,
     ) {
         IconButton(
             onClick = onClick,

@@ -48,7 +48,7 @@ import com.aritxonly.deadliner.ui.base.Switch
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
-import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveTopBarEnabled
+import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.overview.DashboardScreen
@@ -339,7 +339,7 @@ fun OverviewTopBarWithTabs(
     )
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
-    val immersiveTopBar = LocalImmersiveTopBarEnabled.current
+    val immersiveTopBar = LocalImmersiveExperienceEnabled.current
     val advancedMaterialBlurred = advancedMaterial.enabled && backdrop != null && !immersiveTopBar
     val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.topBarTintAlpha)
 

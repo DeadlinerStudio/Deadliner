@@ -67,6 +67,7 @@ fun ModernMainHeader(
     showAccessoryRow: Boolean = true,
     showAiActionInTopBar: Boolean = false,
     forceMaterialTopAppBar: Boolean = false,
+    buttonMaterialRevealProgress: Float = 0f,
 ) {
     val aiEnabled = GlobalUtils.deadlinerAIEnable
     val pageLabel = when (selectedPage) {
@@ -148,6 +149,7 @@ fun ModernMainHeader(
             mode = TopAppBarStyle.SMALL,
             isMainTitle = true,
             forceMaterial3 = forceMaterialTopAppBar,
+            buttonMaterialRevealProgress = buttonMaterialRevealProgress,
         )
 
         AnimatedVisibility(

@@ -81,6 +81,7 @@ import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.RadioButton
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
@@ -268,7 +269,7 @@ fun DeadlineDetailScreen(
                 forceMaterial3 = true,
                 useParentMaterialContainer = true,
                 actions = {
-                    IconButton(onClick = {
+                    TopBarIconButton(onClick = {
                         isStarred = !isStarred
                         onToggleStar(isStarred)
                     }) {

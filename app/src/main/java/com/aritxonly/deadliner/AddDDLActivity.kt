@@ -89,6 +89,7 @@ import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.editor.DeadlineAiQuickAddCard
 import com.aritxonly.deadliner.ui.editor.DeadlineBottomActions
@@ -375,7 +376,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                 },
                                 actions = {
                                     if (selectedPage == 0) {
-                                        IconButton(onClick = { onImportFromCalendarClick() }) {
+                                        TopBarIconButton(onClick = { onImportFromCalendarClick() }) {
                                             Icon(
                                                 painter = painterResource(R.drawable.ic_event),
                                                 contentDescription = stringResource(R.string.select_calendar_to_import),

@@ -34,6 +34,7 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
+import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
@@ -61,6 +62,7 @@ fun AdaptiveMaterialScaffold(
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
+    val immersiveExperienceEnabled = LocalImmersiveExperienceEnabled.current
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val designSystem = LocalAppDesignSystem.current
@@ -156,7 +158,11 @@ fun AdaptiveMaterialScaffold(
                     }
                 }
 
-            if (backdrop != null && wrapTopBarInMaterialContainer) {
+            if (
+                backdrop != null &&
+                wrapTopBarInMaterialContainer &&
+                !immersiveExperienceEnabled
+            ) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
                     Box(
                         modifier = topBarModifier.then(

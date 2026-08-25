@@ -21,7 +21,9 @@ import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.shapes.SmoothRoundedCornerShape
 
+val LocalImmersiveExperienceEnabled = staticCompositionLocalOf { false }
 val LocalImmersiveTopBarEnabled = staticCompositionLocalOf { false }
+val LocalTopBarButtonMaterialProgress = staticCompositionLocalOf { 0f }
 
 private val ProgressiveTopBarShape = SmoothRoundedCornerShape(0.dp)
 
@@ -54,7 +56,7 @@ fun ProgressiveTopBarMaterial(
             )
             Modifier
                 .matchParentSize()
-                .edgeFade(bottom = fadeHeight)
+                .edgeFade(top = 0.dp, bottom = fadeHeight)
                 .advancedTextureBlur(
                     advancedMaterial = advancedMaterial,
                     backdrop = requireNotNull(backdrop),

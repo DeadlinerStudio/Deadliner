@@ -42,6 +42,7 @@ import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import java.util.UUID
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.TopBarIconButton
 
 @Composable
 fun ModelSettingsScreen(
@@ -86,7 +87,7 @@ fun ModelSettingsScreen(
         },
         actions = {
             Box {
-                IconButton(onClick = { showMenu = true }, modifier = Modifier.padding(end = 8.dp)) {
+                TopBarIconButton(onClick = { showMenu = true }, modifier = Modifier.padding(end = 8.dp)) {
                     Icon(
                         painterResource(R.drawable.ic_more),
                         contentDescription = null,

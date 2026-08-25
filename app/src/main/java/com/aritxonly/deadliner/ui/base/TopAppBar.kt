@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -27,7 +30,10 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
-import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveTopBarEnabled
+import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
+import com.aritxonly.deadliner.ui.material.glass.LocalTopBarButtonMaterialProgress
+import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
+import com.aritxonly.deadliner.ui.material.glass.SoftGlassSurface
 import top.yukonga.miuix.kmp.basic.ScrollBehavior as MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
@@ -54,12 +60,13 @@ fun TopAppBar(
     forceMaterial3: Boolean = false,
     useParentMaterialContainer: Boolean = false,
     allowAdvancedMaterialBlur: Boolean = true,
+    buttonMaterialRevealProgress: Float? = null,
     material3ScrollBehavior: TopAppBarScrollBehavior? = null,
     miuixScrollBehavior: MiuixScrollBehavior? = null,
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
-    val immersiveTopBar = LocalImmersiveTopBarEnabled.current
+    val immersiveTopBar = LocalImmersiveExperienceEnabled.current
     val advancedMaterialBlurred =
         allowAdvancedMaterialBlur &&
             !immersiveTopBar &&
@@ -88,15 +95,37 @@ fun TopAppBar(
     } else {
         LocalAppDesignSystem.current
     }
+    val collapsedFraction = when (appDesignSystem) {
+        AppDesignSystem.MATERIAL3 -> material3ScrollBehavior?.state?.collapsedFraction
+        AppDesignSystem.MIUIX -> miuixScrollBehavior?.state?.collapsedFraction
+    }
+    val buttonMaterialProgress = resolveTopBarButtonMaterialProgress(
+        collapsedFraction = collapsedFraction,
+        inherentlyCollapsed = mode != TopAppBarStyle.LARGE,
+        overrideProgress = buttonMaterialRevealProgress,
+    )
+    val resolvedNavigationIcon: @Composable () -> Unit = {
+        navigationIcon?.let { icon ->
+            if (immersiveTopBar && !isMainTitle) {
+                ImmersiveNavigationIcon(
+                    materialAlpha = buttonMaterialProgress,
+                    content = icon,
+                )
+            } else {
+                icon()
+            }
+        }
+    }
 
-    when (appDesignSystem) {
-        AppDesignSystem.MATERIAL3 -> AdvancedMaterialTopBarContainer(
-            advancedMaterial = advancedMaterial,
-            advancedMaterialBlurred = advancedMaterialBlurred,
-            backdrop = backdrop,
-            surfaceTint = surfaceTint,
-        ) {
-            when (mode) {
+    val platformTopBar = @Composable {
+        when (appDesignSystem) {
+            AppDesignSystem.MATERIAL3 -> AdvancedMaterialTopBarContainer(
+                advancedMaterial = advancedMaterial,
+                advancedMaterialBlurred = advancedMaterialBlurred,
+                backdrop = backdrop,
+                surfaceTint = surfaceTint,
+            ) {
+                when (mode) {
                 TopAppBarStyle.CENTER ->
                     CenterAlignedTopAppBar(
                         title = {
@@ -113,7 +142,7 @@ fun TopAppBar(
                                 )
                             }
                         },
-                        navigationIcon = { navigationIcon?.invoke() },
+                        navigationIcon = resolvedNavigationIcon,
                         actions = actions,
                         colors = topBarColors,
                     )
@@ -126,7 +155,7 @@ fun TopAppBar(
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                         },
-                        navigationIcon = { navigationIcon?.invoke() },
+                        navigationIcon = resolvedNavigationIcon,
                         actions = actions,
                         colors = topBarColors,
                         scrollBehavior = material3ScrollBehavior,
@@ -141,7 +170,7 @@ fun TopAppBar(
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
                             },
-                            navigationIcon = { navigationIcon?.invoke() },
+                            navigationIcon = resolvedNavigationIcon,
                             actions = actions,
                             colors = topBarColors,
                             modifier = Modifier.padding(end = 8.dp)
@@ -176,44 +205,80 @@ fun TopAppBar(
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
+                }
+            }
+
+            AppDesignSystem.MIUIX -> AdvancedMaterialTopBarContainer(
+                advancedMaterial = advancedMaterial,
+                advancedMaterialBlurred = advancedMaterialBlurred,
+                backdrop = backdrop,
+                surfaceTint = surfaceTint,
+            ) {
+                val miuixContainerColor = when {
+                    immersiveTopBar -> Color.Transparent
+                    useParentMaterialContainer -> Color.Transparent
+                    advancedMaterialBlurred -> Color.Transparent
+                    advancedMaterial.enabled -> surfaceTint
+                    else -> MaterialTheme.colorScheme.surface
+                }
+                when (mode) {
+                    TopAppBarStyle.LARGE ->
+                        MiuixTopAppBar(
+                            title = title,
+                            largeTitle = title,
+                            color = miuixContainerColor,
+                            navigationIcon = resolvedNavigationIcon,
+                            actions = actions,
+                            titleColor = MaterialTheme.colorScheme.onSurface,
+                            largeTitleColor = MaterialTheme.colorScheme.onSurface,
+                            scrollBehavior = miuixScrollBehavior,
+                        )
+
+                    else ->
+                        SmallTopAppBar(
+                            title = title,
+                            color = miuixContainerColor,
+                            navigationIcon = resolvedNavigationIcon,
+                            actions = actions,
+                            titleColor = MaterialTheme.colorScheme.onSurface,
+                        )
+                }
             }
         }
+    }
 
-        AppDesignSystem.MIUIX -> AdvancedMaterialTopBarContainer(
-            advancedMaterial = advancedMaterial,
-            advancedMaterialBlurred = advancedMaterialBlurred,
-            backdrop = backdrop,
-            surfaceTint = surfaceTint,
-        ) {
-            val miuixContainerColor = when {
-                immersiveTopBar -> Color.Transparent
-                useParentMaterialContainer -> Color.Transparent
-                advancedMaterialBlurred -> Color.Transparent
-                advancedMaterial.enabled -> surfaceTint
-                else -> MaterialTheme.colorScheme.surface
+    CompositionLocalProvider(
+        LocalTopBarButtonMaterialProgress provides buttonMaterialProgress,
+    ) {
+        if (immersiveTopBar) {
+            ProgressiveTopBarMaterial(
+                enabled = true,
+                backdrop = backdrop,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                platformTopBar()
             }
-            when (mode) {
-                TopAppBarStyle.LARGE ->
-                    MiuixTopAppBar(
-                        title = title,
-                        largeTitle = title,
-                        color = miuixContainerColor,
-                        navigationIcon = navigationIcon ?: {},
-                        actions = actions,
-                        titleColor = MaterialTheme.colorScheme.onSurface,
-                        largeTitleColor = MaterialTheme.colorScheme.onSurface,
-                        scrollBehavior = miuixScrollBehavior,
-                    )
+        } else {
+            platformTopBar()
+        }
+    }
+}
 
-                else ->
-                    SmallTopAppBar(
-                        title = title,
-                        color = miuixContainerColor,
-                        navigationIcon = navigationIcon ?: {},
-                        actions = actions,
-                        titleColor = MaterialTheme.colorScheme.onSurface,
-                    )
-            }
+@Composable
+private fun ImmersiveNavigationIcon(
+    materialAlpha: Float,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier.size(48.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        SoftGlassSurface(
+            modifier = Modifier.size(44.dp),
+            materialAlpha = materialAlpha,
+        ) {}
+        CompositionLocalProvider(LocalTopBarButtonMaterialHosted provides true) {
+            content()
         }
     }
 }
