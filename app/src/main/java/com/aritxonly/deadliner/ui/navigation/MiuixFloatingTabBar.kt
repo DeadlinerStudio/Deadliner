@@ -11,9 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -49,11 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -63,13 +59,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
+import com.aritxonly.deadliner.ui.material.glass.deadlinerGlassMaterial
+import com.aritxonly.deadliner.ui.material.glass.softGlassTintColor
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
-import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
-import com.aritxonly.deadliner.ui.theme.rememberBlurColors
-import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
@@ -89,8 +85,8 @@ enum class MiuixFloatingTabLayout {
 }
 
 object MiuixFloatingTabBarDefaults {
-    val Height = 56.dp
-    val ContentPadding = 2.dp
+    val Height = 54.dp
+    val ContentPadding = 1.5.dp
     val MaximumWidth = 380.dp
     val IconSize = 28.dp
 
@@ -120,72 +116,34 @@ fun MiuixFloatingTabBar(
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val contentColor = MiuixTheme.colorScheme.onSurfaceContainer
     val isDark = contentColor.luminance() > 0.5f
-    val containerBaseColor = if (isDark) {
-        lerp(MiuixTheme.colorScheme.surfaceContainer, Color.Black, 0.28f)
-    } else {
-        MiuixTheme.colorScheme.surfaceContainer
-    }
+    val containerBaseColor = advancedMaterial.fineTuning.softGlassTintColor(isDark)
     val containerTint = containerBaseColor.copy(
         alpha = if (advancedMaterial.enabled) advancedMaterial.navigationTintAlpha else 0.92f,
     )
-    val materialColors = advancedMaterial.rememberBlurColors(
-        additionalBlendColors = listOf(BlendColorEntry(containerTint)),
+    val materialModifier = Modifier.deadlinerGlassMaterial(
+        advancedMaterial = advancedMaterial,
+        backdrop = backdrop,
+        shape = MiuixFloatingTabBarDefaults.ContainerShape,
+        tint = containerTint,
+        isDark = isDark,
+        recipe = DeadlinerGlassRecipes.floatingNavigation(advancedMaterial.fineTuning),
     )
-    val containerEdgeGlow = Brush.verticalGradient(
-        colors = if (isDark) {
-            listOf(
-                Color.White.copy(alpha = 0.16f),
-                Color.White.copy(alpha = 0.10f),
-                Color.White.copy(alpha = 0.07f),
-            )
-        } else {
-            listOf(
-                Color.White.copy(alpha = 0.58f),
-                Color.White.copy(alpha = 0.38f),
-                Color.White.copy(alpha = 0.24f),
-            )
-        },
-    )
-    val materialModifier = if (advancedMaterial.enabled && backdrop != null) {
-        Modifier.advancedTextureBlur(
-            advancedMaterial = advancedMaterial,
-            backdrop = backdrop,
-            shape = MiuixFloatingTabBarDefaults.ContainerShape,
-            colors = materialColors,
-        )
-    } else {
-        Modifier.background(
-            color = containerTint,
-            shape = MiuixFloatingTabBarDefaults.ContainerShape,
-        )
-    }
 
     BoxWithConstraints(
         modifier = modifier
-            .padding(horizontal = 8.dp)
+            .padding(horizontal = 4.dp)
             .widthIn(max = MiuixFloatingTabBarDefaults.MaximumWidth)
             .fillMaxWidth()
             .height(MiuixFloatingTabBarDefaults.Height)
             .shadow(
-                elevation = if (isDark) 7.dp else 8.dp,
+                elevation = 12.dp,
                 shape = MiuixFloatingTabBarDefaults.ContainerShape,
-                ambientColor = if (isDark) {
-                    Color.White.copy(alpha = 0.12f)
-                } else {
-                    Color.Black.copy(alpha = 0.11f)
-                },
-                spotColor = if (isDark) {
-                    Color.White.copy(alpha = 0.08f)
-                } else {
-                    Color.Black.copy(alpha = 0.16f)
-                },
+                clip = false,
+                ambientColor = Color.Black.copy(alpha = if (isDark) 0.48f else 0.24f),
+                spotColor = Color.Black.copy(alpha = if (isDark) 0.32f else 0.18f),
             )
             .clip(MiuixFloatingTabBarDefaults.ContainerShape)
             .then(materialModifier)
-            .border(
-                border = BorderStroke(1.dp, containerEdgeGlow),
-                shape = MiuixFloatingTabBarDefaults.ContainerShape,
-            )
             .padding(
                 MiuixFloatingTabBarDefaults.ContentPadding,
             ),

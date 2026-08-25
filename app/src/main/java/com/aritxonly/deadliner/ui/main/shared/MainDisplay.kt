@@ -159,7 +159,12 @@ fun MainDisplay(
 
     val scope = rememberCoroutineScope()
     var abandonDialogVisible by remember { mutableStateOf(false) }
+    var activeSwipeTaskId by remember { mutableStateOf<String?>(null) }
     val pullToRefreshState = rememberPullToRefreshState()
+
+    LaunchedEffect(selectionMode) {
+        if (selectionMode) activeSwipeTaskId = null
+    }
 
     val needsBlur by remember {
         derivedStateOf { abandonDialogVisible }
@@ -218,6 +223,8 @@ fun MainDisplay(
                                 TaskItem(
                                     item = item,
                                     activity = activity,
+                                    activeSwipeTaskId = activeSwipeTaskId,
+                                    onActiveSwipeTaskChange = { activeSwipeTaskId = it },
                                     applyTaskAction = { action ->
                                         taskViewModel.applyTaskActionNow(
                                             item.uid,
@@ -227,6 +234,12 @@ fun MainDisplay(
                                     },
                                     celebrate = {
                                         if (GlobalUtils.fireworksOnFinish) onCelebrate?.invoke()
+                                    },
+                                    deleteTask = {
+                                        taskViewModel.deleteTaskNow(
+                                            item.uid,
+                                            java.time.Instant.now().toString(),
+                                        )
                                     },
                                     selectionMode = selectionMode,
                                     selected = isSelected(item.uid),

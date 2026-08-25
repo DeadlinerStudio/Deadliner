@@ -1,38 +1,39 @@
 package com.aritxonly.deadliner.ui.settings
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.AdvancedMaterialLevel
-import com.aritxonly.deadliner.ui.TintedGradientImage
+import com.aritxonly.deadliner.model.AdvancedMaterialFineTuning
+import com.aritxonly.deadliner.model.AdvancedMaterialTuning
+import com.aritxonly.deadliner.ui.base.Slider
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,15 +41,22 @@ fun AdvancedMaterialSettingsScreen(
     navigateUp: () -> Unit,
 ) {
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
-    val levelOptions = remember {
-        listOf(
-            RadioOption(AdvancedMaterialLevel.CrystalClear, R.string.settings_advanced_material_level_clear),
-            RadioOption(AdvancedMaterialLevel.Light, R.string.settings_advanced_material_level_light),
-            RadioOption(AdvancedMaterialLevel.Soft, R.string.settings_advanced_material_level_soft),
-            RadioOption(AdvancedMaterialLevel.Hazy, R.string.settings_advanced_material_level_hazy),
-            RadioOption(AdvancedMaterialLevel.Deep, R.string.settings_advanced_material_level_deep),
-        )
+    var previewBlurRadius by remember {
+        mutableFloatStateOf(appearance.advancedMaterialBlurRadius)
     }
+    var previewFineTuning by remember {
+        mutableStateOf(appearance.advancedMaterialFineTuning)
+    }
+    LaunchedEffect(appearance.advancedMaterialBlurRadius) {
+        previewBlurRadius = appearance.advancedMaterialBlurRadius
+    }
+    LaunchedEffect(appearance.advancedMaterialFineTuning) {
+        previewFineTuning = appearance.advancedMaterialFineTuning
+    }
+    val exportPreset = rememberAdvancedMaterialPresetExportAction(
+        blurRadius = previewBlurRadius,
+        fineTuning = previewFineTuning,
+    )
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_advanced_material),
@@ -89,20 +97,68 @@ fun AdvancedMaterialSettingsScreen(
             }
 
             AdvancedMaterialPreviewCard(
-                level = appearance.advancedMaterialLevel,
+                blurRadius = previewBlurRadius,
+                fineTuning = previewFineTuning,
                 enabled = appearance.useAdvancedMaterial,
                 modifier = Modifier.padding(vertical = 8.dp),
             )
 
             if (appearance.useAdvancedMaterial) {
                 SettingsSection(topLabel = stringResource(R.string.settings_advanced_material_blur_size)) {
-                    SettingsRadioGroupItem(
-                        options = levelOptions,
-                        selectedKey = appearance.advancedMaterialLevel,
-                        onOptionSelected = { level ->
-                            GlobalUtils.advancedMaterialLevel = level
-                        }
+                    AdvancedMaterialRadiusSlider(
+                        value = previewBlurRadius,
+                        saturationMultiplier = previewFineTuning.saturationMultiplier,
+                        onValueChange = { previewBlurRadius = it },
+                        onValueChangeFinished = {
+                            GlobalUtils.updateAppearance { appearance ->
+                                AdvancedMaterialTuning.withBlurRadius(
+                                    appearance,
+                                    previewBlurRadius,
+                                )
+                            }
+                        },
                     )
+                }
+
+                if (AdvancedMaterialFineTuningAccess.isUnlocked) {
+                    SettingsSection(
+                        topLabel = stringResource(
+                            R.string.settings_advanced_material_advanced_options,
+                        ),
+                    ) {
+                        AdvancedMaterialFineTuningPanel(
+                            value = previewFineTuning,
+                            onValueChange = { previewFineTuning = it.normalized() },
+                            onValueChangeFinished = {
+                                GlobalUtils.updateAppearance { current ->
+                                    current.copy(
+                                        advancedMaterialFineTuning = previewFineTuning.normalized(),
+                                    )
+                                }
+                            },
+                            onImmediateChange = { updated ->
+                                val normalized = updated.normalized()
+                                previewFineTuning = normalized
+                                GlobalUtils.updateAppearance { current ->
+                                    current.copy(advancedMaterialFineTuning = normalized)
+                                }
+                            },
+                            onExport = exportPreset,
+                            onReset = {
+                                previewBlurRadius = AdvancedMaterialTuning.DefaultBlurRadius
+                                previewFineTuning = AdvancedMaterialFineTuning.Default
+                                GlobalUtils.updateAppearance { current ->
+                                    AdvancedMaterialTuning.withBlurRadius(
+                                        appearance = current.copy(
+                                            advancedMaterialFineTuning =
+                                                AdvancedMaterialFineTuning.Default,
+                                        ),
+                                        value = AdvancedMaterialTuning.DefaultBlurRadius,
+                                    )
+                                }
+                            },
+                        )
+                    }
                 }
             }
 
@@ -112,79 +168,52 @@ fun AdvancedMaterialSettingsScreen(
 }
 
 @Composable
-fun AdvancedMaterialPreviewCard(
-    level: AdvancedMaterialLevel,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
+@OptIn(ExperimentalMaterial3Api::class)
+private fun AdvancedMaterialRadiusSlider(
+    value: Float,
+    saturationMultiplier: Float,
+    onValueChange: (Float) -> Unit,
+    onValueChangeFinished: () -> Unit,
 ) {
-    SettingsHeroSection(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(184.dp)
-                .clip(RoundedCornerShape(24.dp))
+    val saturation = AdvancedMaterialTuning.saturationForBlurRadius(value) * saturationMultiplier
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            TintedGradientImage(
-                drawableId = R.drawable.dashboard_background,
-                tintColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.fillMaxSize(),
+            Text(
+                text = stringResource(R.string.settings_advanced_material_blur_radius),
+                style = MaterialTheme.typography.bodyMedium,
             )
-
-            val blurRadius = (level.blurRadius / 18f).coerceIn(3f, 18f).dp
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .fillMaxWidth()
-                    .height(76.dp)
-                    .clip(RoundedCornerShape(28.dp))
-            ) {
-                TintedGradientImage(
-                    drawableId = R.drawable.dashboard_background,
-                    tintColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .blur(if (enabled) blurRadius else 0.dp),
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            MaterialTheme.colorScheme.surface.copy(
-                                alpha = if (enabled) 0.52f else 0.82f
-                            )
-                        )
-                )
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    Text(
-                        text = stringResource(levelTitleRes(level)),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = stringResource(
-                            R.string.settings_advanced_material_level_summary,
-                            level.blurRadius.toInt(),
-                            level.blurSaturation
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = stringResource(
+                    R.string.settings_advanced_material_radius_saturation_value,
+                    value.roundToInt(),
+                    saturation,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
-    }
-}
 
-private fun levelTitleRes(level: AdvancedMaterialLevel): Int = when (level) {
-    AdvancedMaterialLevel.CrystalClear -> R.string.settings_advanced_material_level_clear
-    AdvancedMaterialLevel.Light -> R.string.settings_advanced_material_level_light
-    AdvancedMaterialLevel.Soft -> R.string.settings_advanced_material_level_soft
-    AdvancedMaterialLevel.Hazy -> R.string.settings_advanced_material_level_hazy
-    AdvancedMaterialLevel.Deep -> R.string.settings_advanced_material_level_deep
+        Spacer(Modifier.height(4.dp))
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            onValueChangeFinished = onValueChangeFinished,
+            valueRange = AdvancedMaterialTuning.MinBlurRadius..AdvancedMaterialTuning.MaxBlurRadius,
+            steps = 0,
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.24f),
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }

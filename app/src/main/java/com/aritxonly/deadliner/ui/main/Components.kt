@@ -47,22 +47,16 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,12 +64,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -98,11 +90,7 @@ import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.main.simplified.detectSwipeUp
 import com.aritxonly.deadliner.ui.theme.rememberTaskIndicatorColors
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import nl.dionsegijn.konfetti.xml.KonfettiView
-import kotlin.math.abs
-import kotlin.math.max
 
 @Composable
 fun TextPageIndicator(
@@ -421,211 +409,6 @@ fun DDLItemCardSimplified(
                 }
             }
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DDLItemCardSwipeable(
-    title: String,
-    remainingTimeAlt: String,
-    note: String,
-    progress: Float,
-    isStarred: Boolean,
-    status: DDLStatus,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-    onComplete: () -> Unit,
-    onDelete: () -> Unit,
-    useDisabledCompletedStyle: Boolean = false,
-    primaryActionIcon: ImageVector? = null,
-    primaryActionColor: Color? = null,
-    secondaryActionIcon: ImageVector? = null,
-    secondaryActionColor: Color? = null,
-    selectionMode: Boolean = false,
-    selected: Boolean = false,
-    onLongPressSelect: (() -> Unit)? = null,
-    onToggleSelect: (() -> Unit)? = null
-) {
-    val swipeEnabled = !selectionMode
-    val density = LocalDensity.current
-    val minimumSwipeTriggerThresholdPx = with(density) { 120.dp.toPx() }
-    val resolvedPrimaryActionIcon = primaryActionIcon ?: ImageVector.vectorResource(R.drawable.ic_check)
-    val resolvedPrimaryActionColor = primaryActionColor ?: colorResource(R.color.chart_green)
-    val resolvedSecondaryActionIcon = secondaryActionIcon ?: ImageVector.vectorResource(R.drawable.ic_delete)
-    val resolvedSecondaryActionColor = secondaryActionColor ?: colorResource(R.color.chart_red)
-
-    key(
-        swipeEnabled,
-        resolvedPrimaryActionIcon,
-        resolvedPrimaryActionColor,
-        resolvedSecondaryActionIcon,
-        resolvedSecondaryActionColor
-    ) {
-        var widthPx by remember { mutableIntStateOf(1) }
-        var hasTriggered by remember { mutableStateOf(false) }
-        var latestOffsetPx by remember { mutableStateOf(0f) }
-        val dismissState = rememberSwipeToDismissBoxState(
-            positionalThreshold = { totalDistance ->
-                max(totalDistance * 0.5f, minimumSwipeTriggerThresholdPx)
-            },
-            confirmValueChange = { v ->
-                if (!swipeEnabled) return@rememberSwipeToDismissBoxState false
-                val actualTriggerThresholdPx = max(widthPx * 0.5f, minimumSwipeTriggerThresholdPx)
-                if (abs(latestOffsetPx) < actualTriggerThresholdPx) {
-                    return@rememberSwipeToDismissBoxState false
-                }
-                when (v) {
-                    SwipeToDismissBoxValue.EndToStart -> {
-                        if (!hasTriggered) {
-                            hasTriggered = true
-                            onDelete()
-                        }
-                        false
-                    }
-                    SwipeToDismissBoxValue.StartToEnd -> {
-                        if (!hasTriggered) {
-                            hasTriggered = true
-                            onComplete()
-                        }
-                        false
-                    }
-                    else -> false
-                }
-            }
-        )
-        val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
-
-        val rawOffset = runCatching { dismissState.requireOffset() }.getOrElse { 0f }
-        val fraction = (abs(rawOffset) / widthPx.toFloat()).coerceIn(0f, 1f)
-
-        LaunchedEffect(dismissState) {
-            snapshotFlow {
-                val off = runCatching { dismissState.requireOffset() }.getOrElse { 0f }
-                val currentValue = dismissState.currentValue
-                val targetValue = dismissState.targetValue
-                Triple(off, currentValue, targetValue)
-            }
-                .collectLatest { (off, currentValue, targetValue) ->
-                latestOffsetPx = off
-                val atRest = abs(off) < 0.5f &&
-                        currentValue == SwipeToDismissBoxValue.Settled &&
-                        targetValue == SwipeToDismissBoxValue.Settled
-                    if (atRest) {
-                        hasTriggered = false   // 只有真正回到“静止原位”才解锁
-                    }
-                }
-        }
-
-        SwipeToDismissBox(
-            state = dismissState,
-            enableDismissFromStartToEnd = true,
-            enableDismissFromEndToStart = true,
-            backgroundContent = {
-                if (!swipeEnabled) {
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .onSizeChanged { widthPx = it.width }
-                            .clip(shape)
-                    )
-                    return@SwipeToDismissBox
-                }
-
-                val dir = dismissState.dismissDirection
-
-                // 动作色（红=删除；绿=完成）与对齐位置
-                val actionColor: Color
-                val icon: ImageVector
-                val alignment: Alignment
-
-                when (dir) {
-                    SwipeToDismissBoxValue.EndToStart -> {
-                        actionColor = resolvedSecondaryActionColor
-                        icon = resolvedSecondaryActionIcon
-                        alignment = Alignment.CenterEnd
-                    }
-                    SwipeToDismissBoxValue.StartToEnd -> {
-                        actionColor = resolvedPrimaryActionColor
-                        icon = resolvedPrimaryActionIcon
-                        alignment = Alignment.CenterStart
-                    }
-                    else -> {
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .onSizeChanged { widthPx = it.width }
-                                .clip(shape)
-                        )
-                        return@SwipeToDismissBox
-                    }
-                }
-
-                val base = MaterialTheme.colorScheme.surfaceVariant
-                val bg = lerp(base, actionColor.copy(alpha = 0.80f), fraction)
-
-                val iconTint = lerp(
-                    actionColor.copy(alpha = 0.65f),
-                    actionColor,
-                    fraction.coerceIn(0f, 1f)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .onSizeChanged { widthPx = it.width }
-                        .clip(shape)
-                        .background(bg)
-                        .padding(horizontal = 20.dp),
-                    contentAlignment = alignment
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = iconTint
-                    )
-                }
-            },
-            content = {
-                Box(
-                    modifier = modifier
-                        .clip(shape)
-                        .combinedClickable(
-                            onClick = {
-                                if (selectionMode) {
-                                    onToggleSelect?.invoke()
-                                } else {
-                                    onClick?.invoke()
-                                }
-                            },
-                            onLongClick = {
-                                onLongPressSelect?.invoke()
-                            }
-                        )
-                ) {
-                    DDLItemCardSimplified(
-                        title = title,
-                        remainingTimeAlt = remainingTimeAlt,
-                        note = note,
-                        progress = progress,
-                        isStarred = isStarred,
-                        modifier = modifier
-                            .clip(shape)
-                            .onSizeChanged { widthPx = it.width },
-                        onClick = null,
-                        status = status,
-                        useDisabledCompletedStyle = useDisabledCompletedStyle
-                    )
-
-                    if (selectionMode && selected) {
-                        SelectionOverlay(
-                            shape, Modifier
-                            .height(76.dp)
-                        )
-                    }
-                }
-            }
-        )
     }
 }
 
@@ -962,8 +745,15 @@ private fun PreviewDDLItemCard() {
                 isStarred = true,
                 onClick = {},
                 status = DDLStatus.NEAR,
-                onComplete = {},
-                onDelete = {},
+                swipeKey = "preview",
+                activeSwipeKey = null,
+                onActiveSwipeChange = {},
+                primaryActionLabel = "完成",
+                secondaryActionLabel = "放弃",
+                onPrimaryAction = {},
+                onSecondaryAction = {},
+                onEditAction = {},
+                onDeleteAction = {},
                 selectionMode = true,
                 selected = true
             )

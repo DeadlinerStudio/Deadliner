@@ -153,6 +153,7 @@ fun SimplifiedWizard(
 fun SimplifiedMainWizardScreen(
     config: WizardScreenConfig
 ) {
+    var activeSwipeKey by remember { mutableStateOf<String?>(null) }
     val completeHandler: (() -> Unit)? =
         if (config.interaction == InteractionTarget.SwipeTaskRight)
             config.onInteractionSatisfied
@@ -231,14 +232,19 @@ fun SimplifiedMainWizardScreen(
                             progress = 0.4f,
                             isStarred = true,
                             status = DDLStatus.UNDERGO,
+                            swipeKey = "wizard-primary",
+                            activeSwipeKey = activeSwipeKey,
+                            onActiveSwipeChange = { activeSwipeKey = it },
+                            primaryActionLabel = stringResource(R.string.complete),
+                            secondaryActionLabel = stringResource(R.string.task_swipe_give_up),
                             modifier = Modifier.fillMaxWidth(),
                             onClick = null,
-                            onComplete = {
+                            onPrimaryAction = {
                                 completeHandler?.invoke()
                             },
-                            onDelete = {
-                                deleteHandler?.invoke()
-                            }
+                            onSecondaryAction = {},
+                            onEditAction = {},
+                            onDeleteAction = { deleteHandler?.invoke() },
                         )
                     }
 
@@ -250,10 +256,17 @@ fun SimplifiedMainWizardScreen(
                         progress = 0.6f,
                         isStarred = false,
                         status = DDLStatus.NEAR,
+                        swipeKey = "wizard-secondary",
+                        activeSwipeKey = activeSwipeKey,
+                        onActiveSwipeChange = { activeSwipeKey = it },
+                        primaryActionLabel = stringResource(R.string.complete),
+                        secondaryActionLabel = stringResource(R.string.task_swipe_give_up),
                         modifier = Modifier.fillMaxWidth(),
                         onClick = null,
-                        onComplete = {},
-                        onDelete = {}
+                        onPrimaryAction = {},
+                        onSecondaryAction = {},
+                        onEditAction = {},
+                        onDeleteAction = {},
                     )
                 }
 

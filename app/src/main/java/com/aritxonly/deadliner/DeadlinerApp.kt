@@ -20,6 +20,7 @@ import com.aritxonly.deadliner.localutils.ApiKeystore
 import com.aritxonly.deadliner.sync.SyncScheduler
 import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.aritxonly.deadliner.widgets.glance.TaskWidgetRefreshCoordinator
 
 class DeadlinerApp : Application() {
     override fun onCreate() {
@@ -29,6 +30,7 @@ class DeadlinerApp : Application() {
         AIUtils.init(this)
         AppSingletons.init(this)
         KmpV6Runtime.initialize(this)
+        TaskWidgetRefreshCoordinator.start(this)
         AppIconManager.applyCurrentMode(this)
         var startedActivityCount = 0
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {

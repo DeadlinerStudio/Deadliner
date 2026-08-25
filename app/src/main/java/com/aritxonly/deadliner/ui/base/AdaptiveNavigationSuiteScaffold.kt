@@ -86,6 +86,7 @@ private val RailNavigationShape = RoundedCornerShape(12.dp)
 private val CompactOverlayHostPadding = 92.dp
 private val FloatingCompactOverlayHostPadding = 92.dp
 private val FloatingNavigationBottomSpacing = 4.dp
+private val FloatingNavigationEdgeMaskExtraHeight = 32.dp
 private val RailSlotWidth = 92.dp
 
 @Composable
@@ -298,6 +299,7 @@ private fun FloatingNavigationEdgeMask(
     }
     val coverageHeight = MiuixFloatingTabBarDefaults.Height +
         FloatingNavigationBottomSpacing +
+        FloatingNavigationEdgeMaskExtraHeight +
         navigationBarHeight
 
     Box(

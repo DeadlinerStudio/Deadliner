@@ -105,9 +105,9 @@ private enum class DetailAction(
 ) {
     MARK_COMPLETE(R.drawable.ic_done, R.string.mark_complete),
     GIVE_UP(R.drawable.ic_flag, R.string.give_up_task),
-    RESTORE_ACTIVE(R.drawable.ic_back, R.string.restore_active),
+    RESTORE_ACTIVE(R.drawable.ic_undo, R.string.restore_active),
     ARCHIVE(R.drawable.ic_archiving, R.string.archive),
-    UNARCHIVE(R.drawable.ic_back, R.string.unarchive),
+    UNARCHIVE(R.drawable.ic_undo, R.string.unarchive),
     DELETE(R.drawable.ic_delete, R.string.delete),
     SAVE_TO_CALENDAR(R.drawable.ic_event, R.string.save_and_add_to_calendar)
 }

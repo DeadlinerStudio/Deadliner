@@ -51,10 +51,10 @@ fun DeadlinerTheme(
         tokens = tokens,
         darkTheme = darkTheme,
     )
-    val advancedMaterialSpec = AdvancedMaterialSpec(
+    val advancedMaterialSpec = createAdvancedMaterialSpec(
         enabled = appearance.useAdvancedMaterial,
-        blurRadius = appearance.advancedMaterialLevel.blurRadius,
-        blurSaturation = appearance.advancedMaterialLevel.blurSaturation,
+        blurRadius = appearance.advancedMaterialBlurRadius,
+        fineTuning = appearance.advancedMaterialFineTuning,
     )
 
     CompositionLocalProvider(

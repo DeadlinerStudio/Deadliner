@@ -19,6 +19,7 @@ import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.widgets.HabitMiniWidget
 import com.aritxonly.deadliner.widgets.LargeDeadlineWidget
 import com.aritxonly.deadliner.widgets.MultiDeadlineWidget
+import com.aritxonly.deadliner.widgets.glance.TaskWidgetRefreshCoordinator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -104,5 +105,7 @@ class MainActivity : DeadlinerAppCompatActivity() {
         for (habitMiniWidgetId in habitMiniWidgetIds) {
             HabitMiniWidget.updateWidget(this, appWidgetManager, habitMiniWidgetId)
         }
+
+        TaskWidgetRefreshCoordinator.requestRefresh(this)
     }
 }

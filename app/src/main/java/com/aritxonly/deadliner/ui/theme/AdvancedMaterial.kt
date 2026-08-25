@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import com.aritxonly.deadliner.model.AdvancedMaterialFineTuning
+import com.aritxonly.deadliner.model.AdvancedMaterialTuning
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.BlurBlendMode
@@ -21,17 +23,20 @@ import top.yukonga.miuix.kmp.blur.textureBlur
 data class AdvancedMaterialSpec(
     val enabled: Boolean = false,
     val blurEnabled: Boolean = true,
-    val blurRadius: Float = 256f,
+    val blurRadius: Float = AdvancedMaterialTuning.DefaultBlurRadius,
     val blurRadiusX: Float? = null,
     val blurRadiusY: Float? = null,
-    val noiseCoefficient: Float = 0.09f,
+    val noiseCoefficient: Float = AdvancedMaterialFineTuning.Default.noiseCoefficient,
     val blurBlendColors: List<BlendColorEntry> = emptyList(),
-    val blurBrightness: Float = 0f,
-    val blurContrast: Float = 1f,
-    val blurSaturation: Float = 0.95f,
+    val blurBrightness: Float = AdvancedMaterialFineTuning.Default.brightness,
+    val blurContrast: Float = AdvancedMaterialFineTuning.Default.contrast,
+    val blurSaturation: Float = AdvancedMaterialTuning.saturationForBlurRadius(
+        AdvancedMaterialTuning.DefaultBlurRadius,
+    ) * AdvancedMaterialFineTuning.Default.saturationMultiplier,
     val blurContentBlendMode: BlendMode = BlendMode.SrcOver,
-    val navigationTintAlpha: Float = 0.72f,
-    val topBarTintAlpha: Float = 0.68f,
+    val navigationTintAlpha: Float = AdvancedMaterialFineTuning.Default.navigationTintAlpha,
+    val topBarTintAlpha: Float = AdvancedMaterialFineTuning.Default.topBarTintAlpha,
+    val fineTuning: AdvancedMaterialFineTuning = AdvancedMaterialFineTuning.Default,
 ) {
     val resolvedBlurRadius: Float
         get() = blurRadius.coerceIn(0f, BlurDefaults.MaxBlurRadius)
@@ -47,6 +52,26 @@ data class AdvancedMaterialSpec(
 
     val textureBlurEnabled: Boolean
         get() = enabled && blurEnabled
+}
+
+fun createAdvancedMaterialSpec(
+    enabled: Boolean,
+    blurRadius: Float,
+    fineTuning: AdvancedMaterialFineTuning,
+): AdvancedMaterialSpec {
+    val tuning = fineTuning.normalized()
+    return AdvancedMaterialSpec(
+        enabled = enabled,
+        blurRadius = AdvancedMaterialTuning.normalizeBlurRadius(blurRadius),
+        noiseCoefficient = tuning.noiseCoefficient,
+        blurBrightness = tuning.brightness,
+        blurContrast = tuning.contrast,
+        blurSaturation = AdvancedMaterialTuning.saturationForBlurRadius(blurRadius) *
+            tuning.saturationMultiplier,
+        navigationTintAlpha = tuning.navigationTintAlpha,
+        topBarTintAlpha = tuning.topBarTintAlpha,
+        fineTuning = tuning,
+    )
 }
 
 @Composable

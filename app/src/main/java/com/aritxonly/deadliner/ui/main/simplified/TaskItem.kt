@@ -26,6 +26,7 @@ import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.main.DDLItemCardSwipeable
 import com.aritxonly.deadliner.ui.main.shared.computeProgress
 import com.aritxonly.deadliner.ui.iconResource
+import com.aritxonly.deadliner.ui.theme.rememberTaskSwipeActionColors
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.LocalDateTime
@@ -65,8 +66,11 @@ fun AnimatedItem(
 fun TaskItem(
     item: Task,
     activity: MainActivity,
+    activeSwipeTaskId: String?,
+    onActiveSwipeTaskChange: (String?) -> Unit,
     applyTaskAction: (TaskAction) -> Unit,
     celebrate: () -> Unit,
+    deleteTask: () -> Unit,
     selectionMode: Boolean = false,
     selected: Boolean = false,
     onLongPressSelect: (() -> Unit)? = null,
@@ -74,10 +78,12 @@ fun TaskItem(
     onAbandonDialogVisibilityChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
+    val swipeActionColors = rememberTaskSwipeActionColors()
     var showGiveUpDialog by rememberSaveable(item.uid) { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable(item.uid) { mutableStateOf(false) }
 
-    LaunchedEffect(showGiveUpDialog) {
-        onAbandonDialogVisibilityChange(showGiveUpDialog)
+    LaunchedEffect(showGiveUpDialog, showDeleteDialog) {
+        onAbandonDialogVisibilityChange(showGiveUpDialog || showDeleteDialog)
     }
 
     val startTime = item.startAt?.let(GlobalUtils::parseDateTime)
@@ -110,13 +116,28 @@ fun TaskItem(
         else -> null
     }
     val primaryIcon = when (primaryAction) {
-        TaskAction.RESTORE_ACTIVE -> iconResource(R.drawable.ic_back)
+        TaskAction.RESTORE_ACTIVE -> iconResource(R.drawable.ic_undo)
         else -> iconResource(R.drawable.ic_done)
     }
     val secondaryIcon = when (secondaryAction) {
         TaskAction.MARK_ARCHIVE -> iconResource(R.drawable.ic_archiving)
         TaskAction.MARK_GIVE_UP -> iconResource(R.drawable.ic_flag)
         else -> iconResource(R.drawable.ic_delete)
+    }
+    val primaryLabel = when (item.state) {
+        TaskState.ACTIVE -> stringResource(R.string.complete)
+        TaskState.COMPLETED -> stringResource(R.string.undo)
+        TaskState.ABANDONED -> stringResource(R.string.task_swipe_restore)
+        else -> ""
+    }
+    val secondaryLabel = when (item.state) {
+        TaskState.ACTIVE -> stringResource(R.string.task_swipe_give_up)
+        TaskState.COMPLETED, TaskState.ABANDONED -> stringResource(R.string.archive)
+        else -> ""
+    }
+    val openDetails = {
+        val intent = DeadlineDetailActivity.newIntent(context, item.uid)
+        activity.startActivity(intent)
     }
 
     DDLItemCardSwipeable(
@@ -127,11 +148,13 @@ fun TaskItem(
         isStarred = item.isStarred,
         status = status,
         useDisabledCompletedStyle = item.state == TaskState.ABANDONED,
-        onClick = {
-            val intent = DeadlineDetailActivity.newIntent(context, item.uid)
-            activity.startActivity(intent)
-        },
-        onComplete = {
+        swipeKey = item.uid,
+        activeSwipeKey = activeSwipeTaskId,
+        onActiveSwipeChange = onActiveSwipeTaskChange,
+        primaryActionLabel = primaryLabel,
+        secondaryActionLabel = secondaryLabel,
+        onClick = openDetails,
+        onPrimaryAction = {
             GlobalUtils.triggerVibration(activity, 100)
             val action = primaryAction ?: return@DDLItemCardSwipeable
             applyTaskAction(action)
@@ -142,7 +165,7 @@ fun TaskItem(
                 Toast.makeText(activity, R.string.toast_restored_active, Toast.LENGTH_SHORT).show()
             }
         },
-        onDelete = {
+        onSecondaryAction = {
             GlobalUtils.triggerVibration(activity, 200)
             val action = secondaryAction ?: return@DDLItemCardSwipeable
             if (action == TaskAction.MARK_GIVE_UP) {
@@ -156,8 +179,23 @@ fun TaskItem(
                 ).show()
             }
         },
+        onEditAction = openDetails,
+        onDeleteAction = {
+            GlobalUtils.triggerVibration(activity, 200)
+            showDeleteDialog = true
+        },
         primaryActionIcon = primaryIcon,
+        primaryActionColor = if (item.state == TaskState.ABANDONED) {
+            swipeActionColors.giveUp
+        } else {
+            swipeActionColors.complete
+        },
         secondaryActionIcon = secondaryIcon,
+        secondaryActionColor = if (item.state == TaskState.ACTIVE) {
+            swipeActionColors.giveUp
+        } else {
+            swipeActionColors.archive
+        },
         selectionMode = selectionMode,
         selected = selected,
         onLongPressSelect = onLongPressSelect,
@@ -185,6 +223,33 @@ fun TaskItem(
             },
             dismissButton = {
                 androidx.compose.material3.TextButton(onClick = { showGiveUpDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            show = true,
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.alert_delete_title)) },
+            text = { Text(stringResource(R.string.alert_delete_message)) },
+            miuixTitle = context.getString(R.string.alert_delete_title),
+            miuixSummary = context.getString(R.string.alert_delete_message),
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        deleteTask()
+                        Toast.makeText(activity, R.string.toast_deletion, Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    Text(stringResource(R.string.accept))
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showDeleteDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }

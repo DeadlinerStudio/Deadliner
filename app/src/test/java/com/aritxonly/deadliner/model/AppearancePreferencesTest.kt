@@ -33,5 +33,7 @@ class AppearancePreferencesTest {
     fun advancedMaterialSoftLevelMatchesDefaultSpecValues() {
         assertEquals(128f, AdvancedMaterialLevel.Soft.blurRadius)
         assertEquals(1.00f, AdvancedMaterialLevel.Soft.blurSaturation)
+        assertEquals(AdvancedMaterialLevel.Light, AppearancePreferences().advancedMaterialLevel)
+        assertEquals(92f, AppearancePreferences().advancedMaterialBlurRadius, 0.0001f)
     }
 }

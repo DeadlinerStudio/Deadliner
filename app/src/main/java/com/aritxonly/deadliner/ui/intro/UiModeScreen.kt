@@ -181,7 +181,8 @@ fun AdvancedMaterialIntroScreen() {
         bottomSpacer = 8.dp,
     ) {
         AdvancedMaterialPreviewCard(
-            level = appearance.advancedMaterialLevel,
+            blurRadius = appearance.advancedMaterialBlurRadius,
+            fineTuning = appearance.advancedMaterialFineTuning,
             enabled = appearance.useAdvancedMaterial,
             modifier = Modifier.padding(top = 2.dp, bottom = 2.dp),
         )

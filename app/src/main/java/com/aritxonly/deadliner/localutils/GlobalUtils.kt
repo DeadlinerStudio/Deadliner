@@ -22,6 +22,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.AppIconMode
 import com.aritxonly.deadliner.model.AppThemeStyle
 import com.aritxonly.deadliner.model.AdvancedMaterialLevel
+import com.aritxonly.deadliner.model.AdvancedMaterialTuning
 import com.aritxonly.deadliner.model.AppearanceColorSource
 import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.AppearancePreferences
@@ -315,7 +316,12 @@ object GlobalUtils {
         val advancedMaterial = sharedPreferences.getBoolean("advanced_material", false)
         val advancedMaterialLevel = sharedPreferences.getString("advanced_material_level", null)
             ?.let(AdvancedMaterialLevel::fromKey)
-            ?: AdvancedMaterialLevel.Soft
+            ?: AdvancedMaterialLevel.Light
+        val advancedMaterialBlurRadius = AdvancedMaterialFineTuningPreferences.readBlurRadius(
+            preferences = sharedPreferences,
+            legacyLevel = advancedMaterialLevel,
+        )
+        val advancedMaterialFineTuning = AdvancedMaterialFineTuningPreferences.read(sharedPreferences)
         val legacyHideDivider = sharedPreferences.getBoolean("hide_divider", false)
         val hasModernHideDivider = sharedPreferences.contains("modern_hide_divider")
         val hasVividHideDivider = sharedPreferences.contains("vivid_hide_divider")
@@ -360,6 +366,8 @@ object GlobalUtils {
             useMiuixFloatingTabBar = useMiuixFloatingTabBar,
             useAdvancedMaterial = advancedMaterial,
             advancedMaterialLevel = advancedMaterialLevel,
+            advancedMaterialBlurRadius = advancedMaterialBlurRadius,
+            advancedMaterialFineTuning = advancedMaterialFineTuning,
             modernHideDivider = modernHideDivider,
             vividHideDivider = vividHideDivider,
             useSettingsHomepageColoredIcons = settingsHomepageColoredIcons,
@@ -387,6 +395,11 @@ object GlobalUtils {
             putBoolean("miuix_floating_tab_bar", appearance.useMiuixFloatingTabBar)
             putBoolean("advanced_material", appearance.useAdvancedMaterial)
             putString("advanced_material_level", appearance.advancedMaterialLevel.key)
+            putFloat(
+                "advanced_material_blur_radius",
+                AdvancedMaterialTuning.normalizeBlurRadius(appearance.advancedMaterialBlurRadius),
+            )
+            AdvancedMaterialFineTuningPreferences.write(this, appearance.advancedMaterialFineTuning)
             putBoolean("modern_hide_divider", appearance.modernHideDivider)
             putBoolean("vivid_hide_divider", appearance.vividHideDivider)
             putBoolean("hide_divider", appearance.activeHideDivider)
@@ -705,7 +718,7 @@ object GlobalUtils {
     var advancedMaterialLevel: AdvancedMaterialLevel
         get() = appearancePreferences.advancedMaterialLevel
         set(value) {
-            updateAppearance { it.copy(advancedMaterialLevel = value) }
+            updateAppearance { AdvancedMaterialTuning.withLevel(it, value) }
         }
 
     private var _seedColorFlow: MutableStateFlow<String?>? = null

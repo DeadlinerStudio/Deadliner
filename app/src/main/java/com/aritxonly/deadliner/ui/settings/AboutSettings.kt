@@ -3,6 +3,7 @@ package com.aritxonly.deadliner.ui.settings
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -100,7 +101,10 @@ fun AboutSettingsScreen(
                     supportingText = "v" + context.getAppVersion(),
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .clickable {
+                            AdvancedMaterialFineTuningAccess.registerVersionTap()
+                        },
                     trailingContent = null
                 )
 

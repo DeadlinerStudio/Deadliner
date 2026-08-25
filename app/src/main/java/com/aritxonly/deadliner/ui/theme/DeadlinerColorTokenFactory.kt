@@ -268,33 +268,26 @@ object DeadlinerColorTokenFactory {
         )
     }
 
-    private fun createHyperOsNeutralPalette(darkTheme: Boolean): MiuixNeutralPalette {
+    internal fun createHyperOsNeutralPalette(darkTheme: Boolean): MiuixNeutralPalette {
         val defaults = if (darkTheme) darkMiuixColorScheme() else lightMiuixColorScheme()
-        val supportingTextColor = lerp(
-            defaults.onSurfaceVariantSummary,
-            defaults.onSurface,
-            if (darkTheme) 0.10f else 0.18f,
-        )
-        val backgroundVariantColor = lerp(
-            defaults.onBackgroundVariant,
-            defaults.onBackground,
-            if (darkTheme) 0.08f else 0.12f,
-        )
+        val windowBackground = hyperOsWindowBackground(darkTheme)
+        val surfaceVariant = hyperOsSurfaceVariant(darkTheme)
+        val textColors = hyperOsTextColors(darkTheme)
         return MiuixNeutralPalette(
-            background = defaults.background,
-            onBackground = defaults.onBackground,
-            onBackgroundVariant = backgroundVariantColor,
-            surface = defaults.surface,
-            onSurface = defaults.onSurface,
-            surfaceVariant = defaults.surfaceVariant,
-            onSurfaceVariant = supportingTextColor,
-            onSurfaceVariantSummary = supportingTextColor,
-            onSurfaceVariantActions = defaults.onSurfaceVariantActions,
+            background = windowBackground,
+            onBackground = textColors.primary,
+            onBackgroundVariant = textColors.secondary,
+            surface = windowBackground,
+            onSurface = textColors.primary,
+            surfaceVariant = surfaceVariant,
+            onSurfaceVariant = textColors.secondary,
+            onSurfaceVariantSummary = textColors.secondary,
+            onSurfaceVariantActions = textColors.primary,
             surfaceContainer = defaults.surfaceContainer,
-            surfaceContainerLow = defaults.surface,
+            surfaceContainerLow = windowBackground,
             surfaceContainerHigh = defaults.surfaceContainerHigh,
             surfaceContainerHighest = defaults.surfaceContainerHighest,
-            surfaceContainerLowest = defaults.background,
+            surfaceContainerLowest = windowBackground,
             surfaceBright = defaults.surfaceVariant,
             surfaceDim = defaults.surfaceContainerHigh,
             outline = defaults.outline,
@@ -328,5 +321,28 @@ object DeadlinerColorTokenFactory {
         val outline: Color,
         val outlineVariant: Color,
         val scrim: Color,
+    )
+}
+
+internal fun hyperOsWindowBackground(darkTheme: Boolean): Color =
+    if (darkTheme) Color(0xFF000000) else Color(0xFFF3F3F3)
+
+internal fun hyperOsSurfaceVariant(darkTheme: Boolean): Color =
+    if (darkTheme) Color(0xFF333333) else Color(0xFFECECEC)
+
+internal data class HyperOsTextColors(
+    val primary: Color,
+    val secondary: Color,
+)
+
+internal fun hyperOsTextColors(darkTheme: Boolean): HyperOsTextColors = if (darkTheme) {
+    HyperOsTextColors(
+        primary = Color(0xFFF2F2F2),
+        secondary = Color(0xFFA6A6A6),
+    )
+} else {
+    HyperOsTextColors(
+        primary = Color(0xFF191919),
+        secondary = Color(0xFF6F6F6F),
     )
 }

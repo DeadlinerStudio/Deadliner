@@ -4,7 +4,8 @@
 
 - `contract`：`MiuixFloatingTabItem` 定义稳定的 key、标签及选中/未选中图标。
 - `presentation`：`MiuixFloatingTabBar` 负责布局、选中胶囊动画、交互语义和 MIUIX 中性色。
-- `material`：组件内部适配 `AdvancedMaterialSpec`、`LayerBackdrop`、纹理模糊与无 backdrop 降级背景。
+- `shadow`：外层容器在 presentation 内使用不参与测量的统一 ambient/spot 黑色阴影配方，不侵入玻璃材质 recipe 或布局 contract。
+- `material`：共享 `ui/material/glass` 模块适配 `AdvancedMaterialSpec`、`LayerBackdrop`、API 33+ 单链模糊透镜与无 backdrop 降级背景；导航组件只选择 recipe。
 - `preview`：独立 Preview 文件构造示例导航项、背景内容和浅深色主题，不进入生产调用链。
 - `preference`：`AppearancePreferences` 与 `GlobalUtils` 负责开关默认值、持久化与响应式更新。
 - `adaptive integration`：`AdaptiveNavigationSuiteScaffold` 负责 Compact 宽度判定、Backdrop 宿主和旧导航回退；`ModernHost` 仅传入设置值。

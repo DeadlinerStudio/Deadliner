@@ -148,6 +148,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.core.animation)
     implementation(libs.androidx.ui.viewbinding)
+    implementation(libs.androidx.glance.appwidget)
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("androidx.test:core:1.6.1")
