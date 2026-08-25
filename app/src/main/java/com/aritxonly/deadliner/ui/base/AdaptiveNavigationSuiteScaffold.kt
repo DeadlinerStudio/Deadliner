@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
@@ -55,6 +56,7 @@ import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBar
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBarDefaults
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabItem
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabLayout
+import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
@@ -115,21 +117,31 @@ fun AdaptiveNavigationSuiteScaffold(
         designSystem == AppDesignSystem.MIUIX &&
         isCompactWidth &&
         navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
+    val observeTopBarScroll = useImmersiveExperience && designSystem == AppDesignSystem.MIUIX
+    val topBarScrollObserver = rememberTopBarMaterialScrollObserver(resetKey = selectedKey)
+    val observedModifier = if (observeTopBarScroll) {
+        modifier.nestedScroll(topBarScrollObserver.nestedScrollConnection)
+    } else {
+        modifier
+    }
+    val topBarScrollProgress = if (observeTopBarScroll) topBarScrollObserver.progress else null
 
     if (shouldUseImmersiveExperience) {
         val backdrop = if (advancedMaterial.enabled) rememberLayerBackdrop() else null
-        ImmersiveMiuixCompactNavigationScaffold(
-            items = items,
-            selectedKey = selectedKey,
-            onItemSelected = onItemSelected,
-            backdrop = backdrop,
-            modifier = modifier,
-            topBar = topBar,
-            legacyTopBar = legacyTopBar,
-            snackbarHost = snackbarHost,
-            floatingActionButton = floatingActionButton,
-            content = content,
-        )
+        CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+            ImmersiveMiuixCompactNavigationScaffold(
+                items = items,
+                selectedKey = selectedKey,
+                onItemSelected = onItemSelected,
+                backdrop = backdrop,
+                modifier = observedModifier,
+                topBar = topBar,
+                legacyTopBar = legacyTopBar,
+                snackbarHost = snackbarHost,
+                floatingActionButton = floatingActionButton,
+                content = content,
+            )
+        }
         return
     }
 
@@ -143,55 +155,61 @@ fun AdaptiveNavigationSuiteScaffold(
         } else {
             null
         }
-        LegacyWideNavigationScaffold(
-            items = items,
-            selectedKey = selectedKey,
-            onItemSelected = onItemSelected,
-            designSystem = designSystem,
-            backdrop = backdrop,
-            modifier = modifier,
-            topBar = topBar,
-            legacyTopBar = legacyTopBar,
-            snackbarHost = snackbarHost,
-            floatingActionButton = floatingActionButton,
-            content = content,
-        )
+        CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+            LegacyWideNavigationScaffold(
+                items = items,
+                selectedKey = selectedKey,
+                onItemSelected = onItemSelected,
+                designSystem = designSystem,
+                backdrop = backdrop,
+                modifier = observedModifier,
+                topBar = topBar,
+                legacyTopBar = legacyTopBar,
+                snackbarHost = snackbarHost,
+                floatingActionButton = floatingActionButton,
+                content = content,
+            )
+        }
         return
     }
 
     if (!advancedMaterial.enabled) {
-        LegacyCompactNavigationScaffold(
+        CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+            LegacyCompactNavigationScaffold(
+                items = items,
+                selectedKey = selectedKey,
+                onItemSelected = onItemSelected,
+                designSystem = designSystem,
+                useHorizontalItems = navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium,
+                modifier = observedModifier,
+                topBar = topBar,
+                legacyTopBar = legacyTopBar,
+                snackbarHost = snackbarHost,
+                floatingActionButton = floatingActionButton,
+                content = content,
+            )
+        }
+        return
+    }
+
+    val backdrop = rememberLayerBackdrop()
+    CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+        AdvancedCompactNavigationScaffold(
             items = items,
             selectedKey = selectedKey,
             onItemSelected = onItemSelected,
             designSystem = designSystem,
+            advancedMaterial = advancedMaterial,
             useHorizontalItems = navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium,
-            modifier = modifier,
+            backdrop = backdrop,
+            modifier = observedModifier,
             topBar = topBar,
             legacyTopBar = legacyTopBar,
             snackbarHost = snackbarHost,
             floatingActionButton = floatingActionButton,
             content = content,
         )
-        return
     }
-
-    val backdrop = rememberLayerBackdrop()
-    AdvancedCompactNavigationScaffold(
-        items = items,
-        selectedKey = selectedKey,
-        onItemSelected = onItemSelected,
-        designSystem = designSystem,
-        advancedMaterial = advancedMaterial,
-        useHorizontalItems = navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium,
-        backdrop = backdrop,
-        modifier = modifier,
-        topBar = topBar,
-        legacyTopBar = legacyTopBar,
-        snackbarHost = snackbarHost,
-        floatingActionButton = floatingActionButton,
-        content = content,
-    )
 }
 
 @Composable

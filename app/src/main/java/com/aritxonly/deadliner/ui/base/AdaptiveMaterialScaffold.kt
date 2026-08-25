@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
@@ -35,6 +36,7 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
+import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
@@ -63,6 +65,12 @@ fun AdaptiveMaterialScaffold(
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val immersiveExperienceEnabled = LocalImmersiveExperienceEnabled.current
+    val topBarScrollObserver = rememberTopBarMaterialScrollObserver()
+    val topBarScrollProgress = if (immersiveExperienceEnabled) {
+        topBarScrollObserver.progress
+    } else {
+        null
+    }
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val designSystem = LocalAppDesignSystem.current
@@ -83,9 +91,18 @@ fun AdaptiveMaterialScaffold(
     val surfaceTint = tintBaseColor.copy(alpha = advancedMaterial.topBarTintAlpha)
     val blurColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
 
-    ProvideAdvancedMaterialDialogBlurHost {
-        Scaffold(
-        modifier = modifier.advancedMaterialDialogBlurHost(),
+    CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+        ProvideAdvancedMaterialDialogBlurHost {
+            Scaffold(
+        modifier = modifier
+            .let { scaffoldModifier ->
+                if (immersiveExperienceEnabled) {
+                    scaffoldModifier.nestedScroll(topBarScrollObserver.nestedScrollConnection)
+                } else {
+                    scaffoldModifier
+                }
+            }
+            .advancedMaterialDialogBlurHost(),
         topBar = {
             if (backdrop != null) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
@@ -198,6 +215,7 @@ fun AdaptiveMaterialScaffold(
                 }
             }
         }
+        }
     }
-    }
+}
 }

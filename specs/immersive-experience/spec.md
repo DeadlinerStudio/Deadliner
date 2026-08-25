@@ -29,7 +29,7 @@
 3. 用户按住选中胶囊时胶囊轻微缩小；水平拖动时胶囊连续跟手并随速度轻度拉伸，松手后准确落到最近的可用 Tab，且不会先吸附后再次重播旧位置到新位置的动画。
 4. 用户点击非选中 Tab 时，胶囊以弹性动画连续移动到目标；系统或业务代码改变当前 Tab 时也只有一次动画。
 5. 用户进入任意 MIUIX 页面时，标题栏渐进模糊覆盖到屏幕最顶端；大标题完全展开时按钮没有玻璃底，开始滚动并折叠后玻璃材质平滑显现。
-6. 已经是 Small/Center 形态的标题栏视为折叠态；主列表页则使用自身附件栏折叠状态驱动按钮材质，初始展开状态不显示玻璃底。
+6. Small/Center/Large 三种标题栏初始都不显示按钮玻璃底；页面向上滚动超过轻微阈值后才渐显，回到顶部时再平滑消失。主列表页使用自身附件栏折叠状态驱动同一动画。
 
 ## 验收标准
 
@@ -45,18 +45,24 @@
 - 渐进背景必须从窗口 y=0 开始覆盖状态栏区域，顶部不得残留透明或纯色空隙；底部继续以 28dp 渐变到透明。
 - 标题、图标和点击区域保持完全不透明；高级材质不可用时以渐变 Tint 降级。
 - 顶栏玻璃按钮为独立圆形容器，复用柔光玻璃配方与当前 Backdrop；材质 alpha 与前景 content 分层绘制。
-- Large TopAppBar 的按钮材质使用 Material3/MIUIX `collapsedFraction`：展开端保持 0，滚动超过轻微阈值后平滑升至 1；Small/Center 默认视为折叠态。
+- Large TopAppBar 的按钮材质优先使用 Material3/MIUIX `collapsedFraction`；Small/Center 使用 Scaffold 观测到的垂直滚动距离。三种模式初始值都必须为 0，超过轻微阈值后平滑升至 1。
 - 主列表页显式用附件栏折叠状态覆盖按钮材质进度，未滚动时为 0，折叠后动画到 1。
+- 动画由通用 `TopAppBar` 统一负责；页面只提供目标进度，不能因离散折叠状态切换而瞬间跳变。
+- 顶栏按钮保留独立 Backdrop 采样与完整柔光玻璃效果；顶栏渐进背景使用同一个已注册的 Backdrop，但只执行一次固定小半径高斯模糊和一次 RuntimeShader 渐隐，不调用高级材质、柔光玻璃折射或可调材质参数。
+- 渐进顶栏的模糊输出与 Surface tint 必须在同一条效果链中由顶部完整强度平滑降至底部 0 alpha；不得在模糊层外再叠加一层高级材质或不透明背景。
+- 在真实渐进 Backdrop 之上额外绘制一层克制的 Surface 透明度渐变遮罩：顶部轻度着色，向下连续衰减到完全透明；该遮罩只覆盖背景材质，不能改变标题和按钮透明度。
+- Android 13/API 33 及以上使用 Backdrop + RuntimeShader；运行时 Shader 不可用或没有 Backdrop 时降级为同方向的半透明 Surface 渐变，标题、按钮和点击区域始终位于材质层之上。
 - 偏好迁移、拖动目标解析与运动参数映射有 JVM 回归测试；Android Kotlin 编译、规格校验、格式检查和大文件扫描通过。
 
 ## 风险与约束
 
 - 当前 `AdaptiveNavigationSuiteScaffold.kt`、`ModernHost.kt` 等文件职责较多；新材质与运动状态必须落入独立文件，不继续堆积核心文件。
 - PointerInput、外部 selectedKey 和 Animatable 必须由单一运动状态协调，避免拖动和业务状态并发抢写位置。
-- Backdrop 只能注册在实际内容之上一次；渐进顶栏与底栏共享同一个 `LayerBackdrop`，不能重复捕获。
+- Backdrop 只能注册在实际内容之上一次；渐进顶栏、顶栏按钮与底栏共享同一个 `LayerBackdrop`，各自绘制效果但不能重复捕获。
 - 连续胶囊复用项目已依赖的 MIUIX Shapes，不引入 NexioSchedule 使用的额外 Capsule/Backdrop 实现。
 - 重构前完整工作区已提交为 `c2f3c23`，用于安全回退。
 - 全局标题栏改造前，上一轮沉浸体验实现已提交为 `387e2b5`。
+- 统一滚动显现语义前，全局渐进标题栏实现已提交为 `e021405`。
 
 ## 实现与验证记录
 
@@ -74,3 +80,13 @@
 - `FloatingTabMotionTest` 4 项、`ImmersiveExperiencePreferenceTest` 3 项、`GlassMaterialRecipeTuningTest` 2 项全部通过；Android Kotlin 编译成功。规格、格式与大文件扫描通过，新增文件均低于 1000 行，既有 `GlobalUtils.kt` 保持重构前 1244 行不增长。
 - 全局标题栏阶段新增 `TopBarMaterialProgressTest` 3 项；连同上述沉浸体验回归共 12 项通过，Android Kotlin 编译再次通过，`git diff --check` 无格式错误，变更涉及的既有大文件仍低于 1000 行且 `GlobalUtils.kt` 仍为 1244 行。
 - 完整 `testDebugUnitTest` 共执行 53 项，其中 2 个既有跨模块测试因测试运行时字节码版本不兼容抛出 `UnsupportedClassVersionError`（`ToolCallAdapterTest`、`V5DataMigratorTest`）；本功能定向测试无失败。
+- Small/Center 不再被视为天然折叠态；`AdaptiveMaterialScaffold` 与 `AdaptiveNavigationSuiteScaffold` 使用不消费事件的 nested-scroll 观察器累计滚动距离，12dp 前保持隐藏，12–48dp 使用 smoothstep 映射目标进度，并在导航页面切换时重置观察状态。
+- `TopAppBar` 对所有来源的目标进度统一执行 280ms `FastOutSlowInEasing` 动画；主列表只传递 0/1 折叠目标，不再在页面层重复动画。
+- 顶栏背景曾收敛为“半透明渐变遮罩”路径；在验证 NexioSchedule 的轻量实现后，最终改为共享 Backdrop 上的固定 4dp 高斯模糊，再由单个 RuntimeShader 同时渐隐模糊输出与 Surface tint。它仍不调用 `advancedTextureBlur` 或读取高级材质参数。
+- 顶栏圆形按钮恢复独立 Backdrop effect 与完整柔光玻璃光学链，渐进背景和按钮材质不再共享同一高级材质渲染层。
+- 新增滚动映射 3 项测试，连同进度、导航运动、玻璃参数和偏好迁移共 16 项定向回归通过；Kotlin 编译、规格校验与 `git diff --check` 通过。变更 Kotlin 文件最大 846 行，未超过 1000 行守门线。
+- `ProgressiveTopBarMaterial` 最终从 `LocalAdvancedMaterialBackdrop` 读取已注册的共享捕获层：API 33+ 执行固定 4dp `BlurEffect`，随后由单个 RuntimeShader 在 60%/70% 高度分别开始渐隐模糊与 Surface tint，强度固定为 0.20；缺少 Backdrop 或 Shader 时使用四段 Surface 渐变降级。
+- 导航和 action 的 `SoftGlassSurface`/`SoftGlassIconButton` 继续独立采样同一个 Backdrop 并保留完整折射链，顶栏背景不读取 `AdvancedMaterialSpec`，因此不会跟随高级材质模糊半径变化或形成双重高级材质。
+- 新增 `ProgressiveTopBarMaterialTest` 3 项；连同顶栏进度、滚动观察、底栏运动、玻璃配方和偏好迁移共 19 项定向回归全部通过。Android Kotlin 编译、规格校验、`git diff --check` 与手动大文件扫描通过；变更 Kotlin 文件最大 846 行。
+- 真实 Backdrop 分支在 Shader 输出之上新增独立 Surface alpha 遮罩：顶部 0.14，中段 55% 为 0.075，尾段 82% 为 0.025，底部归零；降级渐变不重复叠加，标题和按钮仍位于两层背景之上。
+- `ProgressiveTopBarMaterialTest` 增加遮罩强度与单调衰减约束，沉浸体验定向回归共 20 项通过；Android Kotlin 编译成功。

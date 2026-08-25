@@ -38,3 +38,33 @@
 - [x] 让柔光玻璃 Surface 分离材质 alpha 与不透明前景
 - [x] 接入 Material3/MIUIX 折叠进度与主列表显式折叠状态
 - [x] 补充进度映射测试并完成编译、规格和大文件验证
+
+## 阶段 6：统一滚动显现与材质层次
+
+- [x] 冻结 Small/Center 默认隐藏、滚动阈值、公共动画与单 Backdrop 规则
+- [x] 创建上一轮实现回退提交 `e021405`
+- [x] 新增不消费事件的通用顶栏滚动距离观察器
+- [x] 将所有模式的默认按钮材质目标改为 0，并统一由公共顶栏执行动画
+- [x] 让顶栏按钮复用父级渐进模糊基底，移除第二次 Backdrop 采样
+- [x] 更新进度映射测试并完成编译、规格与大文件验证
+
+## 阶段 7：分离顶栏遮罩与按钮 Backdrop
+
+- [x] 冻结按钮保留 Backdrop、顶栏背景使用单层半透明渐变遮罩的规则
+- [x] 从 `ProgressiveTopBarMaterial` 移除高级材质与 Backdrop 渲染
+- [x] 恢复顶栏导航及 action 按钮的独立 Backdrop 柔光玻璃
+- [x] 完成编译、规格与大文件验证
+
+## 阶段 8：轻量渐进 Backdrop 模糊
+
+- [x] 调研 NexioSchedule 的固定模糊半径与 RuntimeShader 渐隐结构
+- [x] 冻结共享单一 Backdrop、顶栏轻量效果链和按钮完整玻璃链的边界
+- [x] 将 `ProgressiveTopBarMaterial` 改为固定 4dp Blur + Shader alpha/tint 渐隐
+- [x] 补充渐变参数与降级行为的 JVM 测试
+- [x] 完成 Kotlin 编译、定向回归、规格、格式与大文件验证并回写结果
+
+## 阶段 9：渐进模糊透明遮罩
+
+- [x] 冻结遮罩仅叠加于真实 Backdrop、前景保持不透明的层次规则
+- [x] 在渐进模糊之上加入轻量 Surface alpha 渐变
+- [x] 补充遮罩参数测试并完成编译、定向回归与静态验证

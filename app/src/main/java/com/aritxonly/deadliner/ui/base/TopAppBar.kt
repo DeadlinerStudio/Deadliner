@@ -1,5 +1,8 @@
 package com.aritxonly.deadliner.ui.base
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
@@ -17,6 +20,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +36,7 @@ import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarButtonMaterialProgress
+import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassSurface
 import top.yukonga.miuix.kmp.basic.ScrollBehavior as MiuixScrollBehavior
@@ -99,10 +104,15 @@ fun TopAppBar(
         AppDesignSystem.MATERIAL3 -> material3ScrollBehavior?.state?.collapsedFraction
         AppDesignSystem.MIUIX -> miuixScrollBehavior?.state?.collapsedFraction
     }
-    val buttonMaterialProgress = resolveTopBarButtonMaterialProgress(
+    val buttonMaterialTarget = resolveTopBarButtonMaterialProgress(
         collapsedFraction = collapsedFraction,
-        inherentlyCollapsed = mode != TopAppBarStyle.LARGE,
+        scrollProgress = LocalTopBarScrollProgress.current,
         overrideProgress = buttonMaterialRevealProgress,
+    )
+    val buttonMaterialProgress by animateFloatAsState(
+        targetValue = buttonMaterialTarget,
+        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+        label = "top-bar-button-material",
     )
     val resolvedNavigationIcon: @Composable () -> Unit = {
         navigationIcon?.let { icon ->
@@ -253,7 +263,6 @@ fun TopAppBar(
         if (immersiveTopBar) {
             ProgressiveTopBarMaterial(
                 enabled = true,
-                backdrop = backdrop,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 platformTopBar()

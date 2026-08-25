@@ -11,7 +11,7 @@ class TopBarMaterialProgressTest {
             0f,
             resolveTopBarButtonMaterialProgress(
                 collapsedFraction = 0.04f,
-                inherentlyCollapsed = false,
+                scrollProgress = null,
                 overrideProgress = null,
             ),
             0.0001f,
@@ -22,7 +22,7 @@ class TopBarMaterialProgressTest {
     fun slightCollapseProgressivelyRevealsMaterial() {
         val progress = resolveTopBarButtonMaterialProgress(
             collapsedFraction = 0.18f,
-            inherentlyCollapsed = false,
+            scrollProgress = null,
             overrideProgress = null,
         )
 
@@ -32,7 +32,7 @@ class TopBarMaterialProgressTest {
             1f,
             resolveTopBarButtonMaterialProgress(
                 collapsedFraction = 0.32f,
-                inherentlyCollapsed = false,
+                scrollProgress = null,
                 overrideProgress = null,
             ),
             0.0001f,
@@ -40,12 +40,12 @@ class TopBarMaterialProgressTest {
     }
 
     @Test
-    fun smallBarAndExplicitOverrideUseResolvedState() {
+    fun smallBarStartsHiddenAndUsesObservedScrollProgress() {
         assertEquals(
-            1f,
+            0f,
             resolveTopBarButtonMaterialProgress(
                 collapsedFraction = null,
-                inherentlyCollapsed = true,
+                scrollProgress = null,
                 overrideProgress = null,
             ),
             0.0001f,
@@ -54,8 +54,21 @@ class TopBarMaterialProgressTest {
             0.25f,
             resolveTopBarButtonMaterialProgress(
                 collapsedFraction = null,
-                inherentlyCollapsed = true,
-                overrideProgress = 0.25f,
+                scrollProgress = 0.25f,
+                overrideProgress = null,
+            ),
+            0.0001f,
+        )
+    }
+
+    @Test
+    fun explicitOverrideTakesPriorityOverScrollState() {
+        assertEquals(
+            0.75f,
+            resolveTopBarButtonMaterialProgress(
+                collapsedFraction = 0.1f,
+                scrollProgress = 0.25f,
+                overrideProgress = 0.75f,
             ),
             0.0001f,
         )
