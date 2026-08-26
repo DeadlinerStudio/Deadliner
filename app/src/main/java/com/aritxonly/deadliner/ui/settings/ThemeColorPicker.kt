@@ -14,8 +14,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
+import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.model.AppearanceColorSource
 import com.aritxonly.deadliner.ui.iconResource
 
 val M3BaselineColors = listOf(
@@ -42,8 +46,10 @@ val M3BaselineColors = listOf(
 
 @Composable
 fun ThemeColorPicker(
-    currentSeed: String?, // 传入当前的选中的种子色
-    onColorSelected: (String?) -> Unit // 选中后的回调
+    currentSource: AppearanceColorSource,
+    currentSeed: String?,
+    showPreset: Boolean,
+    onColorSelected: (AppearanceColorSource, String?) -> Unit,
 ) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -53,18 +59,28 @@ fun ThemeColorPicker(
         // 1. 动态壁纸取色按钮 (传 null 代表跟随系统)
         item {
             ColorCircle(
-                colorHex = null,
-                isSelected = currentSeed == null,
-                onClick = { onColorSelected(null) }
+                option = ThemeColorOption.SystemDynamic,
+                isSelected = currentSource == AppearanceColorSource.SystemDynamic,
+                onClick = { onColorSelected(AppearanceColorSource.SystemDynamic, null) }
             )
+        }
+
+        if (showPreset) {
+            item {
+                ColorCircle(
+                    option = ThemeColorOption.Preset,
+                    isSelected = currentSource == AppearanceColorSource.Preset,
+                    onClick = { onColorSelected(AppearanceColorSource.Preset, null) },
+                )
+            }
         }
 
         // 2. 官方预设色卡
         items(M3BaselineColors) { hex ->
             ColorCircle(
-                colorHex = hex,
-                isSelected = currentSeed == hex,
-                onClick = { onColorSelected(hex) }
+                option = ThemeColorOption.Seed(hex),
+                isSelected = currentSource == AppearanceColorSource.SeedColor && currentSeed == hex,
+                onClick = { onColorSelected(AppearanceColorSource.SeedColor, hex) }
             )
         }
     }
@@ -72,15 +88,19 @@ fun ThemeColorPicker(
 
 @Composable
 private fun ColorCircle(
-    colorHex: String?,
+    option: ThemeColorOption,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    // 如果是 null，显示为系统的 SurfaceVariant 颜色，并加个壁纸小图标
-    val backgroundColor = if (colorHex != null) {
-        Color(colorHex.toColorInt())
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
+    val backgroundColor = when (option) {
+        ThemeColorOption.SystemDynamic -> MaterialTheme.colorScheme.surfaceVariant
+        ThemeColorOption.Preset -> Color.Transparent
+        is ThemeColorOption.Seed -> Color(option.hex.toColorInt())
+    }
+    val description = when (option) {
+        ThemeColorOption.SystemDynamic -> stringResource(R.string.settings_color_source_dynamic)
+        ThemeColorOption.Preset -> stringResource(R.string.settings_color_source_preset)
+        is ThemeColorOption.Seed -> stringResource(R.string.settings_color_source_seed)
     }
 
     Box(
@@ -88,6 +108,21 @@ private fun ColorCircle(
             .size(48.dp)
             .clip(CircleShape)
             .background(backgroundColor)
+            .then(
+                if (option == ThemeColorOption.Preset) {
+                    Modifier.background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF3482FF),
+                                Color(0xFFF08A7E),
+                                Color(0xFF53DBC8),
+                            )
+                        )
+                    )
+                } else {
+                    Modifier
+                }
+            )
             .clickable { onClick() }
             .then(
                 // 选中时加一个边框反馈
@@ -102,17 +137,27 @@ private fun ColorCircle(
         if (isSelected) {
             // 选中时打个勾
             Icon(
-                imageVector = iconResource(com.aritxonly.deadliner.R.drawable.ic_on),
-                contentDescription = "Selected",
-                tint = if (colorHex == null) MaterialTheme.colorScheme.onSurfaceVariant else Color.White
+                imageVector = iconResource(R.drawable.ic_on),
+                contentDescription = description,
+                tint = if (option == ThemeColorOption.SystemDynamic) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    Color.White
+                }
             )
-        } else if (colorHex == null) {
+        } else if (option == ThemeColorOption.SystemDynamic) {
             // 动态颜色的图标提示
             Icon(
-                imageVector = iconResource(com.aritxonly.deadliner.R.drawable.ic_wallpaper),
-                contentDescription = "Dynamic Color",
+                imageVector = iconResource(R.drawable.ic_wallpaper),
+                contentDescription = description,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
+}
+
+private sealed interface ThemeColorOption {
+    data object SystemDynamic : ThemeColorOption
+    data object Preset : ThemeColorOption
+    data class Seed(val hex: String) : ThemeColorOption
 }

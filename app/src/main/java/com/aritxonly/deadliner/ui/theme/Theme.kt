@@ -36,7 +36,7 @@ fun DeadlinerTheme(
     }
     val tokens = DeadlinerColorTokenFactory.rememberTokens(
         seedColorHex = appearance.seedColorHex,
-        colorSource = appearance.colorSource,
+        colorSource = appearance.effectiveColorSource,
         dynamicPaletteStyle = appearance.dynamicPaletteStyle,
         darkTheme = darkTheme,
         dynamicColor = dynamicColor,
@@ -60,6 +60,12 @@ fun DeadlinerTheme(
 
     CompositionLocalProvider(
         LocalAppDesignSystem provides designSystem,
+        LocalHomeFabColors provides homeFabColors(
+            designSystem = designSystem,
+            colorSource = appearance.effectiveColorSource,
+            fallbackContainer = materialColorScheme.primary,
+            fallbackContent = materialColorScheme.onPrimary,
+        ),
         LocalAdvancedMaterialSpec provides advancedMaterialSpec,
         LocalImmersiveExperienceEnabled provides (
             appearance.useImmersiveExperience && designSystem == AppDesignSystem.MIUIX

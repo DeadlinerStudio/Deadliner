@@ -129,6 +129,7 @@ dependencies {
     implementation("com.materialkolor:material-kolor:4.1.1")
     implementation("top.yukonga.miuix.kmp:miuix-ui-android:0.9.0")
     implementation("top.yukonga.miuix.kmp:miuix-blur-android:0.9.0")
+    implementation("io.github.kyant0:shapes:1.2.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

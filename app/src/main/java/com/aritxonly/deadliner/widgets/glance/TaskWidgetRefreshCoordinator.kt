@@ -22,6 +22,7 @@ object TaskWidgetRefreshCoordinator {
     private val appearanceKeys = setOf(
         "appearance_design_mode",
         "seed_color",
+        "appearance_color_source",
         "dynamic_palette_style",
         "modern_use_device_palette_strategy",
         "modern_color_palette",

@@ -1,8 +1,14 @@
 package com.aritxonly.deadliner.ui.base
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
@@ -14,6 +20,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -21,9 +28,15 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,10 +48,16 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
+import com.aritxonly.deadliner.ui.material.glass.LocalProgressiveTopBarMaterialHosted
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarButtonMaterialProgress
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
+import com.aritxonly.deadliner.ui.material.glass.SoftGlassDefaults
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassSurface
+import com.aritxonly.deadliner.ui.material.glass.softGlassShadow
+import com.aritxonly.deadliner.ui.material.glass.softGlassPressHighlightAlpha
+import com.aritxonly.deadliner.ui.material.glass.softGlassPressMaterialInteraction
+import com.aritxonly.deadliner.ui.material.glass.softGlassPressScale
 import top.yukonga.miuix.kmp.basic.ScrollBehavior as MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
@@ -72,6 +91,7 @@ fun TopAppBar(
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
     val immersiveTopBar = LocalImmersiveExperienceEnabled.current
+    val progressiveMaterialHosted = LocalProgressiveTopBarMaterialHosted.current
     val advancedMaterialBlurred =
         allowAdvancedMaterialBlur &&
             !immersiveTopBar &&
@@ -260,7 +280,7 @@ fun TopAppBar(
     CompositionLocalProvider(
         LocalTopBarButtonMaterialProgress provides buttonMaterialProgress,
     ) {
-        if (immersiveTopBar) {
+        if (immersiveTopBar && !progressiveMaterialHosted) {
             ProgressiveTopBarMaterial(
                 enabled = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -274,20 +294,74 @@ fun TopAppBar(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun ImmersiveNavigationIcon(
     materialAlpha: Float,
     content: @Composable () -> Unit,
 ) {
+    var pressed by remember { mutableStateOf(false) }
+    val pressProgress by animateFloatAsState(
+        targetValue = if (pressed) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "immersive-navigation-press",
+    )
+    val isDark = MaterialTheme.colorScheme.onSurface.luminance() > 0.5f
+    val highlightColor = MaterialTheme.colorScheme.onSurface.copy(
+        alpha = softGlassPressHighlightAlpha(pressProgress, isDark),
+    )
+
     Box(
-        modifier = Modifier.size(48.dp),
+        modifier = Modifier
+            .size(48.dp)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    pressed = true
+                    try {
+                        waitForUpOrCancellation()
+                    } finally {
+                        pressed = false
+                    }
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
-        SoftGlassSurface(
-            modifier = Modifier.size(44.dp),
-            materialAlpha = materialAlpha,
-        ) {}
-        CompositionLocalProvider(LocalTopBarButtonMaterialHosted provides true) {
-            content()
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .graphicsLayer {
+                    val scale = softGlassPressScale(pressProgress)
+                    scaleX = scale
+                    scaleY = scale
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            SoftGlassSurface(
+                modifier = Modifier
+                    .matchParentSize()
+                    .softGlassShadow(
+                        shape = SoftGlassDefaults.Shape,
+                        isDark = isDark,
+                        alpha = materialAlpha,
+                    ),
+                materialAlpha = materialAlpha,
+                interaction = softGlassPressMaterialInteraction(pressProgress),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(highlightColor),
+                )
+            }
+            CompositionLocalProvider(
+                LocalRippleConfiguration provides null,
+                LocalTopBarButtonMaterialHosted provides true,
+            ) {
+                content()
+            }
         }
     }
 }

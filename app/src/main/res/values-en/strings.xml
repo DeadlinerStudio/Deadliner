@@ -760,6 +760,10 @@
     <string name="settings_design">Design</string>
     <string name="settings_design_color_title">Design &amp; Color</string>
     <string name="settings_design_color_summary">Adjust design mode, accent color, and task indicators</string>
+    <string name="settings_color_source_dynamic">Dynamic wallpaper colors</string>
+    <string name="settings_color_source_preset">Preset colors</string>
+    <string name="settings_color_source_seed">Seed color</string>
+    <string name="settings_color_source_preset_support">Preset colors · MIUIX primary with Material accents</string>
     <string name="settings_advanced_material_summary">Control the blur intensity and feel of advanced material</string>
     <string name="settings_try_new_features">Try These New Features</string>
     <string name="settings_try_new_features_summary">We split design, material, icon, and main screen appearance into clearer sections so each tweak is easier to find.</string>
@@ -864,6 +868,7 @@
     <string name="ui_style_classic_support">Retains the classic v2 layout for a more comprehensive, at-a-glance task management experience.</string>
     <string name="ui_style_miuix">Modern Mode</string>
     <string name="main_section_list">List</string>
+    <string name="lifi">AI</string>
     <string name="ui_style_miuix_support">Inspired by HyperOS’s modern design language—more native, more reliable.</string>
     <string name="ui_style_best_for">Best for</string>
     <string name="ui_style_simplified_fit">You want to focus on tasks and habits themselves, with a more direct bottom switcher and a lighter overall layout.</string>

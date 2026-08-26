@@ -1,8 +1,16 @@
 package com.aritxonly.deadliner.model
 
-enum class AppearanceColorSource {
-    SystemDynamic,
-    SeedColor,
+enum class AppearanceColorSource(val key: String) {
+    SystemDynamic("system_dynamic"),
+    SeedColor("seed_color"),
+    Preset("preset");
+
+    companion object {
+        fun fromKey(value: String?): AppearanceColorSource? = entries.firstOrNull { it.key == value }
+
+        fun resolvePersisted(value: String?, seedColorHex: String?): AppearanceColorSource =
+            fromKey(value) ?: if (seedColorHex.isNullOrBlank()) SystemDynamic else SeedColor
+    }
 }
 
 data class AppearancePreferences(
@@ -47,6 +55,13 @@ data class AppearancePreferences(
 
     val usesMiuixTheme: Boolean
         get() = effectiveThemeStyle == AppThemeStyle.Miuix
+
+    val effectiveColorSource: AppearanceColorSource
+        get() = if (usesMiuixTheme || colorSource != AppearanceColorSource.Preset) {
+            colorSource
+        } else {
+            AppearanceColorSource.SystemDynamic
+        }
 
     val activeHideDivider: Boolean
         get() = when (designMode) {

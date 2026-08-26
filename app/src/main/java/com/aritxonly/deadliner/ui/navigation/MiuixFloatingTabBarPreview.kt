@@ -77,26 +77,26 @@ private fun FloatingTabBarPreviewScene(darkTheme: Boolean) {
         MiuixFloatingTabItem(
             key = "list",
             label = "清单",
-            selectedIcon = ImageVector.vectorResource(R.drawable.ic_check_circle_fill),
-            unselectedIcon = ImageVector.vectorResource(R.drawable.ic_check_circle),
+            selectedIcon = ImageVector.vectorResource(R.drawable.ic_home_imm),
+            unselectedIcon = ImageVector.vectorResource(R.drawable.ic_home_imm),
         ),
         MiuixFloatingTabItem(
             key = "overview",
             label = "概览",
-            selectedIcon = ImageVector.vectorResource(R.drawable.ic_overview_fill),
-            unselectedIcon = ImageVector.vectorResource(R.drawable.ic_overview),
+            selectedIcon = ImageVector.vectorResource(R.drawable.ic_overview_imm),
+            unselectedIcon = ImageVector.vectorResource(R.drawable.ic_overview_imm),
         ),
         MiuixFloatingTabItem(
             key = "capture",
             label = "速记",
-            selectedIcon = ImageVector.vectorResource(R.drawable.ic_draw_fill),
-            unselectedIcon = ImageVector.vectorResource(R.drawable.ic_draw),
+            selectedIcon = ImageVector.vectorResource(R.drawable.ic_capture),
+            unselectedIcon = ImageVector.vectorResource(R.drawable.ic_capture),
         ),
         MiuixFloatingTabItem(
-            key = "search",
-            label = "搜索",
-            selectedIcon = ImageVector.vectorResource(R.drawable.ic_search),
-            unselectedIcon = ImageVector.vectorResource(R.drawable.ic_search),
+            key = "lifi",
+            label = "AI",
+            selectedIcon = ImageVector.vectorResource(R.drawable.ic_lifi),
+            unselectedIcon = ImageVector.vectorResource(R.drawable.ic_lifi),
         ),
     )
 

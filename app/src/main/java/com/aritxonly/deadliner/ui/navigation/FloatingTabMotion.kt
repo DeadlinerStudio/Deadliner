@@ -15,6 +15,21 @@ internal object FloatingTabMotionDefaults {
     const val PressedScale = 52f / 56f
     const val MaximumStretch = 0.18f
     const val FullStretchTabsPerSecond = 8f
+    const val MaximumPanelOffsetDp = 4f
+    const val SelectedIconPressedScale = 0.90f
+}
+
+internal fun floatingTabSelectedIconScale(pressProgress: Float): Float {
+    val progress = pressProgress.coerceIn(0f, 1f)
+    return 1f + (FloatingTabMotionDefaults.SelectedIconPressedScale - 1f) * progress
+}
+
+internal fun floatingTabPanelDragFraction(
+    dragOffsetPx: Float,
+    panelWidthPx: Float,
+): Float {
+    if (panelWidthPx <= 0f) return 0f
+    return (dragOffsetPx / panelWidthPx).coerceIn(-1f, 1f)
 }
 
 internal fun resolveFloatingTabTarget(

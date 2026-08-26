@@ -1,10 +1,8 @@
 package com.aritxonly.deadliner.ui.base
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CheckboxColors
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CheckboxDefaults as Material3CheckboxDefaults
 import androidx.compose.material3.RadioButtonColors
 import androidx.compose.material3.RadioButtonDefaults
@@ -16,8 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import top.yukonga.miuix.kmp.basic.CheckboxDefaults
-import top.yukonga.miuix.kmp.theme.darkColorScheme
-import top.yukonga.miuix.kmp.theme.lightColorScheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 // 为官方和 MIUIX 的组件起别名
 import androidx.compose.material3.Checkbox as Material3Checkbox
@@ -51,11 +48,7 @@ fun RadioButton(
         AppDesignSystem.MIUIX -> {
             // 核心转译：将 Boolean 的选中状态映射为 MIUIX 需要的三态类型
             val toggleState = if (selected) ToggleableState.On else ToggleableState.Off
-            val scheme = if (isSystemInDarkTheme()) {
-                darkColorScheme()
-            } else {
-                lightColorScheme()
-            }
+            val scheme = MiuixTheme.colorScheme
 
             MiuixCheckbox(
                 state = toggleState,
@@ -94,11 +87,7 @@ fun Checkbox(
 
         AppDesignSystem.MIUIX -> {
             val toggleState = if (checked) ToggleableState.On else ToggleableState.Off
-            val scheme = if (isSystemInDarkTheme()) {
-                darkColorScheme()
-            } else {
-                lightColorScheme()
-            }
+            val scheme = MiuixTheme.colorScheme
 
             MiuixCheckbox(
                 state = toggleState,

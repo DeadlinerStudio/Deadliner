@@ -15,9 +15,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -49,14 +46,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
-import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBar
-import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBarDefaults
-import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabItem
-import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabLayout
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
+import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
@@ -80,15 +73,14 @@ data class AdaptiveNavItem(
     val label: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
+    val enabled: Boolean = true,
+    val immersiveIcon: ImageVector? = null,
 )
 
 //private val CompactNavigationShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
 private val CompactNavigationShape = RoundedCornerShape(0.dp)
 private val RailNavigationShape = RoundedCornerShape(12.dp)
 private val CompactOverlayHostPadding = 92.dp
-private val FloatingCompactOverlayHostPadding = 92.dp
-private val FloatingNavigationBottomSpacing = 4.dp
-private val FloatingNavigationEdgeMaskExtraHeight = 32.dp
 private val RailSlotWidth = 92.dp
 
 @Composable
@@ -97,6 +89,7 @@ fun AdaptiveNavigationSuiteScaffold(
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
     useImmersiveExperience: Boolean = false,
+    immersiveDetachedItemKey: String? = null,
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
     legacyTopBar: @Composable () -> Unit = {},
@@ -125,6 +118,14 @@ fun AdaptiveNavigationSuiteScaffold(
         modifier
     }
     val topBarScrollProgress = if (observeTopBarScroll) topBarScrollObserver.progress else null
+    val hostedTopBar: @Composable () -> Unit = {
+        ProgressiveTopBarMaterial(
+            enabled = observeTopBarScroll,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            topBar()
+        }
+    }
 
     if (shouldUseImmersiveExperience) {
         val backdrop = if (advancedMaterial.enabled) rememberLayerBackdrop() else null
@@ -133,9 +134,10 @@ fun AdaptiveNavigationSuiteScaffold(
                 items = items,
                 selectedKey = selectedKey,
                 onItemSelected = onItemSelected,
+                detachedItemKey = immersiveDetachedItemKey,
                 backdrop = backdrop,
                 modifier = observedModifier,
-                topBar = topBar,
+                topBar = hostedTopBar,
                 legacyTopBar = legacyTopBar,
                 snackbarHost = snackbarHost,
                 floatingActionButton = floatingActionButton,
@@ -163,7 +165,7 @@ fun AdaptiveNavigationSuiteScaffold(
                 designSystem = designSystem,
                 backdrop = backdrop,
                 modifier = observedModifier,
-                topBar = topBar,
+                topBar = hostedTopBar,
                 legacyTopBar = legacyTopBar,
                 snackbarHost = snackbarHost,
                 floatingActionButton = floatingActionButton,
@@ -182,7 +184,7 @@ fun AdaptiveNavigationSuiteScaffold(
                 designSystem = designSystem,
                 useHorizontalItems = navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium,
                 modifier = observedModifier,
-                topBar = topBar,
+                topBar = hostedTopBar,
                 legacyTopBar = legacyTopBar,
                 snackbarHost = snackbarHost,
                 floatingActionButton = floatingActionButton,
@@ -203,140 +205,13 @@ fun AdaptiveNavigationSuiteScaffold(
             useHorizontalItems = navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium,
             backdrop = backdrop,
             modifier = observedModifier,
-            topBar = topBar,
+            topBar = hostedTopBar,
             legacyTopBar = legacyTopBar,
             snackbarHost = snackbarHost,
             floatingActionButton = floatingActionButton,
             content = content,
         )
     }
-}
-
-@Composable
-private fun ImmersiveMiuixCompactNavigationScaffold(
-    items: List<AdaptiveNavItem>,
-    selectedKey: String,
-    onItemSelected: (AdaptiveNavItem) -> Unit,
-    backdrop: LayerBackdrop?,
-    modifier: Modifier,
-    topBar: @Composable () -> Unit,
-    legacyTopBar: @Composable () -> Unit,
-    snackbarHost: @Composable () -> Unit,
-    floatingActionButton: @Composable () -> Unit,
-    content: @Composable (PaddingValues) -> Unit,
-) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            if (backdrop != null) {
-                CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
-                    legacyTopBar()
-                }
-            } else {
-                legacyTopBar()
-            }
-        },
-        snackbarHost = {
-            Box(modifier = Modifier.padding(bottom = FloatingCompactOverlayHostPadding)) {
-                snackbarHost()
-            }
-        },
-        floatingActionButton = {
-            Box(modifier = Modifier.padding(bottom = FloatingCompactOverlayHostPadding)) {
-                floatingActionButton()
-            }
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .let { contentModifier ->
-                        if (backdrop != null) {
-                            contentModifier.layerBackdrop(backdrop)
-                        } else {
-                            contentModifier
-                        }
-                    },
-            ) {
-                content(PaddingValues())
-            }
-
-            if (backdrop != null) {
-                CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
-                    Box(modifier = Modifier.align(Alignment.TopCenter)) {
-                        topBar()
-                    }
-                }
-            } else {
-                Box(modifier = Modifier.align(Alignment.TopCenter)) {
-                    topBar()
-                }
-            }
-
-            FloatingNavigationEdgeMask(
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(
-                        start = 16.dp,
-                        top = 12.dp,
-                        end = 16.dp,
-                        bottom = FloatingNavigationBottomSpacing,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                MiuixFloatingTabBar(
-                    items = items.map { item ->
-                        MiuixFloatingTabItem(
-                            key = item.key,
-                            label = item.label,
-                            selectedIcon = item.selectedIcon,
-                            unselectedIcon = item.unselectedIcon,
-                        )
-                    },
-                    selectedKey = selectedKey,
-                    onItemSelected = { selectedItem ->
-                        items.firstOrNull { it.key == selectedItem.key }?.let(onItemSelected)
-                    },
-                    layout = MiuixFloatingTabLayout.Stacked,
-                    backdrop = backdrop,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FloatingNavigationEdgeMask(
-    modifier: Modifier = Modifier,
-) {
-    val density = LocalDensity.current
-    val navigationBarHeight = with(density) {
-        WindowInsets.navigationBars.getBottom(this).toDp()
-    }
-    val coverageHeight = MiuixFloatingTabBarDefaults.Height +
-        FloatingNavigationBottomSpacing +
-        FloatingNavigationEdgeMaskExtraHeight +
-        navigationBarHeight
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(coverageHeight)
-            .edgeFade(top = coverageHeight, bottom = 0.dp)
-            .background(MiuixTheme.colorScheme.surface),
-    )
 }
 
 @Composable
@@ -376,6 +251,7 @@ private fun LegacyCompactNavigationScaffold(
                         val selected = selectedKey == item.key
                         MiuixNavigationBarItem(
                             selected = selected,
+                            enabled = item.enabled,
                             onClick = { onItemSelected(item) },
                             icon = if (selected) item.selectedIcon else item.unselectedIcon,
                             label = item.label,
@@ -430,6 +306,7 @@ private fun LegacyWideNavigationScaffold(
                         val selected = selectedKey == item.key
                         NavigationRailItem(
                             selected = selected,
+                            enabled = item.enabled,
                             onClick = { onItemSelected(item) },
                             icon = {
                                 AnimatedNavIcon(
@@ -454,6 +331,7 @@ private fun LegacyWideNavigationScaffold(
                         val selected = selectedKey == item.key
                         MiuixNavigationRailItem(
                             selected = selected,
+                            enabled = item.enabled,
                             onClick = { onItemSelected(item) },
                             icon = if (selected) item.selectedIcon else item.unselectedIcon,
                             label = item.label,
@@ -655,6 +533,7 @@ private fun MiuixBottomNavigationBar(
                 val selected = selectedKey == item.key
                 MiuixNavigationBarItem(
                     selected = selected,
+                    enabled = item.enabled,
                     onClick = { onItemSelected(item) },
                     icon = if (selected) item.selectedIcon else item.unselectedIcon,
                     label = item.label,
@@ -699,6 +578,7 @@ private fun Material3NavigationRailContainer(
                 val selected = selectedKey == item.key
                 NavigationRailItem(
                     selected = selected,
+                    enabled = item.enabled,
                     onClick = { onItemSelected(item) },
                     icon = {
                         AnimatedNavIcon(
@@ -752,6 +632,7 @@ private fun MiuixNavigationRailContainer(
                 val selected = selectedKey == item.key
                 MiuixNavigationRailItem(
                     selected = selected,
+                    enabled = item.enabled,
                     onClick = { onItemSelected(item) },
                     icon = if (selected) item.selectedIcon else item.unselectedIcon,
                     label = item.label,
@@ -791,6 +672,7 @@ private fun Material3CompactBarContent(
             val selected = selectedKey == item.key
             ShortNavigationBarItem(
                 selected = selected,
+                enabled = item.enabled,
                 onClick = { onItemSelected(item) },
                 icon = {
                     AnimatedNavIcon(

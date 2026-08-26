@@ -13,6 +13,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
+import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
+import com.aritxonly.deadliner.ui.navigation.ImmersiveTextTabRow
 import top.yukonga.miuix.kmp.basic.TabRowDefaults
 
 // 别名防止冲突
@@ -33,6 +35,19 @@ fun TabRow(
     // M3 专属：底部分割线
     divider: @Composable () -> Unit = {}
 ) {
+    if (
+        LocalAppDesignSystem.current == AppDesignSystem.MIUIX &&
+        LocalImmersiveExperienceEnabled.current
+    ) {
+        ImmersiveTextTabRow(
+            tabs = tabs,
+            selectedTabIndex = selectedTabIndex,
+            onTabSelected = onTabSelected,
+            modifier = modifier,
+        )
+        return
+    }
+
     when (LocalAppDesignSystem.current) {
 
         AppDesignSystem.MATERIAL3 -> {

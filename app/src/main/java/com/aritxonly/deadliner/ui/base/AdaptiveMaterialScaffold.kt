@@ -37,6 +37,7 @@ import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
+import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
@@ -90,6 +91,23 @@ fun AdaptiveMaterialScaffold(
     }
     val surfaceTint = tintBaseColor.copy(alpha = advancedMaterial.topBarTintAlpha)
     val blurColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
+    val hostedTopBar: @Composable () -> Unit = {
+        ProgressiveTopBarMaterial(
+            enabled = immersiveExperienceEnabled,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            topBar()
+        }
+    }
+    val hostedFloatingActionButton: @Composable () -> Unit = {
+        if (backdrop != null) {
+            CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                floatingActionButton()
+            }
+        } else {
+            floatingActionButton()
+        }
+    }
 
     CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
         ProvideAdvancedMaterialDialogBlurHost {
@@ -122,7 +140,7 @@ fun AdaptiveMaterialScaffold(
             }
         },
         snackbarHost = snackbarHost,
-        floatingActionButton = floatingActionButton,
+        floatingActionButton = hostedFloatingActionButton,
         floatingActionButtonPosition = floatingActionButtonPosition,
         containerColor = Color.Transparent,
         contentColor = contentColor,
@@ -200,18 +218,18 @@ fun AdaptiveMaterialScaffold(
                                 },
                         )
                     ) {
-                        topBar()
+                        hostedTopBar()
                     }
                 }
             } else if (backdrop != null) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
                     Box(modifier = topBarModifier) {
-                        topBar()
+                        hostedTopBar()
                     }
                 }
             } else {
                 Box(modifier = topBarModifier) {
-                    topBar()
+                    hostedTopBar()
                 }
             }
         }

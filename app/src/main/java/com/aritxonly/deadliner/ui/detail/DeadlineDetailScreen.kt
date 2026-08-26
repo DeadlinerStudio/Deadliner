@@ -32,7 +32,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FlexibleBottomAppBar
 import androidx.compose.material3.HorizontalDivider
@@ -61,8 +60,6 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -293,23 +290,11 @@ fun DeadlineDetailScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                modifier = Modifier
-                    .semantics {
-                        contentDescription = activityContext.getString(R.string.detail_plan_add)
-                    },
-                shape = RoundedCornerShape(20.dp),
+            DetailPlanFloatingActionButton(
                 onClick = {
                     showPlanComposer = true
                     openComposerSignal++
                 },
-                icon = {
-                    Icon(
-                        imageVector = iconResource(R.drawable.ic_add),
-                        contentDescription = null
-                    )
-                },
-                text = { Text(text = stringResource(R.string.detail_plan_add)) }
             )
         }
     ) { innerPadding ->

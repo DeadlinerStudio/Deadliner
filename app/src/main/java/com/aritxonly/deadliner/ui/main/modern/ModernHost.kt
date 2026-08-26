@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -110,6 +111,8 @@ import com.aritxonly.deadliner.ui.main.shared.rememberMainHostUiState
 import com.aritxonly.deadliner.ui.main.shared.rememberMainSelectionActionController
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
 import com.aritxonly.deadliner.ui.main.simplified.MainSearchBar
+import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButton
+import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButtonDefaults
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.FlowPreview
 import nl.dionsegijn.konfetti.compose.KonfettiView
@@ -276,35 +279,44 @@ fun ModernHost(
         AdaptiveNavItem(
             "list",
             context.getString(R.string.main_section_list),
-            ImageVector.vectorResource(R.drawable.ic_check_circle_fill),
-            ImageVector.vectorResource(R.drawable.ic_check_circle),
+            ImageVector.vectorResource(R.drawable.ic_home_fill),
+            ImageVector.vectorResource(R.drawable.ic_home),
+            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_home_imm),
         ),
         AdaptiveNavItem(
             "overview",
             context.getString(R.string.overview),
             ImageVector.vectorResource(R.drawable.ic_overview_fill),
             ImageVector.vectorResource(R.drawable.ic_overview),
+            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_overview_imm),
         ),
         AdaptiveNavItem(
             "capture",
             context.getString(R.string.capture_title),
-            ImageVector.vectorResource(R.drawable.ic_draw_fill),
-            ImageVector.vectorResource(R.drawable.ic_draw),
+            ImageVector.vectorResource(R.drawable.ic_capture),
+            ImageVector.vectorResource(R.drawable.ic_capture),
+            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_capture),
+        ),
+        AdaptiveNavItem(
+            "lifi",
+            context.getString(R.string.lifi),
+            ImageVector.vectorResource(R.drawable.ic_lifi),
+            ImageVector.vectorResource(R.drawable.ic_lifi),
+            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_lifi),
         ),
         AdaptiveNavItem(
             "search",
             context.getString(R.string.search),
             ImageVector.vectorResource(R.drawable.ic_search),
             ImageVector.vectorResource(R.drawable.ic_search),
+            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_search_imm),
         ),
     )
 
     val selectedKey = if (searchActive) {
         "search"
-    } else when (hostState.selectedSection) {
-        MainSection.LIST -> "list"
-        MainSection.OVERVIEW -> "overview"
-        MainSection.CAPTURE -> "capture"
+    } else {
+        mainSectionNavigationKey(hostState.selectedSection)
     }
     val topBarState = when {
         searchActive -> ModernTopBarState.HIDDEN
@@ -312,12 +324,14 @@ fun ModernHost(
             ModernTopBarState.LIST_SELECTION
         hostState.selectedSection == MainSection.LIST -> ModernTopBarState.LIST_DEFAULT
         hostState.selectedSection == MainSection.OVERVIEW -> ModernTopBarState.OVERVIEW
+        hostState.selectedSection == MainSection.LIFI -> ModernTopBarState.HIDDEN
         else -> ModernTopBarState.CAPTURE
     }
     val useOverlayTopBar = when (hostState.selectedSection) {
         MainSection.LIST -> !searchActive
         MainSection.OVERVIEW -> !useFlattenedOverview
         MainSection.CAPTURE -> true
+        MainSection.LIFI -> false
     }
     val overlayTopBarPadding = if (useOverlayTopBar) {
         with(LocalDensity.current) { overlayTopBarHeightPx.toDp() }
@@ -393,22 +407,17 @@ fun ModernHost(
         items = navItems,
         selectedKey = selectedKey,
         useImmersiveExperience = appearance.useImmersiveExperience,
+        immersiveDetachedItemKey = "search",
         onItemSelected = {
             when (it.key) {
                 "search" -> {
                     openSearch()
                 }
-                "overview" -> {
-                    closeSearch()
-                    hostState.selectedSection = MainSection.OVERVIEW
-                }
-                "capture" -> {
-                    closeSearch()
-                    hostState.selectedSection = MainSection.CAPTURE
-                }
                 else -> {
-                    closeSearch()
-                    hostState.selectedSection = MainSection.LIST
+                    mainSectionForNavigationKey(it.key)?.let { section ->
+                        closeSearch()
+                        hostState.selectedSection = section
+                    }
                 }
             }
             hostState.clearSelection()
@@ -547,22 +556,32 @@ fun ModernHost(
             val shouldShowFab =
                 hostState.selectedSection == MainSection.LIST && !hostState.selectionMode && !searchActive
 
-                if (shouldShowFab) {
-                    val onFabClick = {
-                        val intent = Intent(context, AddDDLActivity::class.java).apply {
-                            putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
-                        }
-                        launcher.launch(intent)
+            if (shouldShowFab) {
+                val onFabClick = {
+                    val intent = Intent(context, AddDDLActivity::class.java).apply {
+                        putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
                     }
+                    launcher.launch(intent)
+                }
+                val fabContent: @Composable () -> Unit = {
+                    Icon(
+                        ImageVector.vectorResource(R.drawable.ic_add),
+                        contentDescription = stringResource(R.string.add_task),
+                        modifier = Modifier.size(SoftGlassFloatingActionButtonDefaults.IconSize),
+                    )
+                }
+                if (isImmersiveCompactNavigation) {
+                    SoftGlassFloatingActionButton(
+                        onClick = onFabClick,
+                        content = fabContent,
+                    )
+                } else {
                     FloatingActionButton(
                         onClick = onFabClick,
                         forceMaterial3 = true,
-                    ) {
-                        Icon(
-                            ImageVector.vectorResource(R.drawable.ic_add),
-                            contentDescription = stringResource(R.string.add_task)
-                        )
-                    }
+                        content = fabContent,
+                    )
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -743,6 +762,9 @@ fun ModernHost(
                             else -> 28.dp
                         },
                     )
+                }
+                MainSection.LIFI -> {
+                    Box(modifier = Modifier.fillMaxSize())
                 }
             }
             }

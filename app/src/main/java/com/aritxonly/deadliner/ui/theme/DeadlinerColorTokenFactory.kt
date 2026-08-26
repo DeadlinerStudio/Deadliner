@@ -51,6 +51,7 @@ object DeadlinerColorTokenFactory {
             ?.let { runCatching { Color(it.toColorInt()) }.getOrNull() }
 
         return when {
+            colorSource == AppearanceColorSource.Preset -> MiuixPresetColorSchemes.create(darkTheme)
             dynamicPaletteStyle == DynamicPaletteStyle.System -> {
                 if (
                     colorSource == AppearanceColorSource.SystemDynamic &&
@@ -108,7 +109,7 @@ object DeadlinerColorTokenFactory {
             dynamicColor = dynamicColor,
         )
 
-        val accentScheme = if (usePureMiuixAccent) {
+        val accentScheme = if (usePureMiuixAccent && colorSource != AppearanceColorSource.Preset) {
             createDynamicScheme(
                 seedColor = if (darkTheme) miuixAccentSeedDark else miuixAccentSeedLight,
                 darkTheme = darkTheme,

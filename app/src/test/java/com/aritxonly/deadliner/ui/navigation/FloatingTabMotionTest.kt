@@ -59,4 +59,20 @@ class FloatingTabMotionTest {
         assertEquals(false, sync.shouldAnimateExternalSelection(2))
         assertEquals(true, sync.shouldAnimateExternalSelection(1))
     }
+
+    @Test
+    fun panelDragFractionIsNormalizedAndBounded() {
+        assertEquals(0.25f, floatingTabPanelDragFraction(100f, 400f), 0.0001f)
+        assertEquals(-0.5f, floatingTabPanelDragFraction(-200f, 400f), 0.0001f)
+        assertEquals(1f, floatingTabPanelDragFraction(800f, 400f), 0.0001f)
+        assertEquals(0f, floatingTabPanelDragFraction(100f, 0f), 0.0001f)
+    }
+
+    @Test
+    fun selectedIconShrinksInsteadOfGrowingWhilePressed() {
+        assertEquals(1f, floatingTabSelectedIconScale(0f), 0.0001f)
+        assertEquals(0.95f, floatingTabSelectedIconScale(0.5f), 0.0001f)
+        assertEquals(0.90f, floatingTabSelectedIconScale(1f), 0.0001f)
+        assertTrue(floatingTabSelectedIconScale(1f) < 1f)
+    }
 }

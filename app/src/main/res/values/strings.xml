@@ -842,6 +842,10 @@
     <string name="settings_design">设计</string>
     <string name="settings_design_color_title">设计与色彩</string>
     <string name="settings_design_color_summary">调整设计模式、强调色与任务指示标</string>
+    <string name="settings_color_source_dynamic">动态壁纸取色</string>
+    <string name="settings_color_source_preset">预设颜色</string>
+    <string name="settings_color_source_seed">种子颜色</string>
+    <string name="settings_color_source_preset_support">预设颜色 · MIUIX 主色与 Material 辅助色</string>
     <string name="settings_advanced_material_summary">控制高级材质的模糊强度与质感</string>
     <string name="settings_try_new_features">试试这些新功能</string>
     <string name="settings_try_new_features_summary">我们把设计、材质、图标和主界面外观拆成了更清晰的结构，方便你快速找到想调的部分。</string>
@@ -943,6 +947,7 @@
     <string name="ui_style_simplified">简洁模式</string>
     <string name="ui_style_miuix">现代模式</string>
     <string name="main_section_list">清单</string>
+    <string name="lifi">AI</string>
     <string name="ui_style_simplified_support">聚焦核心任务与习惯管理，提供更清爽、直观的界面布局。</string>
     <string name="ui_style_classic_support">沿用自 v2 的完整布局，呈现更全面、一触即达的任务管理体验。</string>
     <string name="ui_style_miuix_support">来自 HyperOS 的现代化设计理念，更原生，更可靠。</string>

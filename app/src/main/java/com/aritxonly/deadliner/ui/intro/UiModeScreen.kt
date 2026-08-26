@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.AdvancedMaterialLevel
+import com.aritxonly.deadliner.model.AppearanceColorSource
 import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.DynamicPaletteStyle
 import com.aritxonly.deadliner.model.UiStyle
@@ -117,11 +118,18 @@ fun ColorIntroScreen() {
             modifier = Modifier.padding(vertical = 0.dp),
         ) {
             ThemeColorPicker(
+                currentSource = appearance.effectiveColorSource,
                 currentSeed = selectedSeed,
-                onColorSelected = {
-                    GlobalUtils.seedColor = it
-                    selectedSeed = it
-                }
+                showPreset = appearance.designMode == AppearanceDesignMode.Modern,
+                onColorSelected = { source, seed ->
+                    GlobalUtils.updateAppearance {
+                        it.copy(
+                            colorSource = source,
+                            seedColorHex = if (source == AppearanceColorSource.SeedColor) seed else null,
+                        )
+                    }
+                    selectedSeed = seed
+                },
             )
             SettingsSectionDivider()
             DynamicPaletteStylePicker(

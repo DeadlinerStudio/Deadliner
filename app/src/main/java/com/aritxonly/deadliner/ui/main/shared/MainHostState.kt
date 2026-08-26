@@ -14,6 +14,7 @@ enum class MainSection {
     LIST,
     OVERVIEW,
     CAPTURE,
+    LIFI,
 }
 
 @Stable

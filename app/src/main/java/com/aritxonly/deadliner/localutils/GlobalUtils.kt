@@ -291,6 +291,9 @@ object GlobalUtils {
                 AppThemeStyle.Material3 -> AppearanceDesignMode.Vivid
             }
         val seedColor = sharedPreferences.getString("seed_color", null)
+        val colorSource = AppearanceColorSource.resolvePersisted(
+            sharedPreferences.getString("appearance_color_source", null), seedColor,
+        )
         val dynamicPaletteStyle = sharedPreferences
             .getString("dynamic_palette_style", null)
             ?.let(DynamicPaletteStyle::fromKey)
@@ -349,11 +352,7 @@ object GlobalUtils {
             uiStyle = style,
             designMode = designMode,
             themeStyle = legacyThemeStyle,
-            colorSource = if (seedColor.isNullOrBlank()) {
-                AppearanceColorSource.SystemDynamic
-            } else {
-                AppearanceColorSource.SeedColor
-            },
+            colorSource = colorSource,
             seedColorHex = seedColor,
             dynamicPaletteStyle = dynamicPaletteStyle,
             modernUseDevicePaletteStrategy = modernUseDevicePaletteStrategy,
@@ -405,6 +404,7 @@ object GlobalUtils {
             putBoolean("hide_divider", appearance.activeHideDivider)
             putBoolean("settings_homepage_colored_icons", appearance.useSettingsHomepageColoredIcons)
             putString("seed_color", appearance.seedColorHex)
+            putString("appearance_color_source", appearance.colorSource.key)
             putString("dynamic_palette_style", appearance.dynamicPaletteStyle.key)
             putBoolean("modern_use_device_palette_strategy", appearance.modernUseDevicePaletteStrategy)
             putString("modern_color_palette", appearance.modernColorPalette.key)

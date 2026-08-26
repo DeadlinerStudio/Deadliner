@@ -66,11 +66,47 @@ class ProgressiveTopBarMaterialTest {
     }
 
     @Test
-    fun overlayRemainsSubtleAndFadesMonotonically() {
-        assertTrue(ProgressiveTopBarOverlayTopAlpha < 0.2f)
-        assertTrue(ProgressiveTopBarOverlayTopAlpha > ProgressiveTopBarOverlayMiddleAlpha)
-        assertTrue(ProgressiveTopBarOverlayMiddleAlpha > ProgressiveTopBarOverlayTailAlpha)
-        assertTrue(ProgressiveTopBarOverlayTailAlpha > 0f)
-        assertTrue(ProgressiveTopBarOverlayMiddleFraction < ProgressiveTopBarOverlayTailFraction)
+    fun overlayUsesStrongerSurfaceContrastAndEndsBeforeThreeQuarters() {
+        assertEquals(0.94f, ProgressiveTopBarOverlayTopAlpha, 0.0001f)
+        assertEquals(0.68f, ProgressiveTopBarOverlayEndFraction, 0.0001f)
+    }
+
+    @Test
+    fun measuredTopBarHeightIncludesTabsAndReservesFadeTail() {
+        val metrics = resolveProgressiveTopBarHeightMetrics(
+            measuredTopBarHeightPx = 130,
+            statusBarHeightPx = 24,
+            minimumContentHeightPx = 56,
+            materialHeightTrimPx = 6,
+        )
+
+        assertEquals(130, metrics.occupiedHeightPx)
+        assertEquals(168, metrics.materialHeightPx)
+        assertTrue(metrics.materialHeightPx > metrics.occupiedHeightPx)
+    }
+
+    @Test
+    fun shortTopBarUsesStatusBarPlusMinimumContentHeight() {
+        val metrics = resolveProgressiveTopBarHeightMetrics(
+            measuredTopBarHeightPx = 64,
+            statusBarHeightPx = 24,
+            minimumContentHeightPx = 56,
+            materialHeightTrimPx = 6,
+        )
+
+        assertEquals(80, metrics.occupiedHeightPx)
+        assertEquals(101, metrics.materialHeightPx)
+    }
+
+    @Test
+    fun emptyTopBarDoesNotCreateMaterial() {
+        val metrics = resolveProgressiveTopBarHeightMetrics(
+            measuredTopBarHeightPx = 0,
+            statusBarHeightPx = 24,
+            minimumContentHeightPx = 56,
+        )
+
+        assertEquals(0, metrics.occupiedHeightPx)
+        assertEquals(0, metrics.materialHeightPx)
     }
 }

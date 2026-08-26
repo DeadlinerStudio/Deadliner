@@ -1,9 +1,7 @@
 package com.aritxonly.deadliner.ui.base
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
@@ -12,8 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
-import top.yukonga.miuix.kmp.theme.darkColorScheme
-import top.yukonga.miuix.kmp.theme.lightColorScheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 // 为官方和 MIUIX 的组件起别名，防止重名冲突
 import androidx.compose.material3.Switch as Material3Switch
@@ -47,11 +44,7 @@ fun Switch(
             )
         }
         AppDesignSystem.MIUIX -> {
-            val scheme = if (isSystemInDarkTheme()) {
-                darkColorScheme()
-            } else {
-                lightColorScheme()
-            }
+            val scheme = MiuixTheme.colorScheme
 
             MiuixSwitch(
                 checked = checked,

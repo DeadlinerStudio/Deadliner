@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.model.AppearanceColorSource
 import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.ColorfulIndicatorStyle
 import com.aritxonly.deadliner.model.DDLStatus
@@ -115,11 +116,18 @@ fun DesignColorSettingsScreen(
 
             SettingsSection(topLabel = stringResource(R.string.settings_design_color_title)) {
                 ThemeColorPicker(
+                    currentSource = appearance.effectiveColorSource,
                     currentSeed = selectedSeed,
-                    onColorSelected = {
-                        GlobalUtils.seedColor = it
-                        selectedSeed = it
-                    }
+                    showPreset = appearance.designMode == AppearanceDesignMode.Modern,
+                    onColorSelected = { source, seed ->
+                        GlobalUtils.updateAppearance {
+                            it.copy(
+                                colorSource = source,
+                                seedColorHex = if (source == AppearanceColorSource.SeedColor) seed else null,
+                            )
+                        }
+                        selectedSeed = seed
+                    },
                 )
             }
 
@@ -191,7 +199,11 @@ fun DesignColorSettingsScreen(
                 }
                 StaticSettingStrategyRow(
                     headline = stringResource(R.string.settings_color_generation_strategy_title),
-                    supporting = "${stringResource(R.string.settings_color_generation_strategy_value)} · ${stringResource(appearance.dynamicPaletteStyle.labelRes())}"
+                    supporting = if (appearance.effectiveColorSource == AppearanceColorSource.Preset) {
+                        stringResource(R.string.settings_color_source_preset_support)
+                    } else {
+                        "${stringResource(R.string.settings_color_generation_strategy_value)} · ${stringResource(appearance.dynamicPaletteStyle.labelRes())}"
+                    }
                 )
                 SettingsSectionDivider()
                 DynamicPaletteStylePicker(

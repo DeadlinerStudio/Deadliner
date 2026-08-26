@@ -2,6 +2,8 @@ package com.aritxonly.deadliner.ui.navigation
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -38,12 +40,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
@@ -67,10 +70,12 @@ import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
+import com.kyant.shapes.Capsule
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
-import top.yukonga.miuix.kmp.shapes.SmoothCapsuleShape
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.sign
 
 @Immutable
 data class MiuixFloatingTabItem(
@@ -88,12 +93,15 @@ enum class MiuixFloatingTabLayout {
 
 object MiuixFloatingTabBarDefaults {
     val Height = 54.dp
-    val ContentPadding = 1.5.dp
+    val HorizontalContentPadding = 7.dp
+    val VerticalContentPadding = 3.dp
+    val IndicatorHorizontalOverflow = 3.dp
     val MaximumWidth = 380.dp
-    val IconSize = 28.dp
+    val TabIconSize = 26.dp
+    val DetachedIconSize = 28.dp
 
-    val ContainerShape: Shape = SmoothCapsuleShape()
-    val IndicatorShape: Shape = SmoothCapsuleShape()
+    val ContainerShape: Shape = Capsule()
+    val IndicatorShape: Shape = Capsule()
 }
 
 /**
@@ -110,15 +118,19 @@ fun MiuixFloatingTabBar(
     onItemSelected: (MiuixFloatingTabItem) -> Unit,
     modifier: Modifier = Modifier,
     layout: MiuixFloatingTabLayout = MiuixFloatingTabLayout.Horizontal,
+    selectionVisible: Boolean = true,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
 ) {
     if (LocalAppDesignSystem.current != AppDesignSystem.MIUIX || items.isEmpty()) return
 
     val selectedIndex = items.indexOfFirst { it.key == selectedKey }.coerceAtLeast(0)
     val advancedMaterial = LocalAdvancedMaterialSpec.current
-    val contentColor = MiuixTheme.colorScheme.onSurfaceContainer
-    val isDark = contentColor.luminance() > 0.5f
+    val themedContentColor = MiuixTheme.colorScheme.onSurfaceContainer
+    val isDark = themedContentColor.luminance() > 0.5f
+    val contentColor = if (isDark) Color.White else Color.Black
     val motion = remember { FloatingTabMotionState(selectedIndex) }
+    val panelReturnOffset = remember { Animatable(0f) }
+    var directPanelDragOffset: Float? by remember { mutableStateOf(null) }
     val motionScope = rememberCoroutineScope()
     val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
 
@@ -138,21 +150,29 @@ fun MiuixFloatingTabBar(
         ),
         label = "floating_tab_indicator_press_scale",
     )
+    val selectionAlpha by animateFloatAsState(
+        targetValue = if (selectionVisible) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "floating_tab_selection_visibility",
+    )
 
     BoxWithConstraints(
         modifier = modifier
-            .padding(horizontal = 4.dp)
             .widthIn(max = MiuixFloatingTabBarDefaults.MaximumWidth)
             .fillMaxWidth()
-            .height(MiuixFloatingTabBarDefaults.Height)
-            .shadow(
-                elevation = 12.dp,
-                shape = MiuixFloatingTabBarDefaults.ContainerShape,
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = if (isDark) 0.48f else 0.24f),
-                spotColor = Color.Black.copy(alpha = if (isDark) 0.32f else 0.18f),
-            ),
+            .height(MiuixFloatingTabBarDefaults.Height),
     ) {
+        val density = LocalDensity.current
+        val panelDragFraction = floatingTabPanelDragFraction(
+            dragOffsetPx = directPanelDragOffset ?: panelReturnOffset.value,
+            panelWidthPx = constraints.maxWidth.toFloat(),
+        )
+        val panelOffsetPx = with(density) {
+            FloatingTabMotionDefaults.MaximumPanelOffsetDp.dp.toPx()
+        } * sign(panelDragFraction) * EaseOut.transform(abs(panelDragFraction))
         val stretch by animateFloatAsState(
             targetValue = floatingTabStretch(
                 velocityPxPerSecond = motion.velocityPxPerSecond,
@@ -164,132 +184,165 @@ fun MiuixFloatingTabBar(
             ),
             label = "floating_tab_indicator_velocity_stretch",
         )
-        SoftGlassSurface(
-            modifier = Modifier.fillMaxSize(),
-            shape = MiuixFloatingTabBarDefaults.ContainerShape,
-            recipe = DeadlinerGlassRecipes.floatingNavigation(advancedMaterial.fineTuning),
-            interaction = GlassMaterialInteraction(
-                refractionScale = if (motion.isPressed) 1.06f else 1f,
-                highlightScale = if (motion.isPressed) 1.04f else 1f,
-            ),
-            backdrop = backdrop,
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { translationX = panelOffsetPx }
+                .floatingNavigationShadow(
+                    shape = MiuixFloatingTabBarDefaults.ContainerShape,
+                    isDark = isDark,
+                ),
         ) {
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(MiuixFloatingTabBarDefaults.ContentPadding),
+            SoftGlassSurface(
+                modifier = Modifier.fillMaxSize(),
+                shape = MiuixFloatingTabBarDefaults.ContainerShape,
+                recipe = DeadlinerGlassRecipes.floatingNavigation(advancedMaterial.fineTuning),
+                interaction = GlassMaterialInteraction(
+                    refractionScale = if (motion.isPressed) 1.06f else 1f,
+                    highlightScale = if (motion.isPressed) 1.04f else 1f,
+                ),
+                backdrop = backdrop,
             ) {
-                val density = LocalDensity.current
-                val itemWidth = maxWidth / items.size
-                val itemWidthPx = with(density) { itemWidth.toPx() }
-                val indicatorColor = if (isDark) {
-                    Color.White.copy(alpha = 0.13f)
-                } else {
-                    Color.Black.copy(alpha = 0.075f)
-                }
-                val transformOriginX = floatingTabTransformOriginX(
-                    velocityPxPerSecond = motion.velocityPxPerSecond,
-                    stretch = stretch,
-                )
-
-                Box(
-                    modifier = Modifier
-                        .offset(x = itemWidth * motion.visualPosition)
-                        .width(itemWidth)
-                        .fillMaxHeight()
-                        .padding(horizontal = 2.dp, vertical = 1.dp)
-                        .graphicsLayer {
-                            scaleX = indicatorPressScale * (1f + stretch)
-                            scaleY = indicatorPressScale
-                            transformOrigin = TransformOrigin(transformOriginX, 0.5f)
-                        }
-                        .clip(MiuixFloatingTabBarDefaults.IndicatorShape)
-                        .background(indicatorColor),
-                )
-
-                Row(
+                BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
-                        .pointerInput(items, itemWidthPx, isLtr) {
-                            awaitEachGesture {
-                                val down = awaitFirstDown(requireUnconsumed = false)
-                                val indicatorStartPx = if (isLtr) {
-                                    motion.visualPosition * itemWidthPx
-                                } else {
-                                    (items.lastIndex - motion.visualPosition) * itemWidthPx
-                                }
-                                if (down.position.x !in indicatorStartPx..(indicatorStartPx + itemWidthPx)) {
-                                    return@awaitEachGesture
-                                }
+                        .padding(
+                            horizontal = MiuixFloatingTabBarDefaults.HorizontalContentPadding,
+                            vertical = MiuixFloatingTabBarDefaults.VerticalContentPadding,
+                        ),
+                ) {
+                    val itemWidth = maxWidth / items.size
+                    val itemWidthPx = with(density) { itemWidth.toPx() }
+                    val indicatorColor = if (isDark) {
+                        Color.White.copy(alpha = 0.13f)
+                    } else {
+                        Color.Black.copy(alpha = 0.075f)
+                    }
+                    val transformOriginX = floatingTabTransformOriginX(
+                        velocityPxPerSecond = motion.velocityPxPerSecond,
+                        stretch = stretch,
+                    )
 
-                                motion.press()
-                                val downX = down.position.x
-                                val startPosition = motion.visualPosition
-                                val velocityTracker = VelocityTracker()
-                                velocityTracker.addPosition(down.uptimeMillis, down.position)
-                                var dragging = false
-                                var cancelled = false
+                    Box(
+                        modifier = Modifier
+                            .offset(
+                                x = itemWidth * motion.visualPosition -
+                                    MiuixFloatingTabBarDefaults.IndicatorHorizontalOverflow,
+                            )
+                            .width(
+                                itemWidth +
+                                    MiuixFloatingTabBarDefaults.IndicatorHorizontalOverflow * 2,
+                            )
+                            .fillMaxHeight()
+                            .graphicsLayer {
+                                alpha = selectionAlpha
+                                scaleX = indicatorPressScale * (1f + stretch)
+                                scaleY = indicatorPressScale
+                                transformOrigin = TransformOrigin(transformOriginX, 0.5f)
+                            }
+                            .clip(MiuixFloatingTabBarDefaults.IndicatorShape)
+                            .background(indicatorColor),
+                    )
 
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    val change = event.changes.firstOrNull { it.id == down.id }
-                                    if (change == null) {
-                                        cancelled = true
-                                        break
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(items, itemWidthPx, isLtr, selectionVisible) {
+                                awaitEachGesture {
+                                    val down = awaitFirstDown(requireUnconsumed = false)
+                                    if (!selectionVisible) return@awaitEachGesture
+                                    val indicatorStartPx = if (isLtr) {
+                                        motion.visualPosition * itemWidthPx
+                                    } else {
+                                        (items.lastIndex - motion.visualPosition) * itemWidthPx
                                     }
-                                    velocityTracker.addPosition(change.uptimeMillis, change.position)
-                                    val totalDragPx = change.position.x - downX
-                                    if (!dragging && kotlin.math.abs(totalDragPx) > viewConfiguration.touchSlop) {
-                                        dragging = true
-                                        motion.startDrag()
+                                    if (down.position.x !in indicatorStartPx..(indicatorStartPx + itemWidthPx)) {
+                                        return@awaitEachGesture
                                     }
-                                    if (dragging) {
-                                        change.consume()
-                                        val physicalVelocity = velocityTracker.calculateVelocity().x
-                                        val logicalDirection = if (isLtr) 1f else -1f
-                                        motion.dragTo(
-                                            positionInTabs = startPosition +
-                                                totalDragPx / itemWidthPx * logicalDirection,
+
+                                    motion.press()
+                                    val downX = down.position.x
+                                    val startPosition = motion.visualPosition
+                                    val velocityTracker = VelocityTracker()
+                                    velocityTracker.addPosition(down.uptimeMillis, down.position)
+                                    var dragging = false
+                                    var cancelled = false
+
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        val change = event.changes.firstOrNull { it.id == down.id }
+                                        if (change == null) {
+                                            cancelled = true
+                                            break
+                                        }
+                                        velocityTracker.addPosition(change.uptimeMillis, change.position)
+                                        val totalDragPx = change.position.x - downX
+                                        if (!dragging && abs(totalDragPx) > viewConfiguration.touchSlop) {
+                                            dragging = true
+                                            motion.startDrag()
+                                        }
+                                        if (dragging) {
+                                            change.consume()
+                                            directPanelDragOffset = totalDragPx
+                                            val physicalVelocity = velocityTracker.calculateVelocity().x
+                                            val logicalDirection = if (isLtr) 1f else -1f
+                                            motion.dragTo(
+                                                positionInTabs = startPosition +
+                                                    totalDragPx / itemWidthPx * logicalDirection,
+                                                tabCount = items.size,
+                                                velocityPxPerSecond = physicalVelocity,
+                                            )
+                                        }
+                                        if (!change.pressed) break
+                                    }
+
+                                    if (dragging && !cancelled) {
+                                        val targetIndex = resolveFloatingTabTarget(
+                                            position = motion.visualPosition,
                                             tabCount = items.size,
-                                            velocityPxPerSecond = physicalVelocity,
+                                            enabledIndices = items.indices.filter { items[it].enabled },
                                         )
+                                        motion.finishGesture(targetIndex)
+                                        motionScope.launch { motion.settleTo(targetIndex) }
+                                        onItemSelected(items[targetIndex])
+                                    } else {
+                                        motion.cancelGesture()
+                                        if (cancelled) {
+                                            motionScope.launch { motion.settleTo(selectedIndex) }
+                                        }
                                     }
-                                    if (!change.pressed) break
-                                }
-
-                                if (dragging && !cancelled) {
-                                    val targetIndex = resolveFloatingTabTarget(
-                                        position = motion.visualPosition,
-                                        tabCount = items.size,
-                                        enabledIndices = items.indices.filter { items[it].enabled },
-                                    )
-                                    motion.finishGesture(targetIndex)
-                                    motionScope.launch { motion.settleTo(targetIndex) }
-                                    onItemSelected(items[targetIndex])
-                                } else {
-                                    motion.cancelGesture()
-                                    if (cancelled) {
-                                        motionScope.launch { motion.settleTo(selectedIndex) }
+                                    val releasedPanelOffset = directPanelDragOffset ?: 0f
+                                    motionScope.launch {
+                                        panelReturnOffset.snapTo(releasedPanelOffset)
+                                        directPanelDragOffset = null
+                                        panelReturnOffset.animateTo(
+                                            targetValue = 0f,
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessMedium,
+                                                visibilityThreshold = 0.5f,
+                                            ),
+                                        )
                                     }
                                 }
                             }
+                            .selectableGroup(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        items.forEachIndexed { index, item ->
+                            val selected = selectionVisible && index == selectedIndex
+                            FloatingTabItemContent(
+                                item = item,
+                                selected = selected,
+                                selectedPressProgress = if (selected && motion.isPressed) 1f else 0f,
+                                contentColor = contentColor,
+                                layout = layout,
+                                onClick = { onItemSelected(item) },
+                                modifier = Modifier
+                                    .width(itemWidth)
+                                    .fillMaxHeight(),
+                            )
                         }
-                        .selectableGroup(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    items.forEachIndexed { index, item ->
-                        val selected = index == selectedIndex
-                        FloatingTabItemContent(
-                            item = item,
-                            selected = selected,
-                            selectedPressProgress = if (selected && motion.isPressed) 1f else 0f,
-                            contentColor = contentColor,
-                            layout = layout,
-                            onClick = { onItemSelected(item) },
-                            modifier = Modifier
-                                .width(itemWidth)
-                                .fillMaxHeight(),
-                        )
                     }
                 }
             }
@@ -309,20 +362,19 @@ private fun FloatingTabItemContent(
 ) {
     val targetColor = when {
         !item.enabled -> contentColor.copy(alpha = 0.22f)
-        selected -> contentColor
-        else -> contentColor.copy(alpha = 0.46f)
+        else -> contentColor
     }
     val animatedContentColor by animateColorAsState(
         targetValue = targetColor,
         label = "floating_tab_content_color",
     )
-    val animatedContentScale by animateFloatAsState(
-        targetValue = 1f + selectedPressProgress * 0.08f,
+    val animatedIconScale by animateFloatAsState(
+        targetValue = floatingTabSelectedIconScale(selectedPressProgress),
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMedium,
         ),
-        label = "floating_tab_selected_content_scale",
+        label = "floating_tab_selected_icon_scale",
     )
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -336,12 +388,12 @@ private fun FloatingTabItemContent(
             indication = null,
             onClick = onClick,
         )
-        .graphicsLayer {
-            scaleX = animatedContentScale
-            scaleY = animatedContentScale
-        }
     val icon: @Composable () -> Unit = {
         AnimatedContent(
+            modifier = Modifier.graphicsLayer {
+                scaleX = animatedIconScale
+                scaleY = animatedIconScale
+            },
             targetState = selected,
             transitionSpec = {
                 (fadeIn() + scaleIn(initialScale = 0.88f))
@@ -353,7 +405,7 @@ private fun FloatingTabItemContent(
                 imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
                 contentDescription = null,
                 tint = animatedContentColor,
-                modifier = Modifier.size(MiuixFloatingTabBarDefaults.IconSize),
+                modifier = Modifier.size(MiuixFloatingTabBarDefaults.TabIconSize),
             )
         }
     }
@@ -364,8 +416,8 @@ private fun FloatingTabItemContent(
             style = when (layout) {
                 MiuixFloatingTabLayout.Horizontal -> MaterialTheme.typography.labelMedium
                 MiuixFloatingTabLayout.Stacked -> MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 11.sp,
-                    lineHeight = 12.sp,
+                    fontSize = 10.sp,
+                    lineHeight = 11.sp,
                 )
             },
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
