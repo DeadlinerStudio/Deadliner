@@ -1,13 +1,8 @@
 package com.aritxonly.deadliner.ui.settings
 
 import android.app.Activity
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -23,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.DisplayScaleManager
 import com.aritxonly.deadliner.localutils.GlobalUtils
@@ -58,7 +52,7 @@ fun DisplayScaleSettingsScreen(
                 modifier = navIconPaddingModifier
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_back),
+                    com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier
@@ -104,7 +98,7 @@ fun CustomDisplayScaleSettingsScreen(
                 modifier = navIconPaddingModifier
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_back),
+                    com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier

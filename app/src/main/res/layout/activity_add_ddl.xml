@@ -20,7 +20,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="@id/textView"
-        app:srcCompat="@drawable/ic_back" />
+        app:srcCompat="@drawable/msr_arrow_back_wght400" />
 
     <TextView
         android:id="@+id/textView"
@@ -46,7 +46,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="@id/textView"
-        app:srcCompat="@drawable/ic_event" />
+        app:srcCompat="@drawable/msr_event_wght400" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/typeTabLayout"

@@ -66,7 +66,7 @@ fun StepsCardView(card: UiCard.StepsCard, onCreateSubtasks: (String, List<String
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 card.checklist.forEachIndexed { i, s ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(iconResource(R.drawable.ic_check), contentDescription = null)
+                        Icon(iconResource(R.drawable.msr_task_alt_wght400), contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text("${i + 1}. $s", style = MaterialTheme.typography.bodyMedium)
                     }
@@ -111,7 +111,7 @@ fun ErrorBlock(message: String) {
     ) {
         Column(Modifier.padding(16.dp)) {
             Icon(
-                iconResource(R.drawable.ic_error),
+                iconResource(R.drawable.msr_error_wght400),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error
             )

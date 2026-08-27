@@ -28,6 +28,7 @@ data class AppearancePreferences(
     val useMiuixNeutralSurfaces: Boolean = true,
     val useMaterialTopAppBarInMiuix: Boolean = false,
     val useImmersiveExperience: Boolean = false,
+    val useContrastingHomeFab: Boolean = true,
     val useAdvancedMaterial: Boolean = false,
     val advancedMaterialLevel: AdvancedMaterialLevel = AdvancedMaterialLevel.Light,
     val advancedMaterialBlurRadius: Float = AdvancedMaterialTuning.DefaultBlurRadius,
@@ -68,4 +69,8 @@ data class AppearancePreferences(
             AppearanceDesignMode.Modern -> modernHideDivider
             AppearanceDesignMode.Vivid -> vividHideDivider
         }
+
+    val showsContrastingHomeFabOption: Boolean
+        get() = designMode == AppearanceDesignMode.Modern &&
+            effectiveColorSource == AppearanceColorSource.Preset
 }

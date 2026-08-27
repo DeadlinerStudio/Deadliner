@@ -35,6 +35,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
+import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
+import com.aritxonly.deadliner.ui.material.glass.LocalTopBarButtonMaterialProgress
+import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassDefaults
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassSurface
 import com.aritxonly.deadliner.ui.material.glass.softGlassShadow
@@ -54,13 +57,32 @@ internal fun resolveImmersiveTextTabIndex(
     tabCount: Int,
 ): Int = if (tabCount <= 0) 0 else selectedTabIndex.coerceIn(0, tabCount - 1)
 
-/** Pure-text soft-glass tabs used by MIUIX immersive top bars. */
+internal fun resolveImmersiveTextTabMaterialProgress(
+    immersiveEnabled: Boolean,
+    explicitProgress: Float?,
+    topBarProgress: Float,
+    scrollProgress: Float?,
+): Float {
+    if (!immersiveEnabled) return 0f
+    return (explicitProgress ?: maxOf(topBarProgress, scrollProgress ?: 0f)).coerceIn(0f, 1f)
+}
+
+internal fun resolveImmersiveTextTabContainerAlpha(
+    isDark: Boolean,
+    materialProgress: Float,
+): Float {
+    val restingAlpha = if (isDark) 0.74f else 0.82f
+    return restingAlpha * (1f - materialProgress.coerceIn(0f, 1f) * 0.62f)
+}
+
+/** MIUIX text tabs that reveal soft glass in immersive mode and retain a container fallback. */
 @Composable
 fun ImmersiveTextTabRow(
     tabs: List<String>,
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    materialProgress: Float? = null,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
 ) {
     if (tabs.isEmpty()) return
@@ -68,6 +90,15 @@ fun ImmersiveTextTabRow(
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val contentColor = MiuixTheme.colorScheme.onSurfaceContainer
     val isDark = contentColor.luminance() > 0.5f
+    val resolvedMaterialProgress = resolveImmersiveTextTabMaterialProgress(
+        immersiveEnabled = LocalImmersiveExperienceEnabled.current,
+        explicitProgress = materialProgress,
+        topBarProgress = LocalTopBarButtonMaterialProgress.current,
+        scrollProgress = LocalTopBarScrollProgress.current,
+    )
+    val containerColor = MiuixTheme.colorScheme.surfaceContainer.copy(
+        alpha = resolveImmersiveTextTabContainerAlpha(isDark, resolvedMaterialProgress),
+    )
     val resolvedSelectedIndex = resolveImmersiveTextTabIndex(selectedTabIndex, tabs.size)
     val selectionPosition by animateFloatAsState(
         targetValue = resolvedSelectedIndex.toFloat(),
@@ -84,83 +115,100 @@ fun ImmersiveTextTabRow(
             .height(ImmersiveTextTabRowDefaults.Height),
         contentAlignment = Alignment.Center,
     ) {
-        SoftGlassSurface(
+        Box(
             modifier = Modifier
                 .widthIn(max = ImmersiveTextTabRowDefaults.MaximumWidth)
                 .fillMaxWidth()
-                .height(ImmersiveTextTabRowDefaults.Height)
-                .softGlassShadow(
-                    shape = SoftGlassDefaults.Shape,
-                    isDark = isDark,
-                ),
-            shape = SoftGlassDefaults.Shape,
-            recipe = DeadlinerGlassRecipes.floatingNavigation(advancedMaterial.fineTuning),
-            backdrop = backdrop,
+                .height(ImmersiveTextTabRowDefaults.Height),
         ) {
-            BoxWithConstraints(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(ImmersiveTextTabRowDefaults.ContentPadding),
+                    .clip(SoftGlassDefaults.Shape)
+                    .background(containerColor),
+            )
+            SoftGlassSurface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .softGlassShadow(
+                        shape = SoftGlassDefaults.Shape,
+                        isDark = isDark,
+                        alpha = resolvedMaterialProgress,
+                    ),
+                shape = SoftGlassDefaults.Shape,
+                recipe = DeadlinerGlassRecipes.floatingNavigation(advancedMaterial.fineTuning),
+                materialAlpha = resolvedMaterialProgress,
+                backdrop = backdrop,
             ) {
-                val itemWidth = maxWidth / tabs.size
-                val indicatorColor = if (isDark) {
-                    Color.White.copy(alpha = 0.13f)
-                } else {
-                    Color.Black.copy(alpha = 0.075f)
-                }
-
-                Box(
-                    modifier = Modifier
-                        .offset(x = itemWidth * selectionPosition)
-                        .width(itemWidth)
-                        .fillMaxHeight()
-                        .clip(SoftGlassDefaults.Shape)
-                        .background(indicatorColor),
-                )
-
-                Row(
+                BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
-                        .selectableGroup(),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .padding(ImmersiveTextTabRowDefaults.ContentPadding),
                 ) {
-                    tabs.forEachIndexed { index, title ->
-                        val selected = index == resolvedSelectedIndex
-                        val textColor by animateColorAsState(
-                            targetValue = if (selected) {
-                                contentColor
-                            } else {
-                                contentColor.copy(alpha = 0.50f)
-                            },
-                            label = "immersive_text_tab_color_$index",
-                        )
-                        val interactionSource = remember { MutableInteractionSource() }
+                    val itemWidth = maxWidth / tabs.size
+                    val indicatorColor = if (isDark) {
+                        Color.White.copy(alpha = 0.13f)
+                    } else {
+                        Color.Black.copy(alpha = 0.075f)
+                    }
 
-                        Box(
-                            modifier = Modifier
-                                .width(itemWidth)
-                                .fillMaxHeight()
-                                .clip(SoftGlassDefaults.Shape)
-                                .selectable(
-                                    selected = selected,
-                                    role = Role.Tab,
-                                    interactionSource = interactionSource,
-                                    indication = null,
-                                    onClick = { onTabSelected(index) },
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = title,
-                                color = textColor,
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontSize = 14.sp,
-                                    lineHeight = 16.sp,
-                                ),
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                    Box(
+                        modifier = Modifier
+                            .offset(x = itemWidth * selectionPosition)
+                            .width(itemWidth)
+                            .fillMaxHeight()
+                            .clip(SoftGlassDefaults.Shape)
+                            .background(indicatorColor),
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .selectableGroup(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        tabs.forEachIndexed { index, title ->
+                            val selected = index == resolvedSelectedIndex
+                            val textColor by animateColorAsState(
+                                targetValue = if (selected) {
+                                    contentColor
+                                } else {
+                                    contentColor.copy(alpha = 0.50f)
+                                },
+                                label = "immersive_text_tab_color_$index",
                             )
+                            val interactionSource = remember { MutableInteractionSource() }
+
+                            Box(
+                                modifier = Modifier
+                                    .width(itemWidth)
+                                    .fillMaxHeight()
+                                    .clip(SoftGlassDefaults.Shape)
+                                    .selectable(
+                                        selected = selected,
+                                        role = Role.Tab,
+                                        interactionSource = interactionSource,
+                                        indication = null,
+                                        onClick = { onTabSelected(index) },
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = title,
+                                    color = textColor,
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontSize = 14.sp,
+                                        lineHeight = 16.sp,
+                                    ),
+                                    fontWeight = if (selected) {
+                                        FontWeight.Medium
+                                    } else {
+                                        FontWeight.Normal
+                                    },
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                 }

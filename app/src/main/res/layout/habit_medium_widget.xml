@@ -73,7 +73,7 @@
             android:layout_marginStart="4dp"
             android:layout_weight="1"
             android:tint="?android:attr/textColorPrimaryInverse"
-            android:src="@drawable/ic_check" />
+            android:src="@drawable/msr_task_alt_wght400" />
 
         <!-- 右边的文字 -->
         <TextView

@@ -81,6 +81,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.toAndroidRect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -154,6 +156,7 @@ fun MainDisplay(
     onRequestBackdropBlur: (Boolean) -> Unit = {},
     onCelebrate: (() -> Unit)? = null,
     topOverlayPadding: Dp = 0.dp,
+    listNestedScrollConnection: NestedScrollConnection? = null,
 ) {
     val context = LocalContext.current
 
@@ -209,6 +212,13 @@ fun MainDisplay(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier
                             .fillMaxSize()
+                            .let { listModifier ->
+                                if (listNestedScrollConnection != null) {
+                                    listModifier.nestedScroll(listNestedScrollConnection)
+                                } else {
+                                    listModifier
+                                }
+                            }
                             .mainListContainerClip(),
                         state = listState
                     ) {

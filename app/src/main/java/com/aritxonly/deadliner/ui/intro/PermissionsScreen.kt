@@ -199,8 +199,8 @@ private fun PermissionItemCard(
             MaterialTheme.colorScheme.onSurfaceVariant
 
     val iconRes =
-        if (granted) R.drawable.ic_ok
-        else R.drawable.ic_close
+        if (granted) R.drawable.msr_check_wght400
+        else R.drawable.msr_close_wght400
 
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
 

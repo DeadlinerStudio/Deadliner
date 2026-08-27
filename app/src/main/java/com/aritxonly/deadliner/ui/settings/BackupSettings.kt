@@ -2,18 +2,13 @@ package com.aritxonly.deadliner.ui.settings
 
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -46,7 +41,7 @@ fun BackupSettingsScreen(
                 modifier = navIconPaddingModifier
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_back),
+                    com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier
@@ -63,14 +58,14 @@ fun BackupSettingsScreen(
             SettingsSection {
                 SettingsTextButtonItem(
                     text = R.string.settings_import,
-                    iconRes = R.drawable.ic_import
+                    iconRes = R.drawable.msr_download_wght400
                 ) {
                     handleImport()
                 }
                 SettingsSectionDivider()
                 SettingsTextButtonItem(
                     text = R.string.settings_export,
-                    iconRes = R.drawable.ic_export
+                    iconRes = R.drawable.msr_upload_wght400
                 ) {
                     handleExport()
                 }
@@ -79,7 +74,7 @@ fun BackupSettingsScreen(
             SettingsSection {
                 SettingsTextButtonItem(
                     text = R.string.settings_from_webdav,
-                    iconRes = R.drawable.ic_cloud_download
+                    iconRes = R.drawable.msr_cloud_download_wght400
                 ) {
                     if (GlobalUtils.cloudSyncEnable && GlobalUtils.webDavBaseUrl.isNotBlank()
                         && GlobalUtils.webDavUser.isNotBlank() && GlobalUtils.webDavPass.isNotBlank()

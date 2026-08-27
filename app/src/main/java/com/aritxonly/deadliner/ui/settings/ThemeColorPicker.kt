@@ -10,17 +10,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.AppearanceColorSource
 import com.aritxonly.deadliner.ui.iconResource
+import com.aritxonly.deadliner.ui.theme.MiuixPresetColorSchemes
 
 val M3BaselineColors = listOf(
     "#365AB0",
@@ -51,6 +54,12 @@ fun ThemeColorPicker(
     showPreset: Boolean,
     onColorSelected: (AppearanceColorSource, String?) -> Unit,
 ) {
+    val darkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val presetPreviewColors = remember(darkTheme) {
+        MiuixPresetColorSchemes.create(darkTheme).let { scheme ->
+            listOf(scheme.primary, scheme.secondary, scheme.tertiary)
+        }
+    }
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -71,6 +80,7 @@ fun ThemeColorPicker(
                     option = ThemeColorOption.Preset,
                     isSelected = currentSource == AppearanceColorSource.Preset,
                     onClick = { onColorSelected(AppearanceColorSource.Preset, null) },
+                    presetPreviewColors = presetPreviewColors,
                 )
             }
         }
@@ -90,7 +100,8 @@ fun ThemeColorPicker(
 private fun ColorCircle(
     option: ThemeColorOption,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    presetPreviewColors: List<Color> = emptyList(),
 ) {
     val backgroundColor = when (option) {
         ThemeColorOption.SystemDynamic -> MaterialTheme.colorScheme.surfaceVariant
@@ -112,11 +123,7 @@ private fun ColorCircle(
                 if (option == ThemeColorOption.Preset) {
                     Modifier.background(
                         Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xFF3482FF),
-                                Color(0xFFF08A7E),
-                                Color(0xFF53DBC8),
-                            )
+                            colors = presetPreviewColors,
                         )
                     )
                 } else {
@@ -137,7 +144,7 @@ private fun ColorCircle(
         if (isSelected) {
             // 选中时打个勾
             Icon(
-                imageVector = iconResource(R.drawable.ic_on),
+                painter = iconResource(R.drawable.msr_check_wght400),
                 contentDescription = description,
                 tint = if (option == ThemeColorOption.SystemDynamic) {
                     MaterialTheme.colorScheme.onSurfaceVariant
@@ -148,7 +155,7 @@ private fun ColorCircle(
         } else if (option == ThemeColorOption.SystemDynamic) {
             // 动态颜色的图标提示
             Icon(
-                imageVector = iconResource(R.drawable.ic_wallpaper),
+                painter = iconResource(R.drawable.msr_wallpaper_wght400),
                 contentDescription = description,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )

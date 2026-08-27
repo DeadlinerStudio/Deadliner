@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationDock
+import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationAction
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBarDefaults
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabItem
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
@@ -35,6 +36,7 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
     detachedItemKey: String?,
+    detachedAction: MiuixFloatingNavigationAction?,
     backdrop: LayerBackdrop?,
     modifier: Modifier,
     topBar: @Composable () -> Unit,
@@ -144,6 +146,7 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
                 MiuixFloatingNavigationDock(
                     items = navigationPartition.primaryItems.map { it.toFloatingTabItem() },
                     detachedItem = navigationPartition.detachedItem?.toFloatingTabItem(),
+                    detachedAction = detachedAction,
                     primarySelectionVisible = primarySelectionVisible,
                     selectedKey = if (navigationPartition.detachedItem?.key == selectedKey) {
                         selectedKey
@@ -166,6 +169,7 @@ private fun AdaptiveNavItem.toFloatingTabItem() = MiuixFloatingTabItem(
     selectedIcon = resolveImmersiveNavigationIcon(this),
     unselectedIcon = resolveImmersiveNavigationIcon(this),
     enabled = enabled,
+    iconScale = immersiveIconScale,
 )
 
 @Composable

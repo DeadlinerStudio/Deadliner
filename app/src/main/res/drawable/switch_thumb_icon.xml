@@ -2,10 +2,10 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 开 = 显示 ic_on -->
     <item
-        android:drawable="@drawable/ic_on"
+        android:drawable="@drawable/msr_check_wght400"
         android:state_checked="true" />
 
     <!-- 其它（关）= 显示 ic_off -->
     <item
-        android:drawable="@drawable/ic_off" />
+        android:drawable="@drawable/msr_close_wght400" />
 </selector>

@@ -1,12 +1,11 @@
 package com.aritxonly.deadliner.ui.material.glass
 
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalHomeFabColors
@@ -25,18 +24,19 @@ fun SoftGlassFloatingActionButton(
     enabled: Boolean = true,
     containerColor: Color = LocalHomeFabColors.current.container,
     contentColor: Color = LocalHomeFabColors.current.content,
+    size: Dp = SoftGlassFloatingActionButtonDefaults.Size,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
     content: @Composable () -> Unit,
 ) {
-    val isDark = MaterialTheme.colorScheme.onSurface.luminance() > 0.5f
-    val glassTint = containerColor.copy(alpha = if (isDark) 0.82f else 0.86f)
+    val glassTint = containerColor.copy(alpha = 1f)
 
     SoftGlassIconButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        size = SoftGlassFloatingActionButtonDefaults.Size,
+        size = size,
         tint = glassTint,
+        tintStyle = GlassTintStyle.SeedChromatic,
         backdrop = backdrop,
     ) {
         CompositionLocalProvider(LocalContentColor provides contentColor) {

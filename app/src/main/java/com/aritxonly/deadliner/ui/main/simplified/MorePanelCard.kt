@@ -74,7 +74,7 @@ fun MorePanelCard(
                 )
             } else {
                 Icon(
-                    imageVector = iconResource(R.drawable.ic_person),
+                    painter = iconResource(R.drawable.msr_person_wght400),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(32.dp)
@@ -86,7 +86,7 @@ fun MorePanelCard(
                 Text(stringResource(R.string.panel_greeting_deadliner), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             IconButton(onClick = onDismiss) {
-                Icon(iconResource(R.drawable.ic_close), contentDescription = stringResource(R.string.close), modifier = expressiveTypeModifier)
+                Icon(iconResource(R.drawable.msr_close_wght400), contentDescription = stringResource(R.string.close), modifier = expressiveTypeModifier)
             }
         }
 
@@ -94,13 +94,13 @@ fun MorePanelCard(
 
         // 功能列表
         Column(Modifier.padding(vertical = 4.dp)) {
-            MoreRow(R.drawable.ic_settings, stringResource(R.string.settings_title)) {
+            MoreRow(R.drawable.msr_settings_wght400, stringResource(R.string.settings_title)) {
                 activity.startActivity(Intent(context, SettingsActivity::class.java))
             }
-            MoreRow(R.drawable.ic_draw, stringResource(R.string.capture_title)) {
+            MoreRow(R.drawable.msr_draw_wght400, stringResource(R.string.capture_title)) {
                 activity.startActivity(Intent(context, CaptureActivity::class.java))
             }
-            MoreRow(R.drawable.ic_archive, stringResource(R.string.archive)) {
+            MoreRow(R.drawable.msr_inbox_wght400, stringResource(R.string.archive)) {
                 val intent = Intent(activity, ArchiveActivity::class.java)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -110,7 +110,7 @@ fun MorePanelCard(
                     activity.startActivity(intent)
                 }
             }
-            MoreRow(R.drawable.ic_overview, stringResource(R.string.overview)) {
+            MoreRow(R.drawable.msr_pie_chart_wght400, stringResource(R.string.overview)) {
                 activity.startActivity(Intent(context, OverviewActivity::class.java))
             }
         }

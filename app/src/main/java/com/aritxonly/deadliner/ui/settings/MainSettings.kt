@@ -85,7 +85,7 @@ fun MainSettingsScreen(
                 modifier = navIconPaddingModifier
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_back),
+                    com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.close),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier
@@ -129,7 +129,7 @@ fun MainSettingsScreen(
                             } else {
                                 SettingsHomeLeadingIcon(
                                     route = SettingsRoute.Profile,
-                                    iconRes = R.drawable.ic_person,
+                                    iconRes = R.drawable.msr_person_wght400,
                                     enabled = appearance.useSettingsHomepageColoredIcons,
                                 )
                             }
@@ -155,7 +155,7 @@ fun MainSettingsScreen(
                                 leadingContent = {
                                     SettingsHomeLeadingIcon(
                                         route = route,
-                                        iconRes = route.iconRes ?: R.drawable.ic_package,
+                                        iconRes = route.iconRes ?: R.drawable.msr_deployed_code_wght400,
                                         enabled = appearance.useSettingsHomepageColoredIcons,
                                     )
                                 }
@@ -183,7 +183,7 @@ private fun SettingsHomeLeadingIcon(
 ) {
     if (!enabled) {
         Icon(
-            imageVector = ImageVector.vectorResource(iconRes),
+            painter = com.aritxonly.deadliner.ui.iconResource(iconRes),
             contentDescription = null,
             tint = LocalContentColor.current,
         )
@@ -216,7 +216,7 @@ private fun SettingsHomeLeadingIcon(
             .background(containerColor)
     ) {
         Icon(
-            imageVector = ImageVector.vectorResource(iconRes),
+            painter = com.aritxonly.deadliner.ui.iconResource(iconRes),
             contentDescription = null,
             tint = iconTint,
             modifier = Modifier.size(20.dp),

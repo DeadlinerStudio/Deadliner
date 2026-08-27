@@ -159,7 +159,7 @@ fun ArchiveScreen(
                     navigationIcon = {
                         IconButton(onClick = onClose) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_close),
+                                painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_close_wght400),
                                 contentDescription = stringResource(R.string.close),
                                 tint = MaterialTheme.colorScheme.onSurface,
                             )
@@ -427,7 +427,7 @@ private fun ArchiveEmptyState(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_archive),
+                painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_inbox_wght400),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.size(52.dp),

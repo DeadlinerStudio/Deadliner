@@ -41,10 +41,13 @@ internal const val ProgressiveTopBarBlurFadeStart = 0.60f
 internal const val ProgressiveTopBarTintFadeStart = 0.70f
 internal const val ProgressiveTopBarTintIntensity = 0.20f
 internal const val ProgressiveTopBarOverlayTopAlpha = 0.94f
-internal const val ProgressiveTopBarOverlayEndFraction = 0.68f
+internal const val ProgressiveTopBarOverlayEndFraction = 0.80f
 internal const val ProgressiveTopBarContentEndFraction = 0.75f
 internal const val ProgressiveTopBarMinimumContentHeightDp = 56f
 internal const val ProgressiveTopBarMaterialHeightTrimDp = 6f
+
+/** Extra visual clearance below the fully transparent end of the progressive material. */
+internal const val ProgressiveTopBarBottomClearanceDp = 12f
 
 internal enum class ProgressiveTopBarRenderMode {
     Backdrop,
@@ -124,7 +127,9 @@ fun ProgressiveTopBarMaterial(
         ProgressiveTopBarMinimumContentHeightDp.dp.roundToPx()
     }
     val materialHeightTrimPx = with(density) {
-        ProgressiveTopBarMaterialHeightTrimDp.dp.roundToPx()
+        (ProgressiveTopBarMaterialHeightTrimDp + ProgressiveTopBarBottomClearanceDp)
+            .dp
+            .roundToPx()
     }
 
     SubcomposeLayout(modifier = modifier) { constraints ->

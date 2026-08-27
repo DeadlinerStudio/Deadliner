@@ -2,21 +2,15 @@ package com.aritxonly.deadliner.ui.settings
 
 import android.content.Intent
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -38,7 +31,6 @@ import com.aritxonly.deadliner.BuildConfig
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.PreviewCard
 import androidx.core.net.toUri
-import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
@@ -55,7 +47,7 @@ fun AboutSettingsScreen(
         navigationIcon = {
             IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_back),
+                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier
@@ -124,7 +116,7 @@ fun AboutSettingsScreen(
                 SettingsDetailTextButtonItem(
                     headline = R.string.settings_check_for_updates,
                     supporting = R.string.settings_support_check_for_updates,
-                    iconRes = R.drawable.ic_update
+                    iconRes = R.drawable.msr_mobile_arrow_down_wght400
                 ) {
                     nav.navigate("update")
                 }
@@ -146,7 +138,7 @@ fun AboutSettingsScreen(
                 SettingsDetailTextButtonItem(
                     headline = R.string.settings_license,
                     supporting = R.string.settings_license_summary,
-                    iconRes = R.drawable.ic_license
+                    iconRes = R.drawable.msr_contract_wght400
                 ) {
                     nav.navigate("license")
                 }
@@ -154,7 +146,7 @@ fun AboutSettingsScreen(
                 SettingsDetailTextButtonItem(
                     headline = R.string.settings_privacy_policy,
                     supporting = R.string.settings_privacy_summary,
-                    iconRes = R.drawable.ic_privacy
+                    iconRes = R.drawable.msr_shield_wght400
                 ) {
                     nav.navigate("policy")
                 }
@@ -164,7 +156,7 @@ fun AboutSettingsScreen(
             SettingsSection(topLabel = stringResource(R.string.settings_more)) {
                 SettingsTextButtonItem(
                     text = R.string.settings_homepage,
-                    iconRes = R.drawable.ic_author
+                    iconRes = R.drawable.msr_account_circle_wght400
                 ) {
                     val url = "https://github.com/AritxOnly"
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())
@@ -182,7 +174,7 @@ fun AboutSettingsScreen(
                 SettingsSectionDivider()
                 SettingsTextButtonItem(
                     text = R.string.settings_playground,
-                    iconRes = R.drawable.ic_android
+                    iconRes = R.drawable.msr_android_wght400
                 ) {
                     val url = "https://www.magicalapk.com/app/share/app?id=55830"
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())

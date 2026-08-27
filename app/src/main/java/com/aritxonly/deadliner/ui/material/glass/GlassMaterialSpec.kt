@@ -59,6 +59,18 @@ data class GlassMaterialInteraction(
     val highlightScale: Float = 1f,
 )
 
+/** Controls how the tint is composited over the sampled glass backdrop. */
+enum class GlassTintStyle {
+    /** A single neutral wash for navigation capsules and top-bar actions. */
+    Neutral,
+
+    /** Preserves chroma with colorization and a restrained screen lift for tinted controls. */
+    Chromatic,
+
+    /** Keeps a supplied seed's RGB visible while retaining transparent glass optics. */
+    SeedChromatic,
+}
+
 object DeadlinerGlassRecipes {
     val FloatingNavigation = GlassMaterialRecipe(
         blur = GlassBlurSpec(

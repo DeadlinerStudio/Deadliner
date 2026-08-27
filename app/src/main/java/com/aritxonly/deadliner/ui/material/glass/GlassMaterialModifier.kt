@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ fun Modifier.deadlinerGlassMaterial(
     backdrop: LayerBackdrop?,
     shape: Shape,
     tint: Color,
+    tintStyle: GlassTintStyle = GlassTintStyle.Neutral,
     isDark: Boolean,
     recipe: GlassMaterialRecipe,
     interaction: GlassMaterialInteraction = GlassMaterialInteraction(),
@@ -42,6 +44,11 @@ fun Modifier.deadlinerGlassMaterial(
     val resolvedTint = tint.copy(
         alpha = (tint.alpha * blurSpec.tintAlphaMultiplier).coerceIn(0f, 1f),
     )
+    val tintComposite = resolveGlassTintComposite(
+        tint = resolvedTint,
+        style = tintStyle,
+        isDark = isDark,
+    )
     val canDrawBackdrop = resolvedMaterial.textureBlurEnabled && backdrop != null
     val canDrawOpticalStack = canDrawBackdrop &&
         recipe.refraction.enabled &&
@@ -52,7 +59,7 @@ fun Modifier.deadlinerGlassMaterial(
             backdrop = requireNotNull(backdrop),
             shape = shape,
             material = resolvedMaterial,
-            tint = resolvedTint,
+            tintComposite = tintComposite,
             recipe = recipe,
             interaction = interaction,
             isDark = isDark,
@@ -60,7 +67,7 @@ fun Modifier.deadlinerGlassMaterial(
 
         canDrawBackdrop -> {
             val blurColors = resolvedMaterial.rememberBlurColors(
-                additionalBlendColors = listOf(BlendColorEntry(resolvedTint)),
+                additionalBlendColors = listOf(BlendColorEntry(tintComposite.fallbackTint)),
             )
             Modifier
                 .advancedTextureBlur(
@@ -73,11 +80,88 @@ fun Modifier.deadlinerGlassMaterial(
         }
 
         else -> Modifier
-            .background(color = resolvedTint, shape = shape)
+            .background(color = tintComposite.fallbackTint, shape = shape)
             .fallbackGlassEdge(shape, recipe.edgeOptics, isDark)
     }
 
     return this.then(material)
+}
+
+internal data class GlassTintComposite(
+    val baseTint: Color,
+    val colorizeTint: Color,
+    val liftTint: Color,
+    val fallbackTint: Color,
+)
+
+/**
+ * Chromatic glass keeps the sampled luminance instead of covering it with one nearly opaque wash.
+ * The seed profile uses the supplied RGB directly in both color modes, with enough transparent base
+ * coverage to remain recognizable without sacrificing backdrop blur and refraction.
+ */
+internal fun resolveGlassTintComposite(
+    tint: Color,
+    style: GlassTintStyle,
+    isDark: Boolean,
+): GlassTintComposite {
+    if (style == GlassTintStyle.Neutral) {
+        return GlassTintComposite(
+            baseTint = tint,
+            colorizeTint = Color.Transparent,
+            liftTint = Color.Transparent,
+            fallbackTint = tint,
+        )
+    }
+
+    val seedFaithful = style == GlassTintStyle.SeedChromatic
+    val average = (tint.red + tint.green + tint.blue) / 3f
+    val saturationScale = when {
+        seedFaithful -> 1f
+        isDark -> 1.24f
+        else -> 1.16f
+    }
+    val brightnessLift = when {
+        seedFaithful -> 0f
+        isDark -> 0.08f
+        else -> 0.035f
+    }
+    fun resolveChannel(channel: Float): Float {
+        val saturated = average + (channel - average) * saturationScale
+        return (saturated + (1f - saturated) * brightnessLift).coerceIn(0f, 1f)
+    }
+
+    val vividTint = Color(
+        red = resolveChannel(tint.red),
+        green = resolveChannel(tint.green),
+        blue = resolveChannel(tint.blue),
+        alpha = 1f,
+    )
+    val baseAlpha = tint.alpha * when {
+        seedFaithful -> 0.835f
+        isDark -> 0.42f
+        else -> 0.34f
+    }
+    val colorizeAlpha = tint.alpha * when {
+        seedFaithful -> 0.86f
+        isDark -> 0.58f
+        else -> 0.50f
+    }
+    val liftAlpha = tint.alpha * when {
+        seedFaithful -> 0f
+        isDark -> 0.28f
+        else -> 0.10f
+    }
+    val fallbackAlpha = tint.alpha * when {
+        seedFaithful -> 0.96f
+        isDark -> 0.68f
+        else -> 0.62f
+    }
+    return GlassTintComposite(
+        baseTint = vividTint.copy(alpha = baseAlpha.coerceIn(0f, 1f)),
+        colorizeTint = vividTint.copy(alpha = colorizeAlpha.coerceIn(0f, 1f)),
+        liftTint = vividTint.copy(alpha = liftAlpha.coerceIn(0f, 1f)),
+        fallbackTint = vividTint.copy(alpha = fallbackAlpha.coerceIn(0f, 1f)),
+    )
 }
 
 /**
@@ -88,7 +172,7 @@ private fun Modifier.glassOpticalBackdrop(
     backdrop: LayerBackdrop,
     shape: Shape,
     material: AdvancedMaterialSpec,
-    tint: Color,
+    tintComposite: GlassTintComposite,
     recipe: GlassMaterialRecipe,
     interaction: GlassMaterialInteraction,
     isDark: Boolean,
@@ -159,7 +243,21 @@ private fun Modifier.glassOpticalBackdrop(
             )
         }
     },
-    onDrawSurface = { drawRect(tint) },
+    onDrawSurface = {
+        drawRect(tintComposite.baseTint)
+        if (tintComposite.colorizeTint.alpha > 0f) {
+            drawRect(
+                color = tintComposite.colorizeTint,
+                blendMode = BlendMode.Color,
+            )
+        }
+        if (tintComposite.liftTint.alpha > 0f) {
+            drawRect(
+                color = tintComposite.liftTint,
+                blendMode = BlendMode.Screen,
+            )
+        }
+    },
     contentBlendMode = material.blurContentBlendMode,
 )
 

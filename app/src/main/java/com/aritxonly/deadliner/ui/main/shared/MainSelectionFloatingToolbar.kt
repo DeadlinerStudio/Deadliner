@@ -33,21 +33,21 @@ fun MainSelectionFloatingToolbar(
         modifier = modifier.padding(2.dp),
     ) {
         IconButton(onClick = onDoneClick) {
-            Icon(iconResource(R.drawable.ic_done), contentDescription = null)
+            Icon(iconResource(R.drawable.msr_task_alt_wght400), contentDescription = null)
         }
 
         Spacer(modifier = Modifier.width(16.dp))
 
         if (selectedPage == DeadlineType.TASK) {
             IconButton(onClick = onArchiveClick) {
-                Icon(iconResource(R.drawable.ic_archiving), contentDescription = null)
+                Icon(iconResource(R.drawable.msr_move_to_inbox_wght400), contentDescription = null)
             }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
 
         IconButton(onClick = onDeleteClick) {
-            Icon(iconResource(R.drawable.ic_delete), contentDescription = null)
+            Icon(iconResource(R.drawable.msr_delete_wght400), contentDescription = null)
         }
 
     }

@@ -10,7 +10,7 @@ class TopBarMaterialProgressTest {
         assertEquals(
             0f,
             resolveTopBarButtonMaterialProgress(
-                collapsedFraction = 0.04f,
+                collapsedFraction = TopBarMaterialRevealStartFraction,
                 scrollProgress = null,
                 overrideProgress = null,
             ),
@@ -21,7 +21,7 @@ class TopBarMaterialProgressTest {
     @Test
     fun slightCollapseProgressivelyRevealsMaterial() {
         val progress = resolveTopBarButtonMaterialProgress(
-            collapsedFraction = 0.18f,
+            collapsedFraction = 0.09f,
             scrollProgress = null,
             overrideProgress = null,
         )
@@ -31,7 +31,8 @@ class TopBarMaterialProgressTest {
         assertEquals(
             1f,
             resolveTopBarButtonMaterialProgress(
-                collapsedFraction = 0.32f,
+                collapsedFraction = TopBarMaterialRevealStartFraction +
+                    TopBarMaterialRevealRangeFraction,
                 scrollProgress = null,
                 overrideProgress = null,
             ),

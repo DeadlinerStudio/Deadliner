@@ -2,6 +2,7 @@ package com.aritxonly.deadliner.model
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -48,6 +49,25 @@ class AppearancePreferencesTest {
 
         assertEquals(AppearanceColorSource.Preset, modern.effectiveColorSource)
         assertEquals(AppearanceColorSource.SystemDynamic, vivid.effectiveColorSource)
+    }
+
+    @Test
+    fun contrastingHomeFabDefaultsOnAndOnlyAppearsForModernPreset() {
+        val modernPreset = AppearancePreferences(
+            designMode = AppearanceDesignMode.Modern,
+            colorSource = AppearanceColorSource.Preset,
+        )
+
+        assertTrue(modernPreset.useContrastingHomeFab)
+        assertTrue(modernPreset.showsContrastingHomeFabOption)
+        assertFalse(
+            modernPreset.copy(colorSource = AppearanceColorSource.SeedColor)
+                .showsContrastingHomeFabOption,
+        )
+        assertFalse(
+            modernPreset.copy(designMode = AppearanceDesignMode.Vivid)
+                .showsContrastingHomeFabOption,
+        )
     }
 
     @Test

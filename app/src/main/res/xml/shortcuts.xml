@@ -4,7 +4,7 @@
     <shortcut
         android:shortcutId="shortcut_add_task"
         android:enabled="true"
-        android:icon="@drawable/ic_shortcut_add"
+        android:icon="@drawable/msr_add_wght400"
         android:shortcutShortLabel="@string/shortcut_add_task_short"
         android:shortcutLongLabel="@string/shortcut_add_task_long"
         android:shortcutDisabledMessage="@string/shortcut_disabled_message">
@@ -17,7 +17,7 @@
     <shortcut
         android:shortcutId="shortcut_overview"
         android:enabled="true"
-        android:icon="@drawable/ic_shortcut_chart"
+        android:icon="@drawable/msr_donut_large_wght400"
         android:shortcutShortLabel="@string/shortcut_overview_short"
         android:shortcutLongLabel="@string/shortcut_overview_long"
         android:shortcutDisabledMessage="@string/shortcut_disabled_message">

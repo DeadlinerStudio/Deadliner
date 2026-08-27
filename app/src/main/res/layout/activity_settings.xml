@@ -19,7 +19,7 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginVertical="4dp"
             android:background="?attr/colorSurface"
-            app:navigationIcon="@drawable/ic_back"
+            app:navigationIcon="@drawable/msr_arrow_back_wght400"
             app:contentInsetStartWithNavigation="0dp"
             app:layout_scrollFlags="scroll|enterAlways"
             app:titleTextColor="?attr/colorOnSurface"/>
@@ -178,7 +178,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/ic_alert"
+                        android:src="@drawable/msr_error_wght400"
                         android:layout_gravity="center_vertical"
                         android:layout_marginStart="16dp"
                         app:tint="?attr/colorOnErrorContainer" />
@@ -344,7 +344,7 @@
                         android:gravity="start|center_vertical"
                         android:paddingStart="0dp"
                         android:paddingVertical="8dp"
-                        app:icon="@drawable/ic_import"
+                        app:icon="@drawable/msr_download_wght400"
                         app:iconGravity="end"
                         app:iconPadding="8dp"
                         app:backgroundTint="@android:color/transparent"
@@ -363,7 +363,7 @@
                         android:gravity="start|center_vertical"
                         android:paddingStart="0dp"
                         android:paddingVertical="8dp"
-                        app:icon="@drawable/ic_export"
+                        app:icon="@drawable/msr_upload_wght400"
                         app:iconGravity="end"
                         app:iconPadding="8dp"
                         app:backgroundTint="@android:color/transparent"
@@ -514,7 +514,7 @@
                         android:layout_height="24dp"
                         android:layout_gravity="center_vertical"
                         android:layout_marginStart="16dp"
-                        android:src="@drawable/ic_package"
+                        android:src="@drawable/msr_deployed_code_wght400"
                         app:tint="?attr/colorOnSecondaryContainer" />
 
                     <TextView
@@ -568,7 +568,7 @@
                         android:textSize="16sp"
                         style="?attr/materialButtonOutlinedStyle"
                         app:cornerRadius="16dp"
-                        app:icon="@drawable/ic_author"
+                        app:icon="@drawable/msr_account_circle_wght400"
                         app:iconGravity="textStart"
                         app:iconPadding="8dp"/>
 
@@ -581,7 +581,7 @@
                         android:textSize="16sp"
                         style="?attr/materialButtonOutlinedStyle"
                         app:cornerRadius="16dp"
-                        app:icon="@drawable/ic_bug"
+                        app:icon="@drawable/msr_bug_report_wght400"
                         app:iconGravity="textStart"
                         app:iconPadding="8dp"/>
 

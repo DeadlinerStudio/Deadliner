@@ -93,7 +93,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -146,7 +145,7 @@ fun SettingItem(
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = {
         Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_right),
+            painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_chevron_right_wght400),
             modifier = expressiveTypeModifier
                 .padding(start = 2.dp),
             contentDescription = null
@@ -509,7 +508,7 @@ fun SettingsSwitchItem(
                 thumbContent = if (checked) {
                     {
                         Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_on),
+                            painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_check_wght400),
                             contentDescription = null,
                             modifier = Modifier.size(SwitchDefaults.IconSize),
                         )
@@ -576,7 +575,7 @@ fun SettingsDetailSwitchItem(
                     thumbContent = if (checked) {
                         {
                             Icon(
-                                painter = painterResource(R.drawable.ic_on),
+                                painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_check_wght400),
                                 contentDescription = null,
                                 modifier = Modifier.size(SwitchDefaults.IconSize)
                             )
@@ -642,7 +641,7 @@ fun SettingsDetailSwitchItem(
                     thumbContent = if (checked) {
                         {
                             Icon(
-                                painter = painterResource(R.drawable.ic_on),
+                                painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_check_wght400),
                                 contentDescription = null,
                                 modifier = Modifier.size(SwitchDefaults.IconSize)
                             )
@@ -786,7 +785,7 @@ fun SettingsTextButtonItem(
             )
             if (iconRes != null) {
                 Icon(
-                    painter = painterResource(iconRes),
+                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(iconRes),
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )
@@ -831,7 +830,7 @@ fun SettingsDetailTextButtonItem(
             }
             if (iconRes != null) {
                 Icon(
-                    painter = painterResource(iconRes),
+                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(iconRes),
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )
@@ -876,7 +875,7 @@ fun SettingsDetailTextButtonItem(
             }
             if (iconRes != null) {
                 Icon(
-                    painter = painterResource(iconRes),
+                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(iconRes),
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )
@@ -943,13 +942,13 @@ fun RoundedTextField(
         trailingIcon = {
             if (isPassword) {
                 val image = if (passwordVisible)
-                    ImageVector.vectorResource(R.drawable.ic_visibility)
+                    com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_visibility_wght400)
                 else
-                    ImageVector.vectorResource(R.drawable.ic_visibility_off)
+                    com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_visibility_off_wght400)
                 val description = if (passwordVisible) "Hide password" else "Show password"
 
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, contentDescription = description)
+                    Icon(painter = image, contentDescription = description)
                 }
             }
         }
@@ -1117,7 +1116,7 @@ fun InfoCardCentered(
         ) {
             Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_info),
+                    painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_info_wght400),
                     contentDescription = stringResource(R.string.info),
                     tint = iconColor?: MaterialTheme.colorScheme.onPrimaryContainer
                 )

@@ -959,6 +959,8 @@
     <string name="settings_support_miuix_material_top_bar">Keep the MIUIX theme, but switch ModernHost top app bars back to the Material 3 style</string>
     <string name="settings_immersive_experience">Enable immersive experience</string>
     <string name="settings_support_immersive_experience">Use soft-glass floating tabs and a progressively blurred top bar in Compact Modern windows; wider windows keep the existing layout</string>
+    <string name="settings_contrasting_home_fab">Contrasting home button</string>
+    <string name="settings_support_contrasting_home_fab">Use amber soft glass to emphasize the home add action</string>
     <string name="settings_miuix_color">MIUIX color</string>
     <string name="settings_modern_palette_title">Modern color palette</string>
     <string name="settings_modern_palette_support">Switch the neutral surface style. Missing tonal layers fall back to the default HyperOS palette.</string>

@@ -33,7 +33,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:contentDescription="添加"
-        android:src="@drawable/ic_search"
+        android:src="@drawable/msr_search_wght400"
         android:layout_margin="8dp"
         android:padding="4dp"
         app:tint="?attr/colorOnPrimaryContainer" />
@@ -65,7 +65,7 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="8dp"
-        android:src="@drawable/ic_add"
+        android:src="@drawable/msr_add_wght400"
         app:tint="@color/widget_container_fg" />
 
 </RelativeLayout>

@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +40,7 @@ import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import java.util.UUID
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.deadlinerOverlayContainerColor
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
 
 @Composable
@@ -78,7 +77,7 @@ fun ModelSettingsScreen(
                 modifier = navIconPaddingModifier
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_back),
+                    com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier
@@ -89,7 +88,7 @@ fun ModelSettingsScreen(
             Box {
                 TopBarIconButton(onClick = { showMenu = true }, modifier = Modifier.padding(end = 8.dp)) {
                     Icon(
-                        painterResource(R.drawable.ic_more),
+                        com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_more_vert_wght400),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = expressiveTypeModifier
@@ -287,7 +286,11 @@ fun ManagePresetsSheet(
     var editTarget by remember { mutableStateOf<LlmPreset?>(null) }
 
     RegisterAdvancedMaterialDialogBlur()
-    ModalBottomSheet(onDismissRequest = onClose, sheetState = sheetState) {
+    ModalBottomSheet(
+        onDismissRequest = onClose,
+        sheetState = sheetState,
+        containerColor = deadlinerOverlayContainerColor(),
+    ) {
         Text(stringResource(R.string.manage_presets), modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.titleMedium)
         presets.forEachIndexed { i, p ->
             Row(
@@ -300,11 +303,11 @@ fun ManagePresetsSheet(
                     if (p.id == currentId) Text(stringResource(R.string.current_in_use), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                 }
                 IconButton(onClick = { editTarget = p }) {
-                    Icon(ImageVector.vectorResource(R.drawable.ic_edit), contentDescription = stringResource(R.string.edit))
+                    Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_edit_wght400), contentDescription = stringResource(R.string.edit))
                 }
                 val canDelete = p.id != currentId && presets.size > 1
                 IconButton(onClick = { if (canDelete) confirmDelete = p }, enabled = canDelete) {
-                    Icon(ImageVector.vectorResource(R.drawable.ic_delete), contentDescription = stringResource(R.string.delete))
+                    Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_delete_wght400), contentDescription = stringResource(R.string.delete))
                 }
             }
             if (i < presets.lastIndex) SettingsSectionDivider()

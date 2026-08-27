@@ -48,7 +48,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="12dp"
         android:contentDescription="星标"
-        android:src="@drawable/ic_star_filled"
+        android:src="@drawable/msr_star_fill_wght400"
         app:tint="?attr/colorPrimary"
         app:layout_constraintBottom_toBottomOf="@id/titleText"
         app:layout_constraintEnd_toEndOf="parent"
@@ -68,38 +68,6 @@
         app:layout_constraintTop_toBottomOf="@id/titleText"
         app:layout_constraintEnd_toStartOf="@id/checkButton" />
 
-    <!-- 打卡进度指示 -->
-    <LinearLayout
-        android:id="@+id/dailyProgress"
-        android:layout_width="0dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="12dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/frequencyText">
-
-        <!-- 动态生成每日状态点 -->
-        <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_marginEnd="4dp"
-            app:srcCompat="@drawable/ic_dot_filled"
-            app:tint="?attr/colorPrimary" />
-
-        <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_marginEnd="4dp"
-            app:srcCompat="@drawable/ic_dot_empty"
-            app:tint="?attr/colorOnSurfaceVariant" />
-
-        <!-- 更多日期点... -->
-    </LinearLayout>
-
     <!-- 打卡按钮 -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/checkButton"
@@ -114,7 +82,7 @@
         android:textSize="13sp"
         app:iconGravity="textStart"
         app:cornerRadius="18dp"
-        app:icon="@drawable/ic_finish"
+        app:icon="@drawable/msr_check_wght400"
         app:iconTint="?attr/colorOnPrimaryContainer"
         app:iconPadding="4dp"
         app:layout_constraintBottom_toBottomOf="@id/frequencyText"
@@ -138,7 +106,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/dailyProgress"
+        app:layout_constraintTop_toBottomOf="@id/frequencyText"
         app:indicatorTrackGapSize="2dp"
         app:trackStopIndicatorSize="0dp" />
 

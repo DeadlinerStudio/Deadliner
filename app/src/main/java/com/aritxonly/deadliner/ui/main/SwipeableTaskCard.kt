@@ -36,7 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
@@ -80,9 +80,9 @@ fun DDLItemCardSwipeable(
     onEditAction: (() -> Unit)? = null,
     onDeleteAction: (() -> Unit)? = null,
     useDisabledCompletedStyle: Boolean = false,
-    primaryActionIcon: ImageVector? = null,
+    primaryActionIcon: Painter? = null,
     primaryActionColor: Color? = null,
-    secondaryActionIcon: ImageVector? = null,
+    secondaryActionIcon: Painter? = null,
     secondaryActionColor: Color? = null,
     selectionMode: Boolean = false,
     selected: Boolean = false,
@@ -100,13 +100,13 @@ fun DDLItemCardSwipeable(
     val actionColors = rememberTaskSwipeActionColors()
 
     val resolvedPrimaryActionIcon = primaryActionIcon
-        ?: ImageVector.vectorResource(R.drawable.ic_done)
+        ?: com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_task_alt_wght400)
     val resolvedPrimaryActionColor = primaryActionColor ?: actionColors.complete
     val resolvedSecondaryActionIcon = secondaryActionIcon
-        ?: ImageVector.vectorResource(R.drawable.ic_flag)
+        ?: com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_flag_wght400)
     val resolvedSecondaryActionColor = secondaryActionColor ?: actionColors.giveUp
-    val editActionIcon = ImageVector.vectorResource(R.drawable.ic_edit)
-    val deleteActionIcon = ImageVector.vectorResource(R.drawable.ic_delete)
+    val editActionIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_edit_wght400)
+    val deleteActionIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_delete_wght400)
     val editActionColor = actionColors.edit
     val deleteActionColor = actionColors.delete
     val editActionLabel = androidx.compose.ui.res.stringResource(R.string.edit)
@@ -285,7 +285,7 @@ fun DDLItemCardSwipeable(
 
 private data class SwipeActionUi(
     val label: String,
-    val icon: ImageVector,
+    val icon: Painter,
     val color: Color,
     val onClick: () -> Unit,
 )
@@ -378,7 +378,7 @@ private fun SwipeActionButton(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = action.icon,
+                        painter = action.icon,
                         contentDescription = action.label,
                         modifier = Modifier.size(21.dp),
                     )

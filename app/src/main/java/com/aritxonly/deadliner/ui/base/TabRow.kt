@@ -1,6 +1,5 @@
 package com.aritxonly.deadliner.ui.base
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
@@ -13,12 +12,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
-import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.navigation.ImmersiveTextTabRow
-import top.yukonga.miuix.kmp.basic.TabRowDefaults
-
-// 别名防止冲突
-import top.yukonga.miuix.kmp.basic.TabRow as MiuixTabRow
 
 /**
  * Deadliner 基础 TabRow 组件
@@ -35,10 +29,7 @@ fun TabRow(
     // M3 专属：底部分割线
     divider: @Composable () -> Unit = {}
 ) {
-    if (
-        LocalAppDesignSystem.current == AppDesignSystem.MIUIX &&
-        LocalImmersiveExperienceEnabled.current
-    ) {
+    if (LocalAppDesignSystem.current == AppDesignSystem.MIUIX) {
         ImmersiveTextTabRow(
             tabs = tabs,
             selectedTabIndex = selectedTabIndex,
@@ -70,15 +61,6 @@ fun TabRow(
                 }
             }
         }
-
-        AppDesignSystem.MIUIX -> {
-            MiuixTabRow(
-                tabs = tabs,
-                selectedTabIndex = selectedTabIndex,
-                onTabSelected = onTabSelected,
-                modifier = modifier.padding(horizontal = 8.dp),
-                colors = TabRowDefaults.tabRowColors(backgroundColor = Color.Transparent)
-            )
-        }
+        AppDesignSystem.MIUIX -> Unit
     }
 }

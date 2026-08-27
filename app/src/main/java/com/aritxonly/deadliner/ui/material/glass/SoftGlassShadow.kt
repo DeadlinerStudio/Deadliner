@@ -19,23 +19,25 @@ internal data class SoftGlassShadowTokens(
     val offset: DpOffset = DpOffset.Zero,
 )
 
-internal fun softGlassShadowTokens(isDark: Boolean): SoftGlassShadowTokens = if (isDark) {
+internal fun softGlassShadowTokens(
+    isDark: Boolean,
+): SoftGlassShadowTokens = if (isDark) {
     SoftGlassShadowTokens(
-        outerRadius = 10.dp,
-        outerSpread = 0.dp,
-        outerAlpha = 0.09f,
-        edgeRadius = 2.dp,
-        edgeSpread = 0.dp,
-        edgeAlpha = 0.04f,
+        outerRadius = 7.dp,
+        outerSpread = (-0.75).dp,
+        outerAlpha = 0.052f,
+        edgeRadius = 3.dp,
+        edgeSpread = (-0.75).dp,
+        edgeAlpha = 0.010f,
     )
 } else {
     SoftGlassShadowTokens(
-        outerRadius = 12.dp,
-        outerSpread = 0.dp,
-        outerAlpha = 0.11f,
-        edgeRadius = 3.dp,
-        edgeSpread = 0.dp,
-        edgeAlpha = 0.05f,
+        outerRadius = 8.dp,
+        outerSpread = (-0.75).dp,
+        outerAlpha = 0.068f,
+        edgeRadius = 3.5.dp,
+        edgeSpread = (-0.75).dp,
+        edgeAlpha = 0.014f,
     )
 }
 

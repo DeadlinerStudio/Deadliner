@@ -212,8 +212,11 @@ fun AIOverlay(
     borderThickness: Dp = 2.dp,
     glowColors: List<Color> = listOf(Color(0xFF6AA9FF), Color(0xFFFFC36A), Color(0xFFFF6AE6)),
     hintText: String = stringResource(R.string.ai_overlay_enter_questions),
-    respondIme: Boolean = true
+    respondIme: Boolean = true,
+    presentation: AIAgentPresentation = AIAgentPresentation.Overlay,
+    inputBottomPadding: Dp = 40.dp,
 ) {
+    val chromePolicy = aiAgentChromePolicy(presentation)
     var textState by remember { mutableStateOf(TextFieldValue(initialText)) }
     var isLoading by remember { mutableStateOf(false) }
 
@@ -551,7 +554,7 @@ fun AIOverlay(
         }
     }
 
-    BackHandler(enabled = true) { onDismiss() }
+    BackHandler(enabled = chromePolicy.handleBackPress) { onDismiss() }
 
     val density = LocalDensity.current
     var parentHeightPx by remember { mutableIntStateOf(0) }
@@ -623,27 +626,29 @@ fun AIOverlay(
             }
         }
 
-        IconButton(
-            onClick = {
-                focusManager.clearFocus()
-                onDismiss()
-            },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .statusBarsPadding()
-                .padding(end = 20.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.75f),
-                    shape = CircleShape
+        if (chromePolicy.showDismissButton) {
+            IconButton(
+                onClick = {
+                    focusManager.clearFocus()
+                    onDismiss()
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(end = 20.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.75f),
+                        shape = CircleShape
+                    )
+                    .size(36.dp)
+                    .onGloballyPositioned { closeBottomPx = it.boundsInParent().bottom }
+            ) {
+                Icon(
+                    painter = iconResource(R.drawable.msr_close_wght400),
+                    contentDescription = "Close",
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
-                .size(36.dp)
-                .onGloballyPositioned { closeBottomPx = it.boundsInParent().bottom }
-        ) {
-            Icon(
-                imageVector = iconResource(R.drawable.ic_close),
-                contentDescription = "Close",
-                tint = MaterialTheme.colorScheme.onSurface
-            )
+            }
         }
 
         if (messages.isEmpty() && !isLoading) {
@@ -776,7 +781,12 @@ fun AIOverlay(
                 .padding(horizontal = 4.dp)
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp, vertical = 40.dp)
+                .padding(
+                    start = 24.dp,
+                    top = 40.dp,
+                    end = 24.dp,
+                    bottom = inputBottomPadding,
+                )
                 .graphicsLayer {
                     alpha = panelAlpha.value
                     translationY = panelTranslate.value
@@ -795,7 +805,7 @@ fun AIOverlay(
                     enabled = !isLoading && textState.text.isNotBlank()
                 ) {
                     Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.ic_send),
+                        painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_send_wght400),
                         contentDescription = stringResource(R.string.send),
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -991,7 +1001,7 @@ private fun ToolResultBubble(summary: TaskSummary) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Icon(
-            imageVector = iconResource(R.drawable.ic_task),
+            painter = iconResource(R.drawable.msr_check_circle_wght400),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.size(14.dp)
@@ -1091,7 +1101,7 @@ private fun ErrorBubble(text: String) {
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Icon(
-            imageVector = iconResource(R.drawable.ic_error),
+            painter = iconResource(R.drawable.msr_error_wght400),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.error,
             modifier = Modifier.size(16.dp)
@@ -1155,7 +1165,7 @@ private fun QuickPromptRow(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Icon(
-            imageVector = iconResource(R.drawable.ic_ai),
+            painter = iconResource(R.drawable.msr_rocket_launch_wght400),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(18.dp)
@@ -1167,7 +1177,7 @@ private fun QuickPromptRow(
             modifier = Modifier.weight(1f)
         )
         Icon(
-            imageVector = iconResource(R.drawable.ic_chevron_right),
+            painter = iconResource(R.drawable.msr_chevron_right_wght400),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(16.dp)

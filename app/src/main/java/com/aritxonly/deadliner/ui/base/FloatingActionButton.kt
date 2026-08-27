@@ -23,6 +23,7 @@ fun FloatingActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     forceMaterial3: Boolean = false,
     content: @Composable () -> Unit,
 ) {
@@ -32,7 +33,7 @@ fun FloatingActionButton(
                 onClick = onClick,
                 modifier = modifier,
                 containerColor = containerColor,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+                contentColor = contentColor,
                 shape = DeadlinerFabShape,
                 content = content,
             )

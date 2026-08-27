@@ -34,8 +34,8 @@ object DeadlinerColorTokenFactory {
         tertiary = Pink40
     )
 
-    private val miuixAccentSeedLight = Color(0xFF3482FF)
-    private val miuixAccentSeedDark = Color(0xFF277AF7)
+    private val miuixAccentSeedLight = MiuixPresetColorSchemes.LightSeed
+    private val miuixAccentSeedDark = MiuixPresetColorSchemes.DarkSeed
 
     @Composable
     fun rememberBaseMaterialColorScheme(

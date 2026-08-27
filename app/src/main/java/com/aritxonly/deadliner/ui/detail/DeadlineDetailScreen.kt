@@ -58,7 +58,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -86,6 +85,7 @@ import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.iconResource
+import com.aritxonly.deadliner.ui.symbolPainterResource
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -101,13 +101,13 @@ private enum class DetailAction(
     val iconRes: Int,
     val labelRes: Int
 ) {
-    MARK_COMPLETE(R.drawable.ic_done, R.string.mark_complete),
-    GIVE_UP(R.drawable.ic_flag, R.string.give_up_task),
-    RESTORE_ACTIVE(R.drawable.ic_undo, R.string.restore_active),
-    ARCHIVE(R.drawable.ic_archiving, R.string.archive),
-    UNARCHIVE(R.drawable.ic_undo, R.string.unarchive),
-    DELETE(R.drawable.ic_delete, R.string.delete),
-    SAVE_TO_CALENDAR(R.drawable.ic_event, R.string.save_and_add_to_calendar)
+    MARK_COMPLETE(R.drawable.msr_task_alt_wght400, R.string.mark_complete),
+    GIVE_UP(R.drawable.msr_flag_wght400, R.string.give_up_task),
+    RESTORE_ACTIVE(R.drawable.msr_undo_wght400, R.string.restore_active),
+    ARCHIVE(R.drawable.msr_move_to_inbox_wght400, R.string.archive),
+    UNARCHIVE(R.drawable.msr_undo_wght400, R.string.unarchive),
+    DELETE(R.drawable.msr_delete_wght400, R.string.delete),
+    SAVE_TO_CALENDAR(R.drawable.msr_event_wght400, R.string.save_and_add_to_calendar)
 }
 
 private fun availableActions(state: TaskState): List<DetailAction> {
@@ -255,7 +255,7 @@ fun DeadlineDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(
-                            imageVector = iconResource(R.drawable.ic_close),
+                            painter = iconResource(R.drawable.msr_close_wght400),
                             contentDescription = stringResource(R.string.close),
                             modifier = expressiveTypeModifier
                         )
@@ -271,8 +271,8 @@ fun DeadlineDetailScreen(
                         onToggleStar(isStarred)
                     }) {
                         Icon(
-                            painter = painterResource(
-                                if (isStarred) R.drawable.ic_star_filled else R.drawable.ic_star
+                            painter = symbolPainterResource(
+                                if (isStarred) R.drawable.msr_star_fill_wght400 else R.drawable.msr_star_wght400
                             ),
                             contentDescription = stringResource(R.string.star),
                             tint = if (isStarred) Color(0xFFFFE819) else MaterialTheme.colorScheme.onSurface,
@@ -454,7 +454,7 @@ private fun DetailBottomActions(
                 actions.forEach { action ->
                     IconButton(onClick = { onActionClick(action) }) {
                         Icon(
-                            imageVector = iconResource(action.iconRes),
+                            painter = iconResource(action.iconRes),
                             contentDescription = stringResource(action.labelRes)
                         )
                     }
@@ -811,7 +811,7 @@ private fun PlanComposerRow(
                     .height(36.dp)
             ) {
                 Icon(
-                    imageVector = iconResource(R.drawable.ic_ok),
+                    painter = iconResource(R.drawable.msr_check_wght400),
                     contentDescription = stringResource(R.string.save)
                 )
             }
@@ -824,7 +824,7 @@ private fun PlanComposerRow(
                     .height(36.dp)
             ) {
                 Icon(
-                    imageVector = iconResource(R.drawable.ic_close),
+                    painter = iconResource(R.drawable.msr_close_wght400),
                     contentDescription = stringResource(R.string.cancel)
                 )
             }
@@ -900,7 +900,7 @@ private fun SubTaskRow(
                         .height(36.dp)
                 ) {
                     Icon(
-                        imageVector = iconResource(R.drawable.ic_ok),
+                        painter = iconResource(R.drawable.msr_check_wght400),
                         contentDescription = stringResource(R.string.save)
                     )
                 }
@@ -913,7 +913,7 @@ private fun SubTaskRow(
                         .height(36.dp)
                 ) {
                     Icon(
-                        imageVector = iconResource(R.drawable.ic_close),
+                        painter = iconResource(R.drawable.msr_close_wght400),
                         contentDescription = stringResource(R.string.cancel)
                     )
                 }
@@ -933,7 +933,7 @@ private fun SubTaskRow(
                         .height(36.dp)
                 ) {
                     Icon(
-                        imageVector = iconResource(R.drawable.ic_delete),
+                        painter = iconResource(R.drawable.msr_delete_wght400),
                         contentDescription = stringResource(R.string.delete)
                     )
                 }

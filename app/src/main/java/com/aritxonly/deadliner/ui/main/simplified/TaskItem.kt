@@ -116,13 +116,13 @@ fun TaskItem(
         else -> null
     }
     val primaryIcon = when (primaryAction) {
-        TaskAction.RESTORE_ACTIVE -> iconResource(R.drawable.ic_undo)
-        else -> iconResource(R.drawable.ic_done)
+        TaskAction.RESTORE_ACTIVE -> iconResource(R.drawable.msr_undo_wght400)
+        else -> iconResource(R.drawable.msr_task_alt_wght400)
     }
     val secondaryIcon = when (secondaryAction) {
-        TaskAction.MARK_ARCHIVE -> iconResource(R.drawable.ic_archiving)
-        TaskAction.MARK_GIVE_UP -> iconResource(R.drawable.ic_flag)
-        else -> iconResource(R.drawable.ic_delete)
+        TaskAction.MARK_ARCHIVE -> iconResource(R.drawable.msr_move_to_inbox_wght400)
+        TaskAction.MARK_GIVE_UP -> iconResource(R.drawable.msr_flag_wght400)
+        else -> iconResource(R.drawable.msr_delete_wght400)
     }
     val primaryLabel = when (item.state) {
         TaskState.ACTIVE -> stringResource(R.string.complete)

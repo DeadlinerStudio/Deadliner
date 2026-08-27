@@ -49,7 +49,7 @@
                     android:layout_height="18dp"
                     android:contentDescription="星标"
                     android:visibility="gone"
-                    android:src="@drawable/ic_star_filled"
+                    android:src="@drawable/msr_star_fill_wght400"
                     app:tint="?android:attr/textColorPrimaryInverse"
                     android:layout_gravity="center_vertical"/>
 
@@ -113,7 +113,7 @@
                     android:layout_height="18dp"
                     android:contentDescription="星标"
                     android:visibility="gone"
-                    android:src="@drawable/ic_star_filled"
+                    android:src="@drawable/msr_star_fill_wght400"
                     app:tint="?android:attr/textColorPrimaryInverse"
                     android:layout_gravity="center_vertical"/>
 
@@ -175,7 +175,7 @@
                     android:layout_height="18dp"
                     android:contentDescription="星标"
                     android:visibility="gone"
-                    android:src="@drawable/ic_star_filled"
+                    android:src="@drawable/msr_star_fill_wght400"
                     app:tint="?android:attr/textColorPrimaryInverse"
                     android:layout_gravity="center_vertical"/>
 
@@ -217,7 +217,7 @@
             <ImageView
                 android:layout_width="32dp"
                 android:layout_height="32dp"
-                android:src="@drawable/ic_ccheck"
+                android:src="@drawable/msr_event_available_wght400"
                 android:contentDescription="完成图标"
                 android:layout_marginBottom="16dp"
                 android:id="@+id/widgetFinishIcon"
@@ -245,7 +245,7 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="8dp"
-        android:src="@drawable/ic_add"
+        android:src="@drawable/msr_add_wght400"
         app:tint="@color/widget_container_fg" />
 
 </RelativeLayout>

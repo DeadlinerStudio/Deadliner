@@ -186,9 +186,9 @@ private fun PosterMetricCard(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val icon = when (m.isDown) {
-                        true -> R.drawable.ic_arrow_down
-                        false -> R.drawable.ic_arrow_up
-                        null -> R.drawable.ic_next
+                        true -> R.drawable.msr_arrow_downward_wght400
+                        false -> R.drawable.msr_arrow_upward_wght400
+                        null -> R.drawable.msr_chevron_right_wght400
                     }
                     Icon(iconResource(icon), contentDescription = null, tint = color)
                     Spacer(Modifier.width(6.dp))

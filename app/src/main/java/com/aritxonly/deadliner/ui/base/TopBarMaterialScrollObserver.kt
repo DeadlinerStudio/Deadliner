@@ -10,8 +10,8 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 
-private val RevealStartDistance = 12.dp
-private val RevealEndDistance = 48.dp
+internal val TopBarMaterialRevealStartDistance = 4.dp
+internal val TopBarMaterialRevealEndDistance = 28.dp
 
 @Stable
 internal class TopBarMaterialScrollObserver(
@@ -50,8 +50,8 @@ internal fun rememberTopBarMaterialScrollObserver(
     resetKey: Any? = Unit,
 ): TopBarMaterialScrollObserver {
     val density = LocalDensity.current
-    val revealStartPx = with(density) { RevealStartDistance.toPx() }
-    val revealEndPx = with(density) { RevealEndDistance.toPx() }
+    val revealStartPx = with(density) { TopBarMaterialRevealStartDistance.toPx() }
+    val revealEndPx = with(density) { TopBarMaterialRevealEndDistance.toPx() }
     return remember(resetKey, revealStartPx, revealEndPx) {
         TopBarMaterialScrollObserver(
             revealStartPx = revealStartPx,

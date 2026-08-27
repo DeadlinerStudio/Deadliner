@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,12 +45,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
+import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationAction
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
@@ -71,10 +73,11 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 data class AdaptiveNavItem(
     val key: String,
     val label: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector,
+    val selectedIcon: Painter,
+    val unselectedIcon: Painter,
     val enabled: Boolean = true,
-    val immersiveIcon: ImageVector? = null,
+    val immersiveIcon: Painter? = null,
+    val immersiveIconScale: Float = 1f,
 )
 
 //private val CompactNavigationShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
@@ -82,6 +85,7 @@ private val CompactNavigationShape = RoundedCornerShape(0.dp)
 private val RailNavigationShape = RoundedCornerShape(12.dp)
 private val CompactOverlayHostPadding = 92.dp
 private val RailSlotWidth = 92.dp
+private val NavigationIconFrameSize = 24.dp
 
 @Composable
 fun AdaptiveNavigationSuiteScaffold(
@@ -90,6 +94,7 @@ fun AdaptiveNavigationSuiteScaffold(
     onItemSelected: (AdaptiveNavItem) -> Unit,
     useImmersiveExperience: Boolean = false,
     immersiveDetachedItemKey: String? = null,
+    immersiveDetachedAction: MiuixFloatingNavigationAction? = null,
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
     legacyTopBar: @Composable () -> Unit = {},
@@ -135,6 +140,7 @@ fun AdaptiveNavigationSuiteScaffold(
                 selectedKey = selectedKey,
                 onItemSelected = onItemSelected,
                 detachedItemKey = immersiveDetachedItemKey,
+                detachedAction = immersiveDetachedAction,
                 backdrop = backdrop,
                 modifier = observedModifier,
                 topBar = hostedTopBar,
@@ -249,12 +255,14 @@ private fun LegacyCompactNavigationScaffold(
                 ) {
                     items.forEach { item ->
                         val selected = selectedKey == item.key
-                        MiuixNavigationBarItem(
+                        NavigationBarItem(
                             selected = selected,
                             enabled = item.enabled,
                             onClick = { onItemSelected(item) },
-                            icon = if (selected) item.selectedIcon else item.unselectedIcon,
-                            label = item.label,
+                            icon = {
+                                AnimatedNavIcon(selected, item.selectedIcon, item.unselectedIcon, item.label)
+                            },
+                            label = { Text(item.label) },
                         )
                     }
                 }
@@ -329,12 +337,14 @@ private fun LegacyWideNavigationScaffold(
                 ) {
                     items.forEach { item ->
                         val selected = selectedKey == item.key
-                        MiuixNavigationRailItem(
+                        NavigationRailItem(
                             selected = selected,
                             enabled = item.enabled,
                             onClick = { onItemSelected(item) },
-                            icon = if (selected) item.selectedIcon else item.unselectedIcon,
-                            label = item.label,
+                            icon = {
+                                AnimatedNavIcon(selected, item.selectedIcon, item.unselectedIcon, item.label)
+                            },
+                            label = { Text(item.label) },
                         )
                     }
                 }
@@ -531,12 +541,14 @@ private fun MiuixBottomNavigationBar(
         ) {
             items.forEach { item ->
                 val selected = selectedKey == item.key
-                MiuixNavigationBarItem(
+                NavigationBarItem(
                     selected = selected,
                     enabled = item.enabled,
                     onClick = { onItemSelected(item) },
-                    icon = if (selected) item.selectedIcon else item.unselectedIcon,
-                    label = item.label,
+                    icon = {
+                        AnimatedNavIcon(selected, item.selectedIcon, item.unselectedIcon, item.label)
+                    },
+                    label = { Text(item.label) },
                 )
             }
         }
@@ -630,12 +642,14 @@ private fun MiuixNavigationRailContainer(
         ) {
             items.forEach { item ->
                 val selected = selectedKey == item.key
-                MiuixNavigationRailItem(
+                NavigationRailItem(
                     selected = selected,
                     enabled = item.enabled,
                     onClick = { onItemSelected(item) },
-                    icon = if (selected) item.selectedIcon else item.unselectedIcon,
-                    label = item.label,
+                    icon = {
+                        AnimatedNavIcon(selected, item.selectedIcon, item.unselectedIcon, item.label)
+                    },
+                    label = { Text(item.label) },
                 )
             }
         }
@@ -697,8 +711,8 @@ private fun Material3CompactBarContent(
 @Composable
 private fun AnimatedNavIcon(
     selected: Boolean,
-    selectedIcon: ImageVector,
-    unselectedIcon: ImageVector,
+    selectedIcon: Painter,
+    unselectedIcon: Painter,
     contentDescription: String,
 ) {
     AnimatedContent(
@@ -712,8 +726,9 @@ private fun AnimatedNavIcon(
         label = "nav_icon_switch",
     ) { isSelected ->
         Icon(
-            imageVector = if (isSelected) selectedIcon else unselectedIcon,
+            painter = if (isSelected) selectedIcon else unselectedIcon,
             contentDescription = contentDescription,
+            modifier = Modifier.size(NavigationIconFrameSize),
         )
     }
 }

@@ -34,7 +34,7 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="8dp"
-        android:src="@drawable/ic_check"
+        android:src="@drawable/msr_task_alt_wght400"
         android:tint="?android:attr/textColorPrimaryInverse" />
 
 </LinearLayout>

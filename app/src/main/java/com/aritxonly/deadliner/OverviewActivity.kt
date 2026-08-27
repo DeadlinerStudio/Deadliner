@@ -139,7 +139,7 @@ fun OverviewTopBar(
             {
                 TopBarIconButton(onClick = onClose) {
                     Icon(
-                        painterResource(R.drawable.ic_back),
+                        com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                         contentDescription = stringResource(R.string.close),
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = expressiveTypeModifier,
@@ -152,7 +152,7 @@ fun OverviewTopBar(
         actions = {
             TopBarIconButton(onClick = onShowSettings) {
                 Icon(
-                    painterResource(R.drawable.ic_pref),
+                    com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_tune_wght400),
                     contentDescription = stringResource(R.string.settings_more),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier,

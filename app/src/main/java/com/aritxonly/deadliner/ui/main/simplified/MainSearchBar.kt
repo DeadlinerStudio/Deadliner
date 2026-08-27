@@ -1,49 +1,33 @@
 package com.aritxonly.deadliner.ui.main.simplified
 
-import android.content.Context
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.DeadlineDetailActivity
 // 别名导入，防止 M3 和 MIUIX 冲突
 import androidx.compose.material3.Icon as M3Icon
 import androidx.compose.material3.IconButton as M3IconButton
@@ -56,7 +40,6 @@ import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import kotlinx.coroutines.delay
@@ -74,11 +57,22 @@ fun MainSearchBar(
     activity: MainActivity? = null,
     expanded: Boolean,
     onExpandedChangeExternal: (Boolean) -> Unit = {},
+    onArchiveClick: (() -> Unit)? = null,
     useSurfaceColors: Boolean = false,
     miuixMode: Boolean = LocalAppDesignSystem.current == AppDesignSystem.MIUIX,
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            focusRequester.requestFocus()
+            withFrameNanos { }
+            keyboardController?.show()
+        }
+    }
 
     val isEnabled = GlobalUtils.motivationalQuotes
     val excitementArray = stringArrayResource(id = R.array.excitement_array).toList()
@@ -134,6 +128,7 @@ fun MainSearchBar(
                     .semantics { traversalIndex = 0f },
                 inputField = {
                     SearchBarDefaults.InputField(
+                        modifier = Modifier.focusRequester(focusRequester),
                         query = textFieldState.text.toString(),
                         onQueryChange = {
                             onQueryChanged(it)
@@ -150,10 +145,10 @@ fun MainSearchBar(
                         leadingIcon = {
                             if (expanded) {
                                 M3IconButton(onClick = handleClose) {
-                                    M3Icon(ImageVector.vectorResource(R.drawable.ic_back), stringResource(R.string.back))
+                                    M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_arrow_back_wght400), stringResource(R.string.back))
                                 }
                             } else {
-                                M3Icon(ImageVector.vectorResource(R.drawable.ic_search), stringResource(R.string.search_events))
+                                M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400), stringResource(R.string.search_events))
                             }
                         },
                         trailingIcon = {
@@ -165,13 +160,23 @@ fun MainSearchBar(
                                     }
                                 } else {
                                     M3IconButton(onClick = onMoreClick, modifier = iconModifier) {
-                                        M3Icon(ImageVector.vectorResource(R.drawable.ic_more), stringResource(R.string.settings_more))
+                                        M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_more_vert_wght400), stringResource(R.string.settings_more))
                                     }
                                 }
                             } else {
-                                if (textFieldState.text.isNotEmpty()) {
-                                    M3IconButton(onClick = { textFieldState.edit { replace(0, length, "") } }) {
-                                        M3Icon(ImageVector.vectorResource(R.drawable.ic_close), stringResource(R.string.close))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (textFieldState.text.isNotEmpty()) {
+                                        M3IconButton(onClick = { textFieldState.edit { replace(0, length, "") } }) {
+                                            M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_close_wght400), stringResource(R.string.close))
+                                        }
+                                    }
+                                    if (onArchiveClick != null) {
+                                        M3IconButton(onClick = onArchiveClick) {
+                                            M3Icon(
+                                                com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_inbox_wght400),
+                                                stringResource(R.string.archive),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -203,6 +208,7 @@ fun MainSearchBar(
             modifier = modifier.fillMaxWidth().padding(8.dp, 8.dp, 8.dp, 0.dp),
             inputField = {
                 MiuixInputField(
+                    modifier = Modifier.focusRequester(focusRequester),
                     query = textFieldState.text.toString(),
                     onQueryChange = {
                         onQueryChanged(it)
@@ -218,7 +224,17 @@ fun MainSearchBar(
             onExpandedChange = { exp ->
                 if (!exp) textFieldState.edit { replace(0, length, "") }
                 onExpandedChangeExternal(exp)
-            }
+            },
+            outsideEndAction = onArchiveClick?.let { openArchive ->
+                {
+                    MiuixIconButton(onClick = openArchive) {
+                        MiuixIcon(
+                            painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_inbox_wght400),
+                            contentDescription = stringResource(R.string.archive),
+                        )
+                    }
+                }
+            },
         ) {
             content()
         }

@@ -1,8 +1,6 @@
 package com.aritxonly.deadliner.ui.main.modern.components
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SearchBarDefaults
@@ -14,17 +12,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Icon as M3Icon
 import androidx.compose.material3.SearchBar as M3SearchBar
-import top.yukonga.miuix.kmp.basic.InputField as MiuixInputField
-import top.yukonga.miuix.kmp.basic.SearchBar as MiuixSearchBar
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.main.shared.MainSearchResultsContent
 import com.aritxonly.deadliner.ui.main.shared.MainSearchScope
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,13 +55,13 @@ fun ModernSearchBar(
                     if (expanded) {
                         IconButton(onClick = clearQueryAndCollapse) {
                             M3Icon(
-                                ImageVector.vectorResource(R.drawable.ic_back),
+                                com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_arrow_back_wght400),
                                 contentDescription = stringResource(R.string.back),
                             )
                         }
                     } else {
                         M3Icon(
-                            ImageVector.vectorResource(R.drawable.ic_search),
+                            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
                             contentDescription = stringResource(R.string.search_events),
                         )
                     }
@@ -77,7 +70,7 @@ fun ModernSearchBar(
                     if (expanded && query.isNotEmpty()) {
                         IconButton(onClick = { textFieldState.edit { replace(0, length, "") } }) {
                             M3Icon(
-                                ImageVector.vectorResource(R.drawable.ic_close),
+                                com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_close_wght400),
                                 contentDescription = stringResource(R.string.close),
                             )
                         }

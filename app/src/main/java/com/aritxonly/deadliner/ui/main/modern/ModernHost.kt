@@ -7,29 +7,24 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,23 +37,19 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
@@ -68,7 +59,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,16 +71,15 @@ import com.aritxonly.deadliner.OverviewSettingsDialog
 import com.aritxonly.deadliner.OverviewTopBar
 import com.aritxonly.deadliner.OverviewTopBarWithTabs
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.SettingsActivity
 import com.aritxonly.deadliner.capture.CaptureViewModel
 import com.aritxonly.deadliner.capture.ui.CaptureContent
 import com.aritxonly.deadliner.capture.ui.CaptureTopBar
-import com.aritxonly.deadliner.localutils.DeadlinerURLScheme
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
-import com.aritxonly.deadliner.ui.agent.AIOverlayHost
+import com.aritxonly.deadliner.ui.agent.AIAgentPage
+import com.aritxonly.deadliner.ui.agent.AIAgentPageDefaults
 import com.aritxonly.deadliner.ui.base.AdaptiveNavItem
 import com.aritxonly.deadliner.ui.base.AdaptiveNavigationSuiteScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
@@ -101,7 +90,12 @@ import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.main.shared.MainSection
-import com.aritxonly.deadliner.ui.main.modern.components.ModernMainHeader
+import com.aritxonly.deadliner.ui.main.modern.components.ModernListTopAppBar
+import com.aritxonly.deadliner.ui.main.modern.components.ModernListSearchSlotHeight
+import com.aritxonly.deadliner.ui.main.modern.components.ImmersiveListSearchEntry
+import com.aritxonly.deadliner.ui.main.modern.components.ModernListSharedTransitionLayout
+import com.aritxonly.deadliner.ui.main.modern.components.ModernListSearchTransition
+import com.aritxonly.deadliner.ui.main.modern.components.modernListSearchSharedBoundsModifier
 import com.aritxonly.deadliner.ui.main.shared.DeadlinerUrlIntake
 import com.aritxonly.deadliner.ui.main.shared.MainDisplay
 import com.aritxonly.deadliner.ui.main.shared.MainHostLifecycleCoordinator
@@ -111,17 +105,15 @@ import com.aritxonly.deadliner.ui.main.shared.rememberMainHostUiState
 import com.aritxonly.deadliner.ui.main.shared.rememberMainSelectionActionController
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
 import com.aritxonly.deadliner.ui.main.simplified.MainSearchBar
-import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButton
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButtonDefaults
-import kotlinx.coroutines.launch
+import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationAction
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
+import com.aritxonly.deadliner.ui.theme.LocalHomeFabColors
 import kotlinx.coroutines.FlowPreview
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.core.Party
 import java.io.File
-
-private fun LazyListState.hasScrolledPastHeader(threshold: Int = 12): Boolean {
-    return firstVisibleItemIndex > 0 || firstVisibleItemScrollOffset > threshold
-}
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 
 private enum class ModernTopBarState {
     HIDDEN,
@@ -134,7 +126,11 @@ private enum class ModernTopBarState {
 private const val WideLayoutMinWidthDp = 840
 private const val FlattenedOverviewMinWidthDp = 1100
 
-@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalSharedTransitionApi::class,
+    FlowPreview::class,
+)
 @Composable
 fun ModernHost(
     searchActive: Boolean,
@@ -150,8 +146,6 @@ fun ModernHost(
     val taskVm = KmpV6Runtime.taskListViewModel
     val sharedHabitVm = KmpV6Runtime.habitListViewModel
     val captureVm: CaptureViewModel = viewModel()
-    val scope = rememberCoroutineScope()
-
     val snackbarHostState = remember { SnackbarHostState() }
 
     val hostState = rememberMainHostState(DeadlineType.TASK)
@@ -171,6 +165,24 @@ fun ModernHost(
     val captureState by captureVm.uiState.collectAsStateWithLifecycle()
     val searchQuery = textFieldState.text.toString()
     var overlayTopBarHeightPx by remember { mutableIntStateOf(0) }
+
+    val canCollapseListTopBar = canCollapseModernListTopBar(
+        selectedSection = hostState.selectedSection,
+        selectedPage = hostState.selectedPage,
+        selectionMode = hostState.selectionMode,
+        searchActive = searchActive,
+    )
+    val currentCanCollapseListTopBar by rememberUpdatedState(canCollapseListTopBar)
+    val listTopBarScrollBehavior = MiuixScrollBehavior(
+        canScroll = { currentCanCollapseListTopBar },
+    )
+
+    LaunchedEffect(canCollapseListTopBar) {
+        if (!canCollapseListTopBar) {
+            listTopBarScrollBehavior.state.heightOffset = 0f
+            listTopBarScrollBehavior.state.contentOffset = 0f
+        }
+    }
 
     LaunchedEffect(isWideLayout) {
         if (isWideLayout && hostState.selectedPage != DeadlineType.TASK) {
@@ -262,9 +274,8 @@ fun ModernHost(
         onSearchActiveChange(true)
     }
 
-    BackHandler(enabled = hostState.selectionMode || searchActive || hostState.showOverlay) {
+    BackHandler(enabled = hostState.selectionMode || searchActive) {
         when {
-            hostState.showOverlay -> hostState.showOverlay = false
             searchActive -> {
                 closeSearch()
             }
@@ -279,45 +290,98 @@ fun ModernHost(
         AdaptiveNavItem(
             "list",
             context.getString(R.string.main_section_list),
-            ImageVector.vectorResource(R.drawable.ic_home_fill),
-            ImageVector.vectorResource(R.drawable.ic_home),
-            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_home_imm),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_fill_wght400),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
+            immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
+            immersiveIconScale = 1.10f,
         ),
         AdaptiveNavItem(
             "overview",
             context.getString(R.string.overview),
-            ImageVector.vectorResource(R.drawable.ic_overview_fill),
-            ImageVector.vectorResource(R.drawable.ic_overview),
-            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_overview_imm),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_fill_wght400),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_wght400),
+            immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_wght400),
+            immersiveIconScale = 1.05f,
         ),
         AdaptiveNavItem(
             "capture",
             context.getString(R.string.capture_title),
-            ImageVector.vectorResource(R.drawable.ic_capture),
-            ImageVector.vectorResource(R.drawable.ic_capture),
-            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_capture),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture),
+            immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture),
         ),
         AdaptiveNavItem(
             "lifi",
             context.getString(R.string.lifi),
-            ImageVector.vectorResource(R.drawable.ic_lifi),
-            ImageVector.vectorResource(R.drawable.ic_lifi),
-            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_lifi),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_lifi),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_lifi),
+            immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_lifi),
+            immersiveIconScale = 0.9f,
         ),
         AdaptiveNavItem(
             "search",
             context.getString(R.string.search),
-            ImageVector.vectorResource(R.drawable.ic_search),
-            ImageVector.vectorResource(R.drawable.ic_search),
-            immersiveIcon = ImageVector.vectorResource(R.drawable.ic_search_imm),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
+            immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
+            immersiveIconScale = 1.18f,
         ),
     )
 
-    val selectedKey = if (searchActive) {
-        "search"
-    } else {
-        mainSectionNavigationKey(hostState.selectedSection)
+    val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
+    val isShortBottomNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact ||
+        navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium
+    val isImmersiveCompactNavigation = appearance.usesMiuixTheme &&
+        appearance.useImmersiveExperience &&
+        navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
+    val navigationOverlaysContent = isShortBottomNavigation &&
+        (isImmersiveCompactNavigation || LocalAdvancedMaterialSpec.current.enabled)
+    val showImmersiveListSearchEntry = shouldShowImmersiveListSearchEntry(
+        usesMiuixTheme = appearance.usesMiuixTheme,
+        useImmersiveExperience = appearance.useImmersiveExperience,
+        isCompactFloatingNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact,
+        selectedSection = hostState.selectedSection,
+        selectedPage = hostState.selectedPage,
+        selectionMode = hostState.selectionMode,
+    )
+    val searchSlotHeightPx = with(LocalDensity.current) {
+        ModernListSearchSlotHeight.toPx()
     }
+    val listSearchCollapseState = rememberModernListSearchCollapseState(searchSlotHeightPx)
+    val listChromeScrollConnection = rememberModernListChromeScrollConnection(
+        searchState = listSearchCollapseState,
+        topBarScrollBehavior = listTopBarScrollBehavior,
+        chromeEnabled = canCollapseListTopBar,
+        searchEnabled = showImmersiveListSearchEntry && !searchActive,
+    )
+    LaunchedEffect(showImmersiveListSearchEntry) {
+        if (!showImmersiveListSearchEntry) {
+            listSearchCollapseState.snapToExpanded()
+        }
+    }
+    val homeFabColors = LocalHomeFabColors.current
+    val onAddDeadline = {
+        val intent = Intent(context, AddDDLActivity::class.java).apply {
+            putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
+        }
+        launcher.launch(intent)
+    }
+    val immersiveDetachedAction = if (isImmersiveCompactNavigation) {
+        MiuixFloatingNavigationAction(
+            icon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_add_wght400),
+            label = context.getString(R.string.add_task),
+            containerColor = homeFabColors.container,
+            contentColor = homeFabColors.content,
+            iconScale = 1.20f,
+            onClick = onAddDeadline,
+        )
+    } else {
+        null
+    }
+    val selectedKey = modernNavigationSelectedKey(
+        section = hostState.selectedSection,
+        searchActive = searchActive,
+    )
     val topBarState = when {
         searchActive -> ModernTopBarState.HIDDEN
         hostState.selectedSection == MainSection.LIST && hostState.selectionMode ->
@@ -338,33 +402,6 @@ fun ModernHost(
     } else {
         0.dp
     }
-    val shouldCollapseHeaderAccessories by remember(
-        isWideLayout,
-        hostState.selectedSection,
-        hostState.selectedPage,
-        hostState.selectionMode,
-        searchActive,
-        taskListState,
-        habitListState,
-    ) {
-        androidx.compose.runtime.derivedStateOf {
-            if (
-                hostState.selectedSection != MainSection.LIST ||
-                hostState.selectionMode ||
-                searchActive
-            ) {
-                false
-            } else if (isWideLayout) {
-                taskListState.hasScrolledPastHeader() || habitListState.hasScrolledPastHeader()
-            } else {
-                when (hostState.selectedPage) {
-                    DeadlineType.TASK -> taskListState.hasScrolledPastHeader()
-                    DeadlineType.HABIT -> habitListState.hasScrolledPastHeader()
-                }
-            }
-        }
-    }
-    val mainTopBarButtonMaterialProgress = if (shouldCollapseHeaderAccessories) 1f else 0f
     val forceMaterialTopBarsInMiuix = appearance.usesMiuixTheme && appearance.useMaterialTopAppBarInMiuix
 
     val taskState by taskVm.uiState.collectAsStateWithLifecycle()
@@ -373,12 +410,6 @@ fun ModernHost(
             it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED
     }
     val sharedHabitState by sharedHabitVm.uiState.collectAsStateWithLifecycle()
-    val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
-    val isShortBottomNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact ||
-        navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium
-    val isImmersiveCompactNavigation = appearance.usesMiuixTheme &&
-        appearance.useImmersiveExperience &&
-        navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
     val selectionActions = rememberMainSelectionActionController(
         activity = activity,
         taskViewModel = taskVm,
@@ -386,28 +417,23 @@ fun ModernHost(
         hostState = hostState,
     )
 
-    val shouldBlur = hostState.showOverlay ||
-        uiState.childRequestsBlur ||
-        selectionActions.showDeleteDialog ||
-        (hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings) ||
-        (hostState.selectedSection == MainSection.CAPTURE && showCaptureMergeSheet)
     val advancedMaterialBlur = uiState.childRequestsBlur ||
         selectionActions.showDeleteDialog ||
         (hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings) ||
         (hostState.selectedSection == MainSection.CAPTURE && showCaptureMergeSheet)
     ProvideAdvancedMaterialDialogBlurHost {
+        ModernListSharedTransitionLayout(modifier = Modifier.fillMaxSize()) { sharedTransitionScope ->
         AdaptiveNavigationSuiteScaffold(
             modifier = modifier
                 .fillMaxSize()
                 .advancedMaterialDialogBlurHost(
                     active = advancedMaterialBlur,
-                    forceActive = hostState.showOverlay,
-                    activeScale = if (hostState.showOverlay) 0.98f else 1f,
                 ),
         items = navItems,
         selectedKey = selectedKey,
         useImmersiveExperience = appearance.useImmersiveExperience,
         immersiveDetachedItemKey = "search",
+        immersiveDetachedAction = immersiveDetachedAction,
         onItemSelected = {
             when (it.key) {
                 "search" -> {
@@ -458,17 +484,32 @@ fun ModernHost(
                             Box(modifier = Modifier.fillMaxWidth())
                         }
                         ModernTopBarState.LIST_DEFAULT -> {
-                            ModernMainHeader(
+                            val searchContainerModifier = modernListSearchSharedBoundsModifier(
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = this@AnimatedContent,
+                                enabled = isImmersiveCompactNavigation &&
+                                    showImmersiveListSearchEntry,
+                            )
+                            ModernListTopAppBar(
                                 activity = activity,
                                 selectedPage = hostState.selectedPage,
                                 onSelectedPageChange = { hostState.selectedPage = it },
                                 avatarPainter = avatarPainter,
-                                onShowAiOverlay = { hostState.showOverlay = true },
                                 showPageTabs = !isWideLayout,
-                                showAccessoryRow = !isWideLayout && !shouldCollapseHeaderAccessories,
-                                showAiActionInTopBar = isWideLayout,
-                                forceMaterialTopAppBar = forceMaterialTopBarsInMiuix,
-                                buttonMaterialRevealProgress = mainTopBarButtonMaterialProgress,
+                                scrollBehavior = listTopBarScrollBehavior,
+                                transparentBackground = appearance.usesMiuixTheme &&
+                                    appearance.useImmersiveExperience,
+                                searchExpandedFraction = listSearchCollapseState.expandedFraction,
+                                searchContent = if (showImmersiveListSearchEntry) {
+                                    {
+                                        ImmersiveListSearchEntry(
+                                            onOpenSearch = { openSearch() },
+                                            modifier = searchContainerModifier,
+                                        )
+                                    }
+                                } else {
+                                    null
+                                },
                             )
                         }
                         ModernTopBarState.LIST_SELECTION -> {
@@ -483,7 +524,7 @@ fun ModernHost(
                                         activeSelectionPane = null
                                     }) {
                                         Icon(
-                                            ImageVector.vectorResource(R.drawable.ic_close),
+                                            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_close_wght400),
                                             contentDescription = stringResource(R.string.close),
                                         )
                                     }
@@ -499,21 +540,21 @@ fun ModernHost(
                                         )
                                     }) {
                                         Icon(
-                                            ImageVector.vectorResource(R.drawable.ic_done),
+                                            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_task_alt_wght400),
                                             contentDescription = stringResource(R.string.accept)
                                         )
                                     }
                                     if (hostState.selectedPage == DeadlineType.TASK) {
                                         TopBarIconButton(onClick = { selectionActions.onArchiveClick() }) {
                                             Icon(
-                                                ImageVector.vectorResource(R.drawable.ic_archiving),
+                                                com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_move_to_inbox_wght400),
                                                 contentDescription = stringResource(R.string.archive)
                                             )
                                         }
                                     }
                                     TopBarIconButton(onClick = { selectionActions.onDeleteClick() }) {
                                         Icon(
-                                            ImageVector.vectorResource(R.drawable.ic_delete),
+                                            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_delete_wght400),
                                             contentDescription = stringResource(R.string.delete)
                                         )
                                     }
@@ -554,34 +595,26 @@ fun ModernHost(
         },
         floatingActionButton = {
             val shouldShowFab =
-                hostState.selectedSection == MainSection.LIST && !hostState.selectionMode && !searchActive
+                hostState.selectedSection == MainSection.LIST &&
+                    !hostState.selectionMode &&
+                    !searchActive &&
+                    !isImmersiveCompactNavigation
 
             if (shouldShowFab) {
-                val onFabClick = {
-                    val intent = Intent(context, AddDDLActivity::class.java).apply {
-                        putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
-                    }
-                    launcher.launch(intent)
-                }
                 val fabContent: @Composable () -> Unit = {
                     Icon(
-                        ImageVector.vectorResource(R.drawable.ic_add),
+                        com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_add_wght400),
                         contentDescription = stringResource(R.string.add_task),
                         modifier = Modifier.size(SoftGlassFloatingActionButtonDefaults.IconSize),
                     )
                 }
-                if (isImmersiveCompactNavigation) {
-                    SoftGlassFloatingActionButton(
-                        onClick = onFabClick,
-                        content = fabContent,
-                    )
-                } else {
-                    FloatingActionButton(
-                        onClick = onFabClick,
-                        forceMaterial3 = true,
-                        content = fabContent,
-                    )
-                }
+                FloatingActionButton(
+                    onClick = onAddDeadline,
+                    containerColor = homeFabColors.container,
+                    contentColor = homeFabColors.content,
+                    forceMaterial3 = true,
+                    content = fabContent,
+                )
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -599,7 +632,11 @@ fun ModernHost(
 
             when (hostState.selectedSection) {
                 MainSection.LIST -> {
-                    if (!searchActive) {
+                    ModernListSearchTransition(
+                        searchActive = searchActive,
+                        useSharedContainerTransform = isImmersiveCompactNavigation,
+                        sharedTransitionScope = sharedTransitionScope,
+                        listContent = {
                         if (isWideLayout) {
                             val taskPaneBlocked = hostState.selectionMode && activeSelectionPane == DeadlineType.HABIT
                             val habitPaneBlocked = hostState.selectionMode && activeSelectionPane == DeadlineType.TASK
@@ -644,6 +681,7 @@ fun ModernHost(
                                         },
                                         onCelebrate = { celebrate() },
                                         topOverlayPadding = overlayTopBarPadding,
+                                        listNestedScrollConnection = listChromeScrollConnection,
                                     )
                                     if (taskPaneBlocked) {
                                         Box(
@@ -734,9 +772,38 @@ fun ModernHost(
                                 },
                                 onCelebrate = { celebrate() },
                                 topOverlayPadding = overlayTopBarPadding,
+                                listNestedScrollConnection = listChromeScrollConnection,
                             )
                         }
-                    }
+                        },
+                        searchContent = { searchContainerModifier ->
+                            MainSearchBar(
+                                textFieldState = textFieldState,
+                                onQueryChanged = { query ->
+                                    textFieldState.edit { replace(0, length, query) }
+                                },
+                                activity = activity,
+                                expanded = true,
+                                onExpandedChangeExternal = { expanded ->
+                                    if (!expanded) closeSearch()
+                                },
+                                onArchiveClick = {
+                                    activity.startActivity(Intent(activity, ArchiveActivity::class.java))
+                                },
+                                useSurfaceColors = true,
+                                miuixMode = false,
+                                modifier = searchContainerModifier,
+                            ) {
+                                MainSearchResultsContent(
+                                    query = searchQuery,
+                                    scope = searchScope,
+                                    onScopeChange = { searchScope = it },
+                                    activity = activity,
+                                    inspirations = captureState.items,
+                                )
+                            }
+                        },
+                    )
                 }
                 MainSection.OVERVIEW -> {
                     OverviewContent(
@@ -764,52 +831,15 @@ fun ModernHost(
                     )
                 }
                 MainSection.LIFI -> {
-                    Box(modifier = Modifier.fillMaxSize())
+                    AIAgentPage(
+                        onAddDDL = { launcher.launch(it) },
+                        inputBottomPadding = AIAgentPageDefaults.inputBottomPadding(
+                            navigationOverlaysContent = navigationOverlaysContent,
+                        ),
+                    )
                 }
             }
             }
-
-        AnimatedVisibility(
-            visible = searchActive,
-            enter = fadeIn(animationSpec = tween(durationMillis = 220)) +
-                expandVertically(
-                    animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
-                    expandFrom = Alignment.Top,
-                ),
-            exit = fadeOut(animationSpec = tween(durationMillis = 160)) +
-                shrinkVertically(
-                    animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
-                    shrinkTowards = Alignment.Top,
-                ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopCenter),
-            label = "modern-searchbar-visibility",
-        ) {
-            MainSearchBar(
-                textFieldState = textFieldState,
-                onQueryChanged = { q ->
-                    textFieldState.edit { replace(0, length, q) }
-                },
-                activity = activity,
-                expanded = true,
-                onExpandedChangeExternal = { expanded ->
-                    if (!expanded) {
-                        closeSearch()
-                    }
-                },
-                useSurfaceColors = true,
-                miuixMode = false,
-            ) {
-                MainSearchResultsContent(
-                    query = searchQuery,
-                    scope = searchScope,
-                    onScopeChange = { searchScope = it },
-                    activity = activity,
-                    inspirations = captureState.items,
-                )
-            }
-        }
 
         key(fireKey) {
             Box(Modifier.fillMaxSize()) {
@@ -826,6 +856,7 @@ fun ModernHost(
         visible = hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings,
         onDismiss = { showOverviewSettings = false },
     )
+    }
     }
 
     if (selectionActions.showDeleteDialog) {
@@ -847,12 +878,4 @@ fun ModernHost(
         )
     }
 
-    if (hostState.showOverlay) {
-        AIOverlayHost(
-            initialText = "",
-            onAddDDL = { launcher.launch(it) },
-            onRemoveFromWindow = { hostState.showOverlay = false },
-            respondIme = true,
-        )
-    }
 }

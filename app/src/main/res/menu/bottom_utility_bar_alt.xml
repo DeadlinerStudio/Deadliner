@@ -4,21 +4,21 @@
 
     <item
         android:id="@+id/delete"
-        android:icon="@drawable/ic_delete"
+        android:icon="@drawable/msr_delete_wght400"
         android:title="删除"
         android:iconTint="?attr/colorControlNormal"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/done"
-        android:icon="@drawable/ic_done"
+        android:icon="@drawable/msr_task_alt_wght400"
         android:title="完成"
         android:iconTint="?attr/colorControlNormal"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/alarm"
-        android:icon="@drawable/ic_notification_add"
+        android:icon="@drawable/msr_notification_add_wght400"
         android:title="提醒"
         android:iconTint="?attr/colorControlNormal"
         app:showAsAction="ifRoom" />

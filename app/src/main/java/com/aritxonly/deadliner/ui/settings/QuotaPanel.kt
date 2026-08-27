@@ -93,8 +93,8 @@ fun QuotaPanelSimple(
                     },
                     leadingIcon = {
                         Icon(
-                            imageVector = if (isSuccess && result.getOrNull()?.vip == true)
-                                iconResource(R.drawable.ic_plan_vip) else iconResource(R.drawable.ic_plan_free),
+                            painter = if (isSuccess && result.getOrNull()?.vip == true)
+                                iconResource(R.drawable.msr_diamond_shine_wght400) else iconResource(R.drawable.msr_money_off_wght400),
                             contentDescription = null
                         )
                     },
@@ -113,7 +113,7 @@ fun QuotaPanelSimple(
                 ) {
                     Row {
                         Icon(
-                            iconResource(R.drawable.ic_autorenew),
+                            iconResource(R.drawable.msr_autorenew_wght400),
                             contentDescription = stringResource(R.string.quota_action_refresh_cd),
                             modifier = Modifier.align(Alignment.CenterVertically)
                         )
@@ -152,14 +152,14 @@ private fun LoadingBlock(shape: RoundedCornerShape) {
     Column {
         // 简化：纯进度条 + 两行占位文字，全部透明背景
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(iconResource(R.drawable.ic_devices), contentDescription = null,
+            Icon(iconResource(R.drawable.msr_devices_wght400), contentDescription = null,
                 tint = MaterialTheme.colorScheme.outlineVariant)
             Spacer(Modifier.width(8.dp))
             Text("— — —", color = MaterialTheme.colorScheme.outlineVariant)
         }
         Spacer(Modifier.height(6.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(iconResource(R.drawable.ic_calendar), contentDescription = null,
+            Icon(iconResource(R.drawable.msr_calendar_month_wght400), contentDescription = null,
                 tint = MaterialTheme.colorScheme.outlineVariant)
             Spacer(Modifier.width(8.dp))
             Text("— — —", color = MaterialTheme.colorScheme.outlineVariant)
@@ -181,7 +181,7 @@ private fun ErrorBlock(
     shape: RoundedCornerShape
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-        Icon(iconResource(R.drawable.ic_error), contentDescription = null, tint = MaterialTheme.colorScheme.error)
+        Icon(iconResource(R.drawable.msr_error_wght400), contentDescription = null, tint = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.quota_error_text, throwable?.message ?: stringResource(R.string.quota_error_unknown)),
@@ -211,7 +211,7 @@ private fun SuccessBlock(
     // 信息行：无背景，仅图标 + 文本
     Column {
         InfoRow(
-            icon = iconResource(R.drawable.ic_devices),
+            icon = iconResource(R.drawable.msr_devices_wght400),
             label = stringResource(R.string.quota_device_label),
             value = info.deviceId,
             mono = true
@@ -283,7 +283,7 @@ private fun StatsGrid2Column(
 
 @Composable
 private fun InfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: androidx.compose.ui.graphics.painter.Painter,
     label: String,
     value: String,
     mono: Boolean = false

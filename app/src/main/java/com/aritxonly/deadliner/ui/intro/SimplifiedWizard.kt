@@ -358,7 +358,7 @@ private fun SimplifiedWizardBottomBar(
                         onClick = onFabClick
                     ) {
                         Icon(
-                            imageVector = iconResource(R.drawable.ic_add),
+                            painter = iconResource(R.drawable.msr_add_wght400),
                             contentDescription = stringResource(R.string.add_edit_deadline)
                         )
                     }

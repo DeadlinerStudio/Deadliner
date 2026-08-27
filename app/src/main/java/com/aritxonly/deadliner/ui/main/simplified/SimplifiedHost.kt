@@ -335,7 +335,7 @@ fun SimplifiedHost(
                                 onClick = { hostState.clearSelection() },
                                 modifier = Modifier.padding(horizontal = 8.dp)
                             ) {
-                                Icon(ImageVector.vectorResource(R.drawable.ic_close), null,
+                                Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_close_wght400), null,
                                     modifier = expressiveTypeModifier)
                             }
                         },
@@ -502,7 +502,7 @@ fun SimplifiedHost(
                                             }
                                         }
                                 ) {
-                                    Icon(ImageVector.vectorResource(R.drawable.ic_add), "")
+                                    Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_add_wght400), "")
                                 }
                             }
                         } else {

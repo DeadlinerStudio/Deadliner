@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="MaterialSymbolDrawable">
+        <attr name="symbolName" format="string" />
+        <attr name="symbolFilled" format="boolean" />
+    </declare-styleable>
+</resources>

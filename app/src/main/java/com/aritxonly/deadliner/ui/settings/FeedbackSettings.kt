@@ -3,13 +3,11 @@ package com.aritxonly.deadliner.ui.settings
 import android.graphics.Bitmap
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -28,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
@@ -53,7 +50,7 @@ fun FeedbackScreen(
                         modifier = navIconPaddingModifier
                     ) {
                         Icon(
-                            painterResource(R.drawable.ic_back),
+                            com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                             contentDescription = stringResource(R.string.back),
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = expressiveTypeModifier

@@ -52,7 +52,7 @@ import androidx.compose.foundation.background
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
@@ -311,7 +311,7 @@ private fun ClassicWizardTopBar() {
         ) {
             IconButton(onClick = { /* 搜索占位，无交互 */ }) {
                 Icon(
-                    imageVector = iconResource(R.drawable.ic_search),
+                    painter = iconResource(R.drawable.msr_search_wght400),
                     contentDescription = stringResource(R.string.search_hint),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
@@ -319,7 +319,7 @@ private fun ClassicWizardTopBar() {
 
             IconButton(onClick = { /* 设置占位，无交互 */ }) {
                 Icon(
-                    imageVector = iconResource(R.drawable.ic_settings),
+                    painter = iconResource(R.drawable.msr_settings_wght400),
                     contentDescription = stringResource(R.string.settings_title),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
@@ -411,7 +411,7 @@ private fun ClassicWizardBottomBar(
             }
             IconButton(onClick = { /* noop */ }) {
                 Icon(
-                    imageVector = iconResource(R.drawable.ic_overview),
+                    painter = iconResource(R.drawable.msr_pie_chart_wght400),
                     contentDescription = null
                 )
             }
@@ -432,7 +432,7 @@ private fun ClassicWizardBottomBar(
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {
                         Icon(
-                            imageVector = iconResource(R.drawable.ic_add),
+                            painter = iconResource(R.drawable.msr_add_wght400),
                             contentDescription = stringResource(R.string.add_edit_deadline)
                         )
                     }
@@ -548,20 +548,20 @@ fun DDLItemCardSwipeableClassic(
             val direction = dismissState.dismissDirection
 
             val actionColor: Color
-            val icon: ImageVector
+            val icon: Painter
             val alignment: Alignment
 
             when (direction) {
                 SwipeToDismissBoxValue.StartToEnd -> {
                     // 右滑：完成（绿）
                     actionColor = colorResource(R.color.chart_green)
-                    icon = ImageVector.vectorResource(R.drawable.ic_check)
+                    icon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_task_alt_wght400)
                     alignment = Alignment.CenterStart
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
                     // 左滑：删除（红）
                     actionColor = colorResource(R.color.chart_red)
-                    icon = ImageVector.vectorResource(R.drawable.ic_delete)
+                    icon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_delete_wght400)
                     alignment = Alignment.CenterEnd
                 }
                 else -> {
@@ -594,7 +594,7 @@ fun DDLItemCardSwipeableClassic(
                 contentAlignment = alignment
             ) {
                 Icon(
-                    imageVector = icon,
+                    painter = icon,
                     contentDescription = null,
                     tint = iconTint
                 )

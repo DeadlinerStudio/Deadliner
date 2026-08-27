@@ -11,9 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
+import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButton
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassIconButton
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
@@ -22,9 +25,18 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 private val FloatingNavigationDockMaximumWidth = 442.dp
 private val FloatingNavigationDockSpacing = 8.dp
 
+data class MiuixFloatingNavigationAction(
+    val icon: Painter,
+    val label: String,
+    val containerColor: Color,
+    val contentColor: Color,
+    val iconScale: Float = 1f,
+    val onClick: () -> Unit,
+)
+
 /**
  * Compact immersive navigation dock: primary destinations stay in the left capsule while a
- * single contextual destination can live in an independent soft-glass circle on the right.
+ * single destination or contextual action can live in an independent soft-glass circle on the right.
  */
 @Composable
 fun MiuixFloatingNavigationDock(
@@ -33,6 +45,7 @@ fun MiuixFloatingNavigationDock(
     onItemSelected: (MiuixFloatingTabItem) -> Unit,
     modifier: Modifier = Modifier,
     detachedItem: MiuixFloatingTabItem? = null,
+    detachedAction: MiuixFloatingNavigationAction? = null,
     primarySelectionVisible: Boolean = true,
     backdrop: LayerBackdrop? = null,
 ) {
@@ -63,24 +76,46 @@ fun MiuixFloatingNavigationDock(
             backdrop = backdrop,
         )
 
-        detachedItem?.let { item ->
-            val selected = item.key == selectedKey
-            SoftGlassIconButton(
-                onClick = { onItemSelected(item) },
-                enabled = item.enabled,
+        if (detachedAction != null) {
+            SoftGlassFloatingActionButton(
+                onClick = detachedAction.onClick,
+                containerColor = detachedAction.containerColor,
+                contentColor = detachedAction.contentColor,
                 size = MiuixFloatingTabBarDefaults.Height,
-                recipe = DeadlinerGlassRecipes.floatingNavigation(advancedMaterial.fineTuning),
                 backdrop = backdrop,
             ) {
                 Icon(
-                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                    contentDescription = item.label,
-                    tint = when {
-                        !item.enabled -> contentColor.copy(alpha = 0.22f)
-                        else -> contentColor
-                    },
-                    modifier = Modifier.size(MiuixFloatingTabBarDefaults.DetachedIconSize),
+                    painter = detachedAction.icon,
+                    contentDescription = detachedAction.label,
+                    modifier = Modifier
+                        .size(MiuixFloatingTabBarDefaults.DetachedIconSize)
+                        .graphicsLayer {
+                            val scale = detachedAction.iconScale.coerceIn(0.75f, 1.25f)
+                            scaleX = scale
+                            scaleY = scale
+                        },
                 )
+            }
+        } else {
+            detachedItem?.let { item ->
+                val selected = item.key == selectedKey
+                SoftGlassIconButton(
+                    onClick = { onItemSelected(item) },
+                    enabled = item.enabled,
+                    size = MiuixFloatingTabBarDefaults.Height,
+                    recipe = DeadlinerGlassRecipes.floatingNavigation(advancedMaterial.fineTuning),
+                    backdrop = backdrop,
+                ) {
+                    Icon(
+                        painter = if (selected) item.selectedIcon else item.unselectedIcon,
+                        contentDescription = item.label,
+                        tint = when {
+                            !item.enabled -> contentColor.copy(alpha = 0.22f)
+                            else -> contentColor
+                        },
+                        modifier = Modifier.size(MiuixFloatingTabBarDefaults.DetachedIconSize),
+                    )
+                }
             }
         }
     }

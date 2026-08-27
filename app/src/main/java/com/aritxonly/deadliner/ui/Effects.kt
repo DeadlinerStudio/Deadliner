@@ -26,11 +26,10 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
@@ -155,6 +154,6 @@ val navIconPaddingModifier: Modifier
 
 @SuppressLint("ComposableNaming")
 @Composable
-fun iconResource(@DrawableRes id: Int): ImageVector {
-    return ImageVector.vectorResource(id)
+fun iconResource(@DrawableRes id: Int): Painter {
+    return symbolPainterResource(id)
 }

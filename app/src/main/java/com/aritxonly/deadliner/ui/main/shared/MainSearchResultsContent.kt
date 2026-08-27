@@ -46,7 +46,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -144,7 +143,7 @@ fun MainSearchResultsContent(
 
             else -> {
                 if (captures.isNotEmpty()) {
-                    item { SearchSectionHeader(stringResource(R.string.search_group_inspiration), R.drawable.ic_quote) }
+                    item { SearchSectionHeader(stringResource(R.string.search_group_inspiration), R.drawable.msr_format_quote_wght400) }
                     items(captures, key = CaptureItem::uid) { capture ->
                         SearchInspirationCard(
                             item = capture,
@@ -154,11 +153,11 @@ fun MainSearchResultsContent(
                     }
                 }
                 if (activeTasks.isNotEmpty()) {
-                    item { SearchSectionHeader(stringResource(R.string.search_group_task), R.drawable.ic_task) }
+                    item { SearchSectionHeader(stringResource(R.string.search_group_task), R.drawable.msr_check_circle_wght400) }
                     items(activeTasks, key = Task::uid) { task -> SearchTaskCard(task, activity) }
                 }
                 if (activeHabits.isNotEmpty()) {
-                    item { SearchSectionHeader(stringResource(R.string.search_group_habit), R.drawable.ic_habit) }
+                    item { SearchSectionHeader(stringResource(R.string.search_group_habit), R.drawable.msr_eco_wght400) }
                     items(activeHabits, key = Habit::uid) { habit ->
                         habitStatusesByUid[habit.uid]?.let { status ->
                             SearchHabitCard(
@@ -169,7 +168,7 @@ fun MainSearchResultsContent(
                     }
                 }
                 if (archivedTasks.isNotEmpty()) {
-                    item { SearchSectionHeader(stringResource(R.string.search_group_archived_task), R.drawable.ic_archive) }
+                    item { SearchSectionHeader(stringResource(R.string.search_group_archived_task), R.drawable.msr_inbox_wght400) }
                     items(archivedTasks, key = Task::uid) { task ->
                         ArchivedTaskCard(
                             item = task.toArchiveCardModel(),
@@ -182,7 +181,7 @@ fun MainSearchResultsContent(
                     }
                 }
                 if (archivedHabits.isNotEmpty()) {
-                    item { SearchSectionHeader(stringResource(R.string.search_group_archived_habit), R.drawable.ic_archive) }
+                    item { SearchSectionHeader(stringResource(R.string.search_group_archived_habit), R.drawable.msr_inbox_wght400) }
                     items(archivedHabits, key = Habit::uid) { habit ->
                         ArchivedHabitCard(
                             habit = habit.toArchiveCardModel(),
@@ -256,7 +255,7 @@ private fun SearchScopePicker(
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_ok),
+                            painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_check_wght400),
                             contentDescription = null,
                             modifier = Modifier.size(20.dp).alpha(iconAlpha).graphicsLayer {
                                 scaleX = iconScale
@@ -296,7 +295,7 @@ private fun SearchMessageCard(title: String, body: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_search),
+            painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_search_wght400),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.outline,
             modifier = Modifier.size(40.dp).alpha(0.7f),
@@ -322,7 +321,7 @@ private fun SearchSectionHeader(title: String, iconRes: Int) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            painter = com.aritxonly.deadliner.ui.symbolPainterResource(iconRes),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp),
@@ -354,7 +353,7 @@ private fun SearchInspirationCard(item: CaptureItem, activity: MainActivity, onD
             verticalAlignment = Alignment.Top,
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_quote),
+                painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_format_quote_wght400),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                 modifier = Modifier.padding(top = 2.dp).size(18.dp),
@@ -364,7 +363,7 @@ private fun SearchInspirationCard(item: CaptureItem, activity: MainActivity, onD
                     Text(item.text, style = MaterialTheme.typography.bodyLarge, maxLines = 5, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     Box {
                         IconButton(onClick = { menuExpanded = true }) {
-                            Icon(painterResource(R.drawable.ic_more), contentDescription = stringResource(R.string.settings_more))
+                            Icon(com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_more_vert_wght400), contentDescription = stringResource(R.string.settings_more))
                         }
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                             SearchCaptureMenuItem(R.string.capture_ai_task) { openEditor(0, true); menuExpanded = false }
@@ -443,7 +442,7 @@ private fun SearchHabitCard(status: HabitDayStatus, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_habit),
+                painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_eco_wght400),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp),
@@ -456,8 +455,8 @@ private fun SearchHabitCard(status: HabitDayStatus, onClick: () -> Unit) {
                 Text(statusText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Icon(
-                painter = painterResource(
-                    if (status.isCompleted || actionEnabled) R.drawable.ic_done else R.drawable.ic_habit,
+                painter = com.aritxonly.deadliner.ui.symbolPainterResource(
+                    if (status.isCompleted || actionEnabled) R.drawable.msr_task_alt_wght400 else R.drawable.msr_eco_wght400,
                 ),
                 contentDescription = null,
                 tint = if (actionEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,

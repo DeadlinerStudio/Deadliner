@@ -1031,6 +1031,8 @@
     <string name="settings_support_miuix_material_top_bar">在 MIUIX 主题下，将 ModernHost 的顶部栏样式切回 Material 3</string>
     <string name="settings_immersive_experience">启用沉浸体验</string>
     <string name="settings_support_immersive_experience">在现代设计的 Compact 手机窗口中启用柔光玻璃悬浮底栏和渐进模糊顶栏；较宽窗口保持原布局</string>
+    <string name="settings_contrasting_home_fab">撞色主页按钮</string>
+    <string name="settings_support_contrasting_home_fab">使用琥珀色柔光玻璃突出主页新增操作</string>
     <string name="settings_miuix_color">MIUIX 颜色</string>
     <string name="settings_modern_palette_title">现代色彩方案</string>
     <string name="settings_modern_palette_support">切换中性色表面风格。缺失层级色会自动回退到 HyperOS 默认方案。</string>

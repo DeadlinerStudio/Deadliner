@@ -56,7 +56,7 @@
         android:layout_marginTop="2dp"
         android:layout_marginBottom="2dp"
         android:contentDescription="星标"
-        android:src="@drawable/ic_star_filled"
+        android:src="@drawable/msr_star_fill_wght400"
         app:tint="?attr/colorPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="@id/titleText"/>

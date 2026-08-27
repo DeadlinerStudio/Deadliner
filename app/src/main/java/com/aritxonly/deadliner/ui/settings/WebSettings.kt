@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.aritxonly.deadliner.ui.base.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,6 +58,7 @@ import com.aritxonly.deadliner.sync.SyncScheduler
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TextButton
+import com.aritxonly.deadliner.ui.base.deadlinerOverlayContainerColor
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import kotlinx.coroutines.Dispatchers
@@ -199,7 +199,7 @@ fun WebSettingsScreen(
         navigationIcon = {
             IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_back),
+                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier
@@ -383,6 +383,7 @@ fun SyncIntervalBottomSheet(
     ModalBottomSheet(
         sheetState = sheetState,
         onDismissRequest = onDismiss,
+        containerColor = deadlinerOverlayContainerColor(),
     ) {
         // 用 Column 将主体内容与底部操作区分开：上面滚动、下面固定
         Column(

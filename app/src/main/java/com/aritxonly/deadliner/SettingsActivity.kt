@@ -110,19 +110,19 @@ sealed class SettingsRoute(
     object Main : SettingsRoute("main", R.string.settings_title, null, null)
 
     // region: 二级界面
-    object Behavior : SettingsRoute("behavior", R.string.settings_behavior, R.string.settings_support_behavior, R.drawable.ic_tune)
-    object Appearance : SettingsRoute("appearance", R.string.settings_interface_display, R.string.settings_support_interface_display, R.drawable.ic_palette)
-    object Notification : SettingsRoute("notification", R.string.settings_notification, R.string.settings_support_notification, R.drawable.ic_notification_settings)
-    object Backup : SettingsRoute("backup", R.string.settings_backup, R.string.settings_support_backup, R.drawable.ic_backup_settings)
+    object Behavior : SettingsRoute("behavior", R.string.settings_behavior, R.string.settings_support_behavior, R.drawable.msr_tune_wght400)
+    object Appearance : SettingsRoute("appearance", R.string.settings_interface_display, R.string.settings_support_interface_display, R.drawable.msr_palette_wght400)
+    object Notification : SettingsRoute("notification", R.string.settings_notification, R.string.settings_support_notification, R.drawable.msr_notifications_active_wght400)
+    object Backup : SettingsRoute("backup", R.string.settings_backup, R.string.settings_support_backup, R.drawable.msr_database_wght400)
     object AI : SettingsRoute("ai", R.string.settings_deadliner_ai, R.string.settings_support_deadliner_ai,
         GlobalUtils.getDeadlinerAIConfig().getCurrentLogo()
     )
-    object WebDAV : SettingsRoute("webdav", R.string.settings_webdav, R.string.settings_support_webdav, R.drawable.ic_cloud)
-    object Lab : SettingsRoute("lab", R.string.settings_lab, R.string.settings_support_lab, R.drawable.ic_lab)
-    object Widget : SettingsRoute("widget", R.string.settings_widget, R.string.settings_support_widget, R.drawable.ic_widgets_settings)
-    object Wiki : SettingsRoute("wiki", R.string.settings_wiki, R.string.settings_support_wiki, R.drawable.ic_manual)
-    object Feedback : SettingsRoute("feedback", R.string.settings_feedback, R.string.settings_support_feedback, R.drawable.ic_support)
-    object About : SettingsRoute("about", R.string.settings_about, R.string.settings_support_about, R.drawable.ic_package)
+    object WebDAV : SettingsRoute("webdav", R.string.settings_webdav, R.string.settings_support_webdav, R.drawable.msr_cloud_wght400)
+    object Lab : SettingsRoute("lab", R.string.settings_lab, R.string.settings_support_lab, R.drawable.msr_experiment_wght400)
+    object Widget : SettingsRoute("widget", R.string.settings_widget, R.string.settings_support_widget, R.drawable.msr_widgets_wght400)
+    object Wiki : SettingsRoute("wiki", R.string.settings_wiki, R.string.settings_support_wiki, R.drawable.msr_menu_book_wght400)
+    object Feedback : SettingsRoute("feedback", R.string.settings_feedback, R.string.settings_support_feedback, R.drawable.msr_contact_support_wght400)
+    object About : SettingsRoute("about", R.string.settings_about, R.string.settings_support_about, R.drawable.msr_deployed_code_wght400)
     // endregion
 
     // region:三级界面
@@ -140,9 +140,9 @@ sealed class SettingsRoute(
     object AppIcon : SettingsRoute("app_icon", R.string.settings_app_icon_title, R.string.settings_app_icon_summary, null)
     object Profile : SettingsRoute("profile", R.string.edit_profile, R.string.settings_support_profile, null)
 
-    object Update : SettingsRoute("update", R.string.settings_check_for_updates, R.string.settings_check_for_updates, R.drawable.ic_update)
-    object License : SettingsRoute("license", R.string.settings_license, R.string.settings_license_summary, R.drawable.ic_license)
-    object Policy : SettingsRoute("policy", R.string.settings_privacy_policy, R.string.settings_privacy_summary, R.drawable.ic_privacy)
+    object Update : SettingsRoute("update", R.string.settings_check_for_updates, R.string.settings_check_for_updates, R.drawable.msr_mobile_arrow_down_wght400)
+    object License : SettingsRoute("license", R.string.settings_license, R.string.settings_license_summary, R.drawable.msr_contract_wght400)
+    object Policy : SettingsRoute("policy", R.string.settings_privacy_policy, R.string.settings_privacy_summary, R.drawable.msr_shield_wght400)
     object Donate : SettingsRoute("donate", R.string.settings_donate, R.string.settings_support_donate, null)
     // endregion
 

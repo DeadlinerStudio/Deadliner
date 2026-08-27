@@ -7,15 +7,9 @@ import android.content.Context
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -67,7 +60,7 @@ fun WidgetSettingsScreen(
         navigationIcon = {
             IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_back),
+                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier
@@ -116,7 +109,7 @@ fun WidgetSettingsScreen(
                     requestTile(
                         context,
                         component,
-                        R.drawable.ic_add_ddl_tile,
+                        R.drawable.msr_alarm_add_wght400,
                         ContextCompat.getString(context, R.string.add_ddl_tile_label)
                     )
                 }

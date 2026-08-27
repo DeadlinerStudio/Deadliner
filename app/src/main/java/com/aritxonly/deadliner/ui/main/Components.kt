@@ -244,7 +244,7 @@ fun DDLItemCard(
 
                 if (isStarred) {
                     Icon(
-                        ImageVector.vectorResource(R.drawable.ic_star),
+                        com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_star_wght400),
                         contentDescription = null
                     )
                 }
@@ -387,7 +387,7 @@ fun DDLItemCardSimplified(
 
                     if (isStarred) {
                         Icon(
-                            ImageVector.vectorResource(R.drawable.ic_star_filled),
+                            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_star_fill_wght400),
                             contentDescription = null,
                             tint = indicatorColor.copy(alpha = 1f) // 星标颜色自动同步莫兰迪色
                         )
@@ -556,7 +556,7 @@ fun HabitItemCardSimplified(
                         )
                         if (isStarred) {
                             Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.ic_star_filled),
+                                painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_star_fill_wght400),
                                 contentDescription = null,
                                 tint = indicatorColor.copy(alpha = 1f)
                             )
@@ -633,7 +633,7 @@ fun SelectionOverlay(
                 .align(Alignment.TopStart)
         ) {
             Icon(
-                imageVector = iconResource(R.drawable.ic_ok),
+                painter = iconResource(R.drawable.msr_check_wght400),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
@@ -703,7 +703,7 @@ private fun PreviewPageIndicator() {
                     .width(56.dp),
                 onClick = {},
             ) {
-                Icon(ImageVector.vectorResource(R.drawable.ic_add), "")
+                Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_add_wght400), "")
             }
         }
     }

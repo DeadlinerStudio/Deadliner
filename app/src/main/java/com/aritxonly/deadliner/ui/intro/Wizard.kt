@@ -227,7 +227,7 @@ internal fun WizardHeader(
 
         IconButton(onClick = onNext) {
             Icon(
-                imageVector = iconResource(com.aritxonly.deadliner.R.drawable.ic_next),
+                painter = iconResource(com.aritxonly.deadliner.R.drawable.msr_chevron_right_wght400),
                 contentDescription = null
             )
         }

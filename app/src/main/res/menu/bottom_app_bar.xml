@@ -4,21 +4,21 @@
 
     <item
         android:id="@+id/archive"
-        android:icon="@drawable/ic_archive"
+        android:icon="@drawable/msr_inbox_wght400"
         android:title="归档"
         android:iconTint="?attr/colorControlNormal"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/chart"
-        android:icon="@drawable/ic_chart"
+        android:icon="@drawable/msr_donut_large_wght400"
         android:title="概览"
         android:iconTint="?attr/colorControlNormal"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/filter"
-        android:icon="@drawable/ic_filter"
+        android:icon="@drawable/msr_sort_wght400"
         android:title="过滤"
         android:iconTint="?attr/colorControlNormal"
         app:showAsAction="ifRoom" />

@@ -40,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -80,7 +79,7 @@ fun DesignColorSettingsScreen(
                 modifier = navIconPaddingModifier
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_back),
+                    com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier
@@ -129,9 +128,35 @@ fun DesignColorSettingsScreen(
                         selectedSeed = seed
                     },
                 )
+                if (appearance.showsContrastingHomeFabOption) {
+                    SettingsSectionDivider()
+                    SettingsDetailSwitchItem(
+                        headline = R.string.settings_contrasting_home_fab,
+                        supportingText = R.string.settings_support_contrasting_home_fab,
+                        checked = appearance.useContrastingHomeFab,
+                        onCheckedChange = { checked ->
+                            GlobalUtils.updateAppearance { current ->
+                                current.copy(useContrastingHomeFab = checked)
+                            }
+                        },
+                    )
+                }
             }
 
             SettingsSection(topLabel = stringResource(R.string.settings_design_mode_section_title, stringResource(modeTitleRes(appearance.designMode)))) {
+                if (appearance.designMode == AppearanceDesignMode.Modern) {
+                    SettingsDetailSwitchItem(
+                        headline = R.string.settings_immersive_experience,
+                        supportingText = R.string.settings_support_immersive_experience,
+                        checked = appearance.useImmersiveExperience,
+                        onCheckedChange = { checked ->
+                            GlobalUtils.updateAppearance { current ->
+                                current.copy(useImmersiveExperience = checked)
+                            }
+                        },
+                    )
+                    SettingsSectionDivider()
+                }
                 SettingsDetailSwitchItem(
                     headline = R.string.settings_hide_divider,
                     supportingText = R.string.settings_support_hide_divider,
@@ -146,19 +171,6 @@ fun DesignColorSettingsScreen(
                     }
                 )
                 SettingsSectionDivider()
-                if (appearance.designMode == AppearanceDesignMode.Modern) {
-                    SettingsDetailSwitchItem(
-                        headline = R.string.settings_immersive_experience,
-                        supportingText = R.string.settings_support_immersive_experience,
-                        checked = appearance.useImmersiveExperience,
-                        onCheckedChange = { checked ->
-                            GlobalUtils.updateAppearance { current ->
-                                current.copy(useImmersiveExperience = checked)
-                            }
-                        },
-                    )
-                    SettingsSectionDivider()
-                }
                 SettingsDetailSwitchItem(
                     headline = R.string.settings_colored_settings_home_icons,
                     supportingText = R.string.settings_support_colored_settings_home_icons,

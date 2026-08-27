@@ -316,6 +316,7 @@ object GlobalUtils {
         val miuixNeutralSurfaces = sharedPreferences.getBoolean("miuix_neutral_surfaces", true)
         val useMaterialTopAppBarInMiuix = sharedPreferences.getBoolean("miuix_material_top_bar", true)
         val useImmersiveExperience = ImmersiveExperiencePreferences.read(sharedPreferences)
+        val useContrastingHomeFab = sharedPreferences.getBoolean("contrasting_home_fab", true)
         val advancedMaterial = sharedPreferences.getBoolean("advanced_material", false)
         val advancedMaterialLevel = sharedPreferences.getString("advanced_material_level", null)
             ?.let(AdvancedMaterialLevel::fromKey)
@@ -363,6 +364,7 @@ object GlobalUtils {
             useMiuixNeutralSurfaces = miuixNeutralSurfaces,
             useMaterialTopAppBarInMiuix = useMaterialTopAppBarInMiuix,
             useImmersiveExperience = useImmersiveExperience,
+            useContrastingHomeFab = useContrastingHomeFab,
             useAdvancedMaterial = advancedMaterial,
             advancedMaterialLevel = advancedMaterialLevel,
             advancedMaterialBlurRadius = advancedMaterialBlurRadius,
@@ -392,6 +394,7 @@ object GlobalUtils {
             putBoolean("miuix_neutral_surfaces", appearance.useMiuixNeutralSurfaces)
             putBoolean("miuix_material_top_bar", appearance.useMaterialTopAppBarInMiuix)
             ImmersiveExperiencePreferences.write(this, appearance.useImmersiveExperience)
+            putBoolean("contrasting_home_fab", appearance.useContrastingHomeFab)
             putBoolean("advanced_material", appearance.useAdvancedMaterial)
             putString("advanced_material_level", appearance.advancedMaterialLevel.key)
             putFloat(

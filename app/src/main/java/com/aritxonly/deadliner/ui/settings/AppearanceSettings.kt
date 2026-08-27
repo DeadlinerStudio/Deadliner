@@ -177,7 +177,7 @@ private fun DefaultBackButton(
         modifier = navIconPaddingModifier
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_back),
+            painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
             contentDescription = stringResource(R.string.back),
             tint = MaterialTheme.colorScheme.onSurface,
             modifier = expressiveTypeModifier

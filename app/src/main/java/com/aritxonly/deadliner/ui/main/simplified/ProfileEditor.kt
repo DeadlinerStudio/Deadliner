@@ -143,7 +143,7 @@ fun ProfileEditor(
                     )
                 } else {
                     Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.ic_person),
+                        painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_person_wght400),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(48.dp)
@@ -159,7 +159,7 @@ fun ProfileEditor(
                     .size(32.dp)
             ) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_camera),
+                    painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_camera_wght400),
                     contentDescription = stringResource(R.string.change_avatar)
                 )
             }
@@ -203,7 +203,7 @@ fun ProfileEditor(
                 }
             }) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_delete),
+                    painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_delete_wght400),
                     contentDescription = null
                 )
                 Spacer(Modifier.width(6.dp))
@@ -278,7 +278,7 @@ fun AvatarCropperDialog(
                     Text(stringResource(R.string.crop_avatar), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
                     IconButton(onClick = onCancel) {
                         Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_close),
+                            painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_close_wght400),
                             contentDescription = stringResource(R.string.close)
                         )
                     }

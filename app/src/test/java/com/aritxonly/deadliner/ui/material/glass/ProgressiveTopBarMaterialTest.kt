@@ -68,7 +68,7 @@ class ProgressiveTopBarMaterialTest {
     @Test
     fun overlayUsesStrongerSurfaceContrastAndEndsBeforeThreeQuarters() {
         assertEquals(0.94f, ProgressiveTopBarOverlayTopAlpha, 0.0001f)
-        assertEquals(0.68f, ProgressiveTopBarOverlayEndFraction, 0.0001f)
+        assertEquals(0.80f, ProgressiveTopBarOverlayEndFraction, 0.0001f)
     }
 
     @Test
@@ -77,11 +77,11 @@ class ProgressiveTopBarMaterialTest {
             measuredTopBarHeightPx = 130,
             statusBarHeightPx = 24,
             minimumContentHeightPx = 56,
-            materialHeightTrimPx = 6,
+            materialHeightTrimPx = 30,
         )
 
         assertEquals(130, metrics.occupiedHeightPx)
-        assertEquals(168, metrics.materialHeightPx)
+        assertEquals(144, metrics.materialHeightPx)
         assertTrue(metrics.materialHeightPx > metrics.occupiedHeightPx)
     }
 
@@ -91,11 +91,17 @@ class ProgressiveTopBarMaterialTest {
             measuredTopBarHeightPx = 64,
             statusBarHeightPx = 24,
             minimumContentHeightPx = 56,
-            materialHeightTrimPx = 6,
+            materialHeightTrimPx = 30,
         )
 
         assertEquals(80, metrics.occupiedHeightPx)
-        assertEquals(101, metrics.materialHeightPx)
+        assertEquals(80, metrics.materialHeightPx)
+    }
+
+    @Test
+    fun progressiveMaterialAddsTwentyFourDpBottomClearanceToExistingTrim() {
+        assertEquals(6f, ProgressiveTopBarMaterialHeightTrimDp, 0.0001f)
+        assertEquals(12f, ProgressiveTopBarBottomClearanceDp, 0.0001f)
     }
 
     @Test

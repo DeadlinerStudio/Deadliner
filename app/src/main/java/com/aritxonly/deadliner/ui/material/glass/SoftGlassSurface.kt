@@ -39,7 +39,7 @@ object SoftGlassDefaults {
  * Layout-neutral high-level entry point for Deadliner's soft-glass material.
  *
  * The caller owns size and padding. This layer only resolves the active material, backdrop,
- * neutral tint and optical recipe before delegating to [deadlinerGlassMaterial].
+ * tint strategy and optical recipe before delegating to [deadlinerGlassMaterial].
  */
 @Composable
 fun SoftGlassSurface(
@@ -47,6 +47,7 @@ fun SoftGlassSurface(
     shape: Shape = SoftGlassDefaults.Shape,
     recipe: GlassMaterialRecipe? = null,
     tint: Color? = null,
+    tintStyle: GlassTintStyle = GlassTintStyle.Neutral,
     interaction: GlassMaterialInteraction = GlassMaterialInteraction(),
     materialAlpha: Float = 1f,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
@@ -83,6 +84,7 @@ fun SoftGlassSurface(
                     backdrop = backdrop,
                     shape = shape,
                     tint = resolvedTint,
+                    tintStyle = tintStyle,
                     isDark = isDark,
                     recipe = resolvedRecipe,
                     interaction = interaction,
@@ -101,6 +103,7 @@ fun SoftGlassIconButton(
     size: Dp = SoftGlassDefaults.IconButtonSize,
     recipe: GlassMaterialRecipe? = null,
     tint: Color? = null,
+    tintStyle: GlassTintStyle = GlassTintStyle.Neutral,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
     materialAlpha: Float = 1f,
     content: @Composable () -> Unit,
@@ -136,6 +139,7 @@ fun SoftGlassIconButton(
         shape = SoftGlassDefaults.Shape,
         recipe = recipe,
         tint = tint,
+        tintStyle = tintStyle,
         backdrop = backdrop,
         materialAlpha = materialAlpha,
         interaction = softGlassPressMaterialInteraction(pressProgress),

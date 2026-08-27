@@ -64,7 +64,7 @@
                 android:layout_height="36dp"
                 android:layout_marginBottom="16dp"
                 android:contentDescription="完成图标"
-                android:src="@drawable/ic_ccheck"
+                android:src="@drawable/msr_event_available_wght400"
                 app:tint="?attr/colorOnSurface" />
 
             <TextView
@@ -111,7 +111,7 @@
             android:layout_marginEnd="16dp"
             android:background="@drawable/circle_background_main"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_settings"
+            android:src="@drawable/msr_settings_wght400"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -124,7 +124,7 @@
             android:layout_marginEnd="16dp"
             android:background="@drawable/circle_background_main"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_search"
+            android:src="@drawable/msr_search_wght400"
             app:layout_constraintEnd_toStartOf="@id/settingsButton"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -219,7 +219,7 @@
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/add_edit_deadline"
                 android:fadingEdge="none"
-                android:src="@drawable/ic_add"
+                android:src="@drawable/msr_add_wght400"
                 app:backgroundTint="?attr/colorSecondaryContainer"
                 app:layout_anchor="@id/bottomAppBar" />
 
@@ -251,7 +251,7 @@
                 app:boxCornerRadiusTopEnd="@dimen/search_bar_radius"
                 app:boxCornerRadiusBottomStart="@dimen/search_bar_radius"
                 app:boxCornerRadiusBottomEnd="@dimen/search_bar_radius"
-                app:startIconDrawable="@drawable/ic_back"
+                app:startIconDrawable="@drawable/msr_arrow_back_wght400"
                 app:startIconContentDescription="@string/back"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"

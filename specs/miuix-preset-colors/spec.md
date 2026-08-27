@@ -11,7 +11,7 @@
 - 使用独立的 Material 风格 secondary 与 tertiary，让 Material 内容更鲜活，同时保留当前设备中性色表面策略。
 - Material 的活力 secondary/tertiary 不直接覆盖 MIUIX 的 neutral secondary 角色；MIUIX Switch、Checkbox 等控件轨道继续使用官方中性灰语义。
 - 预设颜色的深色模式中，Material 与 MIUIX Checkbox 的选中勾、Switch 的选中 thumb 均为纯白。
-- 预设颜色生效时，沉浸主页 FAB 使用固定色 `#F08A7E`，并保持图标对比度与柔光玻璃质感。
+- 预设颜色生效时，沉浸主页 FAB 使用固定色 `#FF6D6D`，并保持图标对比度与柔光玻璃质感。
 
 ## 非目标
 
@@ -33,7 +33,7 @@
 - 预设深色 Material ColorScheme 的 `onPrimary` 与 `onPrimaryContainer` 为白色，MIUIX ColorScheme 的对应前景语义同样为白色。
 - Material ColorScheme 保留珊瑚 secondary 与青绿 tertiary；MIUIX ColorScheme 的 secondary/secondaryVariant 使用 MIUIX 官方明暗中性灰，不得把未选中控件轨道染成 Material 辅助色。
 - 现代设计颜色选择器显示独立预设入口，鲜活设计不显示该入口。
-- 预设颜色 + 沉浸模式下，主页 FAB 基础 tint 为 `#F08A7E`；其他颜色来源仍使用主题主色。
+- 预设颜色 + 沉浸模式下，主页 FAB 基础 tint 为 `#FF6D6D`；其他颜色来源仍使用主题主色。
 - 定向单元测试、Debug Kotlin 编译通过，既有沉浸体验测试无回归。
 
 ## 风险与约束

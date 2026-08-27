@@ -23,7 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -240,7 +240,7 @@ private fun ArchivedItemCard(
                         ) {
                             if (onRestore != null) {
                                 ArchiveActionButton(
-                                    icon = ImageVector.vectorResource(R.drawable.ic_undo),
+                                    icon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_undo_wght400),
                                     contentDescription = stringResource(R.string.unarchive),
                                     containerColor = MaterialTheme.colorScheme.primary,
                                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -249,7 +249,7 @@ private fun ArchivedItemCard(
                             }
                             if (onDelete != null) {
                                 ArchiveActionButton(
-                                    icon = ImageVector.vectorResource(R.drawable.ic_delete),
+                                    icon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_delete_wght400),
                                     contentDescription = stringResource(R.string.delete),
                                     containerColor = MaterialTheme.colorScheme.error,
                                     contentColor = MaterialTheme.colorScheme.onError,
@@ -287,7 +287,7 @@ private fun ArchiveBadge(
 
 @Composable
 private fun ArchiveActionButton(
-    icon: ImageVector,
+    icon: Painter,
     contentDescription: String,
     containerColor: Color,
     contentColor: Color,
@@ -301,7 +301,7 @@ private fun ArchiveActionButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = contentDescription,
             tint = contentColor,
             modifier = Modifier.size(18.dp),

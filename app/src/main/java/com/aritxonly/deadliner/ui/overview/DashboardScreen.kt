@@ -282,7 +282,7 @@ private fun ShareButtonSection(
             )
         ) {
             Icon(
-                iconResource(R.drawable.ic_share),
+                iconResource(R.drawable.msr_ios_share_wght400),
                 contentDescription = stringResource(R.string.share),
                 modifier = Modifier.size(16.dp)
             )
@@ -365,10 +365,10 @@ private fun SummaryCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     metric.isDown?.let { isDown ->
                         Icon(
-                            imageVector = if (isDown) {
-                                ImageVector.vectorResource(R.drawable.ic_arrow_down)
+                            painter = if (isDown) {
+                                com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_arrow_downward_wght400)
                             } else {
-                                ImageVector.vectorResource(R.drawable.ic_arrow_up)
+                                com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_arrow_upward_wght400)
                             },
                             contentDescription = null,
                             tint = summaryTrendColor(metric.label, isDown),
@@ -442,7 +442,7 @@ private fun AIAnalysisCard(
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    iconResource(R.drawable.ic_ai),
+                    iconResource(R.drawable.msr_rocket_launch_wght400),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)

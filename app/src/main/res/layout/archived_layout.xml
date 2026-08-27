@@ -67,7 +67,7 @@
         android:insetBottom="0dp"
         android:insetTop="0dp"
         app:cornerRadius="16dp"
-        app:icon="@drawable/ic_delete"
+        app:icon="@drawable/msr_delete_wght400"
         app:iconGravity="textStart"
         app:iconSize="24dp"
         app:iconPadding="0dp"

@@ -1,7 +1,12 @@
 package com.aritxonly.deadliner.ui.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import com.aritxonly.deadliner.model.AppearanceColorSource
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamicColorScheme
+import com.materialkolor.dynamiccolor.ColorSpec
+import com.materialkolor.scheme.DynamicScheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -12,32 +17,41 @@ class MiuixPresetColorSchemesTest {
         val light = MiuixPresetColorSchemes.create(darkTheme = false)
         val dark = MiuixPresetColorSchemes.create(darkTheme = true)
 
-        assertEquals(Color(0xFF3482FF), light.primary)
+        assertEquals(Color(0xFF3382FF), light.primary)
         assertEquals(Color(0xFF277AF7), dark.primary)
         assertEquals(Color.White, light.onPrimary)
         assertEquals(Color.White, dark.onPrimary)
     }
 
     @Test
-    fun presetAddsIndependentMaterialAccentRoles() {
-        val light = MiuixPresetColorSchemes.create(darkTheme = false)
+    fun presetKeepsEveryGeneratedMaterialRoleExceptPrimaryAndOnPrimary() {
+        listOf(false, true).forEach { darkTheme ->
+            val seed = MiuixPresetColorSchemes.seed(darkTheme)
+            val preset = MiuixPresetColorSchemes.create(darkTheme)
+            val generated = generatedPresetScheme(seed, darkTheme)
 
-        assertNotEquals(light.primary, light.secondary)
-        assertNotEquals(light.primary, light.tertiary)
-        assertNotEquals(light.secondary, light.tertiary)
+            assertEquals(
+                generated.rolesExceptPrimaryAndOnPrimary(),
+                preset.rolesExceptPrimaryAndOnPrimary(),
+            )
+            assertNotEquals(preset.primary, preset.primaryContainer)
+            assertNotEquals(preset.primary, preset.secondary)
+            assertNotEquals(preset.primary, preset.tertiary)
+        }
     }
 
     @Test
-    fun darkPresetKeepsMaterialAndMiuixControlForegroundsWhite() {
+    fun onPrimaryStaysWhiteWithoutChangingContainerRoles() {
         val base = MiuixPresetColorSchemes.create(darkTheme = true)
+        val generated = generatedPresetScheme(MiuixPresetColorSchemes.DarkSeed, darkTheme = true)
         val tokens = DeadlinerColorTokenFactory.createFromMaterialScheme(base)
         val material = DeadlinerMaterial3ColorSchemeFactory.create(tokens, darkTheme = true)
         val miuix = DeadlinerMiuixColorSchemeFactory.create(tokens, darkTheme = true)
 
         assertEquals(Color.White, material.onPrimary)
-        assertEquals(Color.White, material.onPrimaryContainer)
+        assertEquals(generated.onPrimaryContainer, material.onPrimaryContainer)
         assertEquals(Color.White, miuix.onPrimary)
-        assertEquals(Color.White, miuix.onPrimaryContainer)
+        assertEquals(generated.onPrimaryContainer, miuix.onPrimaryContainer)
     }
 
     @Test
@@ -60,25 +74,140 @@ class MiuixPresetColorSchemesTest {
     }
 
     @Test
-    fun presetUsesHarmonyCoralFabOnlyForMiuixPreset() {
+    fun homeFabUsesContrastingPresetByDefaultAndAlwaysUsesWhiteContent() {
         val fallbackContainer = Color(0xFF123456)
-        val fallbackContent = Color(0xFFFAFAFA)
-        val preset = homeFabColors(
-            designSystem = AppDesignSystem.MIUIX,
+        val lightPreset = homeFabColors(
             colorSource = AppearanceColorSource.Preset,
+            seedColorHex = null,
+            darkTheme = false,
             fallbackContainer = fallbackContainer,
-            fallbackContent = fallbackContent,
+            useContrastingPresetFab = true,
+        )
+        val darkPreset = homeFabColors(
+            colorSource = AppearanceColorSource.Preset,
+            seedColorHex = null,
+            darkTheme = true,
+            fallbackContainer = fallbackContainer,
+            useContrastingPresetFab = true,
+        )
+        val lightPresetWithoutContrast = homeFabColors(
+            colorSource = AppearanceColorSource.Preset,
+            seedColorHex = null,
+            darkTheme = false,
+            fallbackContainer = fallbackContainer,
+            useContrastingPresetFab = false,
+        )
+        val darkPresetWithoutContrast = homeFabColors(
+            colorSource = AppearanceColorSource.Preset,
+            seedColorHex = null,
+            darkTheme = true,
+            fallbackContainer = fallbackContainer,
+            useContrastingPresetFab = false,
+        )
+        val customSeed = homeFabColors(
+            colorSource = AppearanceColorSource.SeedColor,
+            seedColorHex = "#A35BC7",
+            darkTheme = false,
+            fallbackContainer = fallbackContainer,
+            useContrastingPresetFab = true,
         )
         val dynamic = homeFabColors(
-            designSystem = AppDesignSystem.MIUIX,
             colorSource = AppearanceColorSource.SystemDynamic,
+            seedColorHex = "#A35BC7",
+            darkTheme = false,
             fallbackContainer = fallbackContainer,
-            fallbackContent = fallbackContent,
+            useContrastingPresetFab = true,
         )
 
-        assertEquals(Color(0xFFF08A7E), preset.container)
-        assertEquals(Color(0xFF2B100C), preset.content)
+        assertEquals(Color(0xFFFF6D6D), lightPreset.container)
+        assertEquals(Color(0xFFFF6D6D), darkPreset.container)
+        assertEquals(Color(0xFF3382FF), lightPresetWithoutContrast.container)
+        assertEquals(Color(0xFF277AF7), darkPresetWithoutContrast.container)
+        assertEquals(Color(0xFFA35BC7), customSeed.container)
         assertEquals(fallbackContainer, dynamic.container)
-        assertEquals(fallbackContent, dynamic.content)
+        listOf(
+            lightPreset,
+            darkPreset,
+            lightPresetWithoutContrast,
+            darkPresetWithoutContrast,
+            customSeed,
+            dynamic,
+        ).forEach { colors ->
+            assertEquals(Color.White, colors.content)
+        }
     }
+
+    @Test
+    fun invalidCustomSeedFallsBackToMaterialPrimary() {
+        val fallbackContainer = Color(0xFF123456)
+
+        val colors = homeFabColors(
+            colorSource = AppearanceColorSource.SeedColor,
+            seedColorHex = "not-a-color",
+            darkTheme = false,
+            fallbackContainer = fallbackContainer,
+            useContrastingPresetFab = true,
+        )
+
+        assertEquals(fallbackContainer, colors.container)
+        assertEquals(Color.White, colors.content)
+    }
+
+    private fun generatedPresetScheme(seed: Color, darkTheme: Boolean) = dynamicColorScheme(
+        primary = seed,
+        isDark = darkTheme,
+        isAmoled = false,
+        style = PaletteStyle.TonalSpot,
+        specVersion = ColorSpec.SpecVersion.SPEC_2021,
+        platform = DynamicScheme.Platform.PHONE,
+    )
+
+    private fun ColorScheme.rolesExceptPrimaryAndOnPrimary(): List<Color> = listOf(
+        primaryContainer,
+        onPrimaryContainer,
+        inversePrimary,
+        secondary,
+        onSecondary,
+        secondaryContainer,
+        onSecondaryContainer,
+        tertiary,
+        onTertiary,
+        tertiaryContainer,
+        onTertiaryContainer,
+        background,
+        onBackground,
+        surface,
+        onSurface,
+        surfaceVariant,
+        onSurfaceVariant,
+        surfaceTint,
+        inverseSurface,
+        inverseOnSurface,
+        error,
+        onError,
+        errorContainer,
+        onErrorContainer,
+        outline,
+        outlineVariant,
+        scrim,
+        surfaceBright,
+        surfaceDim,
+        surfaceContainer,
+        surfaceContainerHigh,
+        surfaceContainerHighest,
+        surfaceContainerLow,
+        surfaceContainerLowest,
+        primaryFixed,
+        primaryFixedDim,
+        onPrimaryFixed,
+        onPrimaryFixedVariant,
+        secondaryFixed,
+        secondaryFixedDim,
+        onSecondaryFixed,
+        onSecondaryFixedVariant,
+        tertiaryFixed,
+        tertiaryFixedDim,
+        onTertiaryFixed,
+        onTertiaryFixedVariant,
+    )
 }

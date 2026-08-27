@@ -553,7 +553,7 @@ private fun HabitReminderSection(
                 }
             } else {
                 Icon(
-                    imageVector = iconResource(R.drawable.ic_event),
+                    painter = iconResource(R.drawable.msr_event_wght400),
                     contentDescription = stringResource(R.string.set_time),
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurface,

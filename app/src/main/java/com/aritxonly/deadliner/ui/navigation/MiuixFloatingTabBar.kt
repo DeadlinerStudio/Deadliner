@@ -52,7 +52,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalDensity
@@ -62,6 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
 import com.aritxonly.deadliner.ui.material.glass.GlassMaterialInteraction
@@ -75,15 +76,17 @@ import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.math.sign
 
 @Immutable
 data class MiuixFloatingTabItem(
     val key: String,
     val label: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector,
+    val selectedIcon: Painter,
+    val unselectedIcon: Painter,
     val enabled: Boolean = true,
+    val iconScale: Float = 1f,
 )
 
 enum class MiuixFloatingTabLayout {
@@ -187,7 +190,7 @@ fun MiuixFloatingTabBar(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer { translationX = panelOffsetPx }
+                .offset { IntOffset(panelOffsetPx.roundToInt(), 0) }
                 .floatingNavigationShadow(
                     shape = MiuixFloatingTabBarDefaults.ContainerShape,
                     isDark = isDark,
@@ -402,10 +405,16 @@ private fun FloatingTabItemContent(
             label = "floating_tab_icon",
         ) { isSelected ->
             Icon(
-                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                painter = if (isSelected) item.selectedIcon else item.unselectedIcon,
                 contentDescription = null,
                 tint = animatedContentColor,
-                modifier = Modifier.size(MiuixFloatingTabBarDefaults.TabIconSize),
+                modifier = Modifier
+                    .size(MiuixFloatingTabBarDefaults.TabIconSize)
+                    .graphicsLayer {
+                        val scale = item.iconScale.coerceIn(0.75f, 1.25f)
+                        scaleX = scale
+                        scaleY = scale
+                    },
             )
         }
     }

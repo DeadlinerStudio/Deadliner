@@ -11,6 +11,9 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
+import com.aritxonly.deadliner.ui.LocalMaterialSymbolStyle
+import com.aritxonly.deadliner.ui.MaterialSymbolStyle
+import com.aritxonly.deadliner.ui.MaterialSymbolAxisPolicy
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 enum class AppDesignSystem {
@@ -61,35 +64,42 @@ fun DeadlinerTheme(
     CompositionLocalProvider(
         LocalAppDesignSystem provides designSystem,
         LocalHomeFabColors provides homeFabColors(
-            designSystem = designSystem,
             colorSource = appearance.effectiveColorSource,
+            seedColorHex = appearance.seedColorHex,
+            darkTheme = darkTheme,
             fallbackContainer = materialColorScheme.primary,
-            fallbackContent = materialColorScheme.onPrimary,
+            useContrastingPresetFab = appearance.useContrastingHomeFab,
         ),
         LocalAdvancedMaterialSpec provides advancedMaterialSpec,
         LocalImmersiveExperienceEnabled provides (
             appearance.useImmersiveExperience && designSystem == AppDesignSystem.MIUIX
         ),
+        LocalMaterialSymbolStyle provides MaterialSymbolStyle(
+            weight = if (
+                appearance.designMode == com.aritxonly.deadliner.model.AppearanceDesignMode.Modern &&
+                appearance.useImmersiveExperience
+            ) {
+                MaterialSymbolAxisPolicy.ImmersiveModernWeight
+            } else {
+                MaterialSymbolAxisPolicy.DefaultWeight
+            },
+            grade = if (
+                appearance.designMode == com.aritxonly.deadliner.model.AppearanceDesignMode.Modern &&
+                appearance.useImmersiveExperience
+            ) {
+                MaterialSymbolAxisPolicy.ImmersiveModernGrade
+            } else {
+                MaterialSymbolAxisPolicy.DefaultGrade
+            },
+            usesModernBackIcon = appearance.designMode == com.aritxonly.deadliner.model.AppearanceDesignMode.Modern,
+        ),
     ) {
-        when (designSystem) {
-            AppDesignSystem.MATERIAL3 -> {
-                MaterialExpressiveTheme(
-                    colorScheme = materialColorScheme,
-                    typography = Typography,
-                ) {
-                    content()
-                }
-            }
-
-            AppDesignSystem.MIUIX -> {
-                MiuixTheme(colors = miuixColorScheme) {
-                    MaterialExpressiveTheme(
-                        colorScheme = materialColorScheme,
-                        typography = Typography,
-                    ) {
-                        content()
-                    }
-                }
+        MiuixTheme(colors = miuixColorScheme) {
+            MaterialExpressiveTheme(
+                colorScheme = materialColorScheme,
+                typography = Typography,
+            ) {
+                content()
             }
         }
     }

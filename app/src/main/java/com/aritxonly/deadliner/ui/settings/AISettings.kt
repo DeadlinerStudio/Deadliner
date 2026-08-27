@@ -24,7 +24,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.ai.LlmPreset
 import com.aritxonly.deadliner.localutils.ApiKeystore
@@ -69,7 +68,7 @@ fun AISettingsScreen(
                 modifier = navIconPaddingModifier
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_back),
+                    com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = expressiveTypeModifier

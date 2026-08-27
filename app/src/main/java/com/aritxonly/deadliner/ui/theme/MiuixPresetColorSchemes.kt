@@ -1,46 +1,32 @@
 package com.aritxonly.deadliner.ui.theme
 
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamicColorScheme
+import com.materialkolor.dynamiccolor.ColorSpec
+import com.materialkolor.scheme.DynamicScheme
 
 /** Stable non-Monet colors for the modern design system. */
 object MiuixPresetColorSchemes {
-    val HomeFab = Color(0xFFF08A7E)
+    val LightSeed = Color(0xFF3382FF)
+    val DarkSeed = Color(0xFF277AF7)
+    val HomeFab = Color(0xFFFF6D6D)
 
-    fun create(darkTheme: Boolean): ColorScheme = if (darkTheme) dark() else light()
+    fun seed(darkTheme: Boolean): Color = if (darkTheme) DarkSeed else LightSeed
 
-    private fun light(): ColorScheme = lightColorScheme(
-        primary = Color(0xFF3482FF),
-        onPrimary = Color.White,
-        primaryContainer = Color(0xFF5D9BFF),
-        onPrimaryContainer = Color.White,
-        inversePrimary = Color(0xFFAECDFF),
-        secondary = Color(0xFFA8443B),
-        onSecondary = Color.White,
-        secondaryContainer = Color(0xFFFFDAD6),
-        onSecondaryContainer = Color(0xFF410002),
-        tertiary = Color(0xFF006A60),
-        onTertiary = Color.White,
-        tertiaryContainer = Color(0xFF74F8E5),
-        onTertiaryContainer = Color(0xFF00201C),
-    )
-
-    private fun dark(): ColorScheme = darkColorScheme(
-        primary = Color(0xFF277AF7),
-        onPrimary = Color.White,
-        primaryContainer = Color(0xFF338FE4),
-        onPrimaryContainer = Color.White,
-        inversePrimary = Color(0xFF99C7F1),
-        secondary = Color(0xFFFFB4AB),
-        onSecondary = Color(0xFF690005),
-        secondaryContainer = Color(0xFF93000A),
-        onSecondaryContainer = Color(0xFFFFDAD6),
-        tertiary = Color(0xFF53DBC8),
-        onTertiary = Color(0xFF003731),
-        tertiaryContainer = Color(0xFF005048),
-        onTertiaryContainer = Color(0xFF74F8E5),
-    )
+    fun create(darkTheme: Boolean): ColorScheme {
+        val primarySeed = seed(darkTheme)
+        return dynamicColorScheme(
+            primary = primarySeed,
+            isDark = darkTheme,
+            isAmoled = false,
+            style = PaletteStyle.TonalSpot,
+            specVersion = ColorSpec.SpecVersion.SPEC_2021,
+            platform = DynamicScheme.Platform.PHONE,
+        ).copy(
+            primary = primarySeed,
+            onPrimary = Color.White,
+        )
+    }
 }
-

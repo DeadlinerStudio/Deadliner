@@ -77,6 +77,7 @@ fun AlertDialog(
                 modifier = modifier,
                 title = miuixTitle,
                 summary = miuixSummary,
+                backgroundColor = deadlinerOverlayContainerColor(),
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     if (showInlineTitle) {

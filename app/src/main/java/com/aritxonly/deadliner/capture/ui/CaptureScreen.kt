@@ -53,7 +53,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -71,6 +70,7 @@ import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.base.deadlinerOverlayContainerColor
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
 import com.aritxonly.deadliner.ui.settings.RoundedTextField
@@ -108,7 +108,7 @@ fun CaptureTopBar(
                 {
                     TopBarIconButton(onClick = onClose) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_close),
+                            painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_close_wght400),
                             contentDescription = stringResource(R.string.close),
                             modifier = expressiveTypeModifier,
                         )
@@ -134,7 +134,7 @@ fun CaptureTopBar(
             navigationIcon = {
                 TopBarIconButton(onClick = vm::exitMultiSelect) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_close),
+                        painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_close_wght400),
                         contentDescription = stringResource(R.string.close),
                         modifier = expressiveTypeModifier,
                     )
@@ -297,7 +297,8 @@ fun CaptureContent(
         RegisterAdvancedMaterialDialogBlur()
         ModalBottomSheet(
             onDismissRequest = { onShowMergeSheetChange(false) },
-            sheetState = sheetState
+            sheetState = sheetState,
+            containerColor = deadlinerOverlayContainerColor(),
         ) {
             Column(
                 modifier = Modifier
@@ -660,11 +661,11 @@ private fun InspirationLightCard(
             verticalAlignment = Alignment.Top
         ) {
             Icon(
-                painter = painterResource(
-                    id = if (inMultiSelectMode) {
-                        if (selected) R.drawable.ic_check_circle_fill else R.drawable.ic_check_circle
+                painter = com.aritxonly.deadliner.ui.symbolPainterResource(
+                    sourceId = if (inMultiSelectMode) {
+                        if (selected) R.drawable.msr_check_circle_fill_wght400 else R.drawable.msr_check_circle_wght400
                     } else {
-                        R.drawable.ic_quote
+                        R.drawable.msr_format_quote_wght400
                     }
                 ),
                 contentDescription = null,
@@ -698,7 +699,7 @@ private fun InspirationLightCard(
                         Box {
                             IconButton(onClick = { menuExpanded = true }) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_more),
+                                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_more_vert_wght400),
                                     contentDescription = stringResource(R.string.settings_more)
                                 )
                             }
@@ -798,7 +799,7 @@ private fun EmptyCaptureHint(text: String) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_lightbulb),
+                painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_lightbulb_2_wght400),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(32.dp)
@@ -837,7 +838,8 @@ private fun CaptureDetailSheet(
     RegisterAdvancedMaterialDialogBlur()
     ModalBottomSheet(
         onDismissRequest = onClose,
-        sheetState = sheetState
+        sheetState = sheetState,
+        containerColor = deadlinerOverlayContainerColor(),
     ) {
         Column(
             modifier = Modifier
@@ -851,7 +853,7 @@ private fun CaptureDetailSheet(
             ) {
                 IconButton(onClick = onClose) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_close),
+                        painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_close_wght400),
                         contentDescription = stringResource(R.string.close),
                         modifier = expressiveTypeModifier,
                     )
@@ -863,7 +865,7 @@ private fun CaptureDetailSheet(
                 )
                 IconButton(onClick = onSave) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_ok),
+                        painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_check_wght400),
                         contentDescription = stringResource(R.string.save)
                     )
                 }
@@ -905,7 +907,7 @@ private fun CaptureDetailSheet(
                 Box {
                     OutlinedButton(onClick = { secondaryMenuExpanded = true }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_more),
+                            painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_more_vert_wght400),
                             contentDescription = null
                         )
                         Text(" ${stringResource(R.string.capture_direct_secondary_short)}")
