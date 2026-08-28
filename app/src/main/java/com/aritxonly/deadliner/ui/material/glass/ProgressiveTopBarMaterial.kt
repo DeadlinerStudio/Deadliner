@@ -12,21 +12,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
-import top.yukonga.miuix.kmp.blur.drawBackdrop
-import top.yukonga.miuix.kmp.blur.effect
-import top.yukonga.miuix.kmp.blur.isRuntimeShaderSupported
-import top.yukonga.miuix.kmp.blur.runtimeShaderEffect
+import top.yukonga.miuix.kmp.blur.ProgressiveBlur
+import top.yukonga.miuix.kmp.blur.progressiveTextureBlur
 import kotlin.math.ceil
 import kotlin.math.max
 
@@ -38,8 +35,6 @@ val LocalTopBarScrollProgress = staticCompositionLocalOf<Float?> { null }
 
 internal const val ProgressiveTopBarBlurRadiusDp = 4f
 internal const val ProgressiveTopBarBlurFadeStart = 0.60f
-internal const val ProgressiveTopBarTintFadeStart = 0.70f
-internal const val ProgressiveTopBarTintIntensity = 0.20f
 internal const val ProgressiveTopBarOverlayTopAlpha = 0.94f
 internal const val ProgressiveTopBarOverlayEndFraction = 0.80f
 internal const val ProgressiveTopBarContentEndFraction = 0.75f
@@ -48,11 +43,6 @@ internal const val ProgressiveTopBarMaterialHeightTrimDp = 6f
 
 /** Extra visual clearance below the fully transparent end of the progressive material. */
 internal const val ProgressiveTopBarBottomClearanceDp = 12f
-
-internal enum class ProgressiveTopBarRenderMode {
-    Backdrop,
-    GradientFallback,
-}
 
 internal data class ProgressiveTopBarHeightMetrics(
     val occupiedHeightPx: Int,
@@ -85,30 +75,9 @@ internal fun resolveProgressiveTopBarHeightMetrics(
     )
 }
 
-internal fun resolveProgressiveTopBarRenderMode(
-    backdropAvailable: Boolean,
-    runtimeShaderSupported: Boolean,
-): ProgressiveTopBarRenderMode = if (backdropAvailable && runtimeShaderSupported) {
-    ProgressiveTopBarRenderMode.Backdrop
-} else {
-    ProgressiveTopBarRenderMode.GradientFallback
-}
-
-internal fun progressiveTopBarFadeAlpha(
-    verticalFraction: Float,
-    fadeStartFraction: Float,
-): Float {
-    val start = fadeStartFraction.coerceIn(0f, 0.9999f)
-    val progress = ((verticalFraction.coerceIn(0f, 1f) - start) / (1f - start))
-        .coerceIn(0f, 1f)
-    val smoothProgress = progress * progress * (3f - 2f * progress)
-    return 1f - smoothProgress
-}
-
 /**
- * Draws a lightweight progressive backdrop beneath the top-bar foreground. The background uses
- * one fixed Gaussian blur followed by one shader that fades both the sampled image and its tint.
- * It deliberately avoids the advanced-material and soft-glass optical stacks.
+ * Draws a Miuix progressive backdrop beneath the top-bar foreground. When advanced material is
+ * disabled, the existing transparent gradient remains as the intentional lightweight fallback.
  */
 @Composable
 fun ProgressiveTopBarMaterial(
@@ -176,19 +145,15 @@ private fun ProgressiveTopBarBackground(
     modifier: Modifier = Modifier,
 ) {
     val surface = MaterialTheme.colorScheme.surface
+    val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
-    val renderMode = resolveProgressiveTopBarRenderMode(
-        backdropAvailable = backdrop != null,
-        runtimeShaderSupported = isRuntimeShaderSupported(),
-    )
     Box(modifier = modifier) {
-        if (renderMode == ProgressiveTopBarRenderMode.Backdrop) {
+        if (advancedMaterial.enabled && backdrop != null) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
                     .progressiveTopBarBackdrop(
                         backdrop = requireNotNull(backdrop),
-                        tint = surface,
                     ),
             )
         }
@@ -215,49 +180,11 @@ private enum class ProgressiveTopBarSlot {
 
 private fun Modifier.progressiveTopBarBackdrop(
     backdrop: LayerBackdrop,
-    tint: Color,
-): Modifier = drawBackdrop(
+): Modifier = progressiveTextureBlur(
     backdrop = backdrop,
-    shape = { RectangleShape },
-    effects = {
-        val blurRadiusPx = ProgressiveTopBarBlurRadiusDp.dp.toPx()
-        effect(
-            BlurEffect(
-                radiusX = blurRadiusPx,
-                radiusY = blurRadiusPx,
-                edgeTreatment = TileMode.Clamp,
-            ),
-        )
-        runtimeShaderEffect(
-            key = ProgressiveTopBarShaderKey,
-            shaderString = ProgressiveTopBarShader,
-            uniformShaderName = "source",
-        ) {
-            setFloatUniform("size", size.width, size.height)
-            setColorUniform("tint", tint)
-            setFloatUniform("tint_intensity", ProgressiveTopBarTintIntensity)
-            setFloatUniform("blur_fade_start", ProgressiveTopBarBlurFadeStart)
-            setFloatUniform("tint_fade_start", ProgressiveTopBarTintFadeStart)
-        }
-    },
+    shape = RectangleShape,
+    blurRadius = ProgressiveTopBarBlurRadiusDp,
+    gradient = ProgressiveBlur.Top.copy(
+        startFraction = ProgressiveTopBarBlurFadeStart,
+    ),
 )
-
-private const val ProgressiveTopBarShaderKey = "DeadlinerProgressiveTopBar"
-
-private const val ProgressiveTopBarShader = """
-    uniform shader source;
-    uniform float2 size;
-    layout(color) uniform half4 tint;
-    uniform float tint_intensity;
-    uniform float blur_fade_start;
-    uniform float tint_fade_start;
-
-    half4 main(float2 coord) {
-        float normalized_y = clamp(coord.y / max(size.y, 1.0), 0.0, 1.0);
-        float blur_alpha = 1.0 - smoothstep(blur_fade_start, 1.0, normalized_y);
-        float tint_alpha = 1.0 - smoothstep(tint_fade_start, 1.0, normalized_y);
-        half4 blurred = source.eval(coord) * half(blur_alpha);
-        half4 tinted = tint * half(tint_alpha);
-        return mix(blurred, tinted, half(tint_intensity));
-    }
-"""

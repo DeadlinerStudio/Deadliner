@@ -4,7 +4,6 @@ import java.util.Locale
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
     id("kotlin-parcelize")
 }
@@ -29,7 +28,7 @@ android {
 
     defaultConfig {
         applicationId = "com.aritxonly.deadliner"
-        minSdk = 31
+        minSdk = 33
         targetSdk = 36
         versionCode = 33
         versionName = "5.0.0-RC"
@@ -75,9 +74,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
     }
     buildFeatures {
         viewBinding = true
@@ -127,8 +123,8 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences-android:1.1.7")
     implementation("io.github.rroohit:ImageCropView:3.1.1")
     implementation("com.materialkolor:material-kolor:4.1.1")
-    implementation("top.yukonga.miuix.kmp:miuix-ui-android:0.9.0")
-    implementation("top.yukonga.miuix.kmp:miuix-blur-android:0.9.0")
+    implementation("top.yukonga.miuix.kmp:miuix-ui-android:0.9.4-rc01")
+    implementation("top.yukonga.miuix.kmp:miuix-blur-android:0.9.4-rc01")
     implementation("io.github.kyant0:shapes:1.2.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

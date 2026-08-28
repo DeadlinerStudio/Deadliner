@@ -62,7 +62,6 @@ import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import top.yukonga.miuix.kmp.basic.NavigationBar as MiuixNavigationBar
 import top.yukonga.miuix.kmp.basic.NavigationBarItem as MiuixNavigationBarItem
 import top.yukonga.miuix.kmp.basic.NavigationRail as MiuixNavigationRail
-import top.yukonga.miuix.kmp.basic.NavigationRailDisplayMode
 import top.yukonga.miuix.kmp.basic.NavigationRailItem as MiuixNavigationRailItem
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
@@ -333,7 +332,6 @@ private fun LegacyWideNavigationScaffold(
                 AppDesignSystem.MIUIX -> MiuixNavigationRail(
                     color = MiuixTheme.colorScheme.surface,
                     showDivider = false,
-                    mode = NavigationRailDisplayMode.IconAndText,
                 ) {
                     items.forEach { item ->
                         val selected = selectedKey == item.key
@@ -638,7 +636,6 @@ private fun MiuixNavigationRailContainer(
             header = { floatingActionButton() },
             color = Color.Transparent,
             showDivider = false,
-            mode = NavigationRailDisplayMode.IconAndText,
         ) {
             items.forEach { item ->
                 val selected = selectedKey == item.key

@@ -1,27 +1,15 @@
 package com.aritxonly.deadliner.ui.base
 
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ImmersiveNavigationItemsTest {
-    private val testIcon = ImageVector.Builder(
-        name = "test",
-        defaultWidth = 1.dp,
-        defaultHeight = 1.dp,
-        viewportWidth = 1f,
-        viewportHeight = 1f,
-    ).build()
-    private val immersiveTestIcon = ImageVector.Builder(
-        name = "immersive-test",
-        defaultWidth = 1.dp,
-        defaultHeight = 1.dp,
-        viewportWidth = 1f,
-        viewportHeight = 1f,
-    ).build()
+    private val testIcon = ColorPainter(Color.Black)
+    private val immersiveTestIcon = ColorPainter(Color.White)
 
     private fun item(key: String, enabled: Boolean = true) = AdaptiveNavItem(
         key = key,

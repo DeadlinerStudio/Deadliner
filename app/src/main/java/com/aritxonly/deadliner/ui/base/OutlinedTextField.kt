@@ -20,6 +20,7 @@ import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 // 别名防止冲突
 import androidx.compose.material3.OutlinedTextField as Material3OutlinedTextField
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
+import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
 
 @Composable
 fun OutlinedTextField(
@@ -86,7 +87,10 @@ fun OutlinedTextField(
                 readOnly = readOnly,
                 // 把辅助参数喂给 MIUIX
                 label = miuixLabel,
-                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                colors = MiuixTextFieldDefaults.textFieldColors(
+                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
                 useLabelAsPlaceholder = true, // 让 MIUIX 的行为更接近 M3 的 placeholder 习惯
 //                cornerRadius = dimensionResource(R.dimen.item_corner_radius),
 
@@ -99,7 +103,6 @@ fun OutlinedTextField(
                 maxLines = maxLines,
                 minLines = minLines,
                 interactionSource = interactionSource,
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh
             )
         }
     }

@@ -1,8 +1,8 @@
 [versions]
-agp = "8.10.1"
+agp = "9.1.1"
 datastorePreferences = "1.1.7"
 konfettiXml = "2.0.5"
-kotlin = "2.2.0"
+kotlin = "2.4.10"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -57,5 +57,4 @@ androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidge
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
