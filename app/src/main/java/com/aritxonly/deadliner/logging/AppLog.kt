@@ -139,6 +139,7 @@ object AppLog {
     }.getOrNull()
 
     private fun standardLine(record: Record): String {
+        val source = record.source?.takeIf { it == "KMP" } ?: "Native"
         val event = record.message.takeIf { it.startsWith("[") && it.endsWith("]") }
         val module = event?.removePrefix("[")?.removeSuffix("]") ?: record.category
         val message = if (event == null) normalized(record.message) else ""
@@ -147,7 +148,7 @@ object AppLog {
             key + "=" + normalized(value)
         }
         val suffix = listOf(message, fields).filter(String::isNotEmpty).joinToString(" ")
-        return "[${Instant.ofEpochMilli((record.timestamp * 1_000.0).toLong())}][Native][$module]$level" +
+        return "[${Instant.ofEpochMilli((record.timestamp * 1_000.0).toLong())}][$source][$module]$level" +
             if (suffix.isEmpty()) "\n" else " $suffix\n"
     }
 
@@ -175,5 +176,6 @@ object AppLog {
         val category: String,
         val message: String,
         val context: Map<String, String>? = null,
+        val source: String? = null,
     )
 }

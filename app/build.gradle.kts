@@ -49,6 +49,7 @@ val syncDeadlinerCoreKmp by tasks.registering(Exec::class) {
 val verifyDeadlinerCoreKmpAar by tasks.registering {
     group = "deadliner"
     description = "Verify that the locally deployed Deadliner KMP AAR is available."
+    dependsOn(syncDeadlinerCoreKmp)
     inputs.file(deadlinerCoreKmpAar)
     doLast {
         check(deadlinerCoreKmpAar.isFile) {
