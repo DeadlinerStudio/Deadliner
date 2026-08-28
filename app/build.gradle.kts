@@ -9,6 +9,42 @@ plugins {
 }
 
 val deadlinerCoreKmpAar = rootProject.file(".deadliner-core/kmp/deadliner-core.aar")
+val deadlinerCoreDirectory = providers.gradleProperty("deadlinerCoreDir")
+    .orElse(providers.environmentVariable("DEADLINER_CORE_DIR"))
+    .orNull
+    ?.let(::File)
+    ?: rootProject.file("../../ProjectDeadliner/DeadlinerCore")
+val deadlinerCoreDeployScript = deadlinerCoreDirectory.resolve("runscript/buildAndDeploy.sh")
+
+val syncDeadlinerCoreKmp by tasks.registering(Exec::class) {
+    group = "deadliner"
+    description = "Build and deploy the current Deadliner Core KMP AAR before compiling Android."
+    workingDir = deadlinerCoreDirectory
+    commandLine(
+        deadlinerCoreDeployScript.absolutePath,
+        "--skip-ios",
+        "--skip-harmony",
+        "--android-repo",
+        rootProject.projectDir.absolutePath,
+    )
+    inputs.files(
+        fileTree(deadlinerCoreDirectory) {
+            include("shared/src/**")
+            include("shared/build.gradle.kts")
+            include("build.gradle.kts")
+            include("settings.gradle.kts")
+            include("gradle/**")
+            include("runscript/**")
+        },
+    )
+    outputs.file(deadlinerCoreKmpAar)
+    doFirst {
+        check(deadlinerCoreDeployScript.isFile) {
+            "Deadliner Core was not found at ${deadlinerCoreDirectory.absolutePath}. " +
+                "Set DEADLINER_CORE_DIR or -PdeadlinerCoreDir to its checkout."
+        }
+    }
+}
 
 val verifyDeadlinerCoreKmpAar by tasks.registering {
     group = "deadliner"
@@ -92,6 +128,7 @@ android {
 }
 
 tasks.named("preBuild") {
+    dependsOn(syncDeadlinerCoreKmp)
     dependsOn(verifyDeadlinerCoreKmpAar)
 }
 
