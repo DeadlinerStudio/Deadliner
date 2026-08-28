@@ -22,7 +22,7 @@ internal object MaterialSymbolAxisPolicy {
     const val DefaultWeight = 400
     const val DefaultGrade = 0
     const val ImmersiveModernWeight = 400
-    const val ImmersiveModernGrade = -15
+    const val ImmersiveModernGrade = -100
     const val OpticalSize = 24
 }
 

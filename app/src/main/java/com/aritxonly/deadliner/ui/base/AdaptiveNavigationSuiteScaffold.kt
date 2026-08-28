@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
@@ -76,6 +77,7 @@ data class AdaptiveNavItem(
     val unselectedIcon: Painter,
     val enabled: Boolean = true,
     val immersiveIcon: Painter? = null,
+    @DrawableRes val immersiveIconResource: Int? = null,
     val immersiveIconScale: Float = 1f,
 )
 

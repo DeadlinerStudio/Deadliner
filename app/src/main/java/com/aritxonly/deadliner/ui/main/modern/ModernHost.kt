@@ -293,6 +293,7 @@ fun ModernHost(
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_fill_wght400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
+            immersiveIconResource = R.drawable.msr_home_wght400,
             immersiveIconScale = 1.10f,
         ),
         AdaptiveNavItem(
@@ -301,13 +302,14 @@ fun ModernHost(
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_fill_wght400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_wght400),
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_wght400),
+            immersiveIconResource = R.drawable.msr_pie_chart_wght400,
             immersiveIconScale = 1.05f,
         ),
         AdaptiveNavItem(
             "capture",
             context.getString(R.string.capture_title),
-            com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture),
-            com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture_400),
+            com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture_400),
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture),
         ),
         AdaptiveNavItem(
@@ -324,6 +326,7 @@ fun ModernHost(
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
+            immersiveIconResource = R.drawable.msr_search_wght400,
             immersiveIconScale = 1.18f,
         ),
     )
@@ -368,11 +371,11 @@ fun ModernHost(
     }
     val immersiveDetachedAction = if (isImmersiveCompactNavigation) {
         MiuixFloatingNavigationAction(
-            icon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_add_wght400),
+            iconResource = R.drawable.msr_add_2_wght400,
             label = context.getString(R.string.add_task),
             containerColor = homeFabColors.container,
             contentColor = homeFabColors.content,
-            iconScale = 1.20f,
+            iconScale = 1.05f,
             onClick = onAddDeadline,
         )
     } else {

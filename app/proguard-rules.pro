@@ -35,4 +35,8 @@
 -keep class ** extends com.google.gson.reflect.TypeToken { *; }
 -keepclassmembers class * { @com.google.gson.annotations.SerializedName <fields>; }
 
+# WorkManager instantiates its Room-generated database implementation by name at
+# startup. R8 cannot see that reflective constructor call in a minified build.
+-keep class androidx.work.impl.WorkDatabase_Impl { <init>(); }
+
 # Compose/Material/Lottie/Navigation 等一般无需额外 keep，除非你有反射/ServiceLoader

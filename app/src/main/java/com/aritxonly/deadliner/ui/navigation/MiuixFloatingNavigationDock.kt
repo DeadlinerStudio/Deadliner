@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
+import androidx.annotation.DrawableRes
+import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButton
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassIconButton
@@ -26,7 +28,7 @@ private val FloatingNavigationDockMaximumWidth = 442.dp
 private val FloatingNavigationDockSpacing = 8.dp
 
 data class MiuixFloatingNavigationAction(
-    val icon: Painter,
+    @DrawableRes val iconResource: Int,
     val label: String,
     val containerColor: Color,
     val contentColor: Color,
@@ -85,7 +87,7 @@ fun MiuixFloatingNavigationDock(
                 backdrop = backdrop,
             ) {
                 Icon(
-                    painter = detachedAction.icon,
+                    painter = iconResource(detachedAction.iconResource),
                     contentDescription = detachedAction.label,
                     modifier = Modifier
                         .size(MiuixFloatingTabBarDefaults.DetachedIconSize)

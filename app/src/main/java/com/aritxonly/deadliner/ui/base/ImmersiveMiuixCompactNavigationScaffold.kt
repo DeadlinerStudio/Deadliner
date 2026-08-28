@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.aritxonly.deadliner.ui.LocalMaterialSymbolStyle
+import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationDock
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationAction
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBarDefaults
@@ -29,6 +31,7 @@ private val FloatingCompactOverlayHostPadding = 92.dp
 private val FloatingNavigationBottomSpacing = 4.dp
 private val FloatingNavigationEdgeMaskExtraHeight = 32.dp
 private val FloatingFabNavigationGap = 20.dp
+private const val ImmersiveNavigationSymbolWeight = 300
 
 @Composable
 internal fun ImmersiveMiuixCompactNavigationScaffold(
@@ -143,34 +146,50 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                MiuixFloatingNavigationDock(
-                    items = navigationPartition.primaryItems.map { it.toFloatingTabItem() },
-                    detachedItem = navigationPartition.detachedItem?.toFloatingTabItem(),
-                    detachedAction = detachedAction,
-                    primarySelectionVisible = primarySelectionVisible,
-                    selectedKey = if (navigationPartition.detachedItem?.key == selectedKey) {
-                        selectedKey
-                    } else {
-                        primarySelectedKey
-                    },
-                    onItemSelected = { selectedItem ->
-                        items.firstOrNull { it.key == selectedItem.key }?.let(onItemSelected)
-                    },
-                    backdrop = backdrop,
-                )
+                val baseSymbolStyle = LocalMaterialSymbolStyle.current
+                CompositionLocalProvider(
+                    LocalMaterialSymbolStyle provides baseSymbolStyle.copy(
+                        weight = ImmersiveNavigationSymbolWeight,
+                    ),
+                ) {
+                    MiuixFloatingNavigationDock(
+                        items = navigationPartition.primaryItems.map { it.toFloatingTabItem() },
+                        detachedItem = navigationPartition.detachedItem?.toFloatingTabItem(),
+                        detachedAction = detachedAction,
+                        primarySelectionVisible = primarySelectionVisible,
+                        selectedKey = if (navigationPartition.detachedItem?.key == selectedKey) {
+                            selectedKey
+                        } else {
+                            primarySelectedKey
+                        },
+                        onItemSelected = { selectedItem ->
+                            items.firstOrNull { it.key == selectedItem.key }?.let(onItemSelected)
+                        },
+                        backdrop = backdrop,
+                    )
+                }
             }
         }
     }
 }
 
-private fun AdaptiveNavItem.toFloatingTabItem() = MiuixFloatingTabItem(
-    key = key,
-    label = label,
-    selectedIcon = resolveImmersiveNavigationIcon(this),
-    unselectedIcon = resolveImmersiveNavigationIcon(this),
-    enabled = enabled,
-    iconScale = immersiveIconScale,
-)
+@Composable
+private fun AdaptiveNavItem.toFloatingTabItem(): MiuixFloatingTabItem {
+    val immersiveResource = immersiveIconResource
+    val icon = if (immersiveResource != null) {
+        iconResource(immersiveResource)
+    } else {
+        resolveImmersiveNavigationIcon(this)
+    }
+    return MiuixFloatingTabItem(
+        key = key,
+        label = label,
+        selectedIcon = icon,
+        unselectedIcon = icon,
+        enabled = enabled,
+        iconScale = immersiveIconScale,
+    )
+}
 
 @Composable
 private fun FloatingNavigationEdgeMask(

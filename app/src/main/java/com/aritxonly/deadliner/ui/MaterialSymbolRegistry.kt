@@ -14,6 +14,7 @@ internal object MaterialSymbolRegistry {
     private val definitions = mapOf(
         R.drawable.msr_account_circle_wght400 to MaterialSymbolDefinition("account_circle"),
         R.drawable.msr_add_wght400 to MaterialSymbolDefinition("add"),
+        R.drawable.msr_add_2_wght400 to MaterialSymbolDefinition("add_2"),
         R.drawable.msr_add_task_wght400 to MaterialSymbolDefinition("add_task"),
         R.drawable.msr_alarm_add_wght400 to MaterialSymbolDefinition("alarm_add"),
         R.drawable.msr_analytics_wght400 to MaterialSymbolDefinition("analytics"),
