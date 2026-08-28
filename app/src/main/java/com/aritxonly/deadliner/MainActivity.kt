@@ -21,6 +21,8 @@ import com.aritxonly.deadliner.widgets.LargeDeadlineWidget
 import com.aritxonly.deadliner.widgets.MultiDeadlineWidget
 import com.aritxonly.deadliner.widgets.glance.TaskWidgetRefreshCoordinator
 import com.deadliner.platform.PlatformLogSink
+import com.deadliner.platform.PlatformLogger
+import com.deadliner.platform.KmpBuildMetadata
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -32,6 +34,7 @@ class MainActivity : DeadlinerAppCompatActivity() {
         super.onCreate(savedInstanceState)
         AppLog.initialize(applicationContext)
         PlatformLogSink.configure(filesDir.absolutePath, android.os.Process.myPid().toLong())
+        PlatformLogger().i("kmp.build", "compiledAtUtc=" + KmpBuildMetadata.compiledAtUtc)
 
         enableEdgeToEdgeForAllDevices()
 
