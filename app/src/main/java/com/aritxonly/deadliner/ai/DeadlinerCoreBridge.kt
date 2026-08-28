@@ -1,6 +1,5 @@
 package com.aritxonly.deadliner.ai
 
-import android.util.Log
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.deadliner.domain.ai.model.AIConfig
 import com.deadliner.domain.ai.model.CoreEvent

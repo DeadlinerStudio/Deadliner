@@ -1,7 +1,7 @@
 package com.aritxonly.deadliner.ai
 
 import android.content.Context
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import com.aritxonly.deadliner.localutils.ApiKeystore
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.overview.MonthlyAnalysisResult
@@ -254,9 +254,9 @@ object AIUtils {
         val preset = GlobalUtils.getDeadlinerAIConfig().getCurrentPreset() ?: defaultLlmPreset
         val baseUrl = normalizeCoreBaseUrl(preset.endpoint)
         if (apiKey.isBlank()) {
-            Log.w("AIUtils", "core runtime api key is empty")
+            AppLog.w("AIUtils", "core runtime api key is empty")
         }
-        Log.d(
+        AppLog.d(
             "AIUtils",
             "core runtime config: endpoint=${preset.endpoint}, normalizedBaseUrl=$baseUrl, model=${preset.model}"
         )

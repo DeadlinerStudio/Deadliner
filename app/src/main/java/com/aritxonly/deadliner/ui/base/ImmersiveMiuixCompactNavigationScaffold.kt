@@ -31,7 +31,7 @@ private val FloatingCompactOverlayHostPadding = 92.dp
 private val FloatingNavigationBottomSpacing = 4.dp
 private val FloatingNavigationEdgeMaskExtraHeight = 32.dp
 private val FloatingFabNavigationGap = 20.dp
-private const val ImmersiveNavigationSymbolWeight = 300
+private const val ImmersiveNavigationSymbolWeight = 340
 
 @Composable
 internal fun ImmersiveMiuixCompactNavigationScaffold(

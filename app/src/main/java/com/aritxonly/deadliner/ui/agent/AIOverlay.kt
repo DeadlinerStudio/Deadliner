@@ -5,7 +5,7 @@ import android.content.Intent
 import android.provider.CalendarContract
 import com.aritxonly.deadliner.SettingsActivity
 import com.aritxonly.deadliner.SettingsRoute
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -403,7 +403,7 @@ fun AIOverlay(
     fun submitQuery() {
         val query = textState.text.trim()
         if (query.isBlank() || isLoading) return
-        Log.d("AIOverlay", "submitQuery(core-only): $query")
+        AppLog.d("AIOverlay", "submitQuery(core-only): $query")
         val submittedToolsThisTurn = mutableSetOf<String>()
         val hideThinkingProcess = GlobalUtils.aiHideThinkingProcess
         val autoApproveReadTasks = GlobalUtils.aiAutoApproveReadTasks
@@ -487,7 +487,7 @@ fun AIOverlay(
                         }
                     },
                     onLifecycle = { evt ->
-                        Log.d(
+                        AppLog.d(
                             "AIOverlay",
                             "core lifecycle: stage=${evt.stage}, status=${evt.status}, requestId=${evt.requestId}, state=${evt.state}"
                         )

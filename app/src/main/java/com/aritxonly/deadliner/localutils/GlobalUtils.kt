@@ -8,7 +8,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.provider.Settings
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -865,7 +865,7 @@ object GlobalUtils {
 
 
     private fun loadSettings(context: Context) {
-        Log.d("GlobalUtils", "Settings loaded from SharedPreferences")
+        AppLog.d("GlobalUtils", "Settings loaded from SharedPreferences")
         if (!sharedPreferences.contains("modern_color_palette")) {
             sharedPreferences.edit {
                 putString("modern_color_palette", ModernColorPaletteResolver.resolveCurrentDevice().key)
@@ -1110,7 +1110,7 @@ object GlobalUtils {
 
         val baseWikiUrl = "https://github.com/AritxOnly/Deadliner/wiki/%E9%80%9A%E7%9F%A5%E6%8E%A8%E9%80%81%E5%8A%9F%E8%83%BD%E7%94%A8%E6%88%B7%E6%96%87%E6%A1%A3"
 
-        Log.d("WikiGenerate", manufacturer)
+        AppLog.d("WikiGenerate", manufacturer)
 
         return baseWikiUrl
     }

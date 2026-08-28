@@ -1,7 +1,7 @@
 package com.aritxonly.deadliner.platform.kmp
 
 import android.content.SharedPreferences
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import com.deadliner.db.DeadlinerDatabase
 import com.google.gson.JsonArray
 import com.google.gson.JsonNull
@@ -40,7 +40,7 @@ internal class V5DataMigrator(
         check(preferences.edit().putInt(KEY_DATA_VERSION, DATA_VERSION).commit()) {
             "Could not persist v5 -> v6 migration marker"
         }
-        Log.i(TAG, "Imported v5 data into KMP at version=$DATA_VERSION")
+        AppLog.i(TAG, "Imported v5 data into KMP at version=$DATA_VERSION")
     }
 
     private fun migrateCoreData() {

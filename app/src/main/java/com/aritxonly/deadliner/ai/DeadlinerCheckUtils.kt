@@ -1,6 +1,6 @@
 package com.aritxonly.deadliner.ai
 
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import com.aritxonly.deadliner.model.DeadlinerCheckResp
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,7 @@ suspend fun fetchQuotaCheck(
         .get()
         .build()
 
-    Log.d("DeadlinerCheck", req.toString())
+    AppLog.d("DeadlinerCheck", req.toString())
 
     try {
         http.newCall(req).execute().use { resp ->
@@ -35,7 +35,7 @@ suspend fun fetchQuotaCheck(
                 return@withContext Result.failure(IOException("HTTP ${resp.code}"))
             }
             val body = resp.body?.string().orEmpty()
-            Log.d("DeadlinerCheck", body)
+            AppLog.d("DeadlinerCheck", body)
             val data = gson.fromJson(body, DeadlinerCheckResp::class.java)
             Result.success(data)
         }

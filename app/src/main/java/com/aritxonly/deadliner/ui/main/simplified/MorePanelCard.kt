@@ -3,7 +3,6 @@ package com.aritxonly.deadliner.ui.main.simplified
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable

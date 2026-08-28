@@ -6,7 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
@@ -124,7 +124,7 @@ internal fun updateAppMultiDeadlineWidget(
             it.remainingMillis
         })
 
-    Log.d("Widget", "DDLs $parsedDDLs")
+    AppLog.d("Widget", "DDLs $parsedDDLs")
     // 取前3个
     val showList = sortedDDLs.take(3)
 

@@ -5,7 +5,7 @@ import android.content.*
 import android.database.Cursor
 import android.net.Uri
 import android.os.*
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import android.view.LayoutInflater
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -125,7 +125,7 @@ class ApkDownloaderInstaller(private val context: Context) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                Log.d("Downloader", "Received broadcast, id: $id, downloadId: $downloadId")
+                AppLog.d("Downloader", "Received broadcast, id: $id, downloadId: $downloadId")
                 if (id == downloadId) {
                     isDownloading = false
                     progressDialog?.dismiss()
@@ -148,7 +148,7 @@ class ApkDownloaderInstaller(private val context: Context) {
      * 安装 APK
      */
     private fun installApk(apkFile: File) {
-        Log.d("ApkDownloaderInstaller", "开始安装 APK: ${apkFile.absolutePath}")
+        AppLog.d("ApkDownloaderInstaller", "开始安装 APK: ${apkFile.absolutePath}")
 
         val apkUri: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apkFile)

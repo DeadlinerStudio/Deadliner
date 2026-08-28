@@ -1,6 +1,6 @@
 package com.aritxonly.deadliner.web
 
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,11 +34,11 @@ class WebUtils(
         ensureSyncEnabled()
         val url = joinUrl(baseUrl, path)
         val req = auth(Request.Builder().url(url).head()).build()
-        Log.d("WebUtils", "HEAD ${req.url} headers=${redactedHeaders(req.headers)}")
+        AppLog.d("WebUtils", "HEAD ${req.url} headers=${redactedHeaders(req.headers)}")
         client.newCall(req).execute().use { resp ->
             val etag = resp.header("ETag")
             val len = resp.header("Content-Length")?.toLongOrNull()
-            Log.d("WebUtils", "HEAD ${req.url} -> ${resp.code}")
+            AppLog.d("WebUtils", "HEAD ${req.url} -> ${resp.code}")
             Triple(resp.code, etag, len)
         }
     }
@@ -101,7 +101,7 @@ class WebUtils(
         // 去掉重复斜杠，保留 https:// 的 //
         val b = if (base.endsWith("/")) base.dropLast(1) else base
         val p = path.trimStart('/')
-        Log.d("WebUtils", "$base -> $b\n$path -> $p")
+        AppLog.d("WebUtils", "$base -> $b\n$path -> $p")
         return "$b/$p"
     }
 

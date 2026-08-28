@@ -5,7 +5,7 @@ package com.aritxonly.deadliner.ui.main.simplified
 import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -496,7 +496,7 @@ fun SimplifiedHost(
                                     modifier = Modifier
                                         .width(56.dp)
                                         .detectSwipeUp {
-                                            Log.d("SwipeUp", "Triggered")
+                                            AppLog.d("SwipeUp", "Triggered")
                                             if (GlobalUtils.deadlinerAIEnable) {
                                                 uiState.showOverlay = true
                                             }

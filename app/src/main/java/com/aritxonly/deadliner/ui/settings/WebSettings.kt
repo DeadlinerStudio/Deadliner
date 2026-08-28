@@ -1,6 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -148,7 +148,7 @@ fun WebSettingsScreen(
                     else -> false
                 }
                 if (!usable) {
-                    Log.e("WebDAV", code.toString())
+                    AppLog.e("WebDAV", code.toString())
                     Toast.makeText(
                         context,
                         context.getString(R.string.webdav_unusable, code),

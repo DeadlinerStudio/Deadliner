@@ -3,7 +3,7 @@ package com.aritxonly.deadliner.ui.main.shared
 
 import android.graphics.BitmapFactory
 import android.graphics.Rect
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -358,7 +358,7 @@ fun MorePanelFromAnchor(
             val anchorX = anchorRect.right.toFloat()
             val anchorY = anchorRect.top.toFloat()
 
-            Log.d("Anchor", "$anchorX, $anchorY")
+            AppLog.d("Anchor", "$anchorX, $anchorY")
 
             // 目标位置（居中）
             val bias = 0.8f

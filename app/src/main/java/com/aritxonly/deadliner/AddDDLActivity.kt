@@ -10,7 +10,7 @@ import android.content.res.Configuration
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
@@ -185,7 +185,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
-        Log.d("AddDDLActivity", "available: ${com.google.android.material.color.DynamicColors.isDynamicColorAvailable()}")
+        AppLog.d("AddDDLActivity", "available: ${com.google.android.material.color.DynamicColors.isDynamicColorAvailable()}")
 
         enableEdgeToEdgeForAllDevices()
         super.onCreate(savedInstanceState)
@@ -761,7 +761,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("AddDDLActivity", "AI parse failed", e)
+                AppLog.e("AddDDLActivity", "AI parse failed", e)
                 Toast.makeText(
                     this@AddDDLActivity,
                     getString(R.string.ai_parse_failed),
@@ -839,7 +839,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                 Toast.LENGTH_SHORT,
                             ).show()
                         } catch (error: Exception) {
-                            Log.e("Calendar", "Could not create calendar event", error)
+                            AppLog.e("Calendar", "Could not create calendar event", error)
                             Toast.makeText(
                                 this@AddDDLActivity,
                                 getString(R.string.add_calendar_failed, error.toString()),
@@ -945,7 +945,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         val calendarEvents = try {
             calendarHelper.queryAllCalendarEvents()
         } catch (e: SecurityException) {
-            Log.e("Calendar", "No calendar permission", e)
+            AppLog.e("Calendar", "No calendar permission", e)
             Toast.makeText(
                 this,
                 getString(R.string.permission_calendar_error, e.message ?: "SecurityException"),
@@ -981,7 +981,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         val accounts = try {
             helper.getAllCalendarAccounts()
         } catch (e: SecurityException) {
-            Log.e("Calendar", "No calendar permission", e)
+            AppLog.e("Calendar", "No calendar permission", e)
             Toast.makeText(
                 this,
                 getString(R.string.permission_calendar_error, e.message ?: "SecurityException"),

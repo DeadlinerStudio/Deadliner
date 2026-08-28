@@ -5,7 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.provider.CalendarContract
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import androidx.core.content.ContextCompat
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
@@ -196,7 +196,7 @@ class CalendarHelper(private val context: Context) {
                 ))
             }
         } ?: run {
-            Log.e("CalendarHelper", "queryCalendarEvents: cursor 为 null")
+            AppLog.e("CalendarHelper", "queryCalendarEvents: cursor 为 null")
         }
 
         return events

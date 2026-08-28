@@ -5,7 +5,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
+import com.aritxonly.deadliner.logging.AppLog
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,6 +20,7 @@ import com.aritxonly.deadliner.widgets.HabitMiniWidget
 import com.aritxonly.deadliner.widgets.LargeDeadlineWidget
 import com.aritxonly.deadliner.widgets.MultiDeadlineWidget
 import com.aritxonly.deadliner.widgets.glance.TaskWidgetRefreshCoordinator
+import com.deadliner.platform.PlatformLogSink
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -29,6 +30,8 @@ class MainActivity : DeadlinerAppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppLog.initialize(applicationContext)
+        PlatformLogSink.configure(filesDir.absolutePath, android.os.Process.myPid().toLong())
 
         enableEdgeToEdgeForAllDevices()
 
@@ -78,7 +81,7 @@ class MainActivity : DeadlinerAppCompatActivity() {
 
         _showSearch.value = intent.getBooleanExtra("EXTRA_SHOW_SEARCH", false)
 
-        Log.d("Search", _showSearch.value.toString())
+        AppLog.d("Search", _showSearch.value.toString())
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
