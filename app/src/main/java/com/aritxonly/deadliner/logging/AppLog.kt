@@ -1,6 +1,7 @@
 package com.aritxonly.deadliner.logging
 
 import android.content.Context
+import android.os.Build
 import android.os.Process
 import android.util.Log
 import com.google.gson.Gson
@@ -32,6 +33,7 @@ object AppLog {
             directory = File(context.filesDir, DIRECTORY).also { it.mkdirs() }
             pruneLocked(force = true)
             event("app.launch", domain = "lifecycle")
+            event("app.environment", domain = "environment", context = environmentContext(context))
         }
     }
 
@@ -54,6 +56,21 @@ object AppLog {
         pruneLocked(force = true)
         val activeDirectory = directory ?: return emptyList()
         listOf(File(activeDirectory, STANDARD_FILE), File(activeDirectory, JSONL_FILE))
+    }
+
+    private fun environmentContext(context: Context): Map<String, String> {
+        val appVersion = runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
+        }.getOrDefault("unknown")
+        return mapOf(
+            "app.version" to appVersion,
+            "device.brand" to Build.BRAND,
+            "device.manufacturer" to Build.MANUFACTURER,
+            "device.model" to Build.MODEL,
+            "os.apiLevel" to Build.VERSION.SDK_INT.toString(),
+            "os.name" to "Android",
+            "os.version" to Build.VERSION.RELEASE,
+        )
     }
 
     private fun write(
