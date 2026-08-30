@@ -84,8 +84,8 @@ object DeadlinerGlassRecipes {
     /** A wider, denser lens so transient sheets read as frosted glass above their page. */
     val BottomSheet = GlassMaterialRecipe(
         blur = GlassBlurSpec(
-            // About 6x the original sheet recipe. The higher cap keeps the frosted effect
-            // visible even when the user selected the default 92dp advanced-material radius.
+            // Resolves to 2x the global radius at the default 0.25 soft-glass tuning while still
+            // preserving the user's custom tuning in bottomSheet(fineTuning).
             radiusMultiplier = 8f,
             maxRadius = 720f,
             tintAlphaMultiplier = 1f,
@@ -97,11 +97,13 @@ object DeadlinerGlassRecipes {
     /** A compact frosted lens for dialogs, with less distortion than a bottom sheet. */
     val Dialog = GlassMaterialRecipe(
         blur = GlassBlurSpec(
-            radiusMultiplier = 6f,
+            // Resolves to 1x the global radius at the default 0.25 soft-glass tuning; see
+            // dialog(fineTuning).
+            radiusMultiplier = 4f,
             maxRadius = 560f,
             tintAlphaMultiplier = 1f,
         ),
-        geometry = GlassGeometrySpec(cornerRadius = 32.dp),
+        geometry = GlassGeometrySpec(cornerRadius = 40.dp),
         layering = GlassLayeringSpec(postRefractionBlurRadius = 0.75.dp),
     )
 
@@ -143,6 +145,8 @@ object DeadlinerGlassRecipes {
         val tuning = fineTuning.normalized()
         return BottomSheet.copy(
             blur = BottomSheet.blur.copy(
+                radiusMultiplier = BottomSheet.blur.radiusMultiplier *
+                    tuning.glassBlurRadiusMultiplier,
                 noiseMultiplier = tuning.glassNoiseMultiplier,
                 tintAlphaMultiplier = BottomSheet.blur.tintAlphaMultiplier * tuning.glassTintAlphaMultiplier,
             ),
@@ -174,6 +178,8 @@ object DeadlinerGlassRecipes {
         val tuning = fineTuning.normalized()
         return Dialog.copy(
             blur = Dialog.blur.copy(
+                radiusMultiplier = Dialog.blur.radiusMultiplier *
+                    tuning.glassBlurRadiusMultiplier,
                 noiseMultiplier = tuning.glassNoiseMultiplier,
                 tintAlphaMultiplier = Dialog.blur.tintAlphaMultiplier * tuning.glassTintAlphaMultiplier,
             ),

@@ -1,14 +1,17 @@
 package com.aritxonly.deadliner.ui.base
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -66,6 +69,8 @@ fun AlertDialog(
             val showInlineTitle = title != null && miuixTitle == null
             val showInlineText = text != null && (renderTextContentInMiuix || miuixSummary == null)
             val showInlineContent = showInlineTitle || showInlineText
+            val hasTextAboveActions =
+                showInlineContent || miuixTitle != null || miuixSummary != null
 
             MiuixDialog(
                 show = show,
@@ -82,20 +87,59 @@ fun AlertDialog(
                         text?.invoke()
                     }
 
-                    Row(
+                    MiuixDialogActions(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = if (showInlineContent) 16.dp else 0.dp),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        dismissButton?.invoke()
-                        if (dismissButton != null) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        confirmButton()
-                    }
+                            .padding(
+                                top = if (hasTextAboveActions) {
+                                    DeadlinerMiuixDefaults.DialogActionTopSpacing
+                                } else {
+                                    0.dp
+                                },
+                            ),
+                        secondaryButton = dismissButton,
+                        primaryButton = confirmButton,
+                    )
                 }
             }
         }
+    }
+}
+
+/** Equal-width, filled action buttons used by Miuix dialog content. */
+@Composable
+internal fun MiuixDialogActions(
+    primaryButton: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    secondaryButton: @Composable (() -> Unit)? = null,
+) {
+    Row(modifier = modifier.fillMaxWidth()) {
+        if (secondaryButton != null) {
+            MiuixDialogActionSlot(
+                style = MiuixDialogActionStyle.Secondary,
+                content = secondaryButton,
+            )
+            Spacer(modifier = Modifier.width(DeadlinerMiuixDefaults.DialogActionSpacing))
+        }
+        MiuixDialogActionSlot(
+            style = MiuixDialogActionStyle.Primary,
+            content = primaryButton,
+        )
+    }
+}
+
+@Composable
+private fun RowScope.MiuixDialogActionSlot(
+    style: MiuixDialogActionStyle,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier.weight(1f),
+        contentAlignment = Alignment.Center,
+    ) {
+        CompositionLocalProvider(
+            LocalMiuixDialogActionStyle provides style,
+            content = content,
+        )
     }
 }

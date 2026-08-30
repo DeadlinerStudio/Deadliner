@@ -44,6 +44,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.sync.SyncScheduler
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
+import com.aritxonly.deadliner.ui.base.DeadlinerMiuixDefaults
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import kotlinx.coroutines.Dispatchers
@@ -451,6 +452,7 @@ fun SyncIntervalBottomSheet(
                 MiuixTextButton(
                     text = stringResource(R.string.cancel),
                     onClick = onDismiss,
+                    cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                 )
 
                 Spacer(Modifier.width(8.dp))
@@ -460,6 +462,7 @@ fun SyncIntervalBottomSheet(
                         onSave()
                         onDismiss()
                     },
+                    cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                     colors = MiuixButtonDefaults.buttonColorsPrimary(),
                 ) {
                     MiuixText(stringResource(R.string.save))

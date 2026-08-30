@@ -572,6 +572,8 @@ fun SimplifiedHost(
             },
             title = { Text(stringResource(R.string.alert_delete_title)) },
             text  = { Text(stringResource(R.string.alert_delete_message)) },
+            miuixTitle = stringResource(R.string.alert_delete_title),
+            miuixSummary = stringResource(R.string.alert_delete_message),
             dismissButton = {
                 TextButton(onClick = {
                     selectionActions.dismissDeleteDialog()

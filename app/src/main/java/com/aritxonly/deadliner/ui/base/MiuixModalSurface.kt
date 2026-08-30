@@ -98,7 +98,7 @@ fun MiuixDialog(
     maxWidth: Dp = 420.dp,
     content: @Composable () -> Unit,
 ) {
-    val shape = RoundedCornerShape(32.dp)
+    val shape = RoundedCornerShape(DeadlinerMiuixDefaults.DialogCornerRadius)
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val surface = rememberMiuixModalSurface(
         shape = shape,
@@ -112,7 +112,7 @@ fun MiuixDialog(
         summary = summary,
         modifier = modifier.then(surface.modifier),
         backgroundColor = surface.backgroundColor,
-        cornerRadius = 32.dp,
+        cornerRadius = DeadlinerMiuixDefaults.DialogCornerRadius,
         maxWidth = maxWidth,
         renderInRootScaffold = true,
         content = content,

@@ -294,6 +294,22 @@ private fun AboutAppHeader(
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
                 }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(3.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.legacy),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
             }
         }
         Text(

@@ -940,5 +940,6 @@
     <string name="state_archived">已归档</string>
     <string name="state_abandoned">已放弃</string>
     <string name="state_abandoned_archived">放弃并归档</string>
+    <string name="legacy">经典</string>
 
 </resources>

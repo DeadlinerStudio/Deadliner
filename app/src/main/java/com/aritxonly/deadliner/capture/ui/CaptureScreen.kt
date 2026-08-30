@@ -63,6 +63,7 @@ import com.aritxonly.deadliner.capture.CaptureViewModel
 import com.deadliner.domain.capture.CaptureItem
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
+import com.aritxonly.deadliner.ui.base.DeadlinerMiuixDefaults
 import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
@@ -329,6 +330,7 @@ fun CaptureContent(
                             vm.convertSelectedToTask(useAi = true)
                         },
                         modifier = Modifier.weight(1f),
+                        cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                         colors = MiuixButtonDefaults.buttonColorsPrimary(),
                     ) { MiuixText(stringResource(R.string.capture_ai_task)) }
                     MiuixButton(
@@ -337,6 +339,7 @@ fun CaptureContent(
                             vm.convertSelectedToHabit(useAi = true)
                         },
                         modifier = Modifier.weight(1f),
+                        cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                     ) { MiuixText(stringResource(R.string.capture_ai_habit)) }
                 }
                 MiuixText(
@@ -352,6 +355,7 @@ fun CaptureContent(
                             vm.convertSelectedToTask(useAi = false)
                         },
                         modifier = Modifier.weight(1f),
+                        cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                     )
                     MiuixTextButton(
                         text = stringResource(R.string.capture_direct_habit),
@@ -360,6 +364,7 @@ fun CaptureContent(
                             vm.convertSelectedToHabit(useAi = false)
                         },
                         modifier = Modifier.weight(1f),
+                        cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                     )
                 }
             }
@@ -864,7 +869,7 @@ private fun CaptureDetailSheet(
                     labelColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                 ),
                 useLabelAsPlaceholder = true,
-                cornerRadius = 16.dp,
+                cornerRadius = DeadlinerMiuixDefaults.InputCornerRadius,
                 singleLine = false,
             )
 
@@ -881,9 +886,14 @@ private fun CaptureDetailSheet(
                 MiuixButton(
                     onClick = onAiTask,
                     modifier = Modifier.weight(1f),
+                    cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                     colors = MiuixButtonDefaults.buttonColorsPrimary(),
                 ) { MiuixText(stringResource(R.string.capture_ai_task)) }
-                MiuixButton(onClick = onAiHabit, modifier = Modifier.weight(1f)) {
+                MiuixButton(
+                    onClick = onAiHabit,
+                    modifier = Modifier.weight(1f),
+                    cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
+                ) {
                     MiuixText(stringResource(R.string.capture_ai_habit))
                 }
             }
@@ -897,17 +907,20 @@ private fun CaptureDetailSheet(
                     text = stringResource(R.string.capture_direct_task),
                     onClick = onDirectTask,
                     modifier = Modifier.weight(1f),
+                    cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                 )
                 MiuixTextButton(
                     text = stringResource(R.string.capture_direct_habit),
                     onClick = onDirectHabit,
                     modifier = Modifier.weight(1f),
+                    cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                 )
             }
             MiuixTextButton(
                 text = stringResource(R.string.capture_delete_item),
                 onClick = onDelete,
                 modifier = Modifier.align(Alignment.End),
+                cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
                 colors = MiuixButtonDefaults.textButtonColors(
                     color = Color.Transparent,
                     disabledColor = Color.Transparent,

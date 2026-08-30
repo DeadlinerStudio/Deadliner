@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.MiuixDialog
+import com.aritxonly.deadliner.ui.base.MiuixDialogActions
 import com.aritxonly.deadliner.ui.base.TextButton
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
@@ -287,6 +288,7 @@ fun AvatarCropperDialog(
                     imageCrop = imageCrop,
                     aspect = aspect,
                     contentPadding = 20.dp,
+                    useMiuixActions = false,
                     onCancel = onCancel,
                     onCompleteCrop = onCompleteCrop,
                 )
@@ -302,6 +304,7 @@ fun AvatarCropperDialog(
                 imageCrop = imageCrop,
                 aspect = aspect,
                 contentPadding = 0.dp,
+                useMiuixActions = true,
                 onCancel = onCancel,
                 onCompleteCrop = onCompleteCrop,
             )
@@ -314,6 +317,7 @@ private fun AvatarCropperDialogContent(
     imageCrop: ImageCrop,
     aspect: Float,
     contentPadding: androidx.compose.ui.unit.Dp,
+    useMiuixActions: Boolean,
     onCancel: () -> Unit,
     onCompleteCrop: () -> Unit,
 ) {
@@ -353,13 +357,24 @@ private fun AvatarCropperDialogContent(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
-            Spacer(Modifier.width(12.dp))
-            Button(onClick = onCompleteCrop) { Text(stringResource(R.string.accept)) }
+        if (useMiuixActions) {
+            MiuixDialogActions(
+                secondaryButton = {
+                    TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
+                },
+                primaryButton = {
+                    Button(onClick = onCompleteCrop) { Text(stringResource(R.string.accept)) }
+                },
+            )
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
+                Spacer(Modifier.width(12.dp))
+                Button(onClick = onCompleteCrop) { Text(stringResource(R.string.accept)) }
+            }
         }
     }
 }

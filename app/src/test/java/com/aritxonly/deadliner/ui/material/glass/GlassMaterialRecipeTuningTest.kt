@@ -47,4 +47,30 @@ class GlassMaterialRecipeTuningTest {
         assertEquals(0.72f, recipe.edgeOptics.highlightGray, 0.0001f)
         assertEquals(0.8.dp, recipe.layering.postRefractionBlurRadius)
     }
+
+    @Test
+    fun modalBlurScalesFromTheUsersSoftGlassRadius() {
+        val tuning = AdvancedMaterialFineTuning.Default.copy(
+            glassBlurRadiusMultiplier = 0.25f,
+        )
+
+        val dialog = DeadlinerGlassRecipes.dialog(tuning)
+        val bottomSheet = DeadlinerGlassRecipes.bottomSheet(tuning)
+
+        assertEquals(1f, dialog.blur.radiusMultiplier, 0.0001f)
+        assertEquals(2f, bottomSheet.blur.radiusMultiplier, 0.0001f)
+    }
+
+    @Test
+    fun modalBlurPreservesCustomSoftGlassTuning() {
+        val tuning = AdvancedMaterialFineTuning.Default.copy(
+            glassBlurRadiusMultiplier = 0.4f,
+        )
+
+        val dialog = DeadlinerGlassRecipes.dialog(tuning)
+        val bottomSheet = DeadlinerGlassRecipes.bottomSheet(tuning)
+
+        assertEquals(1.6f, dialog.blur.radiusMultiplier, 0.0001f)
+        assertEquals(3.2f, bottomSheet.blur.radiusMultiplier, 0.0001f)
+    }
 }

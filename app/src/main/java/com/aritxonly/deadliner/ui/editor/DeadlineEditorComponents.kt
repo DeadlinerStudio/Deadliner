@@ -97,11 +97,11 @@ fun DeadlineAiQuickAddCard(
             onValueChange = onValueChange,
             label = { Text(stringResource(R.string.ai_quick_add_placeholder)) },
             miuixLabel = stringResource(R.string.ai_quick_add_placeholder),
+            miuixFormStyle = true,
             modifier = Modifier.fillMaxWidth(),
             minLines = 1,
             maxLines = 3,
             shape = textFieldShape,
-            miuixFormStyle = true,
         )
         Spacer(modifier = Modifier.height(10.dp))
         Row(
@@ -134,10 +134,10 @@ fun DeadlineNameField(
         onValueChange = onValueChange,
         label = { Text(stringResource(R.string.add_ddl_name)) },
         miuixLabel = stringResource(R.string.add_ddl_name),
+        miuixFormStyle = true,
         modifier = modifier.fillMaxWidth(),
         singleLine = true,
         shape = textFieldShape,
-        miuixFormStyle = true,
     )
 }
 
@@ -201,11 +201,11 @@ fun TaskEditorSection(
             onValueChange = { onDraftChange(draft.copy(note = it)) },
             label = { Text(stringResource(R.string.add_ddl_note)) },
             miuixLabel = stringResource(R.string.add_ddl_note),
+            miuixFormStyle = true,
             modifier = Modifier.fillMaxWidth(),
             minLines = 3,
             maxLines = 6,
             shape = textFieldShape,
-            miuixFormStyle = true,
         )
     }
 }
@@ -302,10 +302,10 @@ fun HabitEditorSection(
                         onValueChange = { onDraftChange(draft.copy(timesPerPeriod = it.filter(Char::isDigit))) },
                         label = { Text(stringResource(R.string.editor_habit_times_per_period)) },
                         miuixLabel = stringResource(R.string.editor_habit_times_per_period),
+                        miuixFormStyle = true,
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         shape = textFieldShape,
-                        miuixFormStyle = true,
                     )
                     if (draft.goalType == HabitGoalType.TOTAL) {
                         OutlinedTextField(
@@ -313,10 +313,10 @@ fun HabitEditorSection(
                             onValueChange = { onDraftChange(draft.copy(totalTarget = it.filter(Char::isDigit))) },
                             label = { Text(stringResource(R.string.editor_habit_total_target)) },
                             miuixLabel = stringResource(R.string.editor_habit_total_target),
+                            miuixFormStyle = true,
                             modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        shape = textFieldShape,
-                        miuixFormStyle = true,
+                            singleLine = true,
+                            shape = textFieldShape,
                         )
                     }
                 }

@@ -11,10 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
@@ -94,12 +92,12 @@ fun OutlinedTextField(
                     MiuixTextFieldDefaults.textFieldColors(
                         backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
                         labelColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
-                    ),
+                ),
                 useLabelAsPlaceholder = true, // 让 MIUIX 的行为更接近 M3 的 placeholder 习惯
                 cornerRadius = if (miuixFormStyle) {
-                    dimensionResource(R.dimen.item_corner_radius)
+                    DeadlinerMiuixDefaults.FormInputCornerRadius
                 } else {
-                    MiuixTextFieldDefaults.CornerRadius
+                    DeadlinerMiuixDefaults.InputCornerRadius
                 },
 
                 leadingIcon = leadingIcon,
