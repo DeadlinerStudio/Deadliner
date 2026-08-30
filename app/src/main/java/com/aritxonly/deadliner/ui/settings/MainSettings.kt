@@ -278,7 +278,7 @@ private fun settingsHomeIconTint(
             settleWithNeutral = 0f,
             lightThemeBoost = 0.08f,
         )
-        SettingsRoute.WebDAV -> SettingsHomeIconPalette(
+        SettingsRoute.CloudSync -> SettingsHomeIconPalette(
             seedColor = Color.Cyan,
             seedRecovery = 0.24f,
             softenWithWhite = 0.16f,

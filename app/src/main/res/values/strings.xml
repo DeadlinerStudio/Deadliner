@@ -25,7 +25,9 @@
     <string name="settings_lab">实验室</string>
     <string name="settings_wiki" translatable="false">Wiki</string>
     <string name="settings_feedback">帮助与反馈</string>
+    <string name="settings_cloud_and_sync">云与同步</string>
     <string name="settings_webdav" translatable="false">WebDAV</string>
+    <string name="settings_byos" translatable="false">BYOS</string>
     <string name="settings_about">关于</string>
 
     <string name="settings_support_behavior">操作反馈方式 · 应用后台行为</string>
@@ -33,7 +35,9 @@
     <string name="settings_support_notification">DDL临近通知 · 每日定时通知</string>
     <string name="settings_support_backup">导入与导出 V6 数据备份</string>
     <string name="settings_support_deadliner_ai">Lifi AI · API接入 · 自定义prompt</string>
+    <string name="settings_support_cloud_and_sync">BYOS · WebDAV · 云端同步设置</string>
     <string name="settings_support_webdav">WebDAV 云同步服务</string>
+    <string name="settings_support_byos">连接自己的 DeadlinerServer</string>
     <string name="settings_support_lab">调试选项与实验性内容</string>
     <string name="settings_support_widget">小组件配置 · 小组件界面与交互设置</string>
     <string name="settings_support_wiki">访问 Github Wiki 快速入门</string>
@@ -125,6 +129,19 @@
     <string name="settings_web_host_incomplete">请填写所有字段！</string>
     <string name="settings_web_user">用户名</string>
     <string name="settings_web_pass">密码</string>
+    <string name="settings_sync_current">当前状态</string>
+    <string name="settings_sync_status">同步状态</string>
+    <string name="settings_sync_provider">同步方式</string>
+    <string name="settings_sync_active_byos">已启用 BYOS 同步</string>
+    <string name="settings_sync_active_webdav">已启用 WebDAV 同步</string>
+    <string name="settings_sync_disabled">同步未启用</string>
+    <string name="settings_enable_byos">启用 BYOS</string>
+    <string name="settings_byos_description">BYOS 将数据同步到你自己部署的 DeadlinerServer。服务地址与 Access Token 仅用于此设备的同步请求，不会写入导出的诊断日志。</string>
+    <string name="settings_byos_server_url">DeadlinerServer URL</string>
+    <string name="settings_byos_access_token">Access Token</string>
+    <string name="settings_byos_invalid_url">服务器 URL 需要以 https:// 或 http:// 开头</string>
+    <string name="settings_byos_incomplete">请填写服务器 URL 和 Access Token</string>
+    <string name="settings_byos_saved">BYOS 设置已保存</string>
 
     <string name="settings_enable_ai">启用Lifi AI</string>
     <string name="settings_ai_description">Deadliner 接入AI服务商为用户提供从长段文本中提取任务信息的能力，从而帮助用户快速添加任务。</string>

@@ -61,6 +61,9 @@ object GlobalUtils {
 
     private lateinit var sharedPreferences: SharedPreferences
 
+    internal val preferences: SharedPreferences
+        get() = sharedPreferences
+
     private const val DEADLINER_DONATE_TRIGGER_USAGE = 10
 
     fun init(context: Context) {

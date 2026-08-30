@@ -12,12 +12,8 @@ class SyncWorker(appContext: Context, params: WorkerParameters)
     : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        // 开关保护 & 凭据完整性校验
-        if (!GlobalUtils.cloudSyncEnable ||
-            GlobalUtils.webDavBaseUrl.isBlank() ||
-            GlobalUtils.webDavUser.isBlank() ||
-            GlobalUtils.webDavPass.isBlank()
-        ) {
+        // 开关保护与当前 provider 配置校验均由 runtime 统一维护。
+        if (!GlobalUtils.cloudSyncEnable || !KmpV6Runtime.hasCompleteSyncConfiguration()) {
             return@withContext Result.success()
         }
 

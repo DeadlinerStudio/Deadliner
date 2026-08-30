@@ -41,6 +41,8 @@ import com.aritxonly.deadliner.AppSingletons
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.localutils.CloudSyncProvider
+import com.aritxonly.deadliner.localutils.CloudSyncPreferences
 import com.aritxonly.deadliner.sync.SyncScheduler
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
@@ -81,6 +83,7 @@ fun WebSettingsScreen(
     val hostIncompleteHint = stringResource(R.string.settings_web_host_incomplete)
 
     val onWebChange: (Boolean) -> Unit = {
+        if (it) CloudSyncPreferences.provider = CloudSyncProvider.WEB_DAV
         GlobalUtils.cloudSyncEnable = it
         webEnabled = it
 
@@ -113,6 +116,7 @@ fun WebSettingsScreen(
         }
 
         // 1) 本地保存配置
+        CloudSyncPreferences.provider = CloudSyncProvider.WEB_DAV
         GlobalUtils.webDavBaseUrl = serverBase
         GlobalUtils.webDavUser = serverUser
         GlobalUtils.webDavPass = serverPass

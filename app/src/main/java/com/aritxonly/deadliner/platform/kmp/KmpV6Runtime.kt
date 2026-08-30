@@ -2,6 +2,8 @@ package com.aritxonly.deadliner.platform.kmp
 
 import android.content.Context
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.localutils.CloudSyncProvider
+import com.aritxonly.deadliner.localutils.CloudSyncPreferences
 import com.aritxonly.deadliner.notification.AndroidNotificationGateway
 import com.deadliner.db.AndroidDatabaseDriverFactory
 import com.deadliner.db.DeadlinerDatabase
@@ -27,6 +29,9 @@ import com.deadliner.lifi.memory.KmpMemoryStoreAdapter
 import com.deadliner.sync.WebDavChangeLogSyncOutcome
 import com.deadliner.sync.webdav.WebDavCredentials
 import com.deadliner.sync.webdav.WebDavTransportConfiguration
+import com.deadliner.sync.server.engine.DeadlinerServerSyncConfiguration
+import com.deadliner.sync.server.transport.DeadlinerServerTransportConfiguration
+import com.deadliner.sync.server.transport.KtorDeadlinerServerTransport
 import kotlinx.coroutines.runBlocking
 
 /** Android-private composition root for the v6 shared layer. */
@@ -171,12 +176,56 @@ internal object KmpV6Runtime {
     }
 
     suspend fun syncOnce(): WebDavChangeLogSyncOutcome {
+        return when (CloudSyncPreferences.provider) {
+            CloudSyncProvider.WEB_DAV -> syncWebDavOnce()
+            CloudSyncProvider.BYOS -> syncByosOnce()
+        }
+    }
+
+    fun hasCompleteSyncConfiguration(): Boolean = when (CloudSyncPreferences.provider) {
+        CloudSyncProvider.WEB_DAV -> webDavConfiguration() != null
+        CloudSyncProvider.BYOS -> byosConfiguration() != null
+    }
+
+    private suspend fun syncWebDavOnce(): WebDavChangeLogSyncOutcome {
         val configuration = webDavConfiguration()
             ?: return WebDavChangeLogSyncOutcome(
                 succeeded = false,
                 failureMessage = "WebDAV configuration is incomplete",
             )
         return database.webDavChangeLogSync.synchronizeSafely(configuration)
+    }
+
+    private suspend fun syncByosOnce(): WebDavChangeLogSyncOutcome {
+        val configuration = byosConfiguration()
+            ?: return WebDavChangeLogSyncOutcome(
+                succeeded = false,
+                failureMessage = "BYOS configuration is incomplete",
+            )
+        val transport = KtorDeadlinerServerTransport(configuration)
+        val engine = database.createDeadlinerServerSyncEngine(
+            configuration = DeadlinerServerSyncConfiguration(
+                scopeId = CloudSyncPreferences.byosScopeId,
+                deviceUid = CloudSyncPreferences.byosDeviceUid,
+            ),
+            transport = transport,
+        )
+        return try {
+            val outcome = engine.synchronize()
+            WebDavChangeLogSyncOutcome(
+                succeeded = outcome.converged,
+                remoteApplied = outcome.remoteApplied,
+                remoteIgnored = outcome.remoteIgnored,
+                failureMessage = if (outcome.converged) null else "BYOS sync requires another retry",
+            )
+        } catch (error: Throwable) {
+            WebDavChangeLogSyncOutcome(
+                succeeded = false,
+                failureMessage = "BYOS sync failed: " + (error::class.simpleName ?: "UnknownFailure"),
+            )
+        } finally {
+            engine.close()
+        }
     }
 
     /** Pull-to-refresh contract: remote merge first, then publish fresh KMP list snapshots. */
@@ -193,7 +242,7 @@ internal object KmpV6Runtime {
 
     fun updateAutomaticSync() {
         val configuration = webDavConfiguration()
-        if (GlobalUtils.cloudSyncEnable && configuration != null) {
+        if (GlobalUtils.cloudSyncEnable && CloudSyncPreferences.provider == CloudSyncProvider.WEB_DAV && configuration != null) {
             database.configureAutomaticWebDavSync(configuration) { outcome ->
                 if (outcome.succeeded) reloadMainLists()
             }
@@ -211,6 +260,19 @@ internal object KmpV6Runtime {
             baseUrl = baseUrl,
             credentials = WebDavCredentials(username, password),
         )
+    }
+
+    private fun byosConfiguration(): DeadlinerServerTransportConfiguration? {
+        val baseUrl = CloudSyncPreferences.byosBaseUrl.trim()
+        val accessToken = CloudSyncPreferences.byosAccessToken
+        if (baseUrl.isEmpty() || accessToken.isEmpty()) return null
+        return runCatching {
+            DeadlinerServerTransportConfiguration(
+                baseUrl = baseUrl,
+                accessToken = accessToken,
+                deviceUid = CloudSyncPreferences.byosDeviceUid,
+            )
+        }.getOrNull()
     }
 
     fun initialize(

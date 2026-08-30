@@ -84,6 +84,8 @@ import com.aritxonly.deadliner.ui.settings.ProfileSettingsScreen
 import com.aritxonly.deadliner.ui.settings.UpdateScreen
 import com.aritxonly.deadliner.ui.settings.VibrationSettingsScreen
 import com.aritxonly.deadliner.ui.settings.WebSettingsScreen
+import com.aritxonly.deadliner.ui.settings.ByosSettingsScreen
+import com.aritxonly.deadliner.ui.settings.CloudSyncSettingsScreen
 import com.aritxonly.deadliner.ui.settings.WidgetSettingsScreen
 import com.aritxonly.deadliner.ui.settings.WikiScreen
 import com.aritxonly.deadliner.localutils.GlobalUtils
@@ -117,7 +119,7 @@ sealed class SettingsRoute(
     object AI : SettingsRoute("ai", R.string.settings_deadliner_ai, R.string.settings_support_deadliner_ai,
         GlobalUtils.getDeadlinerAIConfig().getCurrentLogo()
     )
-    object WebDAV : SettingsRoute("webdav", R.string.settings_webdav, R.string.settings_support_webdav, R.drawable.msr_cloud_wght400)
+    object CloudSync : SettingsRoute("cloud_sync", R.string.settings_cloud_and_sync, R.string.settings_support_cloud_and_sync, R.drawable.msr_cloud_wght400)
     object Lab : SettingsRoute("lab", R.string.settings_lab, R.string.settings_support_lab, R.drawable.msr_experiment_wght400)
     object Widget : SettingsRoute("widget", R.string.settings_widget, R.string.settings_support_widget, R.drawable.msr_widgets_wght400)
     object Wiki : SettingsRoute("wiki", R.string.settings_wiki, R.string.settings_support_wiki, R.drawable.msr_menu_book_wght400)
@@ -139,6 +141,8 @@ sealed class SettingsRoute(
     object DisplayScaleCustom : SettingsRoute("display_scale_custom", R.string.settings_display_size_custom_title, R.string.settings_support_display_size_lab, null)
     object AppIcon : SettingsRoute("app_icon", R.string.settings_app_icon_title, R.string.settings_app_icon_summary, null)
     object Profile : SettingsRoute("profile", R.string.edit_profile, R.string.settings_support_profile, null)
+    object WebDAV : SettingsRoute("webdav", R.string.settings_webdav, R.string.settings_support_webdav, null)
+    object Byos : SettingsRoute("byos", R.string.settings_byos, R.string.settings_support_byos, null)
 
     object Update : SettingsRoute("update", R.string.settings_check_for_updates, R.string.settings_check_for_updates, R.drawable.msr_mobile_arrow_down_wght400)
     object License : SettingsRoute("license", R.string.settings_license, R.string.settings_license_summary, R.drawable.msr_contract_wght400)
@@ -157,7 +161,7 @@ sealed class SettingsRoute(
             listOf(Widget),
             listOf(
                 AI,
-                WebDAV,
+                CloudSync,
             ),
             listOf(Lab),
             listOf(
@@ -317,13 +321,21 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
                                     ).show()
                                     openBackup()
                                 },
-                                handleWebSettings = { navController.navigate(SettingsRoute.WebDAV.route) }
+                                handleWebSettings = { navController.navigate(SettingsRoute.CloudSync.route) }
                             ) { navController.navigateUp() }
                         }
 
                         composable(SettingsRoute.Widget.route) { WidgetSettingsScreen { navController.navigateUp() } }
                         composable(SettingsRoute.AI.route) { AISettingsScreen(navController) { navController.navigateUp() } }
+                        composable(SettingsRoute.CloudSync.route) {
+                            CloudSyncSettingsScreen(
+                                navigateToByos = { navController.navigate(SettingsRoute.Byos.route) },
+                                navigateToWebDav = { navController.navigate(SettingsRoute.WebDAV.route) },
+                                navigateUp = { navController.navigateUp() },
+                            )
+                        }
                         composable(SettingsRoute.WebDAV.route) { WebSettingsScreen { navController.navigateUp() } }
+                        composable(SettingsRoute.Byos.route) { ByosSettingsScreen { navController.navigateUp() } }
 
                         composable(SettingsRoute.Lab.route) {
                             LabSettingsScreen(
