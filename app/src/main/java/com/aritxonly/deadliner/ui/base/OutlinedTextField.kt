@@ -1,7 +1,6 @@
 package com.aritxonly.deadliner.ui.base
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
@@ -48,6 +47,7 @@ fun OutlinedTextField(
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
 
     miuixLabel: String = "",
+    miuixFormStyle: Boolean = false,
 ) {
     when (LocalAppDesignSystem.current) {
         AppDesignSystem.MATERIAL3 -> {
@@ -88,7 +88,11 @@ fun OutlinedTextField(
                 label = miuixLabel,
                 labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 useLabelAsPlaceholder = true, // 让 MIUIX 的行为更接近 M3 的 placeholder 习惯
-//                cornerRadius = dimensionResource(R.dimen.item_corner_radius),
+                cornerRadius = if (miuixFormStyle) {
+                    DeadlinerMiuixDefaults.FormInputCornerRadius
+                } else {
+                    DeadlinerMiuixDefaults.InputCornerRadius
+                },
 
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon,
@@ -99,7 +103,7 @@ fun OutlinedTextField(
                 maxLines = maxLines,
                 minLines = minLines,
                 interactionSource = interactionSource,
-                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             )
         }
     }

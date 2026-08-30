@@ -11,6 +11,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -185,6 +186,7 @@ fun SettingsSection(
     mainContent: Boolean = false,
     enabled: Boolean = false,
     customColor: Color? = null,
+    containerAlpha: Float = 1f,
     clipContent: Boolean = true,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
@@ -213,7 +215,7 @@ fun SettingsSection(
         if (clipContent) {
             Surface(
                 shape = sectionShape,
-                color = containerColor
+                color = containerColor.copy(alpha = containerColor.alpha * containerAlpha),
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -225,7 +227,7 @@ fun SettingsSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = containerColor,
+                        color = containerColor.copy(alpha = containerColor.alpha * containerAlpha),
                         shape = RectangleShape
                     )
             ) {
@@ -269,12 +271,12 @@ fun rememberSettingsScaffoldTopOverlayPadding(paddingValues: PaddingValues): Dp 
 fun SettingsScrollColumn(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val outerPadding = rememberSettingsScaffoldOuterPaddingValues(contentPadding)
     val topOverlayPadding = rememberSettingsScaffoldTopOverlayPadding(contentPadding)
     val topBarCanScrollState = LocalSettingsTopBarCanScrollState.current
-    val scrollState = rememberScrollState()
     val canScroll by remember(scrollState) {
         derivedStateOf {
             scrollState.maxValue > 0 || scrollState.value > 0

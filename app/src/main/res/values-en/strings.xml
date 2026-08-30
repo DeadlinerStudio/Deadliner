@@ -996,4 +996,5 @@
     <string name="state_abandoned">Abandoned</string>
     <string name="state_abandoned_archived">Abandoned &amp; archived</string>
 
+    <string name="legacy">Legacy</string>
 </resources>

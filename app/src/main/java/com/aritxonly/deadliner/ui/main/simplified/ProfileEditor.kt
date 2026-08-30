@@ -24,6 +24,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.aritxonly.deadliner.ui.base.Button
+import com.aritxonly.deadliner.ui.base.MiuixDialog
+import com.aritxonly.deadliner.ui.base.MiuixDialogActions
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,7 +34,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,11 +55,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.data.UserProfileRepository
 import com.aritxonly.deadliner.model.UserProfile
 import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.theme.AppDesignSystem
+import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.image.cropview.CropType
 import com.image.cropview.EdgeType
 import com.image.cropview.ImageCrop
@@ -223,71 +226,122 @@ fun AvatarCropperDialog(
     onCancel: () -> Unit,
     onDone: (Bitmap) -> Unit
 ) {
-    RegisterAdvancedMaterialDialogBlur()
     val imageCrop = remember(src) { ImageCrop(src) }
     val aspect = src.width.toFloat() / src.height.toFloat()
+    val onCompleteCrop = {
+        val cropped = imageCrop.onCrop()
+        val size = min(cropped.width, cropped.height)
+        val x = (cropped.width - size) / 2
+        val y = (cropped.height - size) / 2
+        val square = Bitmap.createBitmap(cropped, x, y, size, size)
+        onDone(Bitmap.createScaledBitmap(square, 512, 512, true))
+    }
 
-    Dialog(onDismissRequest = onCancel) {
-        Surface(
-            modifier = Modifier
-                .widthIn(max = 560.dp)
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(24.dp),
-            tonalElevation = 6.dp,
-            shadowElevation = 6.dp,
-            color = MaterialTheme.colorScheme.surfaceContainer
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.crop_avatar), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                    IconButton(onClick = onCancel) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_close),
-                            contentDescription = stringResource(R.string.close)
-                        )
-                    }
-                }
-
-                // 预览区域：保持原图宽高比 + 圆角
-                Box(
+    when (LocalAppDesignSystem.current) {
+        AppDesignSystem.MATERIAL3 -> {
+            RegisterAdvancedMaterialDialogBlur()
+            androidx.compose.ui.window.Dialog(onDismissRequest = onCancel) {
+                Surface(
                     modifier = Modifier
+                        .widthIn(max = 560.dp)
                         .fillMaxWidth()
-                        .aspectRatio(aspect)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    tonalElevation = 6.dp,
+                    shadowElevation = 6.dp,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
                 ) {
-                    imageCrop.ImageCropView(
-                        modifier = Modifier.matchParentSize(),
-                        guideLineColor = Color.LightGray,
-                        guideLineWidth = 1.dp,
-                        edgeCircleSize = 8.dp,
-                        showGuideLines = true,
-                        cropType = CropType.PROFILE_CIRCLE,
-                        edgeType = EdgeType.CIRCULAR
+                    AvatarCropperDialogContent(
+                        imageCrop = imageCrop,
+                        aspect = aspect,
+                        contentPadding = 20.dp,
+                        useMiuixActions = false,
+                        onCancel = onCancel,
+                        onCompleteCrop = onCompleteCrop,
                     )
                 }
+            }
+        }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
+        AppDesignSystem.MIUIX -> MiuixDialog(
+            show = true,
+            onDismissRequest = onCancel,
+            maxWidth = 560.dp,
+        ) {
+            AvatarCropperDialogContent(
+                imageCrop = imageCrop,
+                aspect = aspect,
+                contentPadding = 0.dp,
+                useMiuixActions = true,
+                onCancel = onCancel,
+                onCompleteCrop = onCompleteCrop,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AvatarCropperDialogContent(
+    imageCrop: ImageCrop,
+    aspect: Float,
+    contentPadding: androidx.compose.ui.unit.Dp,
+    useMiuixActions: Boolean,
+    onCancel: () -> Unit,
+    onCompleteCrop: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.padding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.crop_avatar),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = onCancel) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_close),
+                    contentDescription = stringResource(R.string.close),
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(aspect)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            imageCrop.ImageCropView(
+                modifier = Modifier.matchParentSize(),
+                guideLineColor = Color.LightGray,
+                guideLineWidth = 1.dp,
+                edgeCircleSize = 8.dp,
+                showGuideLines = true,
+                cropType = CropType.PROFILE_CIRCLE,
+                edgeType = EdgeType.CIRCULAR,
+            )
+        }
+
+        if (useMiuixActions) {
+            MiuixDialogActions(
+                secondaryButton = {
                     TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
-                    Spacer(Modifier.width(12.dp))
-                    Button(onClick = {
-                        val cropped = imageCrop.onCrop() // 库已按视图裁好
-                        // 规范成 512x512 正方形（不失真；若本身是圆形内容，背景为黑/透明见库实现）
-                        val size = min(cropped.width, cropped.height)
-                        val x = (cropped.width - size) / 2
-                        val y = (cropped.height - size) / 2
-                        val square = Bitmap.createBitmap(cropped, x, y, size, size)
-                        val final = Bitmap.createScaledBitmap(square, 512, 512, true)
-                        onDone(final)
-                    }) { Text(stringResource(R.string.accept)) }
-                }
+                },
+                primaryButton = {
+                    Button(onClick = onCompleteCrop) { Text(stringResource(R.string.accept)) }
+                },
+            )
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
+                Spacer(Modifier.width(12.dp))
+                Button(onClick = onCompleteCrop) { Text(stringResource(R.string.accept)) }
             }
         }
     }
