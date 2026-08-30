@@ -180,6 +180,11 @@ private fun Modifier.glassOpticalBackdrop(
     backdrop = backdrop,
     shape = { shape },
     effects = {
+        val maxBlurRadius = recipe.blur.maxRadius.coerceAtLeast(0f)
+        val blurRadiusX = (material.blurRadiusX ?: material.blurRadius)
+            .coerceIn(0f, maxBlurRadius)
+        val blurRadiusY = (material.blurRadiusY ?: material.blurRadius)
+            .coerceIn(0f, maxBlurRadius)
         val refraction = recipe.refraction
         val postBlurRadiusPx = if (recipe.layering.postRefractionBlurEnabled) {
             recipe.layering.postRefractionBlurRadius.toPx().coerceAtLeast(0f)
@@ -194,11 +199,11 @@ private fun Modifier.glassOpticalBackdrop(
             contrast = material.blurContrast,
             saturation = material.blurSaturation,
         )
-        if (material.resolvedBlurRadiusX > 0f || material.resolvedBlurRadiusY > 0f) {
+        if (blurRadiusX > 0f || blurRadiusY > 0f) {
             effect(
                 BlurEffect(
-                    radiusX = material.resolvedBlurRadiusX,
-                    radiusY = material.resolvedBlurRadiusY,
+                    radiusX = blurRadiusX,
+                    radiusY = blurRadiusY,
                     edgeTreatment = TileMode.Clamp,
                 ),
             )

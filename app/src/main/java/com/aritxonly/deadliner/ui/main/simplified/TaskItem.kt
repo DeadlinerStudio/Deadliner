@@ -17,16 +17,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.ui.base.AlertDialog
+import com.aritxonly.deadliner.ui.base.TextButton
 import com.aritxonly.deadliner.ui.main.DDLItemCardSwipeable
 import com.aritxonly.deadliner.ui.main.shared.computeProgress
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.theme.rememberTaskSwipeActionColors
+import com.aritxonly.deadliner.ui.category.CategoryBadge
+import com.aritxonly.deadliner.ui.category.CategoryPresentation
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.LocalDateTime
@@ -76,6 +80,7 @@ fun TaskItem(
     onLongPressSelect: (() -> Unit)? = null,
     onToggleSelect: (() -> Unit)? = null,
     onAbandonDialogVisibilityChange: (Boolean) -> Unit = {},
+    category: CategoryPresentation? = null,
 ) {
     val context = LocalContext.current
     val swipeActionColors = rememberTaskSwipeActionColors()
@@ -139,6 +144,9 @@ fun TaskItem(
         val intent = DeadlineDetailActivity.newIntent(context, item.uid)
         activity.startActivity(intent)
     }
+    val openEditor = {
+        activity.startActivity(AddDDLActivity.newEditIntent(context, item.uid))
+    }
 
     DDLItemCardSwipeable(
         title = item.title,
@@ -179,7 +187,7 @@ fun TaskItem(
                 ).show()
             }
         },
-        onEditAction = openDetails,
+        onEditAction = openEditor,
         onDeleteAction = {
             GlobalUtils.triggerVibration(activity, 200)
             showDeleteDialog = true
@@ -200,6 +208,7 @@ fun TaskItem(
         selected = selected,
         onLongPressSelect = onLongPressSelect,
         onToggleSelect = onToggleSelect,
+        categoryContent = category?.let { selectedCategory -> { CategoryBadge(selectedCategory) } },
     )
 
     if (showGiveUpDialog) {
@@ -211,7 +220,7 @@ fun TaskItem(
             miuixTitle = context.getString(R.string.confirm_give_up_title),
             miuixSummary = context.getString(R.string.confirm_give_up_message),
             confirmButton = {
-                androidx.compose.material3.TextButton(
+                TextButton(
                     onClick = {
                         showGiveUpDialog = false
                         applyTaskAction(TaskAction.MARK_GIVE_UP)
@@ -222,7 +231,7 @@ fun TaskItem(
                 }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showGiveUpDialog = false }) {
+                TextButton(onClick = { showGiveUpDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -238,7 +247,7 @@ fun TaskItem(
             miuixTitle = context.getString(R.string.alert_delete_title),
             miuixSummary = context.getString(R.string.alert_delete_message),
             confirmButton = {
-                androidx.compose.material3.TextButton(
+                TextButton(
                     onClick = {
                         showDeleteDialog = false
                         deleteTask()
@@ -249,7 +258,7 @@ fun TaskItem(
                 }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton(onClick = { showDeleteDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }

@@ -1,5 +1,8 @@
 package com.aritxonly.deadliner.ui.material.glass
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -10,11 +13,13 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
@@ -33,7 +38,7 @@ val LocalProgressiveTopBarMaterialHosted = staticCompositionLocalOf { false }
 val LocalTopBarButtonMaterialProgress = staticCompositionLocalOf { 0f }
 val LocalTopBarScrollProgress = staticCompositionLocalOf<Float?> { null }
 
-internal const val ProgressiveTopBarBlurRadiusDp = 4f
+internal const val ProgressiveTopBarBlurRadiusDp = 8f
 internal const val ProgressiveTopBarBlurFadeStart = 0.60f
 internal const val ProgressiveTopBarOverlayTopAlpha = 0.94f
 internal const val ProgressiveTopBarOverlayEndFraction = 0.80f
@@ -48,6 +53,10 @@ internal data class ProgressiveTopBarHeightMetrics(
     val occupiedHeightPx: Int,
     val materialHeightPx: Int,
 )
+
+/** Keeps progressive blur in lockstep with the scroll-driven soft-glass reveal. */
+internal fun resolveProgressiveTopBarMaterialProgress(scrollProgress: Float?): Float =
+    scrollProgress?.coerceIn(0f, 1f) ?: 0f
 
 internal fun resolveProgressiveTopBarHeightMetrics(
     measuredTopBarHeightPx: Int,
@@ -90,6 +99,12 @@ fun ProgressiveTopBarMaterial(
         return
     }
 
+    val materialTarget = resolveProgressiveTopBarMaterialProgress(LocalTopBarScrollProgress.current)
+    val materialProgress by animateFloatAsState(
+        targetValue = materialTarget,
+        animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+        label = "progressive-top-bar-material",
+    )
     val density = LocalDensity.current
     val statusBarHeightPx = WindowInsets.statusBars.getTop(density)
     val minimumContentHeightPx = with(density) {
@@ -130,7 +145,10 @@ fun ProgressiveTopBarMaterial(
             height = heightMetrics.materialHeightPx,
         )
         val backgroundPlaceables = subcompose(ProgressiveTopBarSlot.Background) {
-            ProgressiveTopBarBackground(modifier = Modifier.fillMaxSize())
+            ProgressiveTopBarBackground(
+                materialProgress = materialProgress,
+                modifier = Modifier.fillMaxSize(),
+            )
         }.map { measurable -> measurable.measure(materialConstraints) }
 
         layout(width, height) {
@@ -142,12 +160,17 @@ fun ProgressiveTopBarMaterial(
 
 @Composable
 private fun ProgressiveTopBarBackground(
+    materialProgress: Float,
     modifier: Modifier = Modifier,
 ) {
+    if (materialProgress <= 0f) return
+
     val surface = MaterialTheme.colorScheme.surface
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier.graphicsLayer(alpha = materialProgress),
+    ) {
         if (advancedMaterial.enabled && backdrop != null) {
             Box(
                 modifier = Modifier

@@ -1,8 +1,0 @@
-<!-- res/drawable/top_gradient.xml -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <gradient
-        android:type="linear"
-        android:startColor="?attr/colorSurface"
-        android:endColor="@android:color/transparent"
-        android:angle="270" />
-</shape>

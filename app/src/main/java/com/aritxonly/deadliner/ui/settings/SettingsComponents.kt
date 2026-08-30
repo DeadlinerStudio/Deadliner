@@ -11,6 +11,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -115,6 +116,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
@@ -184,6 +186,7 @@ fun SettingsSection(
     mainContent: Boolean = false,
     enabled: Boolean = false,
     customColor: Color? = null,
+    containerAlpha: Float = 1f,
     clipContent: Boolean = true,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
@@ -212,7 +215,7 @@ fun SettingsSection(
         if (clipContent) {
             Surface(
                 shape = sectionShape,
-                color = containerColor
+                color = containerColor.copy(alpha = containerColor.alpha * containerAlpha),
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -224,7 +227,7 @@ fun SettingsSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = containerColor,
+                        color = containerColor.copy(alpha = containerColor.alpha * containerAlpha),
                         shape = RectangleShape
                     )
             ) {
@@ -268,12 +271,12 @@ fun rememberSettingsScaffoldTopOverlayPadding(paddingValues: PaddingValues): Dp 
 fun SettingsScrollColumn(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val outerPadding = rememberSettingsScaffoldOuterPaddingValues(contentPadding)
     val topOverlayPadding = rememberSettingsScaffoldTopOverlayPadding(contentPadding)
     val topBarCanScrollState = LocalSettingsTopBarCanScrollState.current
-    val scrollState = rememberScrollState()
     val canScroll by remember(scrollState) {
         derivedStateOf {
             scrollState.maxValue > 0 || scrollState.value > 0
@@ -288,6 +291,7 @@ fun SettingsScrollColumn(
         modifier = modifier
             .padding(outerPadding)
             .padding(horizontal = 16.dp)
+            .syncTopBarMaterialScroll(scrollState)
             .verticalScroll(scrollState)
     ) {
         Spacer(modifier = Modifier.height(topOverlayPadding))
@@ -319,7 +323,8 @@ fun SettingsLazyColumn(
 
     LazyColumn(
         modifier = modifier
-            .padding(outerPadding),
+            .padding(outerPadding)
+            .syncTopBarMaterialScroll(listState),
         state = listState,
         contentPadding = PaddingValues(
             start = 16.dp,
@@ -340,6 +345,7 @@ fun CollapsingTopBarScaffold(
     collapsible: Boolean = true,
     topBarStyle: TopAppBarStyle = TopAppBarStyle.LARGE,
     allowAdvancedMaterialTopBarBlur: Boolean = true,
+    advancedMaterialTopBarBlurOnlyWhenCollapsed: Boolean = false,
     forceOverlayTopBar: Boolean = false,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
@@ -371,6 +377,7 @@ fun CollapsingTopBarScaffold(
                     titleTextStyle = MaterialTheme.typography.headlineMedium,
                     useParentMaterialContainer = false,
                     allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
+                    advancedMaterialBlurOnlyWhenCollapsed = advancedMaterialTopBarBlurOnlyWhenCollapsed,
                     material3ScrollBehavior = scrollBehavior,
                 )
             }
@@ -427,6 +434,7 @@ fun CollapsingTopBarScaffold(
                     actions = actions,
                     useParentMaterialContainer = false,
                     allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
+                    advancedMaterialBlurOnlyWhenCollapsed = advancedMaterialTopBarBlurOnlyWhenCollapsed,
                     miuixScrollBehavior = scrollBehavior,
                 )
             }

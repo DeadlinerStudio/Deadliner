@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="add_event">New task</string>
     <string name="add_ddl_name">New deadline</string>
-    <string name="add_title">New deadline</string>
     <string name="save">Save</string>
     <string name="save_and_add_to_calendar">Save to calendar</string>
     <string name="alert_delete_title">Delete deadline</string>
@@ -11,17 +9,8 @@
     <string name="cancel">Cancel</string>
     <string name="toast_deletion">Deadline deleted ❌</string>
     <string name="toast_finished">Congratulations on completing the deadline! 🎉</string>
-    <string name="alert_edit_title">Deadline actions</string>
-    <string name="alert_edit_modify">Edit</string>
-    <string name="alert_edit_delete">Delete</string>
-    <string name="alert_edit_finished">Mark as done</string>
-    <string name="alert_edit_definish">Undo completion</string>
-    <string name="alert_edit_archive">Archive</string>
-    <string name="toast_definished">Deadline marked as incomplete… 😭</string>
     <string name="toast_archived">%1$d deadlines archived! 🗃️</string>
-    <string name="toast_stared">Star status updated</string>
 
-    <string name="settings_archive">Archive</string>
     <string name="settings_title">Settings</string>
     <string name="settings_behavior">Behavior</string>
     <string name="settings_interface_display">Appearance</string>
@@ -92,7 +81,6 @@
     <string name="settings_support_ldwidget_add_btn">Show a floating “+” button on the large widget to quickly add tasks</string>
     <string name="settings_nearby_notification">Deadline reminder notifications</string>
     <string name="settings_everyday_notification">Daily deadline summary notifications</string>
-    <string name="settings_experimental_e2e">Edge-to-edge system bars (experimental)</string>
     <string name="settings_excitement">Main menu encouraging message</string>
     <string name="settings_highlight">Version info</string>
     <string name="settings_version">Version number</string>
@@ -115,7 +103,6 @@
     <string name="settings_support_nearby_notification">When enabled, you will be reminded 12 hours before a task is due</string>
     <string name="settings_enable_webDAV">Enable WebDAV</string>
     <string name="settings_webDAV_description">The WebDAV service allows users to connect to a cloud storage provider.\nSince we do not provide cloud services ourselves, you need to register with any cloud drive that supports WebDAV. Your account and password are stored locally and will not be uploaded to the cloud.</string>
-    <string name="settings_web_section">Server settings</string>
     <string name="settings_web_host">Server URL</string>
     <string name="settings_web_host_fault">The server URL must start with https:// or http://</string>
     <string name="settings_web_host_success">WebDAV server set successfully!</string>
@@ -125,16 +112,6 @@
     <string name="settings_enable_ai">Enable Lifi AI</string>
     <string name="settings_ai_description">Deadliner integrates with your AI provider to extract task information from long text, helping you quickly add tasks.</string>
     <string name="settings_ai_api_key">API key</string>
-    <string name="settings_ai_success">API key set successfully!</string>
-    <string name="settings_ai_incomplete">Please enter your API key!</string>
-    <string name="settings_support_enable_ai">When disabled, AI entry points on the home screen and task editor are hidden.</string>
-    <string name="settings_ai_interaction_preferences">Interaction preferences</string>
-    <string name="settings_ai_auto_approve_read_tasks">Auto-approve task list reads</string>
-    <string name="settings_ai_auto_approve_read_tasks_support">Automatically allow read-only requests when Lifi AI needs to inspect your tasks or habits.</string>
-    <string name="settings_ai_silent_task_add">Silent task add</string>
-    <string name="settings_ai_silent_task_add_support">When enabled, task-creation tool calls run immediately without per-request confirmation.</string>
-    <string name="settings_ai_hide_thinking_process">Hide thinking process</string>
-    <string name="settings_ai_hide_thinking_process_support">Hide intermediate statuses like thinking and waiting for tools, and only show final results.</string>
     <string name="settings_ai_byok_title">API configuration (BYOK)</string>
     <string name="settings_ai_base_url">Base URL</string>
     <string name="settings_ai_model_id">Model ID (for example, deepseek-chat)</string>
@@ -144,14 +121,11 @@
     <string name="settings_ai_saved_and_validated">AI settings saved and validated</string>
     <string name="settings_ai_validation_failed">Validation failed: %1$s</string>
     <string name="settings_ai_validation_failed_fallback">Please check whether the API key, Base URL, and model name are correct.</string>
-    <string name="settings_ai_more">More settings</string>
-    <string name="settings_ai_notes">Notes</string>
     <string name="settings_ai_byok_description">Lifi AI now uses a unified BYOK flow. Your API key stays on this device only and is never uploaded to any third-party server beyond your chosen AI provider; saving will run an online validation first.</string>
     <string name="settings_ai_custom_prompt">Custom prompt</string>
     <string name="settings_ai_custom_prompt_title">Prompt</string>
     <string name="settings_support_ai_custom_prompt">Custom user prompt (not recommended for beginners)</string>
     <string name="settings_ai_custom_prompt_success">Prompt saved</string>
-    <string name="settings_issues">Submit error report</string>
     <string name="add_widget">Add widget</string>
     <string name="app_md_widget_description">Task small widget</string>
     <string name="app_ld_widget_description">Task large widget</string>
@@ -164,13 +138,11 @@
     <string name="glance_task_widget_due_hours">in %1$d hr</string>
     <string name="glance_task_widget_due_days">in %1$d days</string>
     <string name="glance_task_widget_due_date">%1$d/%2$d</string>
-    <string name="unfinished_settings">Experimental feature, not fully tested</string>
     <string name="go_next">Continue</string>
     <string name="welcome">Your Day,\nEnhanced by AI</string>
     <string name="welcome_version">New Deadliner v5, ready for you to experience</string>
     <string name="finish_notice">No tasks remaining</string>
     <string name="add_ddl_tile_label">Add new task</string>
-    <string name="unselected">Please specify a time</string>
     <string name="end_time">End time</string>
     <string name="start_time">Start time</string>
     <string name="add_ddl_note">Note</string>
@@ -179,29 +151,13 @@
     <string name="back">Back</string>
     <string name="add_edit_deadline">Add / edit deadline</string>
     <string name="filter_dialog_title">Sort by</string>
-    <string name="filter_dialog_default">Remaining time (default)</string>
-    <string name="filter_dialog_name">Name</string>
-    <string name="filter_dialog_start_time">Start time</string>
-    <string name="filter_dialog_end_time">End time</string>
-    <string name="filter_dialog_elapse_time">Project progress</string>
     <string name="title_activity_overview">Overview</string>
     <string name="snackbar_already_checkin">You’ve already checked in today — come back tomorrow! ☺️</string>
-    <string name="snackbar_done">Task completed! 🎉️</string>
-    <string name="add_ddl_frequency_type">Please set a habit time limit</string>
-    <string name="add_ddl_frequency">Check-in frequency</string>
-    <string name="add_ddl_total">Duration (days)</string>
-    <string name="clear_all_notification">Clear all registered notification alarms</string>
     <string name="settings_import">Import</string>
     <string name="settings_export">Export</string>
-    <string name="settings_cloud_sync">Cloud server settings</string>
-    <string name="settings_show_intro">Show welcome page</string>
     <string name="settings_custom_filter_list">Custom calendar import blacklist</string>
     <string name="settings_support_custom_filter_list">Filter out non-essential calendar accounts when adding tasks</string>
-    <string name="alert_select_badge_type">Choose badge type</string>
-    <string name="configure">Configure</string>
     <string name="settings_advance">Advanced settings</string>
-    <string name="settings_support_ai_test">Test API key availability · Test custom prompt</string>
-    <string name="settings_ai_test">Conversation test</string>
     <string name="settings_ai_custom_prompt_description">Custom user prompts let you define the density and style of information extracted by AI. Your custom prompt will be prepended to the input text and sent AI provider\'s API service.</string>
     <string name="placeholder">Welcome to Deadliner 👏</string>
     <string name="settings_clipboard">Auto-read from clipboard</string>
@@ -219,38 +175,19 @@
     <string name="parse_failed">Parse failed</string>
     <string name="unknown_error">Unknown error</string>
     <string name="send">Send</string>
-    <string name="year_format">%1$d year</string>
-    <string name="total_tasks_numbers">Total tasks</string>
-    <string name="completed_number">Completed</string>
-    <string name="overdue_number">Overdue</string>
-    <string name="complete_rate">Completion rate</string>
-    <string name="overdue_rate">Overdue rate</string>
-    <string name="average_ddl_time">Average completion time</string>
     <string name="background">Background</string>
     <string name="last_month_summary">Data summary</string>
     <string name="duration_days_hours">%1$d days %2$d hours</string>
     <string name="duration_minutes">%1$d minutes</string>
     <string name="duration_hours">%1$d hours</string>
-    <string name="duration_less_than_hour">&lt;1 hour</string>
-    <string name="show_clipboard_ai_snackbar">Clipboard content detected. Use Lifi AI to quickly add?</string>
     <string name="add">Add</string>
     <string name="selected_items">%1$d selected</string>
     <string name="habit_success">Check-in successful 🎉</string>
     <string name="undo">Undo</string>
-    <string name="none_selected">No items selected</string>
     <string name="please_select_delete_first">Please select items to delete</string>
     <string name="please_select_done_first">Please select items to mark as completed</string>
-    <string name="please_select_edit_first">Please select items to edit</string>
     <string name="task">Tasks</string>
     <string name="habit">Habits</string>
-    <string name="battery_optimization_title">Battery optimization settings</string>
-    <string name="battery_optimization_message">Please set Deadliner to “not restricted by battery optimization”</string>
-    <string name="goto_setting">Go to settings</string>
-    <string name="permission_calendar_denied">Calendar permission required to sync events</string>
-    <string name="loading_wiki">Loading guide page, tap anywhere to skip</string>
-    <string name="habit_success_retro">Check-in retroactively successful 🎉</string>
-    <string name="find_updates">New version detected: %1$s</string>
-    <string name="goto_update">Update now</string>
     <string name="later">Remind me later</string>
     <string name="task_status_summary">Task status statistics</string>
     <string name="task_complete_time_summary">Task completion time statistics</string>
@@ -299,31 +236,19 @@
     <string name="no_valid_calendar_account">No calendar accounts available</string>
     <string name="select_calendar_account_to_hide">Select calendar accounts to hide</string>
     <string name="calendar_filter_saved">Calendar filter settings saved</string>
-    <string name="clear_all_archive">Clear all completed deadlines?</string>
-    <string name="delete_archived">Delete completed deadline?</string>
     <string name="close">Close</string>
     <string name="star">Star</string>
     <string name="edit">Edit</string>
     <string name="complete">Complete</string>
     <string name="mark_complete">Mark as done</string>
-    <string name="undo_complete">Undo completion</string>
     <string name="task_swipe_restore">Restore</string>
     <string name="task_swipe_give_up">Give up</string>
     <string name="archive">Archive</string>
     <string name="delete">Delete</string>
-    <string name="expand">Expand</string>
-    <string name="retract">Collapse</string>
-    <string name="edit_menu">Edit menu</string>
-    <string name="close_menu">Close menu</string>
     <string name="duration_full">%1$d days %2$d hours %3$d minutes</string>
     <string name="duration_hours_minutes">%1$d hours %2$d minutes</string>
     <string name="label_start_time">Start time: %1$s</string>
     <string name="label_end_time">End time: %1$s</string>
-    <string name="label_remaining_time">Remaining time: %1$s</string>
-    <string name="archive_search_tasks_hint">Search archived tasks</string>
-    <string name="archive_search_habits_hint">Search archived habits</string>
-    <string name="archive_controls_title">Manage archive</string>
-    <string name="archive_controls_subtitle">Browse, restore, or permanently delete archived tasks and habits from here.</string>
     <string name="archive_count_label">%1$d items</string>
     <string name="archive_section_tasks">Archived tasks</string>
     <string name="archive_section_habits">Archived habits</string>
@@ -342,27 +267,8 @@
     <string name="archive_completed_at">Completed at %1$s</string>
     <string name="archive_abandoned_at">Abandoned at %1$s</string>
     <string name="archive_archived_at">Archived at %1$s</string>
-    <string name="archive_habit_detail_template">%1$s · %2$s</string>
     <string name="archive_habit_period_target">%1$d times</string>
-    <string name="archive_habit_total_target">Total target %1$d</string>
-    <string name="daily_frequency">%1$d times per day</string>
-    <string name="daily_frequency_with_total">%1$d times per day / %2$d total</string>
-    <string name="weekly_frequency">%1$d times per week</string>
-    <string name="weekly_frequency_with_total">%1$d times per week / %2$d total</string>
-    <string name="monthly_frequency">%1$d times per month</string>
-    <string name="monthly_frequency_with_total">%1$d times per month / %2$d total</string>
-    <string name="total_frequency_persistent">Keep going</string>
-    <string name="total_frequency_count">%1$d times in total</string>
-    <string name="remaining_days_arg">%1$d days remaining</string>
-    <string name="days_streak">%1$d-day streak</string>
-    <string name="no_time_left">Not enough time</string>
-    <string name="progress_daily">Daily progress %1$d/%2$d</string>
-    <string name="progress_weekly">Weekly progress %1$d/%2$d</string>
-    <string name="progress_monthly">Monthly progress %1$d/%2$d</string>
-    <string name="progress_total">Total progress %1$d/%2$d</string>
-    <string name="already_check_habit">Checked in today</string>
     <string name="check_habit">Check in</string>
-    <string name="completed_long">Deadline completed 🎉</string>
     <string name="remaining_prefix">Remaining </string>
     <string name="remaining_days">%1$d days </string>
     <string name="remaining_hours">%1$d hours </string>
@@ -385,11 +291,9 @@
     <string name="time_bucket_morning">Morning</string>
     <string name="time_bucket_afternoon">Afternoon</string>
     <string name="time_bucket_evening">Evening</string>
-    <string name="time_bucket_unknown">Unknown</string>
     <string name="tab_overview">Overview</string>
     <string name="tab_trend">Trend</string>
     <string name="tab_summary">Last Month</string>
-    <string name="xx_months">%1$d months</string>
     <string name="destroy_alarms">All alarm times have been cleared successfully</string>
     <string name="select_filter_calendar">Please select calendar filters to display</string>
     <string name="filter_add_one">Add item</string>
@@ -405,9 +309,7 @@
     <string name="restart_now">Restart now</string>
     <string name="import_failed">❌ Import failed: %1$s</string>
     <string name="embedded_activities_success">Parallel window set successfully. Restart required to take effect.</string>
-    <string name="test">Test</string>
     <string name="settings_experimental">Experimental feature</string>
-    <string name="settings_developer_options">Developer options</string>
     <string name="settings_donate_emotional">Broke student asking for a treat 🥹</string>
     <string name="settings_donate_thanks">Your support is my biggest motivation~</string>
     <string name="deadliner_donate_plan_title">Deadliner Donate Plan</string>
@@ -420,8 +322,6 @@
     <string name="deadliner_donate_no_more_prompt">Order ID submitted. Deadliner Donate reminder is permanently disabled.</string>
     <string name="settings_general_main">Interaction settings</string>
     <string name="settings_general_others">Misc settings</string>
-    <string name="settings_interface_mainscreen">Main screen</string>
-    <string name="settings_interface_design">Design</string>
     <string name="update_and_install">Update and install</string>
     <string name="download_from_browser">Download with browser</string>
     <string name="check_for_updates_failed">Check for updates failed: %1$s</string>
@@ -470,20 +370,13 @@
     <string name="habit_total_unlimited">Unlimited</string>
     <string name="habit_total_count">%1$d times in total</string>
     <string name="choose_retro_date_title">Choose make-up date</string>
-    <string name="xx_th_weeks">Week %1$d</string>
-    <string name="remind_in">You will be reminded %1$d hours before the deadline ☺️</string>
     <string name="channel_deadline_name">Deadline reminder notification</string>
     <string name="channel_daily_name">Deadliner scheduled notification</string>
-    <string name="channel_important_name">Deadliner important notification</string>
     <string name="channel_deadline_desc">Sends a reminder before a deadline. Notifications must be enabled in settings.</string>
     <string name="channel_daily_desc">Sends a daily summary of task completion. Notifications must be enabled in settings.</string>
-    <string name="channel_important_desc">Special channel for ColorOS</string>
-    <string name="remind_later">Remind me later</string>
-    <string name="notification_near">Due soon reminder: %1$s</string>
     <string name="title_today_overview">Today’s task overview</string>
     <string name="title_today_overview_with_due">Today’s task overview - %1$d tasks due today</string>
     <string name="summary_status">🔥 Overdue %1$d ｜ ⌛️ In progress %2$d</string>
-    <string name="remaining_hours_minutes">%1$d hours %2$d minutes</string>
     <string name="remaining_due_soon">Due soon!</string>
 
     <string-array name="excitement_array">
@@ -509,7 +402,6 @@
         <item>Done! Now yell: Next! 🎤</item>
     </string-array>
     <string name="add_task">Add Tasks</string>
-    <string name="frequency_none">None</string>
     <string name="settings_tablets_only">Tablets</string>
     <string name="settings_split_placeholder">Launch split</string>
     <string name="settings_support_split_placeholder">When enabled, the main screen will launch in split-screen mode by default</string>
@@ -539,31 +431,13 @@
     <string name="sync_interval_12h">Every 12 hours</string>
     <string name="sync_interval_24h">Every 24 hours</string>
 
-    <string name="setup_notification">Enable notification permission</string>
-    <string name="setup_notification_desc">We need this to push DDL reminders and daily plan prompts.</string>
-    <string name="skip">Skip</string>
-    <string name="authorize">Authorize</string>
-    <string name="setup_calendar">Grant calendar permission</string>
-    <string name="setup_calendar_desc">So we can sync DDLs to the system calendar.</string>
-    <string name="setup_battery">Auto-start &amp; battery whitelist</string>
-    <string name="setup_battery_desc">Ensure background alarms and notifications are not killed by the system.</string>
-    <string name="check_manual">View guide</string>
-    <string name="setup_finish">Setup complete</string>
-    <string name="setup_finish_desc">Thanks for completing the setup. You can now enjoy using Deadliner!</string>
-    <string name="start_to_use">Get started</string>
     <string name="search_events">Search events</string>
     <string name="search">Search</string>
-    <string name="overview_settings_month">Number of months to display</string>
-    <string name="overview_settings_weekly_show_overdue_complete">Show overdue tasks in the weekly chart</string>
     <string name="overview_settings_show_overdue_series">Show overdue bars</string>
     <string name="overview_settings_show_overdue_series_support">Overlay unfinished overdue tasks in “This week”, grouped by their due date.</string>
 
-    <string name="settings_model">Model Settings</string>
     <string name="settings_model_endpoint">Model Endpoint Settings</string>
     <string name="settings_support_model_endpoint">Select a preset model for Lifi AI</string>
-    <string name="settings_support_model_endpoint_advance">Custom model endpoint</string>
-    <string name="settings_current_model">Current model: %1$s</string>
-    <string name="settings_current_endpoint">Endpoint: %1$s</string>
     <string name="settings_endpoint_description">An API key works only with its specific model provider. When you switch the endpoint, remember to update your API key so everything runs smoothly.</string>
     <string name="add_model">Add Model</string>
     <string name="model_display_name">Display Name</string>
@@ -575,9 +449,7 @@
     <string name="preset_delete_title">Delete Preset</string>
     <string name="preset_delete_msg">Are you sure you want to delete “%1$s”?</string>
     <string name="edit_model">Edit Model</string>
-    <string name="settings_ai_icon">Set Lifi AI Icon</string>
     <string name="settings_support_clipboard">When enabled, Deadliner will notify you to add a task with Lifi AI whenever the clipboard changes.</string>
-    <string name="toast_ai_logo_requires_reboot">Icon set successfully. Please restart Deadliner to apply the changes.</string>
 
     <!-- Morning -->
     <string-array name="panel_greeting_morning">
@@ -639,24 +511,13 @@
     <string name="search_group_archived_task">Archived tasks</string>
     <string name="search_group_archived_habit">Archived habits</string>
     <string name="search_inspiration_hint">Tap to edit it, or organize it directly into a task or habit.</string>
-    <string name="search_no_result_suggestion_prefix">Try these examples:</string>
-
-    <string name="search_example_y">Tasks in year 2025</string>
-    <string name="search_example_m">Tasks in October</string>
-    <string name="search_example_d">Tasks on the 15th</string>
-    <string name="search_example_h">Tasks at 8 PM</string>
 
     <string name="panel_greeting_deadliner">Welcome to Deadliner, your personalized task management assistant</string>
     <string name="user">User</string>
-    <string name="settings_simplified">Simplified Main Interface</string>
-    <string name="settings_support_simplified">When enabled, the main interface will switch to a brand-new simplified design, bringing you a different task management experience</string>
     <string name="overview">Overview</string>
     <string name="edit_profile">Edit Profile</string>
-    <string name="settings_model_settings_advance">Enable to customize model endpoints and your own API key</string>
-    <string name="settings_model_settings">Advanced model settings</string>
     <string name="settings_ai_function">Feature settings</string>
     <string name="settings_advanced_material">Advanced material</string>
-    <string name="settings_support_advanced_material">Enable a shared blurred glass material for the top app bar and navigation surfaces</string>
 
     <string name="quota_title">Current quota</string>
     <string name="quota_identity_vip">VIP</string>
@@ -673,7 +534,6 @@
     <string name="quota_used_label">Used</string>
     <string name="quota_remaining_label">Remaining</string>
     <string name="quota_reset_label">Reset time</string>
-    <string name="quota_endpoint_label">Service endpoint</string>
 
     <string name="share">Share</string>
     <string name="summary_with_text">%s Summary</string>
@@ -700,9 +560,6 @@
     <string name="add_ddl_tile_supporting">Add the “Create Task” quick setting to the control center</string>
     <string name="notification_upcoming_task_overdue">Task is overdue!</string>
     <string name="notification_upcoming_task_title">Task status: %s</string>
-    <string name="notification_upcoming_critical_soon">Due soon</string>
-    <string name="notification_upcoming_critical">%d minutes left</string>
-    <string name="notification_upcoming_critical_overdue">Overdue</string>
 
     <string name="copy">Copy</string>
     <string name="settings_live_updates_in_advance">Real-time reminder lead time (minutes)</string>
@@ -713,14 +570,11 @@
     <string name="shortcut_overview_long">View overview</string>
     <string name="shortcut_disabled_message">This shortcut is currently unavailable</string>
 
-    <string name="finished_import">All changes applied successfully!</string>
     <string name="detect_share_link">Share link detected</string>
     <string name="share_link_parse_failed">Failed to parse share link!</string>
-    <string name="toast_all_habits_done">All habits completed! 🎉</string>
     <string name="cannot_check_future">You cannot check in for future days!</string>
 
     <string name="habit_goal_total_with_target">Total goal: %1$d times</string>
-    <string name="habit_goal_total_open">Total goal (unlimited)</string>
     <string name="avatar">Avatar</string>
 
     <string name="tile_result_tile_added">Added to quick settings</string>
@@ -733,26 +587,11 @@
     <string name="tile_error_no_status_bar_service">System service unavailable</string>
     <string name="tile_invalid_android">Quick tile addition is only supported on Android 13+</string>
 
-    <string name="habit_enable_notification">Enable reminder</string>
-    <string name="habit_notify_at">Reminder time: %s</string>
     <string name="set_time">Select time</string>
-    <string name="habit_set_notification_time">Set reminder time</string>
-    <string name="habit_notification_title">Habit reminder: %s</string>
     <string name="habit_notification">Habit reminder</string>
 
-    <string name="today">Today</string>
-    <string name="this_week">This week</string>
-    <string name="this_month">This month</string>
-    <string name="total_progress">Total progress</string>
-    <string name="progress_with_postfix">Progress:</string>
-    <string name="all">All</string>
-    <string name="event">Event</string>
-    <string name="steps">Steps</string>
     <string name="show_monthly_dashboard">Share monthly dashboard</string>
 
-    <string name="import_plan">Import schedule block</string>
-    <string name="apply_all_changes">Apply all changes</string>
-    <string name="convert_to_subtask">Convert to subtask</string>
     <string name="copy_list">Copy list</string>
     <string name="ai_empty_hint">Try describing your task, today’s plan, or let me break your goal into steps.</string>
     <string name="linked_task">Linked: %s</string>
@@ -765,8 +604,6 @@
     <string name="settings_color_source_seed">Seed color</string>
     <string name="settings_color_source_preset_support">Preset colors · MIUIX primary with Material accents</string>
     <string name="settings_advanced_material_summary">Control the blur intensity and feel of advanced material</string>
-    <string name="settings_try_new_features">Try These New Features</string>
-    <string name="settings_try_new_features_summary">We split design, material, icon, and main screen appearance into clearer sections so each tweak is easier to find.</string>
     <string name="settings_try_feature">Try %1$s</string>
     <string name="settings_try_design_color_summary">The new live design preview is here, so you can compare Modern and Vivid styles directly.</string>
     <string name="settings_try_advanced_material_summary">Try the new advanced material depth controls with adjustable blur strength and atmosphere.</string>
@@ -803,9 +640,6 @@
     <string name="settings_design_preview_status_passed">Overdue</string>
     <string name="settings_design_preview_status_completed">Completed</string>
     <string name="settings_design_preview_status_abandoned">Abandoned</string>
-    <string name="settings_design_preview_task_title">Wrap up the release checklist</string>
-    <string name="settings_design_preview_task_deadline">Tonight 8:00 PM</string>
-    <string name="settings_design_preview_task_summary">Finish polish and self-review before 8 PM today</string>
     <string name="settings_design_preview_switch_label">Priority alert</string>
     <string name="settings_design_preview_button_label">Organize now</string>
     <string name="settings_advanced_material_blur_size">Blur size</string>
@@ -856,16 +690,10 @@
     <string name="settings_advanced_material_level_soft">Soft</string>
     <string name="settings_advanced_material_level_hazy">Hazy</string>
     <string name="settings_advanced_material_level_deep">Deep</string>
-    <string name="settings_advanced_material_level_summary">%1$d / %2$.2f</string>
     <string name="settings_support_profile">Edit avatar and nickname</string>
-    <string name="intro_guide_title">Feature Guide</string>
-    <string name="intro_guide_next">Next</string>
-    <string name="intro_guide_page_indicator">Guide %1$d / %2$d</string>
-    <string name="ui_style_classic">Classic</string>
     <string name="ui_style_simplified">Simplified</string>
     <string name="settings_ui_mode_title">Main screen layout</string>
     <string name="ui_style_simplified_support">Focuses on core task and habit management with a cleaner, more straightforward layout.</string>
-    <string name="ui_style_classic_support">Retains the classic v2 layout for a more comprehensive, at-a-glance task management experience.</string>
     <string name="ui_style_miuix">Modern Mode</string>
     <string name="main_section_list">List</string>
     <string name="lifi">AI</string>
@@ -946,23 +774,13 @@
     <string name="intro_ui_style_description">Choose the main interface style you want to use in Deadliner. You can always change it later in Settings.</string>
     <string name="intro_get_started">Get started</string>
 
-    <string name="intro_theme_title">Choose Your Preferred Interface Style</string>
-    <string name="intro_theme_description">Select your preferred look for Deadliner. You can change it anytime in Settings.</string>
-
     <string name="wizard_header_title">Tutorial · Step %1$d of 3</string>
     <string name="wizard_header_skip">Skip Tutorial</string>
 
-    <string name="theme">Accent color</string>
-    <string name="settings_miuix_mode">MIUIX theme mode</string>
-    <string name="settings_support_miuix_mode">Enable HyperOS style themes and components.（Experimental）</string>
-    <string name="settings_miuix_material_top_bar">Use Material 3 top bar in ModernHost</string>
-    <string name="settings_support_miuix_material_top_bar">Keep the MIUIX theme, but switch ModernHost top app bars back to the Material 3 style</string>
     <string name="settings_immersive_experience">Enable immersive experience</string>
     <string name="settings_support_immersive_experience">Use soft-glass floating tabs and a progressively blurred top bar in Compact Modern windows; wider windows keep the existing layout</string>
     <string name="settings_contrasting_home_fab">Contrasting home button</string>
     <string name="settings_support_contrasting_home_fab">Use amber soft glass to emphasize the home add action</string>
-    <string name="settings_miuix_color">MIUIX color</string>
-    <string name="settings_modern_palette_title">Modern color palette</string>
     <string name="settings_modern_palette_support">Switch the neutral surface style. Missing tonal layers fall back to the default HyperOS palette.</string>
     <string name="settings_modern_palette_hyperos">HyperOS</string>
     <string name="settings_modern_palette_hyperos_support">Default HyperOS neutral surfaces</string>
@@ -972,9 +790,7 @@
     <string name="settings_modern_palette_oppo_support">A softer misty gray-green tone</string>
     <string name="settings_modern_palette_vivo">vivo</string>
     <string name="settings_modern_palette_vivo_support">Light, restrained cool gray-white surfaces</string>
-    <string name="settings_support_miuix_color">Use HyperOS’s default color palette (requires enabling Modern Mode in the main screen layout to avoid display issues).</string>
     <string name="settings_support_display_size_lab">Preset sizes and a custom scale ratio (Experimental)</string>
-    <string name="settings_display_size_custom">Custom ratio</string>
     <string name="settings_display_size_custom_ratio">Custom scale ratio</string>
     <string name="settings_apply_custom_display_scale">Apply custom scaling</string>
     <string name="settings_support_apply_custom_display_scale">The app will use %1$d%% display size and restart to apply it</string>
@@ -1011,26 +827,19 @@
     <string name="capture_merge_sheet_desc_single">AI organization stays the default path. You can also organize it directly into a task or habit.</string>
     <string name="capture_ai_task">AI organize to task</string>
     <string name="capture_ai_habit">AI organize to habit</string>
-    <string name="capture_direct_secondary">Direct organization (Secondary)</string>
-    <string name="capture_direct_secondary_short">Direct organization</string>
     <string name="capture_direct_task">Direct to task</string>
     <string name="capture_direct_habit">Direct to habit</string>
-    <string name="capture_search_label">Search inspiration</string>
-    <string name="capture_list_title">Inspiration list</string>
-    <string name="capture_search_result_group">Search results · Inspiration</string>
+    <string name="capture_direct_label">Direct organization</string>
     <string name="capture_recent_title">Recent inspiration</string>
     <string name="capture_recent_subtitle">Keep its raw shape first, then decide later whether it should become a task or a habit.</string>
     <string name="capture_recent_subtitle_selection">Select multiple items to delete them in batch, or merge them into one task / habit.</string>
     <string name="capture_empty_hint_default">Keep unfinished thoughts here first.\nWrite it down now, organize it later.</string>
-    <string name="capture_empty_hint_search">No matching inspiration yet.\nTry another keyword, or keep capturing first.</string>
     <string name="capture_empty_title">No new inspiration yet</string>
     <string name="capture_input_title">Capture one thought first</string>
     <string name="capture_input_subtitle">Organize it later</string>
     <string name="capture_input_desc">This space is for inspirations, plan drafts, and things you may do later. No need to make it too formal yet; keep the raw version first.</string>
     <string name="capture_input_placeholder">For example: maybe start a weekly reflection ritual…</string>
-    <string name="capture_voice_input">Voice input</string>
     <string name="capture_save">Save inspiration</string>
-    <string name="capture_voice_reserved_toast">Voice entry is reserved here. Real-time transcription can be added next.</string>
     <string name="capture_card_tip">Open to keep editing, or organize into tasks and habits</string>
     <string name="capture_card_tip_selected">Once selected, you can delete or merge-organize in batch.</string>
     <string name="capture_detail_title">Inspiration detail</string>
@@ -1058,7 +867,6 @@
     <string name="capture_date_short_pattern" translatable="false">MMM d</string>
 
 
-    <string name="detail_actions_title">Task actions</string>
     <string name="detail_progress_title">Progress</string>
     <string name="detail_task_info_title">Task info</string>
     <string name="detail_note_title">Note</string>

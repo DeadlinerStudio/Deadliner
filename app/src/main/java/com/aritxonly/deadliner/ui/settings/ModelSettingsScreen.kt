@@ -10,14 +10,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,10 +35,12 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ai.LlmPreset
 import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.ui.base.AlertDialog
+import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
 import java.util.UUID
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
-import com.aritxonly.deadliner.ui.base.deadlinerOverlayContainerColor
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun ModelSettingsScreen(
@@ -272,7 +271,6 @@ fun EditPresetDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ManagePresetsSheet(
     presets: List<LlmPreset>,
@@ -281,38 +279,51 @@ fun ManagePresetsSheet(
     onDelete: (LlmPreset) -> Unit,
     onEdit: (LlmPreset) -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var confirmDelete by remember { mutableStateOf<LlmPreset?>(null) }
     var editTarget by remember { mutableStateOf<LlmPreset?>(null) }
 
-    RegisterAdvancedMaterialDialogBlur()
-    ModalBottomSheet(
+    MiuixBottomSheet(
+        show = true,
+        title = stringResource(R.string.manage_presets),
         onDismissRequest = onClose,
-        sheetState = sheetState,
-        containerColor = deadlinerOverlayContainerColor(),
     ) {
-        Text(stringResource(R.string.manage_presets), modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.titleMedium)
-        presets.forEachIndexed { i, p ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+        ) {
+            presets.forEachIndexed { i, p ->
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+                Modifier.fillMaxWidth().padding(vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(p.name, style = MaterialTheme.typography.bodyLarge)
-                    Text("${p.model} · ${p.endpoint}", style = MaterialTheme.typography.bodySmall)
-                    if (p.id == currentId) Text(stringResource(R.string.current_in_use), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    MiuixText(p.name, style = MiuixTheme.textStyles.main)
+                    MiuixText(
+                        "${p.model} · ${p.endpoint}",
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                    )
+                    if (p.id == currentId) {
+                        MiuixText(
+                            stringResource(R.string.current_in_use),
+                            style = MiuixTheme.textStyles.body2,
+                            color = MiuixTheme.colorScheme.primary,
+                        )
+                    }
                 }
-                IconButton(onClick = { editTarget = p }) {
+                MiuixIconButton(onClick = { editTarget = p }) {
                     Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_edit_wght400), contentDescription = stringResource(R.string.edit))
                 }
                 val canDelete = p.id != currentId && presets.size > 1
-                IconButton(onClick = { if (canDelete) confirmDelete = p }, enabled = canDelete) {
+                MiuixIconButton(onClick = { if (canDelete) confirmDelete = p }, enabled = canDelete) {
                     Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_delete_wght400), contentDescription = stringResource(R.string.delete))
                 }
             }
             if (i < presets.lastIndex) SettingsSectionDivider()
         }
-        Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
+        }
     }
 
     // 删除确认

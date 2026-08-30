@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -39,7 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +75,7 @@ import com.aritxonly.deadliner.ui.poster.ShareDashboardPoster
 import com.aritxonly.deadliner.ui.poster.renderPosterToCacheUri
 import com.aritxonly.deadliner.ui.poster.saveImageToGallery
 import com.aritxonly.deadliner.ui.poster.shareImage
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -87,6 +89,7 @@ fun DashboardScreen(
     activity: Activity,
     modifier: Modifier = Modifier,
     topContentPadding: Dp = 0.dp,
+    listState: LazyListState,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -131,9 +134,11 @@ fun DashboardScreen(
     var chosenBg by remember { mutableStateOf<Bitmap?>(null) }
 
     LazyColumn(
+        state = listState,
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
+            .syncTopBarMaterialScroll(listState)
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = topContentPadding)
     ) {

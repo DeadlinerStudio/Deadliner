@@ -5,56 +5,7 @@
         <item name="android:background">?android:attr/colorBackground</item>
     </style>
 
-    <style name="Widget.Deadliner.AppWidget.InnerView" parent="android:Widget">
-        <item name="android:background">?android:attr/colorBackground</item>
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
-    </style>
-
     <!-- 自定义动画 -->
-    <style name="AnimationActivityTopDown" parent="@android:style/Animation.Activity">
-        <!-- Activity打开时进入的动画 -->
-        <item name="android:activityOpenEnterAnimation">@anim/slide_up</item>
-        <!-- Activity打开时退出的动画 -->
-        <item name="android:activityOpenExitAnimation">@anim/no_anim</item>
-        <!-- Activity关闭时进入的动画 -->
-        <item name="android:activityCloseEnterAnimation">@anim/slide_down</item>
-        <!-- Activity关闭时退出的动画 -->
-        <item name="android:activityCloseExitAnimation">@anim/no_anim</item>
-    </style>
-
-    <style name="IntroTab" parent="Widget.Material3.TabLayout">
-        <item name="dividerColor">@android:color/transparent</item>
-        <item name="showDividers">middle</item>
-        <item name="dividerThickness">0dp</item>
-    </style>
-
-    <style name="ShapeAppearance.Pill" parent="ShapeAppearance.MaterialComponents.SmallComponent">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">50%</item>
-    </style>
-
-    <style name="Widget.App.SegmentedButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
-        <item name="backgroundTint">?attr/colorSurfaceVariant</item>
-        <item name="strokeColor">?attr/colorPrimary</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Pill</item>
-    </style>
-
-    <style name="Widget.App.SegmentedButtonGroup" parent="Widget.MaterialComponents.MaterialButtonToggleGroup">
-        <item name="singleSelection">true</item>
-        <item name="selectionRequired">true</item>
-    </style>
-
-    <style name="Widget.Custom.ToggleButton" parent="Widget.Material3Expressive.Button.OutlinedButton">
-        <item name="backgroundTint">@color/toggle_button_color_selector</item>
-        <!-- 覆盖圆角 -->
-        <item name="shapeAppearance">@style/ShapeAppearance.Custom.Corner16</item>
-        <item name="strokeColor">@color/transparent</item>
-    </style>
-
-    <style name="ShapeAppearance.Custom.Corner16" parent="ShapeAppearance.Material3.SmallComponent">
-        <item name="cornerSize">16dp</item>
-    </style>
 
     <style name="ShapeAppearanceOverlay.Snackbar.Corner16" parent="">
         <item name="cornerFamily">rounded</item>

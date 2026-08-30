@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.AnimatedItem
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -43,6 +45,7 @@ fun OverviewStatsScreen(
     completionTimeStats: List<Pair<String, Int>>,
     modifier: Modifier,
     topContentPadding: Dp = 0.dp,
+    listState: LazyListState,
 ) {
     val overviewItems = listOf<@Composable () -> Unit>(
         { ActiveStatsCard(activeStats) },
@@ -51,7 +54,10 @@ fun OverviewStatsScreen(
     )
 
     LazyColumn(
-        modifier = modifier.mainListContainerClip(),
+        state = listState,
+        modifier = modifier
+            .syncTopBarMaterialScroll(listState)
+            .mainListContainerClip(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = topContentPadding),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {

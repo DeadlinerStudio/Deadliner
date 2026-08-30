@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -19,7 +18,6 @@ import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
 // 别名防止冲突
 import androidx.compose.material3.AlertDialog as Material3AlertDialog
-import top.yukonga.miuix.kmp.window.WindowDialog as MiuixWindowDialog
 
 /**
  * Deadliner 基础 AlertDialog 组件
@@ -45,11 +43,10 @@ fun AlertDialog(
     miuixTitle: String? = null,
     miuixSummary: String? = null
 ) {
-    RegisterAdvancedMaterialDialogBlur(show = show)
-
     when (LocalAppDesignSystem.current) {
 
         AppDesignSystem.MATERIAL3 -> {
+            RegisterAdvancedMaterialDialogBlur(show = show)
             // M3 分支：只有当 show 为 true 时，才将其挂载到 Compose 树上
             if (show) {
                 Material3AlertDialog(
@@ -70,14 +67,12 @@ fun AlertDialog(
             val showInlineText = text != null && (renderTextContentInMiuix || miuixSummary == null)
             val showInlineContent = showInlineTitle || showInlineText
 
-            // MIUIX 分支：传入伪装好的 MutableState
-            MiuixWindowDialog(
-                show = show, // 传入包装好的 MutableState
+            MiuixDialog(
+                show = show,
                 onDismissRequest = onDismissRequest,
                 modifier = modifier,
                 title = miuixTitle,
                 summary = miuixSummary,
-                backgroundColor = deadlinerOverlayContainerColor(),
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     if (showInlineTitle) {
@@ -87,19 +82,17 @@ fun AlertDialog(
                         text?.invoke()
                     }
 
-                    CompositionLocalProvider(LocalAppDesignSystem provides AppDesignSystem.MATERIAL3) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = if (showInlineContent) 16.dp else 0.dp),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            dismissButton?.invoke()
-                            if (dismissButton != null) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
-                            confirmButton()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = if (showInlineContent) 16.dp else 0.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        dismissButton?.invoke()
+                        if (dismissButton != null) {
+                            Spacer(modifier = Modifier.width(8.dp))
                         }
+                        confirmButton()
                     }
                 }
             }

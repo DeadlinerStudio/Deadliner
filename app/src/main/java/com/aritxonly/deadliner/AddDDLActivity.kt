@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -40,7 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -49,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,6 +82,7 @@ import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.editor.DeadlineAiQuickAddCard
 import com.aritxonly.deadliner.ui.editor.DeadlineBottomActions
 import com.aritxonly.deadliner.ui.editor.DeadlineNameField
@@ -88,6 +91,9 @@ import com.aritxonly.deadliner.ui.editor.HabitEditorDraft
 import com.aritxonly.deadliner.ui.editor.HabitEditorSection
 import com.aritxonly.deadliner.ui.editor.TaskEditorDraft
 import com.aritxonly.deadliner.ui.editor.TaskEditorSection
+import com.aritxonly.deadliner.ui.category.CategoryAssignmentField
+import com.aritxonly.deadliner.ui.category.CategoryPickerSheet
+import com.aritxonly.deadliner.ui.category.toPresentation
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
@@ -109,6 +115,7 @@ import com.aritxonly.deadliner.ai.AIUtils
 class AddDDLActivity : DeadlinerAppCompatActivity() {
 
     private var selectedPage by mutableIntStateOf(0)
+    private var editingTaskUid: String? = null
 
     private var taskDraft by mutableStateOf(TaskEditorDraft())
     private var habitDraft by mutableStateOf(HabitEditorDraft())
@@ -124,6 +131,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     private var calendarImportSearchQuery by mutableStateOf("")
     private var selectedCalendarEventId by mutableStateOf<Long?>(null)
     private var showCalendarAccountFilterDialog by mutableStateOf(false)
+    private var showCategoryPicker by mutableStateOf(false)
     private var calendarAccountOptions by mutableStateOf<List<String>>(emptyList())
     private var selectedCalendarAccounts by mutableStateOf<Set<String>>(emptySet())
     private var pendingPickerLaunchJob: Job? = null
@@ -180,8 +188,12 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     companion object {
         const val EXTRA_PREFILL_TEXT = "EXTRA_PREFILL_TEXT"
         const val EXTRA_AUTO_RUN_AI = "EXTRA_AUTO_RUN_AI"
+        private const val EXTRA_EDIT_TASK_UID = "EXTRA_EDIT_TASK_UID"
         private val REMINDER_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
         private val AI_DUE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+        fun newEditIntent(context: android.content.Context, taskUid: String): Intent =
+            Intent(context, AddDDLActivity::class.java).putExtra(EXTRA_EDIT_TASK_UID, taskUid)
     }
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
@@ -194,13 +206,19 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         DynamicColorsExtension.apply(this, GlobalUtils.seedColor)
         GlobalUtils.decideHideFromRecent(this, this)
 
-        selectedPage = intent.getIntExtra("EXTRA_CURRENT_TYPE", 0).coerceIn(0, 1)
+        editingTaskUid = intent.getStringExtra(EXTRA_EDIT_TASK_UID)
+        selectedPage = if (editingTaskUid == null) {
+            intent.getIntExtra("EXTRA_CURRENT_TYPE", 0).coerceIn(0, 1)
+        } else {
+            0
+        }
 
         val generatedDDL = intent.getParcelableExtra<GeneratedDDL>("EXTRA_GENERATE_DDL")
         val prefillText = intent.getStringExtra(EXTRA_PREFILL_TEXT)
         val autoRunAi = intent.getBooleanExtra(EXTRA_AUTO_RUN_AI, false)
 
         applyInitialData(generatedDDL, prefillText, autoRunAi)
+        editingTaskUid?.let(::loadTaskForEditing)
         promptDeadlinerDonateIfNeeded()
 
         setContent {
@@ -235,6 +253,28 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     private fun updateSharedName(name: String) {
         taskDraft = taskDraft.copy(name = name)
         habitDraft = habitDraft.copy(name = name)
+    }
+
+    private fun loadTaskForEditing(taskUid: String) {
+        val task = KmpV6Runtime.database.tasks.find(taskUid)
+        if (task == null) {
+            Toast.makeText(this, R.string.parse_failed, Toast.LENGTH_SHORT).show()
+            finishAfterTransition()
+            return
+        }
+        val startTime = task.startAt?.let(GlobalUtils::parseDateTime) ?: LocalDateTime.now()
+        val endTime = task.dueAt?.let(GlobalUtils::parseDateTime)
+            ?.takeIf { !it.isBefore(startTime) }
+            ?: startTime.plusHours(1)
+        taskDraft = TaskEditorDraft(
+            name = task.title,
+            note = task.note,
+            startTime = startTime,
+            endTime = endTime,
+            isStarred = task.isStarred,
+            categoryUid = task.categoryUid,
+        )
+        calendarEventId = task.calendarEventId
     }
 
     private fun updateSharedStarred(isStarred: Boolean) {
@@ -305,6 +345,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         val pageSurfaceColor = MaterialTheme.colorScheme.surface
         val advancedMaterial = LocalAdvancedMaterialSpec.current
         val layoutDirection = LocalLayoutDirection.current
+        val categories = remember { KmpV6Runtime.database.categories.list().filterNot { it.isDeleted }.sortedBy { it.sortOrder }.map { it.toPresentation() } }
         val filteredCalendarEvents = calendarImportEvents.filter { event ->
             val query = calendarImportSearchQuery.trim()
             if (query.isBlank()) {
@@ -334,11 +375,20 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                     surfaceColor = MaterialTheme.colorScheme.surface
                 )
 
+                val taskEditorListState = rememberLazyListState()
+                val habitEditorListState = rememberLazyListState()
+                val activeEditorListState = if (selectedPage == 0) {
+                    taskEditorListState
+                } else {
+                    habitEditorListState
+                }
+
                 AdaptiveMaterialScaffold(
                     containerColor = Color.Transparent,
                     contentColor = contentColorFor(Color.Transparent),
                     contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     advancedMaterialTopBarTintColor = MaterialTheme.colorScheme.surface,
+                    topBarMaterialScrollKey = selectedPage,
                     topBar = {
                         Column(
                             modifier = Modifier
@@ -346,7 +396,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                 .background(if (advancedMaterial.enabled) Color.Transparent else pageSurfaceColor)
                         ) {
                             TopAppBar(
-                                title = stringResource(R.string.add_task),
+                                title = stringResource(if (editingTaskUid == null) R.string.add_task else R.string.edit),
                                 mode = TopAppBarStyle.CENTER,
                                 titleTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
                                 useParentMaterialContainer = advancedMaterial.enabled,
@@ -361,7 +411,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                     }
                                 },
                                 actions = {
-                                    if (selectedPage == 0) {
+                                    if (selectedPage == 0 && editingTaskUid == null) {
                                         TopBarIconButton(onClick = { onImportFromCalendarClick() }) {
                                             Icon(
                                                 painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_event_wght400),
@@ -373,27 +423,31 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                     }
                                 }
                             )
-                            TabRow(
-                                tabs = tabs,
-                                selectedTabIndex = selectedPage,
-                                onTabSelected = { selectedPage = it },
-                                divider = { HorizontalDivider(color = Color.Transparent) },
-                                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)
-                            )
+                            if (editingTaskUid == null) {
+                                TabRow(
+                                    tabs = tabs,
+                                    selectedTabIndex = selectedPage,
+                                    onTabSelected = { selectedPage = it },
+                                    divider = { HorizontalDivider(color = Color.Transparent) },
+                                    modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)
+                                )
+                            }
                         }
                     },
                     bottomBar = {
                         DeadlineBottomActions(
-                            showSaveToCalendar = selectedPage == 0,
+                            showSaveToCalendar = selectedPage == 0 && editingTaskUid == null,
                             onSave = { requestSave(SaveAction.SAVE) },
                             onSaveToCalendar = { requestSave(SaveAction.SAVE_TO_CALENDAR) }
                         )
                     }
                 ) { padding ->
                     LazyColumn(
+                        state = activeEditorListState,
                         modifier = Modifier
                             .fillMaxSize()
                             .background(pageSurfaceColor)
+                            .syncTopBarMaterialScroll(activeEditorListState)
                             .padding(
                                 start = padding.calculateStartPadding(layoutDirection),
                                 end = padding.calculateEndPadding(layoutDirection),
@@ -421,6 +475,14 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                             DeadlineNameField(
                                 value = taskDraft.name,
                                 onValueChange = { updateSharedName(it) }
+                            )
+                        }
+
+                        item {
+                            CategoryAssignmentField(
+                                categoryUid = if (selectedPage == 0) taskDraft.categoryUid else habitDraft.categoryUid,
+                                categories = categories,
+                                onClick = { showCategoryPicker = true },
                             )
                         }
 
@@ -502,6 +564,18 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                             }
                         }
                     }
+                }
+
+                if (showCategoryPicker) {
+                    CategoryPickerSheet(
+                        categories = categories,
+                        selectedUid = if (selectedPage == 0) taskDraft.categoryUid else habitDraft.categoryUid,
+                        onSelected = { uid ->
+                            if (selectedPage == 0) taskDraft = taskDraft.copy(categoryUid = uid)
+                            else habitDraft = habitDraft.copy(categoryUid = uid)
+                        },
+                        onDismiss = { showCategoryPicker = false },
+                    )
                 }
 
                 if (showDonatePrompt) {
@@ -813,12 +887,13 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     }
 
     private fun saveTask(name: String, toCalendar: Boolean) {
-        val editor = KmpV6Runtime.createTaskEditorViewModel()
+        val editor = KmpV6Runtime.createTaskEditorViewModel(editingTaskUid)
         editor.updateTitle(name)
         editor.updateNote(taskDraft.note)
         editor.updateStartAt(taskDraft.startTime.toString())
         editor.updateDueAt(taskDraft.endTime.toString())
         editor.updateIsStarred(taskDraft.isStarred)
+        editor.updateCategory(taskDraft.categoryUid)
         editor.updateCalendarEventId(calendarEventId)
         editor.save()
         lifecycleScope.launch {
@@ -887,6 +962,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                 HabitReminder(habitDraft.reminderTime.format(REMINDER_TIME_FORMATTER))
             } else null
         )
+        editor.updateCategory(habitDraft.categoryUid)
         editor.save()
         lifecycleScope.launch {
             editor.uiState.collect { state ->

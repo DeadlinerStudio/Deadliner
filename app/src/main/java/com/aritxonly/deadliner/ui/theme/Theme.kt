@@ -1,6 +1,7 @@
 package com.aritxonly.deadliner.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.runtime.Composable
@@ -8,13 +9,16 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.LocalMaterialSymbolStyle
 import com.aritxonly.deadliner.ui.MaterialSymbolStyle
 import com.aritxonly.deadliner.ui.MaterialSymbolAxisPolicy
+import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 
 enum class AppDesignSystem {
     MATERIAL3,
@@ -99,7 +103,18 @@ fun DeadlinerTheme(
                 colorScheme = materialColorScheme,
                 typography = Typography,
             ) {
-                content()
+                if (designSystem == AppDesignSystem.MIUIX) {
+                    MiuixScaffold(
+                        containerColor = Color.Transparent,
+                        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                    ) {
+                        ProvideAdvancedMaterialDialogBlurHost {
+                            content()
+                        }
+                    }
+                } else {
+                    content()
+                }
             }
         }
     }

@@ -58,6 +58,7 @@ fun MainSearchBar(
     expanded: Boolean,
     onExpandedChangeExternal: (Boolean) -> Unit = {},
     onArchiveClick: (() -> Unit)? = null,
+    onCategoryFilterClick: () -> Unit = {},
     useSurfaceColors: Boolean = false,
     miuixMode: Boolean = LocalAppDesignSystem.current == AppDesignSystem.MIUIX,
     content: @Composable ColumnScope.() -> Unit = {},
@@ -148,7 +149,9 @@ fun MainSearchBar(
                                     M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_arrow_back_wght400), stringResource(R.string.back))
                                 }
                             } else {
-                                M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400), stringResource(R.string.search_events))
+                                M3IconButton(onClick = onCategoryFilterClick) {
+                                    M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_sort_wght400), stringResource(R.string.filter_dialog_title))
+                                }
                             }
                         },
                         trailingIcon = {

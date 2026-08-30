@@ -60,13 +60,16 @@ fun AdaptiveMaterialScaffold(
     advancedMaterialTopBarTintColor: Color? = null,
     wrapTopBarInMaterialContainer: Boolean = true,
     topBarMaterialAlpha: Float = 1f,
+    topBarMaterialScrollKey: Any? = Unit,
     useCurrentTopBarHeightForContentPadding: Boolean = false,
     applyScaffoldPaddingOutsideBackdrop: Boolean = false,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val immersiveExperienceEnabled = LocalImmersiveExperienceEnabled.current
-    val topBarScrollObserver = rememberTopBarMaterialScrollObserver()
+    val topBarScrollObserver = rememberTopBarMaterialScrollObserver(
+        scrollKey = topBarMaterialScrollKey,
+    )
     val topBarScrollProgress = if (immersiveExperienceEnabled) {
         topBarScrollObserver.progress
     } else {
@@ -109,8 +112,12 @@ fun AdaptiveMaterialScaffold(
         }
     }
 
-    CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+    CompositionLocalProvider(
+        LocalTopBarScrollProgress provides topBarScrollProgress,
+        LocalTopBarMaterialScrollObserver provides topBarScrollObserver,
+    ) {
         ProvideAdvancedMaterialDialogBlurHost {
+            RegisterAdvancedMaterialModalBackdrop(backdrop)
             Scaffold(
         modifier = modifier
             .let { scaffoldModifier ->
@@ -168,19 +175,25 @@ fun AdaptiveMaterialScaffold(
         Box(
             modifier = hostModifier,
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .let { baseModifier ->
-                        if (backdrop != null) {
-                            baseModifier.layerBackdrop(backdrop)
-                        } else {
-                            baseModifier
-                        }
+            if (backdrop != null) {
+                CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .layerBackdrop(backdrop)
+                            .background(containerColor),
+                    ) {
+                        content(contentPadding)
                     }
-                    .background(containerColor),
-            ) {
-                content(contentPadding)
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(containerColor),
+                ) {
+                    content(contentPadding)
+                }
             }
 
             val topBarModifier = Modifier

@@ -5,15 +5,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
+import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
@@ -21,6 +22,7 @@ import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import androidx.compose.material3.OutlinedTextField as Material3OutlinedTextField
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun OutlinedTextField(
@@ -49,6 +51,7 @@ fun OutlinedTextField(
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
 
     miuixLabel: String = "",
+    miuixFormStyle: Boolean = false,
 ) {
     when (LocalAppDesignSystem.current) {
         AppDesignSystem.MATERIAL3 -> {
@@ -87,12 +90,17 @@ fun OutlinedTextField(
                 readOnly = readOnly,
                 // 把辅助参数喂给 MIUIX
                 label = miuixLabel,
-                colors = MiuixTextFieldDefaults.textFieldColors(
-                    backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+                colors =
+                    MiuixTextFieldDefaults.textFieldColors(
+                        backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
+                        labelColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+                    ),
                 useLabelAsPlaceholder = true, // 让 MIUIX 的行为更接近 M3 的 placeholder 习惯
-//                cornerRadius = dimensionResource(R.dimen.item_corner_radius),
+                cornerRadius = if (miuixFormStyle) {
+                    dimensionResource(R.dimen.item_corner_radius)
+                } else {
+                    MiuixTextFieldDefaults.CornerRadius
+                },
 
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon,

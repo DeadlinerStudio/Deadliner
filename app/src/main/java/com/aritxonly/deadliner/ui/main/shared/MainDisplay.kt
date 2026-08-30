@@ -48,7 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -112,14 +112,20 @@ import androidx.compose.ui.window.PopupProperties
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.main.HabitItemCardSimplified
 import com.aritxonly.deadliner.ui.main.simplified.*
+import com.aritxonly.deadliner.ui.category.CategoryFilter
+import com.aritxonly.deadliner.ui.category.CategoryFilterResolver
+import com.aritxonly.deadliner.ui.category.CategoryPresentation
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.io.File
@@ -157,13 +163,17 @@ fun MainDisplay(
     onCelebrate: (() -> Unit)? = null,
     topOverlayPadding: Dp = 0.dp,
     listNestedScrollConnection: NestedScrollConnection? = null,
+    categories: List<CategoryPresentation> = emptyList(),
+    categoryFilter: CategoryFilter = CategoryFilter.All,
 ) {
     val context = LocalContext.current
 
     val scope = rememberCoroutineScope()
     var abandonDialogVisible by remember { mutableStateOf(false) }
     var activeSwipeTaskId by remember { mutableStateOf<String?>(null) }
+    var pullRefreshInProgress by remember { mutableStateOf(false) }
     val pullToRefreshState = rememberPullToRefreshState()
+    val effectiveIsRefreshing = isRefreshing || pullRefreshInProgress
 
     LaunchedEffect(selectionMode) {
         if (selectionMode) activeSwipeTaskId = null
@@ -180,20 +190,35 @@ fun MainDisplay(
     }
 
     val habitState by habitViewModel.uiState.collectAsState()
+    val categoryByUid = remember(categories) { categories.associateBy(CategoryPresentation::uid) }
+    val availableCategoryUids = remember(categories) { categories.mapTo(mutableSetOf(), CategoryPresentation::uid) }
+    val filteredHabits = remember(habitState.visibleHabits, categoryFilter, availableCategoryUids) {
+        habitState.visibleHabits.filter { habit ->
+            CategoryFilterResolver.matches(categoryFilter, habit.habit.categoryUid, availableCategoryUids)
+        }
+    }
 
     Column(modifier) {
         PullToRefreshBox(
-            isRefreshing = isRefreshing,
+            isRefreshing = effectiveIsRefreshing,
             state = pullToRefreshState,
             onRefresh = {
-                taskViewModel.loadNow()
-                habitViewModel.loadNow()
+                if (!pullRefreshInProgress) {
+                    scope.launch {
+                        pullRefreshInProgress = true
+                        try {
+                            KmpV6Runtime.refreshMainLists()
+                        } finally {
+                            pullRefreshInProgress = false
+                        }
+                    }
+                }
             },
             modifier = modifier.fillMaxSize(),
             indicator = {
                 PullToRefreshDefaults.LoadingIndicator(
                     state = pullToRefreshState,
-                    isRefreshing = isRefreshing,
+                    isRefreshing = effectiveIsRefreshing,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = topOverlayPadding)
@@ -212,6 +237,7 @@ fun MainDisplay(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier
                             .fillMaxSize()
+                            .syncTopBarMaterialScroll(listState)
                             .let { listModifier ->
                                 if (listNestedScrollConnection != null) {
                                     listModifier.nestedScroll(listNestedScrollConnection)
@@ -256,6 +282,7 @@ fun MainDisplay(
                                     onLongPressSelect = { onItemLongPress(item.uid) },
                                     onToggleSelect = { onItemClickInSelection(item.uid) },
                                     onAbandonDialogVisibilityChange = { abandonDialogVisible = it },
+                                    category = item.categoryUid?.let(categoryByUid::get),
                                 )
                             }
                         }
@@ -266,7 +293,8 @@ fun MainDisplay(
                         habitState.weekOverview, habitState.selectedDate,
                         habitViewModel = habitViewModel,
                         modifier = Modifier.padding(top = topOverlayPadding),
-                        habits = habitState.visibleHabits,
+                        habits = filteredHabits,
+                        categoriesByUid = categoryByUid,
                         selectionMode = selectionMode,
                         isSelected = isSelected,
                         onItemLongPress = onItemLongPress,

@@ -36,7 +36,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -105,6 +105,10 @@ import com.aritxonly.deadliner.ui.main.shared.rememberMainHostUiState
 import com.aritxonly.deadliner.ui.main.shared.rememberMainSelectionActionController
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
 import com.aritxonly.deadliner.ui.main.simplified.MainSearchBar
+import com.aritxonly.deadliner.ui.category.CategoryFilter
+import com.aritxonly.deadliner.ui.category.CategoryFilterResolver
+import com.aritxonly.deadliner.ui.category.CategoryFilterSheet
+import com.aritxonly.deadliner.ui.category.toPresentation
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButtonDefaults
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationAction
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
@@ -158,6 +162,8 @@ fun ModernHost(
     var activeSelectionPane by rememberSaveable { mutableStateOf<DeadlineType?>(null) }
     var parties by remember { mutableStateOf<List<Party>>(emptyList()) }
     var fireKey by remember { mutableIntStateOf(0) }
+    var showCategoryFilter by rememberSaveable { mutableStateOf(false) }
+    var categoryFilter by remember { mutableStateOf<CategoryFilter>(CategoryFilter.All) }
 
     val taskListState = rememberLazyListState()
     val habitListState = rememberLazyListState()
@@ -292,6 +298,8 @@ fun ModernHost(
             context.getString(R.string.main_section_list),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_fill_wght400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
+            selectedIconResource = R.drawable.miuix_home_fill,
+            unselectedIconResource = R.drawable.miuix_home,
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
             immersiveIconResource = R.drawable.msr_home_wght400,
             immersiveIconScale = 1.10f,
@@ -301,6 +309,8 @@ fun ModernHost(
             context.getString(R.string.overview),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_fill_wght400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_wght400),
+            selectedIconResource = R.drawable.miuix_overview_fill,
+            unselectedIconResource = R.drawable.miuix_overview,
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_wght400),
             immersiveIconResource = R.drawable.msr_pie_chart_wght400,
             immersiveIconScale = 1.05f,
@@ -310,6 +320,8 @@ fun ModernHost(
             context.getString(R.string.capture_title),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture_400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture_400),
+            selectedIconResource = R.drawable.ic_capture_400,
+            unselectedIconResource = R.drawable.ic_capture_400,
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture),
         ),
         AdaptiveNavItem(
@@ -317,6 +329,8 @@ fun ModernHost(
             context.getString(R.string.lifi),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_lifi),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_lifi),
+            selectedIconResource = R.drawable.ic_lifi,
+            unselectedIconResource = R.drawable.ic_lifi,
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_lifi),
             immersiveIconScale = 0.9f,
         ),
@@ -325,6 +339,8 @@ fun ModernHost(
             context.getString(R.string.search),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
+            selectedIconResource = R.drawable.miuix_search,
+            unselectedIconResource = R.drawable.miuix_search,
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
             immersiveIconResource = R.drawable.msr_search_wght400,
             immersiveIconScale = 1.18f,
@@ -394,6 +410,12 @@ fun ModernHost(
         hostState.selectedSection == MainSection.LIFI -> ModernTopBarState.HIDDEN
         else -> ModernTopBarState.CAPTURE
     }
+    val topBarMaterialScrollKey = when (hostState.selectedSection) {
+        MainSection.LIST -> hostState.selectedPage
+        MainSection.OVERVIEW -> overviewSelectedTab
+        MainSection.CAPTURE,
+        MainSection.LIFI -> Unit
+    }
     val useOverlayTopBar = when (hostState.selectedSection) {
         MainSection.LIST -> !searchActive
         MainSection.OVERVIEW -> !useFlattenedOverview
@@ -408,9 +430,14 @@ fun ModernHost(
     val forceMaterialTopBarsInMiuix = appearance.usesMiuixTheme && appearance.useMaterialTopAppBarInMiuix
 
     val taskState by taskVm.uiState.collectAsStateWithLifecycle()
+    val categories = remember(taskState) {
+        KmpV6Runtime.database.categories.list().filterNot { it.isDeleted }.sortedBy { it.sortOrder }.map { it.toPresentation() }
+    }
+    val availableCategoryUids = remember(categories) { categories.mapTo(mutableSetOf()) { it.uid } }
     val displayedTasks = taskVm.getFilteredTasks().filter {
         it.state != com.deadliner.domain.task.TaskState.ARCHIVED &&
-            it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED
+            it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED &&
+            CategoryFilterResolver.matches(categoryFilter, it.categoryUid, availableCategoryUids)
     }
     val sharedHabitState by sharedHabitVm.uiState.collectAsStateWithLifecycle()
     val selectionActions = rememberMainSelectionActionController(
@@ -435,6 +462,7 @@ fun ModernHost(
         items = navItems,
         selectedKey = selectedKey,
         useImmersiveExperience = appearance.useImmersiveExperience,
+        topBarMaterialScrollKey = topBarMaterialScrollKey,
         immersiveDetachedItemKey = "search",
         immersiveDetachedAction = immersiveDetachedAction,
         onItemSelected = {
@@ -513,6 +541,7 @@ fun ModernHost(
                                 } else {
                                     null
                                 },
+                                onCategoryFilterClick = { showCategoryFilter = true },
                             )
                         }
                         ModernTopBarState.LIST_SELECTION -> {
@@ -685,6 +714,8 @@ fun ModernHost(
                                         onCelebrate = { celebrate() },
                                         topOverlayPadding = overlayTopBarPadding,
                                         listNestedScrollConnection = listChromeScrollConnection,
+                                        categories = categories,
+                                        categoryFilter = categoryFilter,
                                     )
                                     if (taskPaneBlocked) {
                                         Box(
@@ -733,6 +764,8 @@ fun ModernHost(
                                         },
                                         onCelebrate = { celebrate() },
                                         topOverlayPadding = overlayTopBarPadding,
+                                        categories = categories,
+                                        categoryFilter = categoryFilter,
                                     )
                                     if (habitPaneBlocked) {
                                         Box(
@@ -776,6 +809,8 @@ fun ModernHost(
                                 onCelebrate = { celebrate() },
                                 topOverlayPadding = overlayTopBarPadding,
                                 listNestedScrollConnection = listChromeScrollConnection,
+                                categories = categories,
+                                categoryFilter = categoryFilter,
                             )
                         }
                         },
@@ -859,6 +894,14 @@ fun ModernHost(
         visible = hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings,
         onDismiss = { showOverviewSettings = false },
     )
+    if (showCategoryFilter) {
+        CategoryFilterSheet(
+            categories = categories,
+            filter = categoryFilter,
+            onFilterChange = { categoryFilter = it },
+            onDismiss = { showCategoryFilter = false },
+        )
+    }
     }
     }
 

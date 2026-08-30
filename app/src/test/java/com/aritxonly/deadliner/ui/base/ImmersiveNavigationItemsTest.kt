@@ -16,6 +16,8 @@ class ImmersiveNavigationItemsTest {
         label = key,
         selectedIcon = testIcon,
         unselectedIcon = testIcon,
+        selectedIconResource = 0,
+        unselectedIconResource = 0,
         enabled = enabled,
     )
 

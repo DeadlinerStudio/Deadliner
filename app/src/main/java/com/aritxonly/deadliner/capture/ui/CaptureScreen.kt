@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -17,30 +16,27 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan.Companion.FullLine
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import com.aritxonly.deadliner.ui.base.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,6 +47,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -66,15 +63,23 @@ import com.aritxonly.deadliner.capture.CaptureViewModel
 import com.deadliner.domain.capture.CaptureItem
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
-import com.aritxonly.deadliner.ui.base.deadlinerOverlayContainerColor
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
 import com.aritxonly.deadliner.ui.settings.RoundedTextField
 import com.aritxonly.deadliner.ui.settings.RoundedTextFieldMetrics
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
+import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -231,8 +236,8 @@ fun CaptureContent(
     val layoutDirection = LocalLayoutDirection.current
     val ui by vm.uiState.collectAsState()
     val selectedCount = ui.selectedUids.size
-    var showDirectConvertMenu by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<PendingCaptureDelete?>(null) }
+    val listState = rememberLazyListState()
     val listContentPadding = remember(contentPadding, topOverlayPadding, bottomLiftPadding, layoutDirection) {
         PaddingValues(
             top = contentPadding.calculateTopPadding() + topOverlayPadding,
@@ -293,84 +298,69 @@ fun CaptureContent(
     }
 
     if (showMergeSheet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        RegisterAdvancedMaterialDialogBlur()
-        ModalBottomSheet(
+        MiuixBottomSheet(
+            show = true,
+            title = stringResource(
+                if (selectedCount > 1) R.string.capture_merge_sheet_title else R.string.capture_merge_sheet_title_single,
+            ),
             onDismissRequest = { onShowMergeSheetChange(false) },
-            sheetState = sheetState,
-            containerColor = deadlinerOverlayContainerColor(),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(
+                MiuixText(
                     stringResource(
-                        if (selectedCount > 1) {
-                            R.string.capture_merge_sheet_title
-                        } else {
-                            R.string.capture_merge_sheet_title_single
-                        }
+                        if (selectedCount > 1) R.string.capture_merge_sheet_desc else R.string.capture_merge_sheet_desc_single,
                     ),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
-                Text(
-                    stringResource(
-                        if (selectedCount > 1) {
-                            R.string.capture_merge_sheet_desc
-                        } else {
-                            R.string.capture_merge_sheet_desc_single
-                        }
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                MiuixText(
+                    stringResource(R.string.capture_ai_default_label),
+                    style = MiuixTheme.textStyles.main,
                 )
-                FilledTonalButton(
-                    onClick = {
-                        onShowMergeSheetChange(false)
-                        vm.convertSelectedToTask(useAi = true)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.capture_ai_task)) }
-                FilledTonalButton(
-                    onClick = {
-                        onShowMergeSheetChange(false)
-                        vm.convertSelectedToHabit(useAi = true)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text(stringResource(R.string.capture_ai_habit)) }
-
-                Box {
-                    OutlinedButton(
-                        onClick = { showDirectConvertMenu = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.capture_direct_secondary))
-                    }
-                    DropdownMenu(
-                        expanded = showDirectConvertMenu,
-                        onDismissRequest = { showDirectConvertMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.capture_direct_task)) },
-                            onClick = {
-                                showDirectConvertMenu = false
-                                onShowMergeSheetChange(false)
-                                vm.convertSelectedToTask(useAi = false)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.capture_direct_habit)) },
-                            onClick = {
-                                showDirectConvertMenu = false
-                                onShowMergeSheetChange(false)
-                                vm.convertSelectedToHabit(useAi = false)
-                            }
-                        )
-                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    MiuixButton(
+                        onClick = {
+                            onShowMergeSheetChange(false)
+                            vm.convertSelectedToTask(useAi = true)
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = MiuixButtonDefaults.buttonColorsPrimary(),
+                    ) { MiuixText(stringResource(R.string.capture_ai_task)) }
+                    MiuixButton(
+                        onClick = {
+                            onShowMergeSheetChange(false)
+                            vm.convertSelectedToHabit(useAi = true)
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) { MiuixText(stringResource(R.string.capture_ai_habit)) }
+                }
+                MiuixText(
+                    stringResource(R.string.capture_direct_label),
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    MiuixTextButton(
+                        text = stringResource(R.string.capture_direct_task),
+                        onClick = {
+                            onShowMergeSheetChange(false)
+                            vm.convertSelectedToTask(useAi = false)
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                    MiuixTextButton(
+                        text = stringResource(R.string.capture_direct_habit),
+                        onClick = {
+                            onShowMergeSheetChange(false)
+                            vm.convertSelectedToHabit(useAi = false)
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }
@@ -486,12 +476,14 @@ fun CaptureContent(
         }
     } else {
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     start = contentPadding.calculateStartPadding(layoutDirection),
                     end = contentPadding.calculateEndPadding(layoutDirection),
                 )
+                .syncTopBarMaterialScroll(listState)
                 .mainListContainerClip(),
             contentPadding = listContentPadding,
             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -819,7 +811,7 @@ private fun EmptyCaptureHint(text: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CaptureDetailSheet(
     text: String,
@@ -833,110 +825,95 @@ private fun CaptureDetailSheet(
     onDirectTask: () -> Unit,
     onDirectHabit: () -> Unit
 ) {
-    var secondaryMenuExpanded by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    RegisterAdvancedMaterialDialogBlur()
-    ModalBottomSheet(
+    MiuixBottomSheet(
+        show = true,
+        title = stringResource(R.string.capture_detail_title),
         onDismissRequest = onClose,
-        sheetState = sheetState,
-        containerColor = deadlinerOverlayContainerColor(),
+        startAction = {
+            MiuixIconButton(onClick = onClose) {
+                Icon(
+                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_close_wght400),
+                    contentDescription = stringResource(R.string.close),
+                )
+            }
+        },
+        endAction = {
+            MiuixIconButton(onClick = onSave) {
+                Icon(
+                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_check_wght400),
+                    contentDescription = stringResource(R.string.save),
+                )
+            }
+        },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onClose) {
-                    Icon(
-                        painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_close_wght400),
-                        contentDescription = stringResource(R.string.close),
-                        modifier = expressiveTypeModifier,
-                    )
-                }
-                Text(
-                    stringResource(R.string.capture_detail_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = onSave) {
-                    Icon(
-                        painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_check_wght400),
-                        contentDescription = stringResource(R.string.save)
-                    )
-                }
-            }
-
-            RoundedTextField(
+            MiuixTextField(
                 value = text,
                 onValueChange = onTextChange,
-                hint = stringResource(R.string.capture_detail_placeholder),
-                metrics = RoundedTextFieldMetrics(
-                    singleLine = false,
-                    minHeight = 180.dp,
-                    cornerSize = 12.dp
+                label = stringResource(R.string.capture_detail_placeholder),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 152.dp),
+                colors = MiuixTextFieldDefaults.textFieldColors(
+                    backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
+                    labelColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                 ),
-                modifier = Modifier.fillMaxWidth()
+                useLabelAsPlaceholder = true,
+                cornerRadius = 16.dp,
+                singleLine = false,
             )
 
             if (loading) {
-                Text(
+                MiuixText(
                     stringResource(R.string.capture_ai_loading),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.colorScheme.primary,
                 )
             }
 
-            Text(
-                stringResource(R.string.capture_ai_default_label),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilledTonalButton(onClick = onAiTask) { Text(stringResource(R.string.capture_ai_task)) }
-                FilledTonalButton(onClick = onAiHabit) { Text(stringResource(R.string.capture_ai_habit)) }
-                Box {
-                    OutlinedButton(onClick = { secondaryMenuExpanded = true }) {
-                        Icon(
-                            painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_more_vert_wght400),
-                            contentDescription = null
-                        )
-                        Text(" ${stringResource(R.string.capture_direct_secondary_short)}")
-                    }
-                    DropdownMenu(
-                        expanded = secondaryMenuExpanded,
-                        onDismissRequest = { secondaryMenuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.capture_direct_task)) },
-                            onClick = {
-                                secondaryMenuExpanded = false
-                                onDirectTask()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.capture_direct_habit)) },
-                            onClick = {
-                                secondaryMenuExpanded = false
-                                onDirectHabit()
-                            }
-                        )
-                    }
+            MiuixText(stringResource(R.string.capture_ai_default_label), style = MiuixTheme.textStyles.main)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                MiuixButton(
+                    onClick = onAiTask,
+                    modifier = Modifier.weight(1f),
+                    colors = MiuixButtonDefaults.buttonColorsPrimary(),
+                ) { MiuixText(stringResource(R.string.capture_ai_task)) }
+                MiuixButton(onClick = onAiHabit, modifier = Modifier.weight(1f)) {
+                    MiuixText(stringResource(R.string.capture_ai_habit))
                 }
             }
-
-            HorizontalDivider()
-
-            TextButton(onClick = onDelete) { Text(stringResource(R.string.capture_delete_item)) }
+            MiuixText(
+                stringResource(R.string.capture_direct_label),
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                MiuixTextButton(
+                    text = stringResource(R.string.capture_direct_task),
+                    onClick = onDirectTask,
+                    modifier = Modifier.weight(1f),
+                )
+                MiuixTextButton(
+                    text = stringResource(R.string.capture_direct_habit),
+                    onClick = onDirectHabit,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            MiuixTextButton(
+                text = stringResource(R.string.capture_delete_item),
+                onClick = onDelete,
+                modifier = Modifier.align(Alignment.End),
+                colors = MiuixButtonDefaults.textButtonColors(
+                    color = Color.Transparent,
+                    disabledColor = Color.Transparent,
+                    textColor = MiuixTheme.colorScheme.error,
+                ),
+            )
         }
     }
 }

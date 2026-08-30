@@ -6,9 +6,11 @@ import org.junit.Test
 
 class ProgressiveTopBarMaterialTest {
     @Test
-    fun overlayUsesStrongerSurfaceContrastAndEndsBeforeThreeQuarters() {
+    fun overlayKeepsDefaultSurfaceContrastAndBlurRadiusIsDeepened() {
+        assertEquals(8f, ProgressiveTopBarBlurRadiusDp, 0.0001f)
         assertEquals(0.94f, ProgressiveTopBarOverlayTopAlpha, 0.0001f)
         assertEquals(0.80f, ProgressiveTopBarOverlayEndFraction, 0.0001f)
+        assertEquals(0.75f, ProgressiveTopBarContentEndFraction, 0.0001f)
     }
 
     @Test
@@ -39,9 +41,17 @@ class ProgressiveTopBarMaterialTest {
     }
 
     @Test
-    fun progressiveMaterialAddsTwentyFourDpBottomClearanceToExistingTrim() {
+    fun progressiveMaterialKeepsOriginalHeightTrim() {
         assertEquals(6f, ProgressiveTopBarMaterialHeightTrimDp, 0.0001f)
         assertEquals(12f, ProgressiveTopBarBottomClearanceDp, 0.0001f)
+    }
+
+    @Test
+    fun progressiveMaterialOnlyRevealsForAnObservedScrollPosition() {
+        assertEquals(0f, resolveProgressiveTopBarMaterialProgress(null), 0.0001f)
+        assertEquals(0f, resolveProgressiveTopBarMaterialProgress(0f), 0.0001f)
+        assertEquals(0.5f, resolveProgressiveTopBarMaterialProgress(0.5f), 0.0001f)
+        assertEquals(1f, resolveProgressiveTopBarMaterialProgress(2f), 0.0001f)
     }
 
     @Test

@@ -84,6 +84,7 @@ fun TopAppBar(
     forceMaterial3: Boolean = false,
     useParentMaterialContainer: Boolean = false,
     allowAdvancedMaterialBlur: Boolean = true,
+    advancedMaterialBlurOnlyWhenCollapsed: Boolean = false,
     buttonMaterialRevealProgress: Float? = null,
     material3ScrollBehavior: TopAppBarScrollBehavior? = null,
     miuixScrollBehavior: MiuixScrollBehavior? = null,
@@ -92,29 +93,6 @@ fun TopAppBar(
     val backdrop = LocalAdvancedMaterialBackdrop.current
     val immersiveTopBar = LocalImmersiveExperienceEnabled.current
     val progressiveMaterialHosted = LocalProgressiveTopBarMaterialHosted.current
-    val advancedMaterialBlurred =
-        allowAdvancedMaterialBlur &&
-            !immersiveTopBar &&
-            advancedMaterial.enabled &&
-            backdrop != null &&
-            !useParentMaterialContainer
-    val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.topBarTintAlpha)
-    val topBarColors = TopAppBarDefaults.topAppBarColors(
-        containerColor = when {
-            immersiveTopBar -> Color.Transparent
-            useParentMaterialContainer -> Color.Transparent
-            advancedMaterialBlurred -> Color.Transparent
-            advancedMaterial.enabled -> surfaceTint
-            else -> MaterialTheme.colorScheme.surface
-        },
-        scrolledContainerColor = when {
-            immersiveTopBar -> Color.Transparent
-            useParentMaterialContainer -> Color.Transparent
-            advancedMaterialBlurred -> Color.Transparent
-            advancedMaterial.enabled -> surfaceTint
-            else -> MaterialTheme.colorScheme.surface
-        },
-    )
     val appDesignSystem = if (forceMaterial3) {
         AppDesignSystem.MATERIAL3
     } else {
@@ -124,6 +102,39 @@ fun TopAppBar(
         AppDesignSystem.MATERIAL3 -> material3ScrollBehavior?.state?.collapsedFraction
         AppDesignSystem.MIUIX -> miuixScrollBehavior?.state?.collapsedFraction
     }
+    val isFullyCollapsed = collapsedFraction?.let { it >= 0.999f } ?: false
+    val advancedMaterialBlurEligible =
+        allowAdvancedMaterialBlur &&
+            !immersiveTopBar &&
+            advancedMaterial.enabled &&
+            backdrop != null &&
+            !useParentMaterialContainer
+    val advancedMaterialBlurred =
+        advancedMaterialBlurEligible &&
+            (!advancedMaterialBlurOnlyWhenCollapsed || isFullyCollapsed)
+    val transparentBeforeAdvancedMaterialBlur =
+        advancedMaterialBlurEligible &&
+            advancedMaterialBlurOnlyWhenCollapsed &&
+            !isFullyCollapsed
+    val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.topBarTintAlpha)
+    val topBarColors = TopAppBarDefaults.topAppBarColors(
+        containerColor = when {
+            immersiveTopBar -> Color.Transparent
+            useParentMaterialContainer -> Color.Transparent
+            transparentBeforeAdvancedMaterialBlur -> Color.Transparent
+            advancedMaterialBlurred -> Color.Transparent
+            advancedMaterial.enabled -> surfaceTint
+            else -> MaterialTheme.colorScheme.surface
+        },
+        scrolledContainerColor = when {
+            immersiveTopBar -> Color.Transparent
+            useParentMaterialContainer -> Color.Transparent
+            transparentBeforeAdvancedMaterialBlur -> Color.Transparent
+            advancedMaterialBlurred -> Color.Transparent
+            advancedMaterial.enabled -> surfaceTint
+            else -> MaterialTheme.colorScheme.surface
+        },
+    )
     val buttonMaterialTarget = resolveTopBarButtonMaterialProgress(
         collapsedFraction = collapsedFraction,
         scrollProgress = LocalTopBarScrollProgress.current,
@@ -247,6 +258,7 @@ fun TopAppBar(
                 val miuixContainerColor = when {
                     immersiveTopBar -> Color.Transparent
                     useParentMaterialContainer -> Color.Transparent
+                    transparentBeforeAdvancedMaterialBlur -> Color.Transparent
                     advancedMaterialBlurred -> Color.Transparent
                     advancedMaterial.enabled -> surfaceTint
                     else -> MaterialTheme.colorScheme.surface

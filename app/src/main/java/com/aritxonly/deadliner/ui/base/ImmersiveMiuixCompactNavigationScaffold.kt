@@ -80,18 +80,20 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .let { contentModifier ->
-                        if (backdrop != null) {
-                            contentModifier.layerBackdrop(backdrop)
-                        } else {
-                            contentModifier
-                        }
-                    },
-            ) {
-                content(PaddingValues())
+            if (backdrop != null) {
+                CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .layerBackdrop(backdrop),
+                    ) {
+                        content(PaddingValues())
+                    }
+                }
+            } else {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    content(PaddingValues())
+                }
             }
 
             if (backdrop != null) {

@@ -14,17 +14,26 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
+import com.aritxonly.deadliner.ui.theme.AppDesignSystem
+import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
+import top.yukonga.miuix.kmp.blur.LayerBackdrop
 
 @Stable
 class AdvancedMaterialDialogBlurHostState {
     var activeDialogs by mutableIntStateOf(0)
+        private set
+
+    private val registeredBackdrops = mutableListOf<LayerBackdrop>()
+
+    var modalBackdrop by mutableStateOf<LayerBackdrop?>(null)
         private set
 
     fun register() {
@@ -33,6 +42,19 @@ class AdvancedMaterialDialogBlurHostState {
 
     fun unregister() {
         activeDialogs = (activeDialogs - 1).coerceAtLeast(0)
+    }
+
+    fun registerBackdrop(backdrop: LayerBackdrop) {
+        registeredBackdrops += backdrop
+        modalBackdrop = backdrop
+    }
+
+    fun unregisterBackdrop(backdrop: LayerBackdrop) {
+        val index = registeredBackdrops.indexOfLast { it === backdrop }
+        if (index >= 0) {
+            registeredBackdrops.removeAt(index)
+        }
+        modalBackdrop = registeredBackdrops.lastOrNull()
     }
 }
 
@@ -48,9 +70,29 @@ fun rememberAdvancedMaterialDialogBlurHostState(): AdvancedMaterialDialogBlurHos
 fun ProvideAdvancedMaterialDialogBlurHost(
     content: @Composable () -> Unit
 ) {
-    val state = rememberAdvancedMaterialDialogBlurHostState()
+    val inheritedState = LocalAdvancedMaterialDialogBlurHostState.current
+    val ownedState = rememberAdvancedMaterialDialogBlurHostState()
+    val state = if (LocalAppDesignSystem.current == AppDesignSystem.MIUIX) {
+        inheritedState ?: ownedState
+    } else {
+        ownedState
+    }
     CompositionLocalProvider(LocalAdvancedMaterialDialogBlurHostState provides state) {
         content()
+    }
+}
+
+/** Makes an already captured page backdrop available to sibling dialogs and sheets. */
+@Composable
+fun RegisterAdvancedMaterialModalBackdrop(backdrop: LayerBackdrop?) {
+    val state = LocalAdvancedMaterialDialogBlurHostState.current
+    DisposableEffect(state, backdrop) {
+        if (state != null && backdrop != null) {
+            state.registerBackdrop(backdrop)
+            onDispose { state.unregisterBackdrop(backdrop) }
+        } else {
+            onDispose { }
+        }
     }
 }
 
@@ -128,8 +170,8 @@ fun Modifier.advancedMaterialDialogBlurHost(
 ): Modifier = composed {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val hostState = LocalAdvancedMaterialDialogBlurHostState.current
-    val effectiveActive = forceActive || (
-        advancedMaterial.enabled && (active || (hostState?.activeDialogs ?: 0) > 0)
+    val effectiveActive = LocalAppDesignSystem.current == AppDesignSystem.MATERIAL3 && (
+        forceActive || (advancedMaterial.enabled && (active || (hostState?.activeDialogs ?: 0) > 0))
     )
 
     graphicsLayerBlurEffect(

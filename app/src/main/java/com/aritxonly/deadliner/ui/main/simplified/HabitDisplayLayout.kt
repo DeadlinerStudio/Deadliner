@@ -27,7 +27,9 @@ import com.aritxonly.deadliner.model.DDLStatus
 import com.deadliner.viewmodel.habit.HabitDayStatus
 import com.deadliner.viewmodel.habit.HabitListViewModel
 import com.deadliner.viewmodel.habit.HabitScheduleHintKind
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
+import com.aritxonly.deadliner.ui.category.CategoryPresentation
 
 private data class HabitDisplayItem(
     val habit: HabitDayStatus,
@@ -70,7 +72,8 @@ fun HabitDisplayLayout(
     onItemClickInSelection: (String) -> Unit = {},
     onToggleHabit: (String) -> Unit = {},
     isClassic: Boolean = false,
-    listState: LazyListState = LazyListState()
+    listState: LazyListState = LazyListState(),
+    categoriesByUid: Map<String, CategoryPresentation> = emptyMap(),
 ) {
     val context = LocalContext.current
 
@@ -128,6 +131,7 @@ fun HabitDisplayLayout(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
                 .fillMaxSize()
+                .syncTopBarMaterialScroll(listState)
                 .mainListContainerClip(),
             state = listState,
         ) {
@@ -154,7 +158,8 @@ fun HabitDisplayLayout(
                         onLongPress = {
                             onItemLongPress(uid)
                         },
-                        remainingText = item.remainingText
+                        remainingText = item.remainingText,
+                        category = item.habit.habit.categoryUid?.let(categoriesByUid::get),
                     )
                 } else {
                     HabitRowClassic(
@@ -171,7 +176,8 @@ fun HabitDisplayLayout(
                         onLongPress = {
                             onItemLongPress(uid)
                         },
-                        remainingText = item.remainingText
+                        remainingText = item.remainingText,
+                        category = item.habit.habit.categoryUid?.let(categoriesByUid::get),
                     )
                 }
             }

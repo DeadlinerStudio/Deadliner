@@ -2,8 +2,8 @@ package com.aritxonly.deadliner.ui.settings
 
 import com.aritxonly.deadliner.logging.AppLog
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,24 +18,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.aritxonly.deadliner.ui.base.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,8 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -56,16 +43,21 @@ import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.sync.SyncScheduler
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
-import com.aritxonly.deadliner.ui.base.TextButton
-import com.aritxonly.deadliner.ui.base.deadlinerOverlayContainerColor
+import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.RadioButton as MiuixRadioButton
+import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun WebSettingsScreen(
     navigateUp: () -> Unit
@@ -341,7 +333,6 @@ fun WebSettingsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SyncIntervalBottomSheet(
     show: Boolean,
@@ -356,15 +347,7 @@ fun SyncIntervalBottomSheet(
 ) {
     if (!show) return
 
-    // 允许“部分展开”，并在首次显示时默认半屏
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    val scope = rememberCoroutineScope()
-
     val context = LocalContext.current
-
-    LaunchedEffect(Unit) {
-        runCatching { sheetState.partialExpand() }
-    }
 
     val intervalOptions = remember {
         listOf(
@@ -379,11 +362,10 @@ fun SyncIntervalBottomSheet(
         )
     }
 
-    RegisterAdvancedMaterialDialogBlur()
-    ModalBottomSheet(
-        sheetState = sheetState,
+    MiuixBottomSheet(
+        show = true,
+        title = stringResource(R.string.settings_web_auto_sync),
         onDismissRequest = onDismiss,
-        containerColor = deadlinerOverlayContainerColor(),
     ) {
         // 用 Column 将主体内容与底部操作区分开：上面滚动、下面固定
         Column(
@@ -398,32 +380,23 @@ fun SyncIntervalBottomSheet(
                     .weight(1f, fill = true),
                 contentPadding = PaddingValues(bottom = 12.dp)
             ) {
-                // 标题
-                item {
-                    Text(
-                        text = stringResource(R.string.settings_web_auto_sync),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
-                    )
-                }
-
                 // 两个开关在最上面
                 item {
-                    SettingsDetailSwitchItem(
-                        headline = R.string.settings_web_wifi_only,
-                        supportingText = R.string.settings_support_web_wifi_only,
+                    MiuixSyncSettingRow(
+                        title = stringResource(R.string.settings_web_wifi_only),
+                        summary = stringResource(R.string.settings_support_web_wifi_only),
                         checked = wifiOnly,
                         onCheckedChange = onWifiOnlyChange,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 20.dp),
                     )
                 }
                 item {
-                    SettingsDetailSwitchItem(
-                        headline = R.string.settings_web_charging_only,
-                        supportingText = R.string.settings_support_web_charging_only,
+                    MiuixSyncSettingRow(
+                        title = stringResource(R.string.settings_web_charging_only),
+                        summary = stringResource(R.string.settings_support_web_charging_only),
                         checked = chargingOnly,
                         onCheckedChange = onChargingOnlyChange,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 20.dp),
                     )
                 }
 
@@ -438,9 +411,9 @@ fun SyncIntervalBottomSheet(
 
                 // 分组标题
                 item {
-                    Text(
+                    MiuixText(
                         text = stringResource(R.string.settings_web_auto_sync_time),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MiuixTheme.textStyles.main,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                     )
                 }
@@ -468,8 +441,6 @@ fun SyncIntervalBottomSheet(
             // ====== 固定在底部的操作按钮 ======
             SheetDivider(modifier = Modifier.fillMaxWidth())
 
-            var closing by remember { mutableStateOf(false) }
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -477,50 +448,21 @@ fun SyncIntervalBottomSheet(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             ) {
-                TextButton(
-                    modifier = Modifier.heightIn(min = 40.dp),
-                    enabled = !closing,
-                    forceMaterial3 = true,
-                    miuixText = stringResource(R.string.cancel),
-                    onClick = {
-                        scope.launch {
-                            closing = true
-                            // 直接收起，带过渡动画
-                            sheetState.hide()        // suspend 直到动画完成
-                            onDismiss()              // 动画结束后真正移除
-                            closing = false
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
+                MiuixTextButton(
+                    text = stringResource(R.string.cancel),
+                    onClick = onDismiss,
+                )
 
                 Spacer(Modifier.width(8.dp))
 
-                Button(
-                    modifier = Modifier.heightIn(min = 40.dp),
-                    enabled = !closing,
-                    forceMaterial3 = true,
+                MiuixButton(
                     onClick = {
-                        scope.launch {
-                            closing = true
-                            onSave()                 // 先执行业务保存
-                            sheetState.hide()        // 平滑收起
-                            onDismiss()              // 动画结束再关闭
-                            closing = false
-                        }
-                    }
+                        onSave()
+                        onDismiss()
+                    },
+                    colors = MiuixButtonDefaults.buttonColorsPrimary(),
                 ) {
-                    if (closing) {
-                        // 简单的反馈：保存/收起动画时显示一个小 Loading
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(18.dp)
-                                .padding(end = 8.dp),
-                            strokeWidth = 2.dp
-                        )
-                    }
-                    Text(stringResource(R.string.save))
+                    MiuixText(stringResource(R.string.save))
                 }
             }
         }
@@ -534,31 +476,49 @@ private fun RadioRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 圆角背景 + 轻微高亮
-    val bg = if (selected)
-        MaterialTheme.colorScheme.primaryContainer
-    else
-        MaterialTheme.colorScheme.surfaceContainer
-
-    Surface(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(bg),
-        color = Color.Transparent
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
     ) {
-        ListItem(
-            modifier = Modifier
-                .clickable(onClick = onClick)
-                .padding(horizontal = 4.dp), // 让圆角更明显
-            headlineContent = { Text(text) },
-            trailingContent = {
-                RadioButton(selected = selected, onClick = onClick)
-            },
-            leadingContent = null,
-            tonalElevation = ListItemDefaults.Elevation,
-            shadowElevation = ListItemDefaults.Elevation,
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+        MiuixText(
+            text = text,
+            modifier = Modifier.weight(1f),
+            style = MiuixTheme.textStyles.main,
+            color = if (selected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface,
+        )
+        MiuixRadioButton(selected = selected, onClick = onClick)
+    }
+}
+
+@Composable
+private fun MiuixSyncSettingRow(
+    title: String,
+    summary: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 12.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            MiuixText(text = title, style = MiuixTheme.textStyles.main)
+            MiuixText(
+                text = summary,
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            )
+        }
+        MiuixSwitch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
         )
     }
 }
@@ -567,9 +527,10 @@ private fun RadioRow(
 @Composable
 private fun SheetDivider(modifier: Modifier = Modifier, onContainer: Boolean = true) {
     if (!GlobalUtils.hideDividerUi) {
-        HorizontalDivider(
-            modifier = modifier,
-            color = MaterialTheme.colorScheme.outlineVariant
+        Spacer(
+            modifier = modifier
+                .height(1.dp)
+                .background(MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.12f)),
         )
     } else {
         Spacer(modifier = Modifier.height(0.dp))

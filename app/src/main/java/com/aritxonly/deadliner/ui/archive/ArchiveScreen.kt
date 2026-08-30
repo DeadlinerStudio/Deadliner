@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -60,6 +61,7 @@ import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TextButton
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
@@ -111,8 +113,11 @@ fun ArchiveScreen(
     var deleteTarget by remember { mutableStateOf<ArchiveDeleteTarget?>(null) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var showDeleteAllDialog by rememberSaveable { mutableStateOf(false) }
+    val taskListState = rememberLazyListState()
+    val habitListState = rememberLazyListState()
 
     val selectedTab = ArchiveTab.entries[selectedTabIndex]
+    val activeListState = if (selectedTab == ArchiveTab.TASK) taskListState else habitListState
     val archivedTasks = taskState.tasks
     val archivedHabits = habitState.habits
         .filter { it.status == HabitStatus.ARCHIVED }
@@ -145,6 +150,7 @@ fun ArchiveScreen(
         contentColor = contentColorFor(Color.Transparent),
         contentWindowInsets = WindowInsets(0),
         advancedMaterialTopBarTintColor = MaterialTheme.colorScheme.surface,
+        topBarMaterialScrollKey = selectedTab,
         topBar = {
             Column(
                 modifier = Modifier
@@ -191,9 +197,11 @@ fun ArchiveScreen(
                 .background(pageSurfaceColor),
         ) {
             LazyColumn(
+                state = activeListState,
                 modifier = Modifier
                     .fillMaxSize()
                     .background(pageSurfaceColor)
+                    .syncTopBarMaterialScroll(activeListState)
                     .padding(
                         start = innerPadding.calculateStartPadding(layoutDirection),
                         end = innerPadding.calculateEndPadding(layoutDirection),

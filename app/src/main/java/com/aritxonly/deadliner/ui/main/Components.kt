@@ -300,7 +300,8 @@ fun DDLItemCardSimplified(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     status: DDLStatus = DDLStatus.UNDERGO,
-    useDisabledCompletedStyle: Boolean = false
+    useDisabledCompletedStyle: Boolean = false,
+    categoryContent: (@Composable () -> Unit)? = null,
 ) {
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
     val progressClamped = progress.coerceIn(0f, 1f)
@@ -393,18 +394,15 @@ fun DDLItemCardSimplified(
                     }
                 }
 
-                // 第二行：备注（可空）
-                if (note.isNotEmpty()) {
-                    Text(
-                        text = note,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
-                    Spacer(modifier = Modifier.height(0.dp))
+                // 第二行：分类徽标与备注（可空）
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    categoryContent?.invoke()
+                    if (categoryContent != null && note.isNotEmpty()) Spacer(Modifier.width(6.dp))
+                    if (note.isNotEmpty()) {
+                        Text(text = note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    } else {
+                        Spacer(modifier = Modifier.height(0.dp))
+                    }
                 }
             }
         }

@@ -58,6 +58,8 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 import com.aritxonly.deadliner.ui.base.Checkbox
+import com.aritxonly.deadliner.ui.category.CategoryBadge
+import com.aritxonly.deadliner.ui.category.CategoryPresentation
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -188,7 +190,8 @@ fun HabitRow(
     onToggle: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
-    remainingText: String? = null
+    remainingText: String? = null,
+    category: CategoryPresentation? = null,
 ) {
     val context = LocalContext.current
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
@@ -289,12 +292,11 @@ fun HabitRow(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    Text(
-                        text = bottomLine,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        category?.let { CategoryBadge(it) }
+                        if (category != null) Spacer(Modifier.size(6.dp))
+                        Text(text = bottomLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                    }
                 }
 
                 Text(
@@ -332,7 +334,8 @@ fun HabitRowClassic(
     onToggle: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
-    remainingText: String? = null
+    remainingText: String? = null,
+    category: CategoryPresentation? = null,
 ) {
     val context = LocalContext.current
 
@@ -406,12 +409,11 @@ fun HabitRowClassic(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Text(
-                    text = bottomLine,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    category?.let { CategoryBadge(it) }
+                    if (category != null) Spacer(Modifier.size(6.dp))
+                    Text(text = bottomLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                }
             }
 
             Text(

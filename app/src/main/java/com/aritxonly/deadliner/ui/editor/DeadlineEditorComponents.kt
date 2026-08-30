@@ -61,6 +61,7 @@ data class TaskEditorDraft(
     val startTime: LocalDateTime = LocalDateTime.now(),
     val endTime: LocalDateTime = LocalDateTime.now().plusHours(1),
     val isStarred: Boolean = false,
+    val categoryUid: String? = null,
 )
 
 data class HabitEditorDraft(
@@ -72,6 +73,7 @@ data class HabitEditorDraft(
     val totalTarget: String = "",
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime = LocalTime.of(20, 0),
+    val categoryUid: String? = null,
 )
 
 @Composable
@@ -83,7 +85,7 @@ fun DeadlineAiQuickAddCard(
     modifier: Modifier = Modifier,
 ) {
     val textFieldShape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
-    EditorSectionCard(modifier = modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = stringResource(R.string.ai_quick_add),
             style = MaterialTheme.typography.titleSmall,
@@ -99,6 +101,7 @@ fun DeadlineAiQuickAddCard(
             minLines = 1,
             maxLines = 3,
             shape = textFieldShape,
+            miuixFormStyle = true,
         )
         Spacer(modifier = Modifier.height(10.dp))
         Row(
@@ -134,6 +137,7 @@ fun DeadlineNameField(
         modifier = modifier.fillMaxWidth(),
         singleLine = true,
         shape = textFieldShape,
+        miuixFormStyle = true,
     )
 }
 
@@ -201,6 +205,7 @@ fun TaskEditorSection(
             minLines = 3,
             maxLines = 6,
             shape = textFieldShape,
+            miuixFormStyle = true,
         )
     }
 }
@@ -300,6 +305,7 @@ fun HabitEditorSection(
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         shape = textFieldShape,
+                        miuixFormStyle = true,
                     )
                     if (draft.goalType == HabitGoalType.TOTAL) {
                         OutlinedTextField(
@@ -308,8 +314,9 @@ fun HabitEditorSection(
                             label = { Text(stringResource(R.string.editor_habit_total_target)) },
                             miuixLabel = stringResource(R.string.editor_habit_total_target),
                             modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            shape = textFieldShape,
+                        singleLine = true,
+                        shape = textFieldShape,
+                        miuixFormStyle = true,
                         )
                     }
                 }

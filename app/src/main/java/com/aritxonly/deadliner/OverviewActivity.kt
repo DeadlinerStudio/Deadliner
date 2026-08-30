@@ -17,9 +17,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -231,6 +232,9 @@ fun OverviewContent(
     val snapshot = remember(overviewState) {
         KmpOverviewPresenter.present(activity, overviewState)
     }
+    val statsListState = rememberLazyListState()
+    val trendListState = rememberLazyListState()
+    val dashboardListState = rememberLazyListState()
 
     if (flattenedLayout) {
         Row(
@@ -249,6 +253,7 @@ fun OverviewContent(
                     .fillMaxHeight()
                     .background(MaterialTheme.colorScheme.surface),
                 topContentPadding = topContentPadding,
+                listState = statsListState,
             )
             TrendAnalysisScreen(
                 snapshot = snapshot,
@@ -257,6 +262,7 @@ fun OverviewContent(
                     .fillMaxHeight()
                     .background(MaterialTheme.colorScheme.surface),
                 topContentPadding = topContentPadding,
+                listState = trendListState,
             )
             DashboardScreen(
                 snapshot = snapshot,
@@ -266,6 +272,7 @@ fun OverviewContent(
                     .fillMaxHeight()
                     .background(MaterialTheme.colorScheme.surface),
                 topContentPadding = topContentPadding,
+                listState = dashboardListState,
             )
         }
         return
@@ -302,12 +309,14 @@ fun OverviewContent(
                 completionTimeStats = snapshot.completionTimeStats,
                 modifier = Modifier.background(MaterialTheme.colorScheme.surface),
                 topContentPadding = topContentPadding,
+                listState = statsListState,
             )
 
             1 -> TrendAnalysisScreen(
                 snapshot = snapshot,
                 modifier = Modifier.background(MaterialTheme.colorScheme.surface),
                 topContentPadding = topContentPadding,
+                listState = trendListState,
             )
 
             else -> DashboardScreen(
@@ -315,6 +324,7 @@ fun OverviewContent(
                 activity = activity,
                 modifier = Modifier.background(MaterialTheme.colorScheme.surface),
                 topContentPadding = topContentPadding,
+                listState = dashboardListState,
             )
         }
     }
@@ -425,6 +435,7 @@ fun OverviewScreen(
         contentColor = contentColorFor(Color.Transparent),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         wrapTopBarInMaterialContainer = false,
+        topBarMaterialScrollKey = selectedTab,
         topBar = {
             if (!showTopBar) return@AdaptiveMaterialScaffold
             if (flattenedLayout) {

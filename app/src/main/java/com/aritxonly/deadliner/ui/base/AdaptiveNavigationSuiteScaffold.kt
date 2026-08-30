@@ -46,8 +46,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
@@ -75,6 +77,8 @@ data class AdaptiveNavItem(
     val label: String,
     val selectedIcon: Painter,
     val unselectedIcon: Painter,
+    @DrawableRes val selectedIconResource: Int,
+    @DrawableRes val unselectedIconResource: Int,
     val enabled: Boolean = true,
     val immersiveIcon: Painter? = null,
     @DrawableRes val immersiveIconResource: Int? = null,
@@ -94,6 +98,7 @@ fun AdaptiveNavigationSuiteScaffold(
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
     useImmersiveExperience: Boolean = false,
+    topBarMaterialScrollKey: Any? = Unit,
     immersiveDetachedItemKey: String? = null,
     immersiveDetachedAction: MiuixFloatingNavigationAction? = null,
     modifier: Modifier = Modifier,
@@ -117,7 +122,9 @@ fun AdaptiveNavigationSuiteScaffold(
         isCompactWidth &&
         navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
     val observeTopBarScroll = useImmersiveExperience && designSystem == AppDesignSystem.MIUIX
-    val topBarScrollObserver = rememberTopBarMaterialScrollObserver(resetKey = selectedKey)
+    val topBarScrollObserver = rememberTopBarMaterialScrollObserver(
+        scrollKey = listOf(selectedKey, topBarMaterialScrollKey),
+    )
     val observedModifier = if (observeTopBarScroll) {
         modifier.nestedScroll(topBarScrollObserver.nestedScrollConnection)
     } else {
@@ -135,7 +142,11 @@ fun AdaptiveNavigationSuiteScaffold(
 
     if (shouldUseImmersiveExperience) {
         val backdrop = if (advancedMaterial.enabled) rememberLayerBackdrop() else null
-        CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+        RegisterAdvancedMaterialModalBackdrop(backdrop)
+        CompositionLocalProvider(
+            LocalTopBarScrollProgress provides topBarScrollProgress,
+            LocalTopBarMaterialScrollObserver provides topBarScrollObserver,
+        ) {
             ImmersiveMiuixCompactNavigationScaffold(
                 items = items,
                 selectedKey = selectedKey,
@@ -155,16 +166,16 @@ fun AdaptiveNavigationSuiteScaffold(
     }
 
     if (!isShortBottomNavigation) {
-        val backdrop = if (
-            useImmersiveExperience &&
-            designSystem == AppDesignSystem.MIUIX &&
-            advancedMaterial.enabled
-        ) {
+        val backdrop = if (advancedMaterial.enabled) {
             rememberLayerBackdrop()
         } else {
             null
         }
-        CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+        RegisterAdvancedMaterialModalBackdrop(backdrop)
+        CompositionLocalProvider(
+            LocalTopBarScrollProgress provides topBarScrollProgress,
+            LocalTopBarMaterialScrollObserver provides topBarScrollObserver,
+        ) {
             LegacyWideNavigationScaffold(
                 items = items,
                 selectedKey = selectedKey,
@@ -183,7 +194,10 @@ fun AdaptiveNavigationSuiteScaffold(
     }
 
     if (!advancedMaterial.enabled) {
-        CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+        CompositionLocalProvider(
+            LocalTopBarScrollProgress provides topBarScrollProgress,
+            LocalTopBarMaterialScrollObserver provides topBarScrollObserver,
+        ) {
             LegacyCompactNavigationScaffold(
                 items = items,
                 selectedKey = selectedKey,
@@ -202,7 +216,11 @@ fun AdaptiveNavigationSuiteScaffold(
     }
 
     val backdrop = rememberLayerBackdrop()
-    CompositionLocalProvider(LocalTopBarScrollProgress provides topBarScrollProgress) {
+    RegisterAdvancedMaterialModalBackdrop(backdrop)
+    CompositionLocalProvider(
+        LocalTopBarScrollProgress provides topBarScrollProgress,
+        LocalTopBarMaterialScrollObserver provides topBarScrollObserver,
+    ) {
         AdvancedCompactNavigationScaffold(
             items = items,
             selectedKey = selectedKey,
@@ -256,14 +274,14 @@ private fun LegacyCompactNavigationScaffold(
                 ) {
                     items.forEach { item ->
                         val selected = selectedKey == item.key
-                        NavigationBarItem(
+                        MiuixNavigationBarItem(
                             selected = selected,
-                            enabled = item.enabled,
                             onClick = { onItemSelected(item) },
-                            icon = {
-                                AnimatedNavIcon(selected, item.selectedIcon, item.unselectedIcon, item.label)
-                            },
-                            label = { Text(item.label) },
+                            icon = ImageVector.vectorResource(
+                                if (selected) item.selectedIconResource else item.unselectedIconResource,
+                            ),
+                            label = item.label,
+                            enabled = item.enabled,
                         )
                     }
                 }
@@ -337,14 +355,14 @@ private fun LegacyWideNavigationScaffold(
                 ) {
                     items.forEach { item ->
                         val selected = selectedKey == item.key
-                        NavigationRailItem(
+                        MiuixNavigationRailItem(
                             selected = selected,
-                            enabled = item.enabled,
                             onClick = { onItemSelected(item) },
-                            icon = {
-                                AnimatedNavIcon(selected, item.selectedIcon, item.unselectedIcon, item.label)
-                            },
-                            label = { Text(item.label) },
+                            icon = ImageVector.vectorResource(
+                                if (selected) item.selectedIconResource else item.unselectedIconResource,
+                            ),
+                            label = item.label,
+                            enabled = item.enabled,
                         )
                     }
                 }
@@ -373,18 +391,20 @@ private fun LegacyWideNavigationScaffold(
                     .fillMaxSize()
                     .padding(innerPadding),
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .let { contentModifier ->
-                            if (backdrop != null) {
-                                contentModifier.layerBackdrop(backdrop)
-                            } else {
-                                contentModifier
-                            }
-                        },
-                ) {
-                    content(PaddingValues())
+                if (backdrop != null) {
+                    CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .layerBackdrop(backdrop),
+                        ) {
+                            content(PaddingValues())
+                        }
+                    }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        content(PaddingValues())
+                    }
                 }
                 if (backdrop != null) {
                     CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
@@ -442,12 +462,14 @@ private fun AdvancedCompactNavigationScaffold(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .layerBackdrop(backdrop),
-            ) {
-                content(PaddingValues())
+            CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .layerBackdrop(backdrop),
+                ) {
+                    content(PaddingValues())
+                }
             }
             CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
                 Box(modifier = Modifier.align(Alignment.TopCenter)) {
@@ -541,14 +563,14 @@ private fun MiuixBottomNavigationBar(
         ) {
             items.forEach { item ->
                 val selected = selectedKey == item.key
-                NavigationBarItem(
+                MiuixNavigationBarItem(
                     selected = selected,
-                    enabled = item.enabled,
                     onClick = { onItemSelected(item) },
-                    icon = {
-                        AnimatedNavIcon(selected, item.selectedIcon, item.unselectedIcon, item.label)
-                    },
-                    label = { Text(item.label) },
+                    icon = ImageVector.vectorResource(
+                        if (selected) item.selectedIconResource else item.unselectedIconResource,
+                    ),
+                    label = item.label,
+                    enabled = item.enabled,
                 )
             }
         }
@@ -641,14 +663,14 @@ private fun MiuixNavigationRailContainer(
         ) {
             items.forEach { item ->
                 val selected = selectedKey == item.key
-                NavigationRailItem(
+                MiuixNavigationRailItem(
                     selected = selected,
-                    enabled = item.enabled,
                     onClick = { onItemSelected(item) },
-                    icon = {
-                        AnimatedNavIcon(selected, item.selectedIcon, item.unselectedIcon, item.label)
-                    },
-                    label = { Text(item.label) },
+                    icon = ImageVector.vectorResource(
+                        if (selected) item.selectedIconResource else item.unselectedIconResource,
+                    ),
+                    label = item.label,
+                    enabled = item.enabled,
                 )
             }
         }

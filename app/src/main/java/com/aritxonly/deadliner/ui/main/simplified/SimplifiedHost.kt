@@ -36,6 +36,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.*
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -82,6 +83,10 @@ import com.aritxonly.deadliner.ui.main.shared.MainSelectionFloatingToolbar
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostUiState
 import com.aritxonly.deadliner.ui.main.shared.rememberMainSelectionActionController
 import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
+import com.aritxonly.deadliner.ui.category.CategoryFilter
+import com.aritxonly.deadliner.ui.category.CategoryFilterResolver
+import com.aritxonly.deadliner.ui.category.CategoryFilterSheet
+import com.aritxonly.deadliner.ui.category.toPresentation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nl.dionsegijn.konfetti.compose.KonfettiView
@@ -141,9 +146,16 @@ fun SimplifiedHost(
     )
 
     val taskState by taskVm.uiState.collectAsStateWithLifecycle()
+    var showCategoryFilter by rememberSaveable { mutableStateOf(false) }
+    var categoryFilter by remember { mutableStateOf<CategoryFilter>(CategoryFilter.All) }
+    val categories = remember(taskState) {
+        KmpV6Runtime.database.categories.list().filterNot { it.isDeleted }.sortedBy { it.sortOrder }.map { it.toPresentation() }
+    }
+    val availableCategoryUids = remember(categories) { categories.mapTo(mutableSetOf()) { it.uid } }
     val displayedTasks = taskVm.getFilteredTasks().filter {
         it.state != com.deadliner.domain.task.TaskState.ARCHIVED &&
-            it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED
+            it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED &&
+            CategoryFilterResolver.matches(categoryFilter, it.categoryUid, availableCategoryUids)
     }
     val sharedHabitState by sharedHabitVm.uiState.collectAsStateWithLifecycle()
 
@@ -349,6 +361,7 @@ fun SimplifiedHost(
                             textFieldState.edit { replace(0, length, q) }
                         },
                         onMoreClick = { uiState.moreExpanded = true },
+                        onCategoryFilterClick = { showCategoryFilter = true },
                         onMoreAnchorChange = { rect -> moreAnchorRect = rect },
                         useAvatar = useAvatar,
                         avatarPainter = avatarPainter,
@@ -404,7 +417,9 @@ fun SimplifiedHost(
                     selectionMode = hostState.selectionMode,
                     isSelected = { id -> hostState.selectedIds.contains(id) },
                     onItemLongPress = { id -> hostState.enterSelection(id) },
-                    onItemClickInSelection = { id -> hostState.toggleSelection(id) }
+                    onItemClickInSelection = { id -> hostState.toggleSelection(id) },
+                    categories = categories,
+                    categoryFilter = categoryFilter,
                 )
             }
 
@@ -525,6 +540,15 @@ fun SimplifiedHost(
             }
         }
     }
+    }
+
+    if (showCategoryFilter) {
+        CategoryFilterSheet(
+            categories = categories,
+            filter = categoryFilter,
+            onFilterChange = { categoryFilter = it },
+            onDismiss = { showCategoryFilter = false },
+        )
     }
 
     if (uiState.showOverlay && GlobalUtils.deadlinerAIEnable) {

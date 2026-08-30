@@ -16,6 +16,7 @@ import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.detail.DeadlineDetailScreen
+import com.aritxonly.deadliner.ui.category.toPresentation
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.deadliner.viewmodel.task.SubtaskCreateConfig
 
@@ -40,6 +41,7 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
             DeadlinerTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 val task = state.task
+                val categories = KmpV6Runtime.database.categories.list().filterNot { it.isDeleted }.sortedBy { it.sortOrder }.map { it.toPresentation() }
                 ProvideAdvancedMaterialDialogBlurHost {
                     Box(Modifier.fillMaxSize().advancedMaterialDialogBlurHost()) {
                         if (task != null) {
@@ -49,6 +51,11 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
                                 deadline = task,
                                 onClose = { finish() },
                                 onToggleStar = viewModel::setStarred,
+                                categories = categories,
+                                onSetCategory = { categoryUid ->
+                                    KmpV6Runtime.updateTaskCategory(task, categoryUid)
+                                    viewModel.initialize()
+                                },
                                 onApplyTaskAction = { action ->
                                     when (action) {
                                         com.deadliner.domain.task.TaskAction.MARK_COMPLETE -> viewModel.markComplete()

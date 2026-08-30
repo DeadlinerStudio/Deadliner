@@ -58,6 +58,7 @@ fun ModernListTopAppBar(
     transparentBackground: Boolean = false,
     searchExpandedFraction: Float = 1f,
     searchContent: (@Composable () -> Unit)? = null,
+    onCategoryFilterClick: () -> Unit = {},
 ) {
     val containerColor = if (transparentBackground) Color.Transparent else MiuixTheme.colorScheme.surface
     val materialTarget = resolveTopBarButtonMaterialProgress(
@@ -80,7 +81,7 @@ fun ModernListTopAppBar(
             color = containerColor,
             scrollBehavior = scrollBehavior,
             navigationIcon = {
-                TopBarIconButton(onClick = {}) {
+                TopBarIconButton(onClick = onCategoryFilterClick) {
                     Icon(
                         painter = iconResource(R.drawable.msr_sort_wght400),
                         contentDescription = stringResource(R.string.filter_dialog_title),

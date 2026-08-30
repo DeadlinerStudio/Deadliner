@@ -16,6 +16,7 @@ import com.deadliner.viewmodel.task.TaskDetailViewModel
 import com.deadliner.viewmodel.task.TaskEditorViewModel
 import com.deadliner.viewmodel.search.SearchViewModel
 import com.deadliner.domain.habit.Habit
+import com.deadliner.domain.task.Task
 import com.deadliner.service.LifiToolExecutor
 import com.deadliner.service.NotificationOrchestrator
 import com.deadliner.platform.DailySummaryConfig
@@ -106,6 +107,12 @@ internal object KmpV6Runtime {
             notificationOrchestrator = notificationOrchestrator,
         )
 
+    fun updateTaskCategory(task: Task, categoryUid: String?) {
+        val updated = task.copy(categoryUid = categoryUid, updatedAt = java.time.Instant.now().toString())
+        database.tasks.update(updated)
+        notificationOrchestrator.onTaskUpdated(updated)
+    }
+
     fun refreshNotifications() {
         notificationOrchestrator.refreshAll(database.tasks.list(), database.habits.list())
         if (GlobalUtils.dailyStatsNotification) {
@@ -172,10 +179,24 @@ internal object KmpV6Runtime {
         return database.webDavChangeLogSync.synchronizeSafely(configuration)
     }
 
+    /** Pull-to-refresh contract: remote merge first, then publish fresh KMP list snapshots. */
+    suspend fun refreshMainLists(): WebDavChangeLogSyncOutcome = try {
+        syncOnce()
+    } finally {
+        reloadMainLists()
+    }
+
+    private fun reloadMainLists() {
+        taskListViewModel.loadNow()
+        habitListViewModel.loadNow()
+    }
+
     fun updateAutomaticSync() {
         val configuration = webDavConfiguration()
         if (GlobalUtils.cloudSyncEnable && configuration != null) {
-            database.configureAutomaticWebDavSync(configuration)
+            database.configureAutomaticWebDavSync(configuration) { outcome ->
+                if (outcome.succeeded) reloadMainLists()
+            }
         } else {
             database.disableAutomaticSync()
         }

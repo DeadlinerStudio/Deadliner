@@ -12,6 +12,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.dimensionResource
+import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
@@ -67,7 +69,7 @@ fun Button(
                     contentColor = colors.contentColor,
                     disabledColor = colors.disabledContainerColor,
                     disabledContentColor = colors.disabledContentColor
-                ),
+                )
             ) {
                 CompositionLocalProvider(
                     Material3LocalContentColor provides resolvedContentColor,
@@ -118,12 +120,34 @@ fun TextButton(
             )
         }
         AppDesignSystem.MIUIX -> {
-            MiuixTextButton(
-                text = miuixText,
-                onClick = onClick,
-                enabled = enabled,
-                insideMargin = top.yukonga.miuix.kmp.basic.ButtonDefaults.InsideMargin,
-            )
+            if (miuixText.isNotBlank()) {
+                MiuixTextButton(
+                    text = miuixText,
+                    onClick = onClick,
+                    modifier = modifier,
+                    enabled = enabled,
+                )
+            } else {
+                val resolvedContentColor = if (enabled) colors.contentColor else colors.disabledContentColor
+                MiuixButton(
+                    onClick = onClick,
+                    modifier = modifier,
+                    enabled = enabled,
+                    colors = top.yukonga.miuix.kmp.basic.ButtonDefaults.buttonColors(
+                        color = colors.containerColor,
+                        contentColor = colors.contentColor,
+                        disabledColor = colors.disabledContainerColor,
+                        disabledContentColor = colors.disabledContentColor,
+                    ),
+                ) {
+                    CompositionLocalProvider(
+                        Material3LocalContentColor provides resolvedContentColor,
+                        MiuixLocalContentColor provides resolvedContentColor,
+                    ) {
+                        content()
+                    }
+                }
+            }
         }
     }
 }

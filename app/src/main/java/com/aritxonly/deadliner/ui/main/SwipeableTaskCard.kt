@@ -88,6 +88,7 @@ fun DDLItemCardSwipeable(
     selected: Boolean = false,
     onLongPressSelect: (() -> Unit)? = null,
     onToggleSelect: (() -> Unit)? = null,
+    categoryContent: (@Composable () -> Unit)? = null,
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -274,6 +275,7 @@ fun DDLItemCardSwipeable(
                 onClick = null,
                 status = status,
                 useDisabledCompletedStyle = useDisabledCompletedStyle,
+                categoryContent = categoryContent,
             )
 
             if (selectionMode && selected) {

@@ -9,6 +9,8 @@ import com.aritxonly.deadliner.model.AdvancedMaterialFineTuning
 @Immutable
 data class GlassBlurSpec(
     val radiusMultiplier: Float = 1f,
+    /** A modal lens may exceed Miuix texture blur's 150dp cap on the shader-backed path. */
+    val maxRadius: Float = 150f,
     val noiseMultiplier: Float = 1f,
     val tintAlphaMultiplier: Float = 1f,
 )
@@ -79,6 +81,30 @@ object DeadlinerGlassRecipes {
         ),
     )
 
+    /** A wider, denser lens so transient sheets read as frosted glass above their page. */
+    val BottomSheet = GlassMaterialRecipe(
+        blur = GlassBlurSpec(
+            // About 6x the original sheet recipe. The higher cap keeps the frosted effect
+            // visible even when the user selected the default 92dp advanced-material radius.
+            radiusMultiplier = 8f,
+            maxRadius = 720f,
+            tintAlphaMultiplier = 1f,
+        ),
+        geometry = GlassGeometrySpec(cornerRadius = 36.dp),
+        layering = GlassLayeringSpec(postRefractionBlurRadius = 1.dp),
+    )
+
+    /** A compact frosted lens for dialogs, with less distortion than a bottom sheet. */
+    val Dialog = GlassMaterialRecipe(
+        blur = GlassBlurSpec(
+            radiusMultiplier = 6f,
+            maxRadius = 560f,
+            tintAlphaMultiplier = 1f,
+        ),
+        geometry = GlassGeometrySpec(cornerRadius = 32.dp),
+        layering = GlassLayeringSpec(postRefractionBlurRadius = 0.75.dp),
+    )
+
     fun floatingNavigation(
         fineTuning: AdvancedMaterialFineTuning,
     ): GlassMaterialRecipe {
@@ -105,6 +131,68 @@ object DeadlinerGlassRecipes {
                 fallbackDarkAlpha = tuning.fallbackDarkAlpha,
             ),
             layering = FloatingNavigation.layering.copy(
+                postRefractionBlurEnabled = tuning.postRefractionBlurEnabled,
+                postRefractionBlurRadius = tuning.postRefractionBlurRadiusDp.dp,
+            ),
+        )
+    }
+
+    fun bottomSheet(
+        fineTuning: AdvancedMaterialFineTuning,
+    ): GlassMaterialRecipe {
+        val tuning = fineTuning.normalized()
+        return BottomSheet.copy(
+            blur = BottomSheet.blur.copy(
+                noiseMultiplier = tuning.glassNoiseMultiplier,
+                tintAlphaMultiplier = BottomSheet.blur.tintAlphaMultiplier * tuning.glassTintAlphaMultiplier,
+            ),
+            refraction = BottomSheet.refraction.copy(
+                enabled = tuning.refractionEnabled,
+                height = tuning.refractionHeightDp.dp,
+                amount = tuning.refractionAmountDp.dp,
+                depthEffect = tuning.refractionDepthEffect,
+                chromaticAberration = tuning.chromaticAberrationDp.dp,
+            ),
+            edgeOptics = BottomSheet.edgeOptics.copy(
+                highlightAlpha = tuning.edgeHighlightAlpha,
+                highlightGray = tuning.edgeHighlightGray,
+                darkHighlightMultiplier = tuning.darkHighlightMultiplier,
+                fallbackWidth = tuning.fallbackEdgeWidthDp.dp,
+                fallbackLightAlpha = tuning.fallbackLightAlpha,
+                fallbackDarkAlpha = tuning.fallbackDarkAlpha,
+            ),
+            layering = BottomSheet.layering.copy(
+                postRefractionBlurEnabled = tuning.postRefractionBlurEnabled,
+                postRefractionBlurRadius = tuning.postRefractionBlurRadiusDp.dp,
+            ),
+        )
+    }
+
+    fun dialog(
+        fineTuning: AdvancedMaterialFineTuning,
+    ): GlassMaterialRecipe {
+        val tuning = fineTuning.normalized()
+        return Dialog.copy(
+            blur = Dialog.blur.copy(
+                noiseMultiplier = tuning.glassNoiseMultiplier,
+                tintAlphaMultiplier = Dialog.blur.tintAlphaMultiplier * tuning.glassTintAlphaMultiplier,
+            ),
+            refraction = Dialog.refraction.copy(
+                enabled = tuning.refractionEnabled,
+                height = tuning.refractionHeightDp.dp,
+                amount = tuning.refractionAmountDp.dp,
+                depthEffect = tuning.refractionDepthEffect,
+                chromaticAberration = tuning.chromaticAberrationDp.dp,
+            ),
+            edgeOptics = Dialog.edgeOptics.copy(
+                highlightAlpha = tuning.edgeHighlightAlpha,
+                highlightGray = tuning.edgeHighlightGray,
+                darkHighlightMultiplier = tuning.darkHighlightMultiplier,
+                fallbackWidth = tuning.fallbackEdgeWidthDp.dp,
+                fallbackLightAlpha = tuning.fallbackLightAlpha,
+                fallbackDarkAlpha = tuning.fallbackDarkAlpha,
+            ),
+            layering = Dialog.layering.copy(
                 postRefractionBlurEnabled = tuning.postRefractionBlurEnabled,
                 postRefractionBlurRadius = tuning.postRefractionBlurRadiusDp.dp,
             ),

@@ -41,7 +41,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -78,6 +78,7 @@ import com.aritxonly.deadliner.ui.base.RadioButton
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
@@ -86,6 +87,9 @@ import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.symbolPainterResource
+import com.aritxonly.deadliner.ui.category.CategoryAssignmentField
+import com.aritxonly.deadliner.ui.category.CategoryPickerSheet
+import com.aritxonly.deadliner.ui.category.CategoryPresentation
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -130,6 +134,8 @@ fun DeadlineDetailScreen(
     deadline: Task,
     onClose: () -> Unit,
     onToggleStar: (Boolean) -> Unit,
+    categories: List<CategoryPresentation>,
+    onSetCategory: (String?) -> Unit,
     onApplyTaskAction: (TaskAction) -> Unit,
     onDelete: () -> Unit,
     onAddSubtask: (String) -> Unit,
@@ -148,6 +154,7 @@ fun DeadlineDetailScreen(
     var isMutatingPlan by remember(deadline.uid) { mutableStateOf(false) }
     var showGiveUpDialog by rememberSaveable(deadline.uid) { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable(deadline.uid) { mutableStateOf(false) }
+    var showCategoryPicker by rememberSaveable(deadline.uid) { mutableStateOf(false) }
     val composerFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(deadline.isStarred) {
@@ -302,6 +309,7 @@ fun DeadlineDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
+                .syncTopBarMaterialScroll(scrollState)
                 .verticalScroll(scrollState)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -309,6 +317,11 @@ fun DeadlineDetailScreen(
         ) {
             ProgressCard(deadline = deadline)
             TaskMetaCard(deadline = deadline)
+            CategoryAssignmentField(
+                categoryUid = deadline.categoryUid,
+                categories = categories,
+                onClick = { showCategoryPicker = true },
+            )
             NoteCard(note = deadline.note)
             PlanCard(
                 subTasks = sortedSubTasks,
@@ -409,6 +422,15 @@ fun DeadlineDetailScreen(
                     Text(stringResource(R.string.cancel))
                 }
             }
+        )
+    }
+
+    if (showCategoryPicker) {
+        CategoryPickerSheet(
+            categories = categories,
+            selectedUid = deadline.categoryUid,
+            onSelected = onSetCategory,
+            onDismiss = { showCategoryPicker = false },
         )
     }
 }
