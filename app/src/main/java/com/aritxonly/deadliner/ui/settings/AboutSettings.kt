@@ -73,6 +73,7 @@ fun AboutSettingsScreen(
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_about),
+        advancedMaterialTopBarBlurOnlyWhenCollapsed = true,
         navigationIcon = {
             IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(
@@ -224,7 +225,7 @@ private fun AboutAppHeader(
             color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
             Image(
-                painter = painterResource(R.mipmap.ic_launcher),
+                painter = painterResource(R.drawable.app_icon),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier

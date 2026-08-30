@@ -343,6 +343,7 @@ fun CollapsingTopBarScaffold(
     collapsible: Boolean = true,
     topBarStyle: TopAppBarStyle = TopAppBarStyle.LARGE,
     allowAdvancedMaterialTopBarBlur: Boolean = true,
+    advancedMaterialTopBarBlurOnlyWhenCollapsed: Boolean = false,
     forceOverlayTopBar: Boolean = false,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
@@ -374,6 +375,7 @@ fun CollapsingTopBarScaffold(
                     titleTextStyle = MaterialTheme.typography.headlineMedium,
                     useParentMaterialContainer = false,
                     allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
+                    advancedMaterialBlurOnlyWhenCollapsed = advancedMaterialTopBarBlurOnlyWhenCollapsed,
                     material3ScrollBehavior = scrollBehavior,
                 )
             }
@@ -430,6 +432,7 @@ fun CollapsingTopBarScaffold(
                     actions = actions,
                     useParentMaterialContainer = false,
                     allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
+                    advancedMaterialBlurOnlyWhenCollapsed = advancedMaterialTopBarBlurOnlyWhenCollapsed,
                     miuixScrollBehavior = scrollBehavior,
                 )
             }

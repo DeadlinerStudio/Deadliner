@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object AIUtils {
-    private var model: String = "deepseek-chat"
+    private var model: String = "deepseek-v4-flash"
     private var transport: LlmTransport? = null
     private var appContext: Context? = null
     private var coreBridge: DeadlinerCoreBridge? = null

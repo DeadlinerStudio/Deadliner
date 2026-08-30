@@ -17,6 +17,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,20 @@ enum class TopAppBarStyle {
 }
 
 private val TopAppBarMaterialShape = RoundedCornerShape(0.dp)
+internal const val MiuixTopAppBarVisualCollapseFraction = 1f / 3f
+internal const val Material3TopAppBarVisualCollapseFraction = 0.5f
+
+internal fun isTopAppBarVisuallyCollapsed(
+    designSystem: AppDesignSystem,
+    collapsedFraction: Float?,
+): Boolean {
+    val fraction = collapsedFraction ?: return false
+    val threshold = when (designSystem) {
+        AppDesignSystem.MATERIAL3 -> Material3TopAppBarVisualCollapseFraction
+        AppDesignSystem.MIUIX -> MiuixTopAppBarVisualCollapseFraction
+    }
+    return fraction >= threshold
+}
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -53,33 +68,72 @@ fun TopAppBar(
     forceMaterial3: Boolean = false,
     useParentMaterialContainer: Boolean = false,
     allowAdvancedMaterialBlur: Boolean = true,
+    advancedMaterialBlurOnlyWhenCollapsed: Boolean = false,
     material3ScrollBehavior: TopAppBarScrollBehavior? = null,
     miuixScrollBehavior: MiuixScrollBehavior? = null,
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
+    val appDesignSystem = if (forceMaterial3) {
+        AppDesignSystem.MATERIAL3
+    } else {
+        LocalAppDesignSystem.current
+    }
+    val collapsedFraction = when (appDesignSystem) {
+        AppDesignSystem.MATERIAL3 -> material3ScrollBehavior?.state?.collapsedFraction
+        AppDesignSystem.MIUIX -> miuixScrollBehavior?.state?.collapsedFraction
+    }
+    val isVisuallyCollapsed = isTopAppBarVisuallyCollapsed(appDesignSystem, collapsedFraction)
+    val advancedMaterialBlurEligible =
+        allowAdvancedMaterialBlur &&
+            advancedMaterial.enabled &&
+            backdrop != null &&
+            !useParentMaterialContainer
     val advancedMaterialBlurred =
-        allowAdvancedMaterialBlur && advancedMaterial.enabled && backdrop != null && !useParentMaterialContainer
+        advancedMaterialBlurEligible &&
+            (!advancedMaterialBlurOnlyWhenCollapsed || isVisuallyCollapsed)
+    val transparentBeforeAdvancedMaterialBlur =
+        advancedMaterialBlurEligible &&
+            advancedMaterialBlurOnlyWhenCollapsed &&
+            !isVisuallyCollapsed
+    val miuixCollapsedBlurAlpha: (() -> Float)? =
+        if (
+            appDesignSystem == AppDesignSystem.MIUIX &&
+            advancedMaterialBlurEligible &&
+            advancedMaterialBlurOnlyWhenCollapsed
+        ) {
+            {
+                if (
+                    isTopAppBarVisuallyCollapsed(
+                        AppDesignSystem.MIUIX,
+                        miuixScrollBehavior?.state?.collapsedFraction,
+                    )
+                ) {
+                    1f
+                } else {
+                    0f
+                }
+            }
+        } else {
+            null
+        }
     val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.topBarTintAlpha)
     val topBarColors = TopAppBarDefaults.topAppBarColors(
         containerColor = when {
             useParentMaterialContainer -> Color.Transparent
+            transparentBeforeAdvancedMaterialBlur -> Color.Transparent
             advancedMaterialBlurred -> Color.Transparent
             advancedMaterial.enabled -> surfaceTint
             else -> MaterialTheme.colorScheme.surface
         },
         scrolledContainerColor = when {
             useParentMaterialContainer -> Color.Transparent
+            transparentBeforeAdvancedMaterialBlur -> Color.Transparent
             advancedMaterialBlurred -> Color.Transparent
             advancedMaterial.enabled -> surfaceTint
             else -> MaterialTheme.colorScheme.surface
         },
     )
-    val appDesignSystem = if (forceMaterial3) {
-        AppDesignSystem.MATERIAL3
-    } else {
-        LocalAppDesignSystem.current
-    }
 
     when (appDesignSystem) {
         AppDesignSystem.MATERIAL3 -> AdvancedMaterialTopBarContainer(
@@ -173,12 +227,14 @@ fun TopAppBar(
 
         AppDesignSystem.MIUIX -> AdvancedMaterialTopBarContainer(
             advancedMaterial = advancedMaterial,
-            advancedMaterialBlurred = advancedMaterialBlurred,
+            advancedMaterialBlurred = advancedMaterialBlurred || miuixCollapsedBlurAlpha != null,
             backdrop = backdrop,
             surfaceTint = surfaceTint,
+            blurAlphaProvider = miuixCollapsedBlurAlpha,
         ) {
             val miuixContainerColor = when {
                 useParentMaterialContainer -> Color.Transparent
+                transparentBeforeAdvancedMaterialBlur -> Color.Transparent
                 advancedMaterialBlurred -> Color.Transparent
                 advancedMaterial.enabled -> surfaceTint
                 else -> MaterialTheme.colorScheme.surface
@@ -215,21 +271,41 @@ private fun AdvancedMaterialTopBarContainer(
     advancedMaterialBlurred: Boolean,
     backdrop: LayerBackdrop? = null,
     surfaceTint: Color,
+    blurAlphaProvider: (() -> Float)? = null,
     content: @Composable () -> Unit,
 ) {
     if (advancedMaterialBlurred && backdrop != null) {
         val blurColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .advancedTextureBlur(
-                    advancedMaterial = advancedMaterial,
-                    backdrop = backdrop,
-                    shape = TopAppBarMaterialShape,
-                    colors = blurColors,
-                ),
-        ) {
-            content()
+        if (blurAlphaProvider != null) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer {
+                            alpha = blurAlphaProvider().coerceIn(0f, 1f)
+                        }
+                        .advancedTextureBlur(
+                            advancedMaterial = advancedMaterial,
+                            backdrop = backdrop,
+                            shape = TopAppBarMaterialShape,
+                            colors = blurColors,
+                        ),
+                )
+                content()
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .advancedTextureBlur(
+                        advancedMaterial = advancedMaterial,
+                        backdrop = backdrop,
+                        shape = TopAppBarMaterialShape,
+                        colors = blurColors,
+                    ),
+            ) {
+                content()
+            }
         }
     } else {
         content()

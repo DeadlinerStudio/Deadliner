@@ -78,8 +78,8 @@ class DeadlinerAIConfig(private val sp: SharedPreferences) {
             LlmPreset(
                 id = "deepseek_official",
                 name = "DeepSeek",
-                model = "deepseek-chat",
-                endpoint = "https://api.deepseek.com/v1/chat/completions"
+                model = "deepseek-v4-flash",
+                endpoint = "https://api.deepseek.com/chat/completions"
             ),
             LlmPreset(
                 id = "gpt_official",
