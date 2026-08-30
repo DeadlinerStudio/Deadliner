@@ -1,10 +1,12 @@
 package com.aritxonly.deadliner.data
 
+import android.util.Log
 import com.aritxonly.deadliner.AppSingletons
 import com.aritxonly.deadliner.model.Habit
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.HabitRecord
 import com.aritxonly.deadliner.model.HabitRecordStatus
+import com.aritxonly.deadliner.model.isReviewDueOn
 import com.aritxonly.deadliner.sync.SyncService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -102,7 +104,13 @@ class HabitRepository(
 
     fun getHabitById(id: Long): Habit? = db.getHabitById(id)
 
-    fun getAllHabits(): List<Habit> = db.getAllHabits()
+    fun getAllHabits(): List<Habit> {
+        val cleaned = db.cleanupOrphanHabits()
+        if (cleaned > 0) {
+            Log.w("HabitRepository", "Removed $cleaned orphan habit(s) before loading active habits")
+        }
+        return db.getAllHabits()
+    }
 
     fun updateHabit(habit: Habit) {
         val (_, resolvedUpdatedAt) = reservePayloadVersionAndUpdatedAt(habit.ddlId, habit.updatedAt)
@@ -191,6 +199,7 @@ class HabitRepository(
                 val end = ym.atEndOfMonth()
                 start to end
             }
+            HabitPeriod.EBBINGHAUS -> date to date
         }
     }
 
@@ -201,7 +210,11 @@ class HabitRepository(
      */
     fun toggleRecord(habitId: Long, date: LocalDate) {
         val habit = getHabitById(habitId) ?: return
-        val target = habit.timesPerPeriod.coerceAtLeast(1)
+        val target = if (habit.period == HabitPeriod.EBBINGHAUS) {
+            1
+        } else {
+            habit.timesPerPeriod.coerceAtLeast(1)
+        }
 
         when (habit.period) {
             HabitPeriod.DAILY -> {
@@ -236,6 +249,25 @@ class HabitRepository(
                     else -> {
                         deleteRecordsForHabitOnDate(habitId, date)
                     }
+                }
+            }
+
+            HabitPeriod.EBBINGHAUS -> {
+                if (!habit.isReviewDueOn(date)) return
+
+                val recordsToday = getRecordsForHabitOnDate(habitId, date)
+                    .filter { it.status == HabitRecordStatus.COMPLETED }
+                val currentCount = recordsToday.sumOf { it.count }
+
+                if (currentCount > 0) {
+                    deleteRecordsForHabitOnDate(habitId, date)
+                } else {
+                    insertRecord(
+                        habitId = habitId,
+                        date = date,
+                        count = 1,
+                        status = HabitRecordStatus.COMPLETED
+                    )
                 }
             }
 

@@ -2,8 +2,10 @@ package com.aritxonly.deadliner.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -47,7 +50,7 @@ fun PolicyScreen(
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_privacy_policy),
         navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = Modifier.padding(start = 8.dp)) {
+            IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(
                     painter = painterResource(R.drawable.ic_back),
                     contentDescription = stringResource(R.string.back),
@@ -57,14 +60,17 @@ fun PolicyScreen(
             }
         }
     ) { innerPadding ->
-        Box(
+        val outerPadding = rememberSettingsScaffoldOuterPaddingValues(innerPadding)
+        val topOverlayPadding = rememberSettingsScaffoldTopOverlayPadding(innerPadding)
+        Column(
             Modifier
-                .padding(innerPadding)
+                .padding(outerPadding)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
+            Spacer(modifier = Modifier.height(topOverlayPadding))
             MarkdownText(
                 markdown = policyText,
                 syntaxHighlightColor = MaterialTheme.colorScheme.surfaceContainer

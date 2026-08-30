@@ -20,7 +20,7 @@ data class Message(
 )
 
 data class ChatRequest(
-    val model: String = "deepseek-chat",
+    val model: String = "deepseek-v4-flash",
     val messages: List<Message>,
     val stream: Boolean = false
 )
@@ -84,8 +84,8 @@ data class LlmPreset(
 val defaultLlmPreset = LlmPreset(
     id = "deadliner_official",
     name = "Lifi AI",
-    model = "deepseek-chat",
-    endpoint = "https://deadliner.aritxonly.top/api"
+    model = "deepseek-v4-flash",
+    endpoint = "https://api.deepseek.com/chat/completions"
 )
 
 /** 后端类型：保持可扩展（将来可加 HMAC） */

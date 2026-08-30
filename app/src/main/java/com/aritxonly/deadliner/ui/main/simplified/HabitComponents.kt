@@ -23,7 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -52,12 +52,12 @@ import com.aritxonly.deadliner.model.DayOverview
 import com.aritxonly.deadliner.model.HabitGoalType
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.HabitWithDailyStatus
+import com.aritxonly.deadliner.ui.theme.rememberTaskIndicatorColors
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
-import androidx.compose.ui.res.colorResource
-import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.base.Checkbox
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -192,39 +192,13 @@ fun HabitRow(
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
     val progress = (data.doneCount.toFloat() / data.targetCount.coerceAtLeast(1)).coerceIn(0f, 1f)
 
-    // 🌟 1. 获取全局鸿蒙莫兰迪色开关
-    val usePreset = GlobalUtils.presetIndicatorColor
-
-    // 🌟 2. 颜色按 DDLStatus 和开关状态来分配
-    val indicatorColor: Color
-    val bgColor: Color
-    when (status) {
-        DDLStatus.UNDERGO -> {
-            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_undergo).copy(alpha = 0.55f)
-            else MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
-            bgColor = if (usePreset) colorResource(R.color.bg_morandi_undergo).copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        }
-        DDLStatus.NEAR -> {
-            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_near).copy(alpha = 0.55f)
-            else MaterialTheme.colorScheme.tertiary.copy(alpha = 0.55f)
-            bgColor = if (usePreset) colorResource(R.color.bg_morandi_near).copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
-        }
-        DDLStatus.PASSED -> {
-            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_passed).copy(alpha = 0.55f)
-            else MaterialTheme.colorScheme.error.copy(alpha = 0.55f)
-            // 列表中缺少 bg_morandi_passed，统一用 indicator 降低透明度代替
-            bgColor = if (usePreset) colorResource(R.color.indicator_morandi_passed).copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        }
-        DDLStatus.COMPLETED -> {
-            indicatorColor = if (usePreset) colorResource(R.color.indicator_morandi_completed).copy(alpha = 0.55f)
-            else MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f)
-            bgColor = if (usePreset) colorResource(R.color.bg_morandi_completed).copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
-        }
-    }
+    val indicatorColors = rememberTaskIndicatorColors(
+        status = status,
+    )
+    val indicatorColor = indicatorColors.indicatorColor
+    val checkboxCheckedColor = indicatorColor.copy(alpha = 1f)
+    val baseBgColor = indicatorColors.baseBackgroundColor
+    val overlayBgColor = indicatorColors.overlayBackgroundColor
 
     val bottomLine = when (data.habit.goalType) {
         HabitGoalType.PER_PERIOD -> {
@@ -252,6 +226,7 @@ fun HabitRow(
             HabitPeriod.DAILY -> stringResource(R.string.frequency_daily)
             HabitPeriod.WEEKLY -> stringResource(R.string.frequency_weekly)
             HabitPeriod.MONTHLY -> stringResource(R.string.frequency_monthly)
+            HabitPeriod.EBBINGHAUS -> stringResource(R.string.editor_habit_period_ebbinghaus)
         }
 
         HabitGoalType.TOTAL -> data.habit.totalTarget?.let {
@@ -271,20 +246,29 @@ fun HabitRow(
     ) {
         Box(
             modifier = Modifier
-                .background(bgColor) // 👈 背景色应用
                 .fillMaxWidth()
                 .height(72.dp)
         ) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(baseBgColor)
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(overlayBgColor)
+            )
             // 进度前景条
             if (progress > 0f) {
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
                         .fillMaxWidth(progress)
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    indicatorColor.copy(alpha = 0.4f), // 👈 进度条渐变应用
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                    indicatorColor.copy(alpha = indicatorColor.alpha * 0.45f), // 👈 进度条渐变应用
                                     indicatorColor
                                 )
                             )
@@ -301,7 +285,14 @@ fun HabitRow(
                 Checkbox(
                     enabled = canToggle,
                     checked = data.isCompleted,
-                    onCheckedChange = { if (canToggle) onToggle() }
+                    onCheckedChange = { if (canToggle) onToggle() },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = checkboxCheckedColor,
+                        uncheckedColor = checkboxCheckedColor,
+                        checkmarkColor = MaterialTheme.colorScheme.surface,
+                        disabledCheckedColor = checkboxCheckedColor.copy(alpha = 0.6f),
+                        disabledUncheckedColor = checkboxCheckedColor.copy(alpha = 0.6f),
+                    )
                 )
 
                 Column(
@@ -398,6 +389,7 @@ fun HabitRowClassic(
             HabitPeriod.DAILY -> stringResource(R.string.frequency_daily)
             HabitPeriod.WEEKLY -> stringResource(R.string.frequency_weekly)
             HabitPeriod.MONTHLY -> stringResource(R.string.frequency_monthly)
+            HabitPeriod.EBBINGHAUS -> stringResource(R.string.editor_habit_period_ebbinghaus)
         }
 
         HabitGoalType.TOTAL -> data.habit.totalTarget?.let {
@@ -431,7 +423,10 @@ fun HabitRowClassic(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 8.dp, top = 12.dp, bottom = 12.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .padding(start = 4.dp, end = 8.dp, top = 12.dp, bottom = 12.dp)
         ) {
             Checkbox(
                 enabled = canToggle,

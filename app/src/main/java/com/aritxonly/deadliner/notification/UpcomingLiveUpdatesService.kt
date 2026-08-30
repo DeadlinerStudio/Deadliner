@@ -5,21 +5,33 @@ import android.content.Context
 import android.content.Intent
 import android.os.*
 import androidx.core.app.NotificationManagerCompat
+import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
+import com.aritxonly.deadliner.model.DeadlineType
 import java.time.Duration
 import java.time.LocalDateTime
 
 class UpcomingLiveUpdateService : Service() {
 
     companion object {
+        @Volatile
+        private var activeDdlId: Long? = null
+
         fun start(context: Context, ddl: DDLItem) {
             val i = Intent(context, UpcomingLiveUpdateService::class.java)
                 .putExtra("DDL_ID", ddl.id)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(i)
             } else context.startService(i)
+        }
+
+        fun stop(context: Context, ddlId: Long) {
+            NotificationManagerCompat.from(context).cancel(ddlId.hashCode())
+            if (activeDdlId == ddlId) {
+                context.stopService(Intent(context, UpcomingLiveUpdateService::class.java))
+            }
         }
     }
 
@@ -35,16 +47,26 @@ class UpcomingLiveUpdateService : Service() {
 
             ddl = latest
             val remaining = calculateRemainingSeconds(latest)
+            val liveWindowSeconds = GlobalUtils.liveUpdatesInAdvance * 60L
+
+            if (latest.type != DeadlineType.TASK || !latest.state.isActionable()) {
+                stopLiveUpdate(latest.id)
+                return
+            }
+
+            if (remaining > liveWindowSeconds) {
+                DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(this@UpcomingLiveUpdateService, latest)
+                stopLiveUpdate(latest.id)
+                return
+            }
 
             if (remaining <= -300) {
-                val nm = NotificationManagerCompat.from(this@UpcomingLiveUpdateService)
-                nm.cancel(notificationId)
-                stopSelf()
+                stopLiveUpdate(latest.id)
                 return
             }
 
             // 到期或完成就做最后一版并退出
-            if (remaining <= 0 || !latest.state.isActionable()) {
+            if (remaining <= 0) {
                 NotificationUtil.sendUpcomingDDLNotification(this@UpcomingLiveUpdateService, latest, remaining)
                 stopSelf()
                 return
@@ -67,12 +89,27 @@ class UpcomingLiveUpdateService : Service() {
 
         // 拉取最新 DDL
         val d = DatabaseHelper.getInstance(this).getDDLById(ddlId) ?: return START_NOT_STICKY
+        val remaining = calculateRemainingSeconds(d)
+        val liveWindowSeconds = GlobalUtils.liveUpdatesInAdvance * 60L
+
+        if (d.type != DeadlineType.TASK || !d.state.isActionable()) {
+            stopLiveUpdate(ddlId)
+            return START_NOT_STICKY
+        }
+        if (remaining <= 0L || remaining > liveWindowSeconds) {
+            if (remaining > liveWindowSeconds) {
+                DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(this, d)
+            }
+            stopLiveUpdate(ddlId)
+            return START_NOT_STICKY
+        }
+
         ddl = d
+        activeDdlId = d.id
         notificationId = d.id.hashCode()
 
         // 首帧：用 NotificationUtil 构建通知并前台化
-        val firstRemaining = calculateRemainingSeconds(d)
-        val first = NotificationUtil.createUpcomingDDLNotification(this, d, firstRemaining)
+        val first = NotificationUtil.createUpcomingDDLNotification(this, d, remaining)
         startForeground(notificationId, first)
 
         // 周期刷新
@@ -83,6 +120,9 @@ class UpcomingLiveUpdateService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        if (activeDdlId == ddl?.id) {
+            activeDdlId = null
+        }
         super.onDestroy()
     }
 
@@ -92,5 +132,11 @@ class UpcomingLiveUpdateService : Service() {
         val now = LocalDateTime.now()
         val end = GlobalUtils.safeParseDateTime(d.endTime)
         return Duration.between(now, end).seconds
+    }
+
+    private fun stopLiveUpdate(ddlId: Long) {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        NotificationManagerCompat.from(this).cancel(ddlId.hashCode())
+        stopSelf()
     }
 }

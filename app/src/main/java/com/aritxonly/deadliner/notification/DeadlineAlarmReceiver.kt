@@ -25,7 +25,10 @@ class DeadlineAlarmReceiver : BroadcastReceiver() {
 
         val ddl = DatabaseHelper.getInstance(context).getDDLById(ddlId.toLong()) ?: return
 
-        if (ddl.type == DeadlineType.HABIT && ddl.isCompleted) return
+        if (ddl.type != DeadlineType.TASK || !ddl.state.isActionable()) {
+            DeadlineAlarmScheduler.syncScheduledNotifications(context, ddl)
+            return
+        }
 	
         val endTime = GlobalUtils.parseDateTime(ddl.endTime)
         val duration = Duration.between(LocalDateTime.now(), endTime)

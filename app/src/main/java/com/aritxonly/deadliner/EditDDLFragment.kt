@@ -1,336 +1,408 @@
 package com.aritxonly.deadliner
 
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.os.Build
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.os.Bundle
-import android.util.TypedValue
-import android.view.*
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.LinearLayout
-import android.widget.TextView
-import androidx.core.view.ViewCompat
-import androidx.core.view.ViewCompat.setBackground
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
+import com.aritxonly.deadliner.data.HabitRepository
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.DeadlineType
+import com.aritxonly.deadliner.model.HabitGoalType
 import com.aritxonly.deadliner.model.HabitMetaData
+import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.toJson
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
+import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
+import com.aritxonly.deadliner.ui.base.TopAppBar
+import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.editor.DeadlineBottomActions
+import com.aritxonly.deadliner.ui.editor.DeadlineNameField
+import com.aritxonly.deadliner.ui.editor.DeadlineStarToggleCard
+import com.aritxonly.deadliner.ui.editor.EditorHabitPeriod
+import com.aritxonly.deadliner.ui.editor.HabitEditorDraft
+import com.aritxonly.deadliner.ui.editor.HabitEditorSection
+import com.aritxonly.deadliner.ui.editor.TaskEditorDraft
+import com.aritxonly.deadliner.ui.editor.TaskEditorSection
+import com.aritxonly.deadliner.ui.editor.toDeadlineFrequency
+import com.aritxonly.deadliner.ui.editor.toEditorHabitPeriod
+import com.aritxonly.deadliner.ui.editor.toModelPeriod
+import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.*
-import androidx.core.graphics.drawable.toDrawable
-import com.aritxonly.deadliner.data.HabitRepository
-import com.aritxonly.deadliner.model.HabitGoalType
-import com.aritxonly.deadliner.model.HabitPeriod
+import java.util.Locale
 
-class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLItem) -> Unit) : DialogFragment() {
-
-    private lateinit var ddlNameEditText: TextInputEditText
-    private lateinit var startTimeCard: View
-    private lateinit var endTimeCard: View
-    private lateinit var startTimeContent: TextView
-    private lateinit var endTimeContent: TextView
-    private lateinit var ddlNoteLayout: TextInputLayout
-    private lateinit var ddlNoteEditText: EditText
-    private lateinit var saveButton: MaterialButton
-    private lateinit var backButton: ImageButton
-
-    private var startTime: LocalDateTime = GlobalUtils.safeParseDateTime(ddlItem.startTime)
-    private var endTime: LocalDateTime? = GlobalUtils.parseDateTime(ddlItem.endTime)
-
-    private lateinit var freqEditLayout: LinearLayout
-    private lateinit var freqTypeToggleGroup: MaterialButtonToggleGroup
-    private lateinit var freqTextInput: TextInputLayout
-    private lateinit var freqEditText: EditText
-    private lateinit var totalTextInput: TextInputLayout
-    private lateinit var totalEditText: EditText
-    private lateinit var freqTypeHint: TextView
+class EditDDLFragment(
+    private val ddlItem: DDLItem,
+    private val onUpdate: (DDLItem) -> Unit
+) : DialogFragment() {
 
     private val habitRepo by lazy { HabitRepository() }
+    private var pendingPickerLaunchJob: Job? = null
+    private var showPickerDialogBlur by mutableStateOf(false)
 
     override fun onStart() {
         super.onStart()
         dialog?.window?.apply {
             setWindowAnimations(R.style.DialogAnimation)
+            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         }
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        val view = inflater.inflate(R.layout.fragment_edit_ddl, container, false)
-
-        // 获取主题中的 colorBackground 并设置为背景
-        val typedValue = TypedValue()
-        requireContext().theme.resolveAttribute(android.R.attr.colorBackground, typedValue, true)
-        view.setBackgroundColor(typedValue.data)
-        return view
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                DeadlinerTheme {
+                    EditDDLScreen()
+                }
+            }
+        }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun EditDDLScreen() {
+        val context = LocalContext.current
+        val initialHabit = remember(ddlItem.id) { habitRepo.getHabitByDdlId(ddlItem.id) }
+        val initialTaskDraft = remember(ddlItem.id) { ddlItem.toTaskEditorDraft() }
+        val initialHabitDraft = remember(ddlItem.id) { ddlItem.toHabitEditorDraft(initialHabit) }
 
-        ddlNameEditText = view.findViewById(R.id.ddlNameEditText)
-        startTimeCard = view.findViewById(R.id.startTimeCard)
-        endTimeCard = view.findViewById(R.id.endTimeCard)
-        startTimeContent = view.findViewById(R.id.startTimeContent)
-        endTimeContent = view.findViewById(R.id.endTimeContent)
-        ddlNoteLayout = view.findViewById(R.id.ddlNoteLayout)
-        ddlNoteEditText = view.findViewById(R.id.ddlNoteEditText)
-        saveButton = view.findViewById(R.id.saveButton)
-        backButton = view.findViewById(R.id.backButton)
-
-        freqEditLayout = view.findViewById(R.id.freqEditLayout)
-        freqTypeToggleGroup = view.findViewById(R.id.freqTypeToggleGroup)
-        freqTextInput = view.findViewById(R.id.freqTextInput)
-        freqEditText = view.findViewById(R.id.freqEditText)
-        totalTextInput = view.findViewById(R.id.totalTextInput)
-        totalEditText = view.findViewById(R.id.totalEditText)
-        freqTypeHint = view.findViewById(R.id.freqTypeHint)
-
-        ddlNameEditText.setText(ddlItem.name)
-        startTimeContent.text = formatLocalDateTime(startTime)
-//        Log.d("endTime", "endTime: $endTime | realValue: ${ddlItem.endTime} | parseReturnValue: ${GlobalUtils.parseDateTime(ddlItem.endTime)} | safeParse: ${GlobalUtils.safeParseDateTime(ddlItem.endTime)}")
-        if (endTime != null && endTime != GlobalUtils.timeNull) endTimeContent.text = formatLocalDateTime(endTime!!)
-
-        when (ddlItem.type) {
-            DeadlineType.TASK -> {
-                startTimeCard.visibility = View.VISIBLE
-                endTimeCard.visibility = View.VISIBLE
-                ddlNoteLayout.visibility = View.VISIBLE
-                ddlNoteEditText.visibility = View.VISIBLE
-                freqTypeToggleGroup.visibility = View.GONE
-                freqTypeHint.visibility = View.GONE
-                freqEditLayout.visibility = View.GONE
-
-                ddlNoteEditText.setText(ddlItem.note)
-            }
-            DeadlineType.HABIT -> {
-                startTimeCard.visibility = View.GONE
-                endTimeCard.visibility = View.GONE
-                ddlNoteLayout.visibility = View.GONE
-                ddlNoteEditText.visibility = View.GONE
-                freqTypeToggleGroup.visibility = View.VISIBLE
-                freqTypeHint.visibility = View.VISIBLE
-                freqEditLayout.visibility = View.VISIBLE
-
-                val habit = habitRepo.getHabitByDdlId(ddlItem.id)
-
-                if (habit != null) {
-                    // goalType / period → 频率类型按钮
-                    when (habit.goalType) {
-                        HabitGoalType.TOTAL -> {
-                            // 总次数模式
-                            freqTypeToggleGroup.check(R.id.btnTotal)
-                            // TOTAL 模式下 timesPerPeriod 一般是 1，这里直接展示 1
-                            freqEditText.setText("1")
-                            totalEditText.setText(habit.totalTarget?.toString().orEmpty())
-                        }
-                        HabitGoalType.PER_PERIOD -> {
-                            // 按周期模式
-                            val checkedId = when (habit.period) {
-                                HabitPeriod.DAILY -> R.id.btnDaily
-                                HabitPeriod.WEEKLY -> R.id.btnWeekly
-                                HabitPeriod.MONTHLY -> R.id.btnYearly   // 复用原来的按钮
-                            }
-                            freqTypeToggleGroup.check(checkedId)
-                            freqEditText.setText(habit.timesPerPeriod.toString())
-                            totalEditText.setText("")  // 按周期模式下总次数不使用
-                        }
-                    }
-                } else {
-                    // 找不到 Habit 的兜底策略：默认每天 1 次
-                    freqTypeToggleGroup.check(R.id.btnDaily)
-                    freqEditText.setText("1")
-                    totalEditText.setText("")
-                }
-            }
+        var taskDraft by remember(ddlItem.id) { mutableStateOf(initialTaskDraft) }
+        var habitDraft by remember(ddlItem.id) { mutableStateOf(initialHabitDraft) }
+        val reminderTimeLabel = remember(habitDraft.reminderTime) {
+            habitDraft.reminderTime.format(REMINDER_TIME_FORMATTER)
         }
 
-        // 设置沉浸式状态栏和导航栏
-        val colorSurface = getThemeColor(com.google.android.material.R.attr.colorSurface)
-        setSystemBarColors(colorSurface, isLightColor(colorSurface))
-
-        if (ddlItem.type == DeadlineType.TASK) {
-            // 选择开始时间
-            startTimeCard.setOnClickListener {
-                GlobalUtils.showDateTimePicker(parentFragmentManager) { selectedTime ->
-                    startTime = selectedTime
-                    startTimeContent.text = formatLocalDateTime(startTime)
-                }
-            }
-
-            // 选择结束时间
-            endTimeCard.setOnClickListener {
-                GlobalUtils.showDateTimePicker(parentFragmentManager) { selectedTime ->
-                    endTime = selectedTime
-                    endTimeContent.text = formatLocalDateTime(endTime!!)
-                }
-            }
+        if (showPickerDialogBlur) {
+            RegisterAdvancedMaterialDialogBlur()
         }
+        PickerWindowBlurEffect(
+            active = showPickerDialogBlur,
+            surfaceColor = MaterialTheme.colorScheme.surface
+        )
 
-        saveButton.setOnClickListener {
-            when (ddlItem.type) {
-                DeadlineType.TASK -> {
-                    val updatedDDL = ddlItem.copy(
-                        name = ddlNameEditText.text.toString(),
-                        startTime = startTime.toString(),
-                        endTime = endTime.toString(),
-                        note = ddlNoteEditText.text.toString(),
-                        type = DeadlineType.TASK
-                    )
-                    onUpdate(updatedDDL)
-                }
-                DeadlineType.HABIT -> {
-                    // 1) 读取 UI
-                    val ddlName = ddlNameEditText.text.toString()
-                    val frequency = freqEditText.text.toString().ifBlank { "1" }.toInt()
-                    val total = totalEditText.text.toString().ifBlank { "0" }.toIntOrNull() ?: 0
-
-                    val frequencyType = when (freqTypeToggleGroup.checkedButtonId) {
-                        R.id.btnDaily -> DeadlineFrequency.DAILY
-                        R.id.btnWeekly -> DeadlineFrequency.WEEKLY
-                        R.id.btnYearly -> DeadlineFrequency.MONTHLY
-                        else -> DeadlineFrequency.TOTAL
-                    }
-
-                    // 2) 构造 HabitMetaData JSON（兼容旧逻辑）
-                    val meta = HabitMetaData(
-                        completedDates = emptySet(),
-                        frequencyType = frequencyType,
-                        frequency = frequency,
-                        total = total,
-                        refreshDate = LocalDate.now().toString()
-                    )
-                    val noteJson = meta.toJson()
-
-                    // 3) 更新 DDLItem：写回 note、时间、名字等
-                    val updatedDDL = ddlItem.copy(
-                        name = ddlName,
-                        startTime = "",
-                        endTime = "",
-                        note = noteJson,
-                        type = DeadlineType.HABIT
-                    )
-                    onUpdate(updatedDDL)
-
-                    // 4) 同步更新 Habit 表（和 AddDDLActivity 的创建逻辑保持一致）
-                    val habitPeriod = when (frequencyType) {
-                        DeadlineFrequency.DAILY -> HabitPeriod.DAILY
-                        DeadlineFrequency.WEEKLY -> HabitPeriod.WEEKLY
-                        DeadlineFrequency.MONTHLY -> HabitPeriod.MONTHLY
-                        DeadlineFrequency.TOTAL -> HabitPeriod.DAILY   // TOTAL 没有周期概念，用 DAILY 兜底
-                    }
-
-                    val habitGoalType =
-                        if (frequencyType == DeadlineFrequency.TOTAL)
-                            HabitGoalType.TOTAL
-                        else
-                            HabitGoalType.PER_PERIOD
-
-                    val habitTimesPerPeriod =
-                        if (frequencyType == DeadlineFrequency.TOTAL)
-                            1
-                        else
-                            frequency
-
-                    val habitTotalTarget =
-                        if (frequencyType == DeadlineFrequency.TOTAL)
-                            total
-                        else
-                            null
-
-                    val habit = habitRepo.getHabitByDdlId(ddlItem.id)
-                    if (habit != null) {
-                        val updatedHabit = habit.copy(
-                            name = ddlName,
-                            period = habitPeriod,
-                            timesPerPeriod = habitTimesPerPeriod,
-                            goalType = habitGoalType,
-                            totalTarget = habitTotalTarget
+        AdaptiveMaterialScaffold(
+            containerColor = MaterialTheme.colorScheme.surface,
+            advancedMaterialTopBarTintColor = MaterialTheme.colorScheme.surface,
+            topBar = {
+                TopAppBar(
+                    title = stringResource(R.string.alert_edit_modify),
+                    navigationIcon = {
+                        IconButton(onClick = ::dismiss) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_back),
+                                contentDescription = stringResource(R.string.close),
+                            )
+                        }
+                    },
+                    mode = TopAppBarStyle.SMALL,
+                    forceMaterial3 = true,
+                    useParentMaterialContainer = true,
+                )
+            },
+            bottomBar = {
+                DeadlineBottomActions(
+                    showSaveToCalendar = false,
+                    onSave = {
+                        when (ddlItem.type) {
+                            DeadlineType.TASK -> saveTask(taskDraft)
+                            DeadlineType.HABIT -> saveHabit(habitDraft)
+                        }
+                    },
+                    onSaveToCalendar = {},
+                )
+            },
+            content = { padding ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        top = padding.calculateTopPadding() + 8.dp,
+                        end = 16.dp,
+                        bottom = 160.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    item {
+                        DeadlineNameField(
+                            value = when (ddlItem.type) {
+                                DeadlineType.TASK -> taskDraft.name
+                                DeadlineType.HABIT -> habitDraft.name
+                            },
+                            onValueChange = { value ->
+                                taskDraft = taskDraft.copy(name = value)
+                                habitDraft = habitDraft.copy(name = value)
+                            },
                         )
-                        habitRepo.updateHabit(updatedHabit)
                     }
 
-                    dismiss()
-                    return@setOnClickListener
+                    when (ddlItem.type) {
+                        DeadlineType.TASK -> {
+                            item {
+                                DeadlineStarToggleCard(
+                                    checked = taskDraft.isStarred,
+                                    onCheckedChange = { taskDraft = taskDraft.copy(isStarred = it) },
+                                )
+                            }
+                            item {
+                                TaskEditorSection(
+                                    draft = taskDraft,
+                                    onDraftChange = { taskDraft = it },
+                                    formatDateTime = ::formatLocalDateTime,
+                                    onPickStartTime = {
+                                        launchPickerWithBlur {
+                                            GlobalUtils.showDateTimePicker(
+                                                parentFragmentManager,
+                                                onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
+                                            ) { selected ->
+                                                taskDraft = taskDraft.copy(
+                                                    startTime = selected,
+                                                    endTime = if (taskDraft.endTime.isBefore(selected)) {
+                                                        selected.plusHours(1)
+                                                    } else {
+                                                        taskDraft.endTime
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onPickEndTime = {
+                                        launchPickerWithBlur {
+                                            GlobalUtils.showDateTimePicker(
+                                                parentFragmentManager,
+                                                taskDraft.startTime,
+                                                { chosen ->
+                                                    Toast.makeText(
+                                                        requireContext(),
+                                                        getString(R.string.please_choose_the_time_after, chosen),
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                },
+                                                onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
+                                            ) { selected ->
+                                                taskDraft = taskDraft.copy(endTime = selected)
+                                            }
+                                        }
+                                    },
+                                )
+                            }
+                        }
+
+                        DeadlineType.HABIT -> {
+                            item {
+                                HabitEditorSection(
+                                    draft = habitDraft,
+                                    onDraftChange = { habitDraft = it },
+                                    summaryText = buildHabitSummary(context, habitDraft),
+                                    onPickReminderTime = {
+                                        launchPickerWithBlur {
+                                            GlobalUtils.showTimePicker(
+                                                parentFragmentManager,
+                                                initialTime = habitDraft.reminderTime,
+                                                onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
+                                            ) { selected ->
+                                                habitDraft = habitDraft.copy(
+                                                    reminderEnabled = true,
+                                                    reminderTime = selected
+                                                )
+                                            }
+                                        }
+                                    },
+                                    reminderTimeLabel = reminderTimeLabel,
+                                    onClearReminder = {
+                                        habitDraft = habitDraft.copy(reminderEnabled = false)
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
             }
-            dismiss()
-        }
-
-        backButton.setOnClickListener {
-            dismiss()
-        }
+        )
     }
 
-    /**
-     * 设置状态栏和导航栏颜色及图标颜色
-     */
-    private fun setSystemBarColors(color: Int, lightIcons: Boolean) {
-        dialog?.window?.apply {
-            addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-            statusBarColor = color
-            navigationBarColor = color
+    private fun saveTask(draft: TaskEditorDraft) {
+        val name = draft.name.trim()
+        if (name.isBlank()) {
+            Toast.makeText(requireContext(), getString(R.string.add_ddl_name), Toast.LENGTH_SHORT).show()
+            return
+        }
 
-            // 设置状态栏图标颜色
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                insetsController?.setSystemBarsAppearance(
-                    if (lightIcons) WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS else 0,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                )
-                insetsController?.setSystemBarsAppearance(
-                    if (lightIcons) WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS else 0,
-                    WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                decorView.systemUiVisibility = if (lightIcons) {
-                    decorView.systemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        val updatedDDL = ddlItem.copy(
+            name = name,
+            startTime = draft.startTime.toString(),
+            endTime = draft.endTime.toString(),
+            note = draft.note,
+            isStared = draft.isStarred,
+            type = DeadlineType.TASK,
+        )
+        onUpdate(updatedDDL)
+        dismiss()
+    }
+
+    private fun saveHabit(draft: HabitEditorDraft) {
+        val name = draft.name.trim()
+        if (name.isBlank()) {
+            Toast.makeText(requireContext(), getString(R.string.add_ddl_name), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val isEbbinghaus = draft.period == EditorHabitPeriod.EBBINGHAUS
+        val goalType = if (isEbbinghaus) HabitGoalType.PER_PERIOD else draft.goalType
+        val frequency = if (isEbbinghaus) {
+            1
+        } else {
+            draft.timesPerPeriod.toIntOrNull()?.coerceAtLeast(1) ?: 1
+        }
+        val total = if (goalType == HabitGoalType.TOTAL) {
+            draft.totalTarget.toIntOrNull()
+        } else {
+            null
+        }
+        val frequencyType = if (isEbbinghaus) DeadlineFrequency.DAILY else draft.toDeadlineFrequency()
+
+        val meta = HabitMetaData(
+            completedDates = emptySet(),
+            frequencyType = frequencyType,
+            frequency = if (goalType == HabitGoalType.TOTAL) 1 else frequency,
+            total = if (goalType == HabitGoalType.TOTAL) total ?: 0 else 0,
+            refreshDate = LocalDate.now().toString()
+        )
+
+        habitRepo.getHabitByDdlId(ddlItem.id)?.let { habit ->
+            val updatedHabit = habit.copy(
+                name = name,
+                period = draft.period.toModelPeriod(),
+                timesPerPeriod = if (goalType == HabitGoalType.TOTAL) 1 else frequency,
+                goalType = goalType,
+                totalTarget = if (goalType == HabitGoalType.TOTAL) total else null,
+                alarmTime = if (draft.reminderEnabled) {
+                    draft.reminderTime.format(REMINDER_TIME_FORMATTER)
                 } else {
-                    decorView.systemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                    null
                 }
+            )
+            habitRepo.updateHabit(updatedHabit)
+
+            if (draft.reminderEnabled) {
+                DeadlineAlarmScheduler.scheduleHabitNotifyAlarm(requireContext().applicationContext, ddlItem.id)
+            } else {
+                DeadlineAlarmScheduler.cancelHabitNotifyAlarm(requireContext().applicationContext, ddlItem.id)
             }
         }
+
+        val updatedDDL = ddlItem.copy(
+            name = name,
+            startTime = "",
+            endTime = "",
+            note = meta.toJson(),
+            type = DeadlineType.HABIT
+        )
+        onUpdate(updatedDDL)
+        dismiss()
     }
 
-    /**
-     * 获取主题颜色
-     * @param attributeId 主题属性 ID
-     * @return 颜色值
-     */
-    private fun getThemeColor(attributeId: Int): Int {
-        val typedValue = TypedValue()
-        requireContext().theme.resolveAttribute(attributeId, typedValue, true)
-        return typedValue.data
+    private fun DDLItem.toTaskEditorDraft(): TaskEditorDraft {
+        val parsedStart = GlobalUtils.safeParseDateTime(startTime)
+        val parsedEnd = GlobalUtils.parseDateTime(endTime) ?: parsedStart.plusHours(1)
+        return TaskEditorDraft(
+            name = name,
+            note = note,
+            startTime = parsedStart,
+            endTime = parsedEnd,
+            isStarred = isStared,
+        )
     }
 
-    /**
-     * 判断颜色是否为浅色
-     */
-    private fun isLightColor(color: Int): Boolean {
-        val darkness = 1 - (0.299 * ((color shr 16 and 0xFF) / 255.0) +
-                0.587 * ((color shr 8 and 0xFF) / 255.0) +
-                0.114 * ((color and 0xFF) / 255.0))
-        return darkness < 0.5
+    private fun DDLItem.toHabitEditorDraft(habit: com.aritxonly.deadliner.model.Habit?): HabitEditorDraft {
+        val meta = GlobalUtils.parseHabitMetaData(note)
+        val reminderTime = parseReminderTime(habit?.alarmTime)
+        val goalType = habit?.goalType
+            ?: if (meta.frequencyType == DeadlineFrequency.TOTAL) HabitGoalType.TOTAL else HabitGoalType.PER_PERIOD
+        val timesPerPeriod = habit?.timesPerPeriod?.toString()
+            ?: meta.frequency.coerceAtLeast(1).toString()
+        val totalTarget = habit?.totalTarget
+            ?: meta.total.takeIf { it > 0 }
+
+        return HabitEditorDraft(
+            name = name,
+            period = habit?.period?.let { modelPeriod ->
+                when (modelPeriod) {
+                    HabitPeriod.DAILY -> EditorHabitPeriod.DAILY
+                    HabitPeriod.WEEKLY -> EditorHabitPeriod.WEEKLY
+                    HabitPeriod.MONTHLY -> EditorHabitPeriod.MONTHLY
+                    HabitPeriod.EBBINGHAUS -> EditorHabitPeriod.EBBINGHAUS
+                }
+            } ?: meta.frequencyType.toEditorHabitPeriod(),
+            goalType = goalType,
+            timesPerPeriod = timesPerPeriod,
+            totalTarget = totalTarget?.toString().orEmpty(),
+            reminderEnabled = reminderTime != null,
+            reminderTime = reminderTime ?: LocalTime.of(20, 0)
+        )
     }
 
-    /**
-     * 格式化 LocalDateTime 为字符串
-     */
+    private fun parseReminderTime(raw: String?): LocalTime? {
+        if (raw.isNullOrBlank()) return null
+        return runCatching { LocalTime.parse(raw, REMINDER_TIME_FORMATTER) }.getOrNull()
+    }
+
+    private fun buildHabitSummary(context: android.content.Context, draft: HabitEditorDraft): String {
+        return GlobalUtils.generateHabitNote(
+            context,
+            draft.timesPerPeriod.toIntOrNull(),
+            draft.totalTarget.toIntOrNull(),
+            draft.toDeadlineFrequency()
+        )
+    }
+
     private fun formatLocalDateTime(dateTime: LocalDateTime): String {
         val formatter = DateTimeFormatter
             .ofLocalizedDateTime(FormatStyle.MEDIUM)
@@ -338,5 +410,85 @@ class EditDDLFragment(private val ddlItem: DDLItem, private val onUpdate: (DDLIt
         return dateTime.format(formatter)
     }
 
+    private fun launchPickerWithBlur(showPicker: () -> Unit) {
+        pendingPickerLaunchJob?.cancel()
+        showPickerDialogBlur = true
+        pendingPickerLaunchJob = lifecycleScope.launch {
+            delay(PICKER_BLUR_LEAD_IN_MS)
+            showPicker()
+        }
+    }
+
+    private fun onPickerDialogVisibilityChanged(visible: Boolean) {
+        if (!visible) {
+            showPickerDialogBlur = false
+        }
+    }
+
+    @Composable
+    private fun PickerWindowBlurEffect(active: Boolean, surfaceColor: Color) {
+        val blurProgress by animateFloatAsState(
+            targetValue = if (active) 1f else 0f,
+            animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+            label = "edit-ddl-picker-blur"
+        )
+        val scale by animateFloatAsState(
+            targetValue = if (active) 0.98f else 1f,
+            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+            label = "edit-ddl-picker-scale"
+        )
+        val blurRadius = (24f * blurProgress).coerceIn(0f, 24f)
+        val saturation = 1f - ((1f - 0.5f) * blurProgress)
+
+        val decorView = dialog?.window?.decorView
+        val contentView = decorView?.findViewById<View>(android.R.id.content) ?: decorView
+
+        DisposableEffect(decorView, contentView) {
+            val originalBackground = decorView?.background
+
+            onDispose {
+                contentView?.setRenderEffect(null)
+                contentView?.scaleX = 1f
+                contentView?.scaleY = 1f
+                decorView?.background = originalBackground
+            }
+        }
+
+        SideEffect {
+            decorView?.setBackgroundColor(surfaceColor.toArgb())
+
+            if (contentView != null) {
+                val effects = mutableListOf<RenderEffect>()
+
+                if (blurRadius >= 0.5f) {
+                    effects += RenderEffect.createBlurEffect(
+                        blurRadius,
+                        blurRadius,
+                        Shader.TileMode.CLAMP
+                    )
+                }
+                if (saturation < 1f - 1e-3f) {
+                    val colorMatrix = ColorMatrix().apply { setSaturation(saturation) }
+                    effects += RenderEffect.createColorFilterEffect(
+                        ColorMatrixColorFilter(colorMatrix)
+                    )
+                }
+
+                contentView.setRenderEffect(
+                    when (effects.size) {
+                        0 -> null
+                        1 -> effects[0]
+                        else -> RenderEffect.createChainEffect(effects[0], effects[1])
+                    }
+                )
+                contentView.scaleX = scale
+                contentView.scaleY = scale
+            }
+        }
+    }
+
     override fun getTheme(): Int = android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen
 }
+
+private val REMINDER_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+private const val PICKER_BLUR_LEAD_IN_MS = 45L

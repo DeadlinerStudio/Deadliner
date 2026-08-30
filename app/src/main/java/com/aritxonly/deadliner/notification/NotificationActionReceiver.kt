@@ -29,6 +29,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         val databaseHelper = DatabaseHelper.getInstance(context)
         val item = databaseHelper.getDDLById(ddlId) ?: return
+        val repo = DDLRepository()
 
         when (intent.action) {
             ACTION_MARK_COMPLETE -> {
@@ -39,24 +40,27 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     else -> null
                 }
                 if (action != null) {
-                    DDLRepository().applyTaskAction(ddlId, action, confirmed = true)
+                    repo.applyTaskAction(ddlId, action, confirmed = true)
                 }
             }
 
             ACTION_DELETE -> {
-                databaseHelper.deleteDDL(ddlId)
+                repo.deleteDDL(ddlId)
                 Toast.makeText(context, R.string.toast_deletion, Toast.LENGTH_LONG).show()
             }
 
             ACTION_LATER -> {
-                DeadlineAlarmScheduler.cancelExactAlarm(context, ddlId.toLong())
+                DeadlineAlarmScheduler.cancelScheduledNotifications(context, ddlId)
                 GlobalUtils.NotificationStatusManager.clearNotified(ddlId)
 
                 val endTime = GlobalUtils.safeParseDateTime(item.endTime)
                 val now = LocalDateTime.now()
                 val totalHours = Duration.between(now, endTime).toHours()
                 val delayHours = maxOf(1, totalHours / 2)
-                DeadlineAlarmScheduler.scheduleExactAlarm(context, item, delayHours)
+                if (item.state.isActionable() && GlobalUtils.deadlineNotification) {
+                    DeadlineAlarmScheduler.scheduleExactAlarm(context, item, delayHours)
+                    DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(context, item)
+                }
 
                 Toast.makeText(context, context.getString(R.string.remind_in, delayHours), Toast.LENGTH_LONG).show()
             }

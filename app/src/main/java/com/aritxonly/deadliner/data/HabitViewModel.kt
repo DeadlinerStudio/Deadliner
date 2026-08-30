@@ -8,6 +8,8 @@ import com.aritxonly.deadliner.model.HabitGoalType
 import com.aritxonly.deadliner.model.HabitPeriod
 import com.aritxonly.deadliner.model.HabitRecordStatus
 import com.aritxonly.deadliner.model.HabitWithDailyStatus
+import com.aritxonly.deadliner.model.isReviewDueOn
+import com.aritxonly.deadliner.model.scheduleStateOn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,6 +67,7 @@ class HabitViewModel(
                 val end = ym.atEndOfMonth()
                 start to end
             }
+            HabitPeriod.EBBINGHAUS -> date to date
         }
     }
 
@@ -76,6 +79,8 @@ class HabitViewModel(
         habit: Habit,
         date: LocalDate
     ): HabitWithDailyStatus {
+        val scheduleState = habit.scheduleStateOn(date)
+
         return when (habit.goalType) {
             HabitGoalType.PER_PERIOD -> {
                 // 原来的逻辑：按周期窗口统计
@@ -86,14 +91,19 @@ class HabitViewModel(
                     .filter { it.status == HabitRecordStatus.COMPLETED }
 
                 val done = recordsInPeriod.sumOf { it.count }
-                val target = habit.timesPerPeriod.coerceAtLeast(1)
+                val target = if (habit.period == HabitPeriod.EBBINGHAUS) {
+                    1
+                } else {
+                    habit.timesPerPeriod.coerceAtLeast(1)
+                }
                 val completed = done >= target
 
                 HabitWithDailyStatus(
                     habit = habit,
                     doneCount = done,
                     targetCount = target,
-                    isCompleted = completed
+                    isCompleted = completed,
+                    scheduleState = scheduleState
                 )
             }
 
@@ -115,7 +125,8 @@ class HabitViewModel(
                     habit = habit,
                     doneCount = done,
                     targetCount = target,
-                    isCompleted = completed
+                    isCompleted = completed,
+                    scheduleState = scheduleState
                 )
             }
         }
@@ -143,16 +154,14 @@ class HabitViewModel(
         val startOfWeek = date.with(DayOfWeek.MONDAY)
         val week = (0..6).map { offset ->
             val d = startOfWeek.plusDays(offset.toLong())
-
-            val completedCountForDay = allHabits.count { h ->
-                val status = buildStatusForDate(h, d)
-                status.isCompleted
-            }
+            val statusesForDay = allHabits.map { h -> buildStatusForDate(h, d) }
+            val visibleStatuses = statusesForDay.filter { it.scheduleState?.isDue != false }
+            val completedCountForDay = visibleStatuses.count { it.isCompleted }
 
             DayOverview(
                 date = d,
                 completedCount = completedCountForDay,
-                totalCount = allHabits.size
+                totalCount = visibleStatuses.size
             )
         }
         _weekOverview.value = week
@@ -182,6 +191,9 @@ class HabitViewModel(
     fun onToggleHabit(habitId: Long, onCelebrate: (() -> Unit)? = null) {
         val date = _selectedDate.value
         viewModelScope.launch(Dispatchers.IO) {
+            val currentStatus = _baseHabitsForSelectedDate.value.find { it.habit.id == habitId }
+            if (currentStatus?.habit?.isReviewDueOn(date) == false) return@launch
+
             // 切换前的完成率
             val before = _baseHabitsForSelectedDate.value
                 .find { it.habit.id == habitId }?.let {

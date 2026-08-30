@@ -11,6 +11,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -41,20 +43,27 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Label
@@ -71,17 +80,26 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.ripple
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
@@ -96,7 +114,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
+import com.aritxonly.deadliner.ui.base.TopAppBar
+import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.base.Scaffold
 import com.aritxonly.deadliner.ui.base.Switch
@@ -164,11 +186,14 @@ fun SettingsSection(
     mainContent: Boolean = false,
     enabled: Boolean = false,
     customColor: Color? = null,
+    containerAlpha: Float = 1f,
+    clipContent: Boolean = true,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
     val radiusDimen = if (mainContent) 48.dp else dimensionResource(R.dimen.item_corner_radius)
+    val sectionShape = MaterialTheme.shapes.large.copy(CornerSize(radiusDimen))
     val containerColor = customColor
-        ?: if (enabled && mainContent && !GlobalUtils.miuixColor) {
+        ?: if (enabled && mainContent) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
             MaterialTheme.colorScheme.surfaceContainer
@@ -177,7 +202,7 @@ fun SettingsSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(vertical = 8.dp),
     ) {
         topLabel?.let {
             Text(
@@ -187,12 +212,30 @@ fun SettingsSection(
                 modifier = modifier.padding(horizontal = 24.dp, vertical = 8.dp)
             )
         }
-        Surface(
-            shape = MaterialTheme.shapes.large.copy(CornerSize(radiusDimen)),
-            color = containerColor
-//                .copy(alpha = 0.6f)
-        ) {
-            Column(content = content)
+        if (clipContent) {
+            Surface(
+                shape = sectionShape,
+                color = containerColor.copy(alpha = containerColor.alpha * containerAlpha),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    content = content
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = containerColor.copy(alpha = containerColor.alpha * containerAlpha),
+                        shape = RectangleShape
+                    )
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    content = content
+                )
+            }
         }
     }
 }
@@ -206,6 +249,90 @@ fun SettingsSectionDivider(
 ) else Spacer(modifier = Modifier.height(0.dp))
 // endregion
 
+private val LocalSettingsTopBarCanScrollState = compositionLocalOf<MutableState<Boolean>?> { null }
+@Composable
+fun rememberSettingsScaffoldOuterPaddingValues(paddingValues: PaddingValues): PaddingValues {
+    val layoutDirection = LocalLayoutDirection.current
+    return remember(paddingValues, layoutDirection) {
+        PaddingValues(
+            start = paddingValues.calculateStartPadding(layoutDirection),
+            end = paddingValues.calculateEndPadding(layoutDirection),
+            bottom = paddingValues.calculateBottomPadding(),
+        )
+    }
+}
+
+@Composable
+fun rememberSettingsScaffoldTopOverlayPadding(paddingValues: PaddingValues): Dp {
+    return remember(paddingValues) { paddingValues.calculateTopPadding() }
+}
+
+@Composable
+fun SettingsScrollColumn(
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val outerPadding = rememberSettingsScaffoldOuterPaddingValues(contentPadding)
+    val topOverlayPadding = rememberSettingsScaffoldTopOverlayPadding(contentPadding)
+    val topBarCanScrollState = LocalSettingsTopBarCanScrollState.current
+    val canScroll by remember(scrollState) {
+        derivedStateOf {
+            scrollState.maxValue > 0 || scrollState.value > 0
+        }
+    }
+
+    LaunchedEffect(topBarCanScrollState, canScroll) {
+        topBarCanScrollState?.value = canScroll
+    }
+
+    Column(
+        modifier = modifier
+            .padding(outerPadding)
+            .padding(horizontal = 16.dp)
+            .verticalScroll(scrollState)
+    ) {
+        Spacer(modifier = Modifier.height(topOverlayPadding))
+        content()
+    }
+}
+
+@Composable
+fun SettingsLazyColumn(
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    content: LazyListScope.() -> Unit,
+) {
+    val outerPadding = rememberSettingsScaffoldOuterPaddingValues(contentPadding)
+    val topOverlayPadding = rememberSettingsScaffoldTopOverlayPadding(contentPadding)
+    val topBarCanScrollState = LocalSettingsTopBarCanScrollState.current
+    val listState = rememberLazyListState()
+    val canScroll by remember(listState) {
+        derivedStateOf {
+            listState.canScrollForward ||
+                listState.firstVisibleItemIndex > 0 ||
+                listState.firstVisibleItemScrollOffset > 0
+        }
+    }
+
+    LaunchedEffect(topBarCanScrollState, canScroll) {
+        topBarCanScrollState?.value = canScroll
+    }
+
+    LazyColumn(
+        modifier = modifier
+            .padding(outerPadding),
+        state = listState,
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            top = topOverlayPadding,
+            end = 16.dp,
+        ),
+        content = content,
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CollapsingTopBarScaffold(
@@ -213,67 +340,130 @@ fun CollapsingTopBarScaffold(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surface,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    collapsible: Boolean = true,
+    topBarStyle: TopAppBarStyle = TopAppBarStyle.LARGE,
+    allowAdvancedMaterialTopBarBlur: Boolean = true,
+    advancedMaterialTopBarBlurOnlyWhenCollapsed: Boolean = false,
+    forceOverlayTopBar: Boolean = false,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
+    val advancedMaterial = LocalAdvancedMaterialSpec.current
+    val canScrollState = remember { mutableStateOf(true) }
+    val canCollapseTopBar = collapsible && canScrollState.value
+    val useLegacyTopBar = !advancedMaterial.enabled && !forceOverlayTopBar
+
     when (LocalAppDesignSystem.current) {
         AppDesignSystem.MATERIAL3 -> {
-            val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-                rememberTopAppBarState()
-            )
-
-            Scaffold(
-                modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                topBar = {
-                    LargeTopAppBar(
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = containerColor,
-                            titleContentColor = titleColor,
-                        ),
-                        title = {
-                            Text(
-                                text = title,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        },
-                        navigationIcon = navigationIcon,
-                        actions = actions,
-                        scrollBehavior = scrollBehavior,
-                    )
+            val scrollBehavior = if (collapsible && topBarStyle == TopAppBarStyle.LARGE) {
+                TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+                    state = rememberTopAppBarState(),
+                    canScroll = { canCollapseTopBar },
+                )
+            } else {
+                null
+            }
+            val overlayTopBar: @Composable () -> Unit = {
+                TopAppBar(
+                    title = title,
+                    mode = topBarStyle,
+                    navigationIcon = navigationIcon,
+                    actions = actions,
+                    titleTextStyle = MaterialTheme.typography.headlineMedium,
+                    useParentMaterialContainer = false,
+                    allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
+                    advancedMaterialBlurOnlyWhenCollapsed = advancedMaterialTopBarBlurOnlyWhenCollapsed,
+                    material3ScrollBehavior = scrollBehavior,
+                )
+            }
+            val legacyTopBar: @Composable () -> Unit = {
+                TopAppBar(
+                    title = title,
+                    mode = topBarStyle,
+                    navigationIcon = navigationIcon,
+                    actions = actions,
+                    titleTextStyle = if (topBarStyle == TopAppBarStyle.LARGE) {
+                        MaterialTheme.typography.headlineMedium
+                    } else {
+                        null
+                    },
+                    forceMaterial3 = true,
+                    allowAdvancedMaterialBlur = false,
+                    material3ScrollBehavior = scrollBehavior,
+                )
+            }
+            AdaptiveMaterialScaffold(
+                modifier = if (scrollBehavior != null) {
+                    modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+                } else {
+                    modifier
                 },
+                topBar = if (useLegacyTopBar) ({}) else overlayTopBar,
+                legacyTopBar = if (useLegacyTopBar) legacyTopBar else ({}),
                 bottomBar = bottomBar,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                wrapTopBarInMaterialContainer = false,
+                useCurrentTopBarHeightForContentPadding = !useLegacyTopBar,
                 snackbarHost = snackbarHost,
-                content = content
+                content = { paddingValues ->
+                    CompositionLocalProvider(LocalSettingsTopBarCanScrollState provides canScrollState) {
+                        content(paddingValues)
+                    }
+                },
             )
         }
 
         AppDesignSystem.MIUIX -> {
-            val scrollBehavior = top.yukonga.miuix.kmp.basic.MiuixScrollBehavior()
-
-            Scaffold(
-                modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                topBar = {
-                    top.yukonga.miuix.kmp.basic.TopAppBar(
-                        title = title,
-                        largeTitle = title,
-                        color = containerColor,
-                        navigationIcon = navigationIcon,
-                        actions = actions,
-                        scrollBehavior = scrollBehavior
-                    )
+            val scrollBehavior = if (collapsible && topBarStyle == TopAppBarStyle.LARGE) {
+                top.yukonga.miuix.kmp.basic.MiuixScrollBehavior(
+                    canScroll = { canCollapseTopBar },
+                )
+            } else {
+                null
+            }
+            val overlayTopBar: @Composable () -> Unit = {
+                TopAppBar(
+                    title = title,
+                    mode = topBarStyle,
+                    navigationIcon = navigationIcon,
+                    actions = actions,
+                    useParentMaterialContainer = false,
+                    allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
+                    advancedMaterialBlurOnlyWhenCollapsed = advancedMaterialTopBarBlurOnlyWhenCollapsed,
+                    miuixScrollBehavior = scrollBehavior,
+                )
+            }
+            val legacyTopBar: @Composable () -> Unit = {
+                TopAppBar(
+                    title = title,
+                    mode = topBarStyle,
+                    navigationIcon = navigationIcon,
+                    actions = actions,
+                    allowAdvancedMaterialBlur = false,
+                    miuixScrollBehavior = scrollBehavior,
+                )
+            }
+            AdaptiveMaterialScaffold(
+                modifier = if (scrollBehavior != null) {
+                    modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+                } else {
+                    modifier
                 },
+                topBar = if (useLegacyTopBar) ({}) else overlayTopBar,
+                legacyTopBar = if (useLegacyTopBar) legacyTopBar else ({}),
                 bottomBar = bottomBar,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                wrapTopBarInMaterialContainer = false,
+                useCurrentTopBarHeightForContentPadding = !useLegacyTopBar,
                 snackbarHost = snackbarHost,
                 content = { paddingValues ->
-                    content(paddingValues)
-                }
+                    CompositionLocalProvider(LocalSettingsTopBarCanScrollState provides canScrollState) {
+                        content(paddingValues)
+                    }
+                },
             )
         }
     }
@@ -311,7 +501,7 @@ fun SettingsSwitchItem(
                 text = stringResource(label),
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLargeEmphasized,
-                color = if (!mainSwitch || !checked || GlobalUtils.miuixColor)
+                color = if (!mainSwitch || !checked)
                     MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onPrimaryContainer
             )

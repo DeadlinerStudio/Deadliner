@@ -11,13 +11,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.core.graphics.toColorInt
-import com.aritxonly.deadliner.data.HabitViewModel
 import com.aritxonly.deadliner.localutils.DynamicColorsExtension
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
@@ -25,19 +20,16 @@ import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.main.classic.ClassicController
 import com.aritxonly.deadliner.ui.main.classic.ClassicHost
 import com.aritxonly.deadliner.ui.main.classic.CustomAdapter
-import com.aritxonly.deadliner.ui.main.simplified.MiuixHost
+import com.aritxonly.deadliner.ui.main.modern.ModernHost
 import com.aritxonly.deadliner.ui.main.simplified.SimplifiedHost
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.widgets.HabitMiniWidget
 import com.aritxonly.deadliner.widgets.LargeDeadlineWidget
 import com.aritxonly.deadliner.widgets.MultiDeadlineWidget
-import com.google.android.material.color.DynamicColors
-import com.google.android.material.color.DynamicColorsOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlin.apply
 
-class MainActivity : AppCompatActivity(), CustomAdapter.SwipeListener {
+class MainActivity : DeadlinerAppCompatActivity(), CustomAdapter.SwipeListener {
     private var classicController: ClassicController? = null
 
     lateinit var addDDLLauncher: ActivityResultLauncher<Intent>
@@ -78,9 +70,9 @@ class MainActivity : AppCompatActivity(), CustomAdapter.SwipeListener {
 
         setContent {
             val searchActive by showSearch.collectAsState()
+            val style by GlobalUtils.styleFlow.collectAsState()
 
             DeadlinerTheme {
-                val style = remember { UiStyle.fromKey(GlobalUtils.style) }
                 when (style) {
                     UiStyle.Classic     -> ClassicHost(
                         activity = this,
@@ -96,7 +88,7 @@ class MainActivity : AppCompatActivity(), CustomAdapter.SwipeListener {
                         )
                     }
                     UiStyle.Miuix -> {
-                        MiuixHost(
+                        ModernHost(
                             searchActive = searchActive,
                             onSearchActiveChange = { _showSearch.value = it },
                             activity = this
@@ -193,4 +185,3 @@ class MainActivity : AppCompatActivity(), CustomAdapter.SwipeListener {
         }
     }
 }
-

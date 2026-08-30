@@ -41,7 +41,7 @@
     <string name="settings_about">关于</string>
 
     <string name="settings_support_behavior">操作反馈方式 · 应用后台行为</string>
-    <string name="settings_support_interface_display">主界面布局 · 显示风格</string>
+    <string name="settings_support_interface_display">设计与色彩 · 高级材质 · 主界面风格</string>
     <string name="settings_support_notification">DDL临近通知 · 每日定时通知</string>
     <string name="settings_support_backup">导入与导出用户数据库</string>
     <string name="settings_support_deadliner_ai">Lifi AI · API接入 · 自定义prompt</string>
@@ -62,6 +62,15 @@
     <string name="settings_progress_dir_main">主界面正向进度条</string>
     <string name="settings_fireworks">完成时显示动画效果</string>
     <string name="settings_detail_display">剩余时间详细显示</string>
+    <string name="settings_display_size_title">显示大小</string>
+    <string name="settings_display_size_follow_system">跟随系统</string>
+    <string name="settings_display_size_compact">更紧凑</string>
+    <string name="settings_display_size_slightly_compact">稍紧凑</string>
+    <string name="settings_display_size_standard">标准</string>
+    <string name="settings_display_size_slightly_large">稍大</string>
+    <string name="settings_display_size_large">更大</string>
+    <string name="settings_support_display_size_menu">选择预设显示大小档位</string>
+    <string name="settings_display_size_custom_title">自定义显示大小缩放比例</string>
 
     <string name="settings_support_progress_dir">主界面任务进度条显示项目进行进度</string>
     <string name="settings_support_excitement">在主界面标题栏下方显示个性化鼓励语句</string>
@@ -136,6 +145,26 @@
     <string name="settings_ai_api_key">API Key</string>
     <string name="settings_ai_success">设置API Key成功！</string>
     <string name="settings_ai_incomplete">请填写API Key！</string>
+    <string name="settings_support_enable_ai">关闭后，主页和任务编辑器中的 AI 入口会隐藏。</string>
+    <string name="settings_ai_interaction_preferences">交互偏好</string>
+    <string name="settings_ai_auto_approve_read_tasks">自动确认读取任务列表</string>
+    <string name="settings_ai_auto_approve_read_tasks_support">当 Lifi AI 需要读取任务或习惯列表时，自动允许这类只读请求。</string>
+    <string name="settings_ai_silent_task_add">静默添加任务</string>
+    <string name="settings_ai_silent_task_add_support">开启后，创建任务类工具调用会直接执行，不再逐次确认。</string>
+    <string name="settings_ai_hide_thinking_process">隐藏思考过程</string>
+    <string name="settings_ai_hide_thinking_process_support">隐藏“正在思考”“等待工具结果”等过程提示，仅保留最终结果。</string>
+    <string name="settings_ai_byok_title">API 配置（BYOK）</string>
+    <string name="settings_ai_base_url">Base URL</string>
+    <string name="settings_ai_model_id">模型 ID（如 deepseek-chat）</string>
+    <string name="settings_ai_config_incomplete">请完整填写 API Key、Base URL 和模型 ID。</string>
+    <string name="settings_ai_save_and_validate">保存并验证 AI 设置</string>
+    <string name="settings_ai_validating">正在验证...</string>
+    <string name="settings_ai_saved_and_validated">AI 设置已保存并验证成功</string>
+    <string name="settings_ai_validation_failed">验证失败：%1$s</string>
+    <string name="settings_ai_validation_failed_fallback">请检查 API Key、Base URL 和模型名称是否正确。</string>
+    <string name="settings_ai_more">更多设置</string>
+    <string name="settings_ai_notes">说明</string>
+    <string name="settings_ai_byok_description">Lifi AI 现统一采用 BYOK 模式。你的 API Key 仅保存在本地设备，不会上传到 Deadliner 之外的第三方服务器；保存时会先进行一次在线验证。</string>
     <string name="settings_ai_custom_prompt">自定义提示词</string>
     <string name="settings_ai_custom_prompt_title">提示词</string>
     <string name="settings_support_ai_custom_prompt">自定义用户提示词 (不建议初级用户修改)</string>
@@ -179,7 +208,7 @@
 
     <!--下面是开始页面的内容-->
     <string name="welcome">让我们\n与AI同行</string>
-    <string name="welcome_version">全新Deadliner v4，诚邀您体验</string>
+    <string name="welcome_version">全新Deadliner v5，诚邀您体验</string>
 
     <string name="finish_notice">没有剩余的工作了</string>
     <string name="add_ddl_tile_label">添加新任务</string>
@@ -187,6 +216,23 @@
     <string name="end_time">结束时间</string>
     <string name="start_time">开始时间</string>
     <string name="add_ddl_note">备注</string>
+    <string name="editor_habit_period">周期</string>
+    <string name="editor_habit_goal_type">目标类型</string>
+    <string name="editor_habit_goal_per_period">坚持</string>
+    <string name="editor_habit_goal_total">定量</string>
+    <string name="editor_habit_times_per_period">每次/频次</string>
+    <string name="editor_habit_total_target">总目标数量</string>
+    <string name="editor_habit_period_ebbinghaus">艾宾浩斯</string>
+    <string name="editor_habit_ebbinghaus_title">记忆曲线</string>
+    <string name="editor_habit_ebbinghaus_description">根据艾宾浩斯遗忘曲线自动规划复习时间，更适合背词、记忆与阶段性复习。</string>
+    <string name="editor_habit_ebbinghaus_not_ready">Android 端的艾宾浩斯习惯还在接入中，先别急，我后面可以继续把数据层补上。</string>
+    <string name="habit_ebbinghaus_starts_in_days">%1$d 天后开始</string>
+    <string name="habit_ebbinghaus_review_in_days">%1$d 天后复习</string>
+    <string name="habit_ebbinghaus_cycle_completed">已完成记忆周期</string>
+    <string name="habit_ebbinghaus_review_today">今日复习</string>
+    <string name="editor_habit_reminder_title">提醒时间</string>
+    <string name="editor_habit_no_reminder">暂不提醒</string>
+    <string name="editor_habit_clear_reminder">清除</string>
 
     <string name="clear_all">全部清除</string>
 
@@ -249,9 +295,10 @@
     <string name="overdue_rate">逾期率</string>
     <string name="average_ddl_time">平均完成时长</string>
     <string name="background">背景</string>
-    <string name="last_month_summary">上月总结</string>
+    <string name="last_month_summary">数据汇总</string>
 
     <string name="duration_days_hours">%1$d天 %2$d小时</string>
+    <string name="duration_minutes">%1$d分钟</string>
     <string name="duration_hours">%1$d小时</string>
     <string name="duration_less_than_hour">&lt;1小时</string>
     <string name="show_clipboard_ai_snackbar">检测到剪切板内容，使用 Lifi AI 快捷添加？</string>
@@ -278,9 +325,9 @@
     <string name="task_complete_time_summary">任务完成时间段统计</string>
     <string name="today_task_summary">今日任务状态统计</string>
     <string name="today_overdue">今日逾期</string>
-    <string name="prev4weeks">最近4周完成量</string>
-    <string name="monthly_trend">月度趋势</string>
-    <string name="weekly_completed">周完成量</string>
+    <string name="prev4weeks">近4周完成</string>
+    <string name="monthly_trend">每月趋势</string>
+    <string name="weekly_completed">本周完成情况</string>
     <string name="overdue">逾期</string>
     <string name="today_completed">今日完成</string>
     <string name="completed">已完成</string>
@@ -288,6 +335,29 @@
     <string name="no_data_yet">暂无数据</string>
     <string name="overdue_done">逾期完成</string>
     <string name="total_tasks">总任务</string>
+    <string name="pending_tasks">待办任务</string>
+    <string name="current_pending">当前待办</string>
+    <string name="cumulative_completed">累计完成</string>
+    <string name="cumulative_abandoned">累计放弃</string>
+    <string name="cumulative_overdue">累计逾期</string>
+    <string name="contribution_heatmap">活跃热力图</string>
+    <string name="contribution_heatmap_days">%1$d天内</string>
+    <string name="heatmap_less">少</string>
+    <string name="heatmap_more">多</string>
+    <string name="heatmap_low_frequency">低频率</string>
+    <string name="heatmap_high_frequency">高频率</string>
+    <string name="metric_last_month_total">上月任务数</string>
+    <string name="metric_last_month_completed">上月完成</string>
+    <string name="metric_last_month_completion_rate">上月完成率</string>
+    <string name="metric_last_month_overdue">上月逾期数</string>
+    <string name="metric_most_active_period">最活跃时段</string>
+    <string name="metric_average_duration">平均耗时</string>
+    <string name="metric_bucket_completed_count">完成 %1$d 个</string>
+    <string name="monthly_ai_insight_title">AI 月度洞察</string>
+    <string name="monthly_ai_analyzing">AI 正在深度分析上月数据…</string>
+    <string name="monthly_ai_unavailable">本月还没有可展示的 AI 洞察，稍后再回来看看。</string>
+    <string name="last_month_activity_distribution">%1$s活动分布</string>
+    <string name="last_month_activity_frequency">每日完成频率</string>
     <string name="permission_calendar_error">请检查日历权限：%s$1</string>
     <string name="add_calendar_success">已添加至日历</string>
     <string name="add_calendar_failed">添加至日历失败: %s$1</string>
@@ -327,6 +397,31 @@
     <string name="archive_label_completed">完成归档</string>
     <string name="archive_label_abandoned">放弃归档</string>
     <string name="archive_time_with_state">%1$s · %2$s</string>
+    <string name="archive_search_tasks_hint">搜索归档任务</string>
+    <string name="archive_search_habits_hint">搜索归档习惯</string>
+    <string name="archive_controls_title">管理归档内容</string>
+    <string name="archive_controls_subtitle">在这里查找、恢复，或永久删除已经归档的任务和习惯。</string>
+    <string name="archive_count_label">%1$d 项</string>
+    <string name="archive_section_tasks">归档任务</string>
+    <string name="archive_section_habits">归档习惯</string>
+    <string name="archive_empty_tasks">没有归档的任务</string>
+    <string name="archive_empty_habits">没有归档的习惯</string>
+    <string name="archive_empty_tasks_description">完成或放弃后归档的任务会出现在这里。</string>
+    <string name="archive_empty_habits_description">被归档的习惯会集中收纳在这里，方便之后恢复。</string>
+    <string name="archive_delete_title">永久删除</string>
+    <string name="archive_delete_message">确定要永久删除“%1$s”吗？此操作不可恢复。</string>
+    <string name="archive_delete_message_fallback">确定要永久删除该项吗？此操作不可恢复。</string>
+    <string name="archive_delete_all_title">全部永久删除</string>
+    <string name="archive_delete_all_tasks_message">确定要永久删除所有归档任务吗？此操作不可恢复。</string>
+    <string name="archive_delete_all_habits_message">确定要永久删除所有归档习惯吗？此操作不可恢复。</string>
+    <string name="archive_state_archived">已归档</string>
+    <string name="archive_state_abandoned">已放弃归档</string>
+    <string name="archive_completed_at">完成于 %1$s</string>
+    <string name="archive_abandoned_at">放弃于 %1$s</string>
+    <string name="archive_archived_at">归档于 %1$s</string>
+    <string name="archive_habit_detail_template">%1$s · %2$s</string>
+    <string name="archive_habit_period_target">%1$d次</string>
+    <string name="archive_habit_total_target">总目标 %1$d</string>
 
     <string name="daily_frequency">每天%1$d次</string>
     <string name="daily_frequency_with_total">每天%1$d次/共%2$d次</string>
@@ -367,6 +462,13 @@
     <!-- 逾期 -->
     <string name="ddl_overdue_full">DDL逾期!!!</string>
     <string name="ddl_overdue_short">已逾期</string>
+    <string name="task_remaining_less_than_one_hour">不足1小时</string>
+    <string name="task_remaining_days_hours">%1$d天 %2$d小时</string>
+    <string name="task_remaining_hours">%1$d小时</string>
+    <string name="task_remaining_starts_in_less_than_one_hour">不足1小时后开始</string>
+    <string name="task_remaining_starts_in_days_hours">%1$d天 %2$d小时后开始</string>
+    <string name="task_remaining_starts_in_hours">%1$d小时后开始</string>
+    <string name="task_remaining_overdue_hours">已逾期 %1$d 小时</string>
 
     <string name="time_bucket_late_night">凌晨</string>
     <string name="time_bucket_morning">上午</string>
@@ -374,9 +476,9 @@
     <string name="time_bucket_evening">晚上</string>
     <string name="time_bucket_unknown">未知</string>
 
-    <string name="tab_overview">概览统计</string>
-    <string name="tab_trend">趋势分析</string>
-    <string name="tab_summary">上月总结</string>
+    <string name="tab_overview">总览</string>
+    <string name="tab_trend">趋势</string>
+    <string name="tab_summary">上月</string>
     <string name="xx_months">%1$d 个月</string>
     <string name="destroy_alarms">已成功销毁所有闹钟时间</string>
     <string name="select_filter_calendar">请选择要显示的日历过滤器</string>
@@ -398,6 +500,14 @@
     <string name="settings_developer_options">开发者选项</string>
     <string name="settings_donate_emotional">穷学生在线求投喂 🥹</string>
     <string name="settings_donate_thanks">你的支持是对我最大的鼓励~</string>
+    <string name="deadliner_donate_plan_title">Deadliner Donate 捐赠计划</string>
+    <string name="deadliner_donate_plan_message">你已经使用 Lifi AI 超过 10 次啦。如果 Deadliner 帮到了你，欢迎支持一下开发者。进入捐赠页并上传订单号后，将不再弹出此提醒。</string>
+    <string name="deadliner_donate_go">前往捐赠</string>
+    <string name="deadliner_donate_order_id">订单号</string>
+    <string name="deadliner_donate_submit_order">提交订单号</string>
+    <string name="deadliner_donate_order_id_empty">请先输入订单号</string>
+    <string name="deadliner_donate_order_saved">订单号已记录，后续将不再弹出提醒</string>
+    <string name="deadliner_donate_no_more_prompt">已提交订单号，Deadliner Donate 提醒已永久关闭。</string>
     <string name="settings_general_main">交互设置</string>
     <string name="settings_general_others">杂项设置</string>
     <string name="settings_interface_mainscreen">主界面</string>
@@ -497,8 +607,11 @@
     <string name="setup_finish_desc">感谢你完成引导，现在可以愉快使用Deadliner啦。</string>
     <string name="start_to_use">开始使用</string>
     <string name="search_events">搜索事件</string>
+    <string name="search">搜索</string>
     <string name="overview_settings_month">查看的月度数</string>
-    <string name="overview_settings_weekly_show_overdue_complete">每周视图显示逾期完成</string>
+    <string name="overview_settings_weekly_show_overdue_complete">本周完成情况显示逾期</string>
+    <string name="overview_settings_show_overdue_series">显示逾期柱状</string>
+    <string name="overview_settings_show_overdue_series_support">在“本周完成情况”中叠加显示按到期日归属的逾期未完成任务。</string>
 
     <string name="settings_model">模型设置</string>
     <string name="settings_model_endpoint">模型接入点</string>
@@ -576,6 +689,18 @@
     <string name="user">用户</string>
 
     <string name="search_no_result_title">没有匹配的项</string>
+    <string name="search_no_result_hint">试试换个关键词，或者切换搜索范围。</string>
+    <string name="search_empty_query_title">开始搜索</string>
+    <string name="search_empty_query_hint">输入关键词后，即可搜索任务、习惯和归档内容。</string>
+    <string name="search_scope_all">全部</string>
+    <string name="search_scope_active">清单</string>
+    <string name="search_scope_archive">归档</string>
+    <string name="search_group_inspiration">灵感</string>
+    <string name="search_group_task">任务</string>
+    <string name="search_group_habit">习惯</string>
+    <string name="search_group_archived_task">归档任务</string>
+    <string name="search_group_archived_habit">归档习惯</string>
+    <string name="search_inspiration_hint">点击查看详情，或直接整理成任务 / 习惯。</string>
     <string name="search_no_result_suggestion_prefix">试试以下搜索示例：</string>
 
     <!-- 示例语义与正则逻辑匹配 -->
@@ -586,6 +711,8 @@
     <string name="settings_model_settings_advance">开启后，可以自定义模型接入点与自己的API Key</string>
     <string name="settings_model_settings">模型高级设置</string>
     <string name="settings_ai_function">功能设置</string>
+    <string name="settings_advanced_material">高级材质</string>
+    <string name="settings_support_advanced_material">为顶部栏和导航栏启用统一的模糊玻璃材质效果</string>
 
     <string name="quota_title">当前配额</string>
     <string name="quota_identity_vip">VIP</string>
@@ -680,15 +807,85 @@
     <string name="linked_task">关联: %s</string>
     <string name="settings_ui_mode_title">主界面风格</string>
     <string name="settings_support_ui_mode">调整 Deadliner 的布局与显示风格</string>
+    <string name="settings_design">设计</string>
+    <string name="settings_design_color_title">设计与色彩</string>
+    <string name="settings_design_color_summary">调整设计模式、强调色与任务指示标</string>
+    <string name="settings_advanced_material_summary">控制高级材质的模糊强度与质感</string>
+    <string name="settings_try_new_features">试试这些新功能</string>
+    <string name="settings_try_new_features_summary">我们把设计、材质、图标和主界面外观拆成了更清晰的结构，方便你快速找到想调的部分。</string>
+    <string name="settings_try_feature">试试 %1$s</string>
+    <string name="settings_try_design_color_summary">新的设计预览已经放进这里了，可以直接对比现代和鲜明两套风格。</string>
+    <string name="settings_try_advanced_material_summary">来试试新的高级材质层次，模糊强度和氛围感现在都可以单独调。</string>
+    <string name="settings_try_app_icon_summary">应用图标已经独立成页了，切换图标会比以前更顺手。</string>
+    <string name="settings_welcome_title">欢迎来到全新的界面外观</string>
+    <string name="settings_welcome_summary">现在你可以分别调整设计与色彩、高级材质、应用图标，以及主界面风格和显示大小。</string>
+    <string name="settings_welcome_points">• 设计与色彩：切换现代 / 鲜明与强调色\n• 高级材质：为容器选择更轻或更深的模糊质感\n• 界面外观：继续单独调整主界面风格和显示大小</string>
+    <string name="settings_design_mode_modern">现代</string>
+    <string name="settings_design_mode_vivid">鲜明</string>
+    <string name="settings_design_mode_section_title">%1$s模式</string>
+    <string name="settings_background_strategy_title">背景色策略</string>
+    <string name="settings_background_strategy_value">和设备统一</string>
+    <string name="settings_color_generation_strategy_title">颜色生成策略</string>
+    <string name="settings_color_generation_strategy_value">Material3颜色</string>
+    <string name="settings_palette_style_system">系统 System</string>
+    <string name="settings_palette_style_tonal_spot">柔和 TonalSpot</string>
+    <string name="settings_palette_style_neutral">中性 Neutral</string>
+    <string name="settings_palette_style_vibrant">高饱和 Vibrant</string>
+    <string name="settings_palette_style_expressive">表现力 Expressive</string>
+    <string name="settings_palette_style_rainbow">彩虹 Rainbow</string>
+    <string name="settings_palette_style_fruit_salad">果沙 FruitSalad</string>
+    <string name="settings_palette_style_monochrome">单色 Monochrome</string>
+    <string name="settings_palette_style_fidelity">保真 Fidelity</string>
+    <string name="settings_palette_style_content">内容 Content</string>
+    <string name="settings_design_preview_subtitle">实时预览当前色彩与层级效果</string>
+    <string name="settings_design_preview_chip">预览</string>
+    <string name="settings_design_preview_role_title">主题角色</string>
+    <string name="settings_design_preview_primary">Primary</string>
+    <string name="settings_design_preview_secondary">Secondary</string>
+    <string name="settings_design_preview_tertiary">Tertiary</string>
+    <string name="settings_design_preview_indicator_title">多彩任务指示标</string>
+    <string name="settings_design_preview_status_undergo">进行中</string>
+    <string name="settings_design_preview_status_near">即将到期</string>
+    <string name="settings_design_preview_status_passed">已逾期</string>
+    <string name="settings_design_preview_status_completed">已完成</string>
+    <string name="settings_design_preview_status_abandoned">已放弃</string>
+    <string name="settings_design_preview_task_title">整理项目验收清单</string>
+    <string name="settings_design_preview_task_deadline">今晚 20:00</string>
+    <string name="settings_design_preview_task_summary">今天 20:00 前完成收尾与自查</string>
+    <string name="settings_design_preview_switch_label">突出提醒</string>
+    <string name="settings_design_preview_button_label">立即整理</string>
+    <string name="settings_advanced_material_blur_size">模糊大小</string>
+    <string name="settings_advanced_material_level_clear">通透</string>
+    <string name="settings_advanced_material_level_light">轻盈</string>
+    <string name="settings_advanced_material_level_soft">柔和</string>
+    <string name="settings_advanced_material_level_hazy">朦胧</string>
+    <string name="settings_advanced_material_level_deep">深邃</string>
+    <string name="settings_advanced_material_level_summary">%1$d / %2$.2f</string>
+    <string name="settings_support_profile">编辑头像与昵称</string>
+    <string name="intro_guide_title">功能引导</string>
+    <string name="intro_guide_next">下一步</string>
+    <string name="intro_guide_page_indicator">引导 %1$d / %2$d</string>
     <string name="ui_style_classic">经典模式</string>
     <string name="ui_style_simplified">简洁模式</string>
     <string name="ui_style_miuix">现代模式</string>
+    <string name="main_section_list">清单</string>
     <string name="ui_style_simplified_support">聚焦核心任务与习惯管理，提供更清爽、直观的界面布局。</string>
     <string name="ui_style_classic_support">沿用自 v2 的完整布局，呈现更全面、一触即达的任务管理体验。</string>
     <string name="ui_style_miuix_support">来自 HyperOS 的现代化设计理念，更原生，更可靠。</string>
+    <string name="ui_style_best_for">更适合</string>
+    <string name="ui_style_simplified_fit">想把注意力放在待办和习惯本身，偏好更直接的底部切换与更轻的页面结构。</string>
+    <string name="ui_style_miuix_fit">希望同时保留概览、灵感和问 AI 等更多入口，适合更高频、更完整的主界面使用方式。</string>
+    <string name="ui_style_simplified_keyword_focus">内容更聚焦</string>
+    <string name="ui_style_simplified_keyword_switch">底部切换直接</string>
+    <string name="ui_style_simplified_keyword_light">操作更轻</string>
+    <string name="ui_style_miuix_keyword_navigation">导航更完整</string>
+    <string name="ui_style_miuix_keyword_entry">入口更丰富</string>
+    <string name="ui_style_miuix_keyword_power">适合重度使用</string>
+    <string name="ui_style_classic_hidden_title">经典模式入口已暂时隐藏</string>
+    <string name="ui_style_classic_hidden_summary">如果你当前仍在使用经典模式，它会继续生效；切换到其他模式后，这里将不再显示经典模式入口。</string>
 
     <string name="intro_cover_title">重塑任务管理体验</string>
-    <string name="intro_cover_desc">Deadliner v4 · 你的智能任务助手</string>
+    <string name="intro_cover_desc">Deadliner v5 · 你的智能任务助手</string>
     <string name="wizard_add_a_task">添加一个任务</string>
     <string name="wizard_add_a_task_desc">点击底部中间的「+」按钮，打开添加任务界面。</string>
     <string name="wizard_mark_as_complete">将任务标记为完成</string>
@@ -734,6 +931,19 @@
     <string name="permissions_wiki_title">权限设置向导</string>
     <string name="permissions_wiki_desc">如果你不确定如何设置上述权限，可以打开使用指南查看图文说明。</string>
 
+    <string name="intro_design_color_title">先把视觉风格调到顺眼</string>
+    <string name="intro_design_color_description">在开始使用前，先选好设计风格、强调色、颜色生成策略和多彩任务指示标。</string>
+    <string name="intro_color_title">再把色彩细节调顺手</string>
+    <string name="intro_color_description">在这里继续设置强调色、颜色生成策略和多彩任务指示标，让整套界面更贴近你的偏好。</string>
+    <string name="intro_advanced_material_title">再决定材质的轻重和氛围</string>
+    <string name="intro_advanced_material_description">如果你喜欢更柔和、更有层次的界面，可以在这里提前打开高级材质并选择模糊强度。</string>
+    <string name="intro_ui_style_title">最后选一个适合你的主界面</string>
+    <string name="intro_ui_style_description">选择 Deadliner 的主界面风格，之后也可以在设置中随时更改。</string>
+    <string name="intro_ui_style_description_classic">经典模式会在这里正式谢幕。选好新的主界面之后，我们就继续往前走。</string>
+    <string name="intro_classic_farewell_title">向经典模式认真说一声再见</string>
+    <string name="intro_classic_farewell_description">它从 v2 一路陪你走到 v5，见证过很多任务被完成。现在，是时候把接力棒交给新的两种主界面风格了，请在下面选一个继续前进。</string>
+    <string name="intro_get_started">开始使用</string>
+
     <string name="intro_theme_title">选择你喜欢的界面样式</string>
     <string name="intro_theme_description">你可以在这里预先选择 Deadliner 的主界面风格，之后也可以在设置中随时更改。</string>
 
@@ -743,10 +953,47 @@
     <string name="theme">强调色</string>
     <string name="settings_miuix_mode">MIUIX 主题模式</string>
     <string name="settings_support_miuix_mode">开启 HyperOS 风格的主题与组件库（实验性）</string>
+    <string name="settings_miuix_material_top_bar">现代主页顶栏使用 Material 3</string>
+    <string name="settings_support_miuix_material_top_bar">在 MIUIX 主题下，将 ModernHost 的顶部栏样式切回 Material 3</string>
     <string name="settings_miuix_color">MIUIX 颜色</string>
+    <string name="settings_modern_palette_title">现代色彩方案</string>
+    <string name="settings_modern_palette_support">切换中性色表面风格。缺失层级色会自动回退到 HyperOS 默认方案。</string>
+    <string name="settings_modern_palette_hyperos">HyperOS</string>
+    <string name="settings_modern_palette_hyperos_support">默认的澎湃中性色表面</string>
+    <string name="settings_modern_palette_honor">HONOR</string>
+    <string name="settings_modern_palette_honor_support">偏冷静、明亮的浅灰层级</string>
+    <string name="settings_modern_palette_oppo">OPPO</string>
+    <string name="settings_modern_palette_oppo_support">更柔和的雾面灰绿色基调</string>
+    <string name="settings_modern_palette_vivo">vivo</string>
+    <string name="settings_modern_palette_vivo_support">轻盈克制的冷灰白表面</string>
     <string name="settings_support_miuix_color">使用 HyperOS 的默认颜色（需要在主界面风格中开启 现代模式 以避免界面显示问题）</string>
+    <string name="settings_support_display_size_lab">预设档位与自定义缩放比例（实验性）</string>
+    <string name="settings_display_size_custom">自定义比例</string>
+    <string name="settings_display_size_custom_ratio">自定义缩放比例</string>
+    <string name="settings_apply_custom_display_scale">应用自定义缩放</string>
+    <string name="settings_support_apply_custom_display_scale">当前将使用 %1$d%% 的显示大小，应用后会重启</string>
+    <string name="settings_app_icon_title">应用图标</string>
+    <string name="settings_app_icon_summary">切换默认图标或四季图标</string>
+    <string name="settings_app_icon_description">选择你喜欢的 Deadliner 图标。切换后桌面图标通常会很快刷新，少数系统可能会有轻微延迟。</string>
+    <string name="settings_app_icon_applied_hint">图标设置已更新，桌面可能会稍后刷新</string>
+    <string name="settings_app_icon_default">默认</string>
+    <string name="settings_app_icon_default_summary">使用默认图标</string>
+    <string name="settings_app_icon_auto">四季</string>
+    <string name="settings_app_icon_auto_summary">根据当前节气季节自动切换图标</string>
+    <string name="settings_app_icon_spring">春</string>
+    <string name="settings_app_icon_spring_summary">固定使用春季图标</string>
+    <string name="settings_app_icon_summer">夏</string>
+    <string name="settings_app_icon_summer_summary">固定使用夏季图标</string>
+    <string name="settings_app_icon_autumn">秋</string>
+    <string name="settings_app_icon_autumn_summary">固定使用秋季图标</string>
+    <string name="settings_app_icon_winter">冬</string>
+    <string name="settings_app_icon_winter_summary">固定使用冬季图标</string>
+    <string name="settings_colored_settings_home_icons">设置主页彩色图标</string>
+    <string name="settings_support_colored_settings_home_icons">为设置主页的小图标添加柔和的分类色</string>
     <string name="settings_preset_indicator">多彩任务指示标</string>
     <string name="settings_support_preset_indicator">替换来自鸿蒙版本的多彩任务进度指示标</string>
+    <string name="settings_indicator_style_harmonize">中和</string>
+    <string name="settings_indicator_style_morandi">莫兰迪</string>
     <string name="capture_title">灵感</string>
     <string name="capture_multi_select">多选</string>
     <string name="capture_selected_count">%1$d 项已选中</string>
@@ -754,6 +1001,8 @@
     <string name="capture_merge_count">合并 %1$d 项</string>
     <string name="capture_merge_sheet_title">合并后整理</string>
     <string name="capture_merge_sheet_desc">默认优先走 AI 整理。你也可以在次级入口中直接整理。</string>
+    <string name="capture_merge_sheet_title_single">整理这条灵感</string>
+    <string name="capture_merge_sheet_desc_single">默认优先走 AI 整理。你也可以直接整理成任务或习惯。</string>
     <string name="capture_ai_task">AI 整理成任务</string>
     <string name="capture_ai_habit">AI 整理成习惯</string>
     <string name="capture_direct_secondary">直接整理（次级入口）</string>
@@ -763,8 +1012,12 @@
     <string name="capture_search_label">搜索灵感</string>
     <string name="capture_list_title">灵感列表</string>
     <string name="capture_search_result_group">搜索结果 · 灵感</string>
+    <string name="capture_recent_title">最近灵感</string>
+    <string name="capture_recent_subtitle">先保留它的原始样子，之后再决定要不要变成任务或习惯。</string>
+    <string name="capture_recent_subtitle_selection">选中多条后可以批量删除，或合并整理成一个任务 / 习惯。</string>
     <string name="capture_empty_hint_default">这里先留给那些还没成型的想法。\n先记下来，稍后再整理。</string>
     <string name="capture_empty_hint_search">暂时没搜到相关灵感。\n可以换个词，或者继续先记下来。</string>
+    <string name="capture_empty_title">还没有新的灵感</string>
     <string name="capture_input_title">先记下一句想法</string>
     <string name="capture_input_subtitle">稍后再整理</string>
     <string name="capture_input_desc">这里适合放灵感、计划草稿、稍后可能要做的事。先别急着把它变得太正式，先保留它的原始样子。</string>
@@ -773,11 +1026,17 @@
     <string name="capture_save">保存灵感</string>
     <string name="capture_voice_reserved_toast">语音输入入口已预留，后续可接入实时转写。</string>
     <string name="capture_card_tip">点开后可以继续编辑，或整理成任务与习惯</string>
+    <string name="capture_card_tip_selected">已选中后可批量删除或合并整理。</string>
     <string name="capture_detail_title">灵感详情</string>
     <string name="capture_detail_placeholder">保留它的原始样子，等它成熟一点再整理。</string>
     <string name="capture_ai_loading">AI 正在整理中…</string>
     <string name="capture_ai_default_label">默认优先 AI 整理</string>
     <string name="capture_delete_item">删除这条灵感</string>
+    <string name="capture_delete_confirm_title">确认删除这条灵感？</string>
+    <string name="capture_delete_confirm_title_with_text">确认删除「%1$s」？</string>
+    <string name="capture_delete_confirm_message">此操作不可撤销。</string>
+    <string name="capture_delete_selected_confirm_title">确认删除选中的 %1$d 条灵感？</string>
+    <string name="capture_delete_selected_confirm_message">删除后无法撤销。</string>
     <string name="capture_clipboard_label">灵感原文</string>
     <string name="capture_clipboard_copied">已复制原始文本，进入编辑器后可直接粘贴。</string>
     <string name="capture_ai_habit_toast">已走 AI 整理，接下来会进入习惯编辑器，你可以继续微调。</string>
@@ -808,4 +1067,5 @@
     <string name="state_abandoned">已放弃</string>
     <string name="state_abandoned_archived">放弃并归档</string>
 
+    <string name="legacy">经典</string>
 </resources>

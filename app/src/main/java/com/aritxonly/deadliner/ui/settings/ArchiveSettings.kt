@@ -27,6 +27,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
 @Composable
 fun ArchiveSettingsScreen(
@@ -49,7 +50,7 @@ fun ArchiveSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = navIconPaddingModifier
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),
@@ -60,10 +61,9 @@ fun ArchiveSettingsScreen(
             }
         }
     ) { padding ->
-        Column(
-            Modifier
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
+        SettingsScrollColumn(
+            contentPadding = padding,
+            modifier = Modifier,
         ) {
             SettingsSection(
                 mainContent = true,
@@ -77,7 +77,7 @@ fun ArchiveSettingsScreen(
                 )
             }
 
-            SvgCard(R.drawable.svg_archive, modifier = Modifier.padding(16.dp))
+            SvgCard(R.drawable.svg_archive, modifier = Modifier.padding(vertical = 8.dp))
 
             if (archiveEnabled) {
                 SettingsSection {

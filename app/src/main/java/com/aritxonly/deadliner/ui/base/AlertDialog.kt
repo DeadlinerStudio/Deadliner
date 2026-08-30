@@ -1,16 +1,17 @@
 package com.aritxonly.deadliner.ui.base
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -20,7 +21,6 @@ import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
 // 别名防止冲突
 import androidx.compose.material3.AlertDialog as Material3AlertDialog
-import top.yukonga.miuix.kmp.extra.WindowDialog as MiuixWindowDialog
 
 /**
  * Deadliner 基础 AlertDialog 组件
@@ -38,6 +38,7 @@ fun AlertDialog(
     text: @Composable (() -> Unit)? = null,
     shape: Shape = AlertDialogDefaults.shape,
     containerColor: Color = AlertDialogDefaults.containerColor,
+    renderTextContentInMiuix: Boolean = false,
 
     // ==========================================
     // MIUIX 专属辅助参数
@@ -48,6 +49,7 @@ fun AlertDialog(
     when (LocalAppDesignSystem.current) {
 
         AppDesignSystem.MATERIAL3 -> {
+            RegisterAdvancedMaterialDialogBlur(show = show)
             // M3 分支：只有当 show 为 true 时，才将其挂载到 Compose 树上
             if (show) {
                 Material3AlertDialog(
@@ -64,43 +66,80 @@ fun AlertDialog(
         }
 
         AppDesignSystem.MIUIX -> {
-            // 1. 状态桥接：把外层传进来的 Boolean 包装成 MIUIX 需要的 MutableState
-            val miuixShowState = remember { mutableStateOf(show) }
+            val showInlineTitle = title != null && miuixTitle == null
+            val showInlineText = text != null && (renderTextContentInMiuix || miuixSummary == null)
+            val showInlineContent = showInlineTitle || showInlineText
+            val hasTextAboveActions =
+                showInlineContent || miuixTitle != null || miuixSummary != null
 
-            // 2. 同步向下：当外层的 show 变化时，同步给 MIUIX
-            LaunchedEffect(show) {
-                miuixShowState.value = show
-            }
-
-            // 3. 同步向上：如果 MIUIX 内部（比如手势返回、点击外部）把状态改为了 false，我们要通知外层业务
-            LaunchedEffect(miuixShowState.value) {
-                if (!miuixShowState.value && show) {
-                    onDismissRequest()
-                }
-            }
-
-            // MIUIX 分支：传入伪装好的 MutableState
-            MiuixWindowDialog(
-                show = miuixShowState, // 传入包装好的 MutableState
+            MiuixDialog(
+                show = show,
                 onDismissRequest = onDismissRequest,
                 modifier = modifier,
                 title = miuixTitle,
                 summary = miuixSummary,
             ) {
-                // 按钮排列逻辑保持不变
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    dismissButton?.invoke()
-                    if (dismissButton != null) {
-                        Spacer(modifier = Modifier.width(8.dp))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (showInlineTitle) {
+                        title?.invoke()
                     }
-                    confirmButton()
+                    if (showInlineText) {
+                        text?.invoke()
+                    }
+
+                    MiuixDialogActions(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                top = if (hasTextAboveActions) {
+                                    DeadlinerMiuixDefaults.DialogActionTopSpacing
+                                } else {
+                                    0.dp
+                                },
+                            ),
+                        secondaryButton = dismissButton,
+                        primaryButton = confirmButton,
+                    )
                 }
             }
         }
+    }
+}
+
+/** Equal-width, filled action buttons used by Miuix dialog content. */
+@Composable
+internal fun MiuixDialogActions(
+    primaryButton: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    secondaryButton: @Composable (() -> Unit)? = null,
+) {
+    Row(modifier = modifier.fillMaxWidth()) {
+        if (secondaryButton != null) {
+            MiuixDialogActionSlot(
+                style = MiuixDialogActionStyle.Secondary,
+                content = secondaryButton,
+            )
+            Spacer(modifier = Modifier.width(DeadlinerMiuixDefaults.DialogActionSpacing))
+        }
+        MiuixDialogActionSlot(
+            style = MiuixDialogActionStyle.Primary,
+            content = primaryButton,
+        )
+    }
+}
+
+@Composable
+private fun RowScope.MiuixDialogActionSlot(
+    style: MiuixDialogActionStyle,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier.weight(1f),
+        contentAlignment = Alignment.Center,
+    ) {
+        CompositionLocalProvider(
+            LocalMiuixDialogActionStyle provides style,
+            content = content,
+        )
     }
 }

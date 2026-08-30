@@ -40,6 +40,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import androidx.core.net.toUri
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.web.UpdateManager
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.Dispatchers
@@ -83,7 +84,7 @@ fun UpdateScreen(
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_check_for_updates),
         navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = Modifier.padding(start = 8.dp)) {
+            IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(
                     painter            = painterResource(R.drawable.ic_back),
                     contentDescription = stringResource(R.string.back),
@@ -118,9 +119,11 @@ fun UpdateScreen(
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)
-            .verticalScroll(rememberScrollState())) {
-            SvgCard(R.drawable.svg_update, modifier = Modifier.padding(16.dp))
+        SettingsScrollColumn(
+            contentPadding = innerPadding,
+            modifier = Modifier,
+        ) {
+            SvgCard(R.drawable.svg_update, modifier = Modifier.padding(vertical = 8.dp))
 
             Box(
                 Modifier.fillMaxSize()

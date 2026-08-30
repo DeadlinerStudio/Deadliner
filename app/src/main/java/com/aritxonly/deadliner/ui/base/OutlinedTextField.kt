@@ -1,8 +1,6 @@
 package com.aritxonly.deadliner.ui.base
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
@@ -13,17 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
-import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.theme.darkColorScheme
-import top.yukonga.miuix.kmp.theme.lightColorScheme
 
 // 别名防止冲突
 import androidx.compose.material3.OutlinedTextField as Material3OutlinedTextField
@@ -56,6 +47,7 @@ fun OutlinedTextField(
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
 
     miuixLabel: String = "",
+    miuixFormStyle: Boolean = false,
 ) {
     when (LocalAppDesignSystem.current) {
         AppDesignSystem.MATERIAL3 -> {
@@ -94,8 +86,13 @@ fun OutlinedTextField(
                 readOnly = readOnly,
                 // 把辅助参数喂给 MIUIX
                 label = miuixLabel,
+                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 useLabelAsPlaceholder = true, // 让 MIUIX 的行为更接近 M3 的 placeholder 习惯
-//                cornerRadius = dimensionResource(R.dimen.item_corner_radius),
+                cornerRadius = if (miuixFormStyle) {
+                    DeadlinerMiuixDefaults.FormInputCornerRadius
+                } else {
+                    DeadlinerMiuixDefaults.InputCornerRadius
+                },
 
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon,
@@ -106,11 +103,7 @@ fun OutlinedTextField(
                 maxLines = maxLines,
                 minLines = minLines,
                 interactionSource = interactionSource,
-                backgroundColor = if (isSystemInDarkTheme()) {
-                    darkColorScheme().secondaryContainer
-                } else {
-                    lightColorScheme().secondaryContainer
-                }
+                backgroundColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             )
         }
     }

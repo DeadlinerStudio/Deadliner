@@ -17,6 +17,8 @@ import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineFrequency
 import com.aritxonly.deadliner.model.HabitMetaData
 import com.aritxonly.deadliner.model.HabitPeriod
+import com.aritxonly.deadliner.model.formatHint
+import com.aritxonly.deadliner.model.scheduleStateOn
 import java.time.LocalDate
 
 class HabitMediumWidget : AppWidgetProvider() {
@@ -98,18 +100,24 @@ internal fun updateMediumAppWidget(
                         habit.timesPerPeriod,
                         habit.totalTarget
                     )
+            HabitPeriod.EBBINGHAUS ->
+                context.getString(R.string.editor_habit_period_ebbinghaus)
         }
-        views.setTextViewText(R.id.medium_description, freqDesc)
+        val scheduleHint = habit.scheduleStateOn(LocalDate.now())?.formatHint(context)
+        views.setTextViewText(R.id.medium_description, scheduleHint?.let { "$freqDesc · $it" } ?: freqDesc)
 
         // 今天打卡次数 vs 每周期次数
         val today = LocalDate.now()
         val recordsToday = habitRepo.getRecordsForHabitOnDate(habit.id, today)
         val doneToday = recordsToday.sumOf { it.count }
-        val targetPerDay = habit.timesPerPeriod.coerceAtLeast(1)
+        val targetPerDay = if (habit.period == HabitPeriod.EBBINGHAUS) 1 else habit.timesPerPeriod.coerceAtLeast(1)
+        val isDueToday = habit.scheduleStateOn(today)?.isDue != false
 
-        val canClick = doneToday < targetPerDay
+        val canClick = isDueToday && doneToday < targetPerDay
         val label = if (canClick) {
             context.getString(R.string.check_habit)
+        } else if (!isDueToday) {
+            scheduleHint ?: context.getString(R.string.editor_habit_period_ebbinghaus)
         } else {
             context.getString(R.string.completed)   // 或 R.string.complete，看你现有资源
         }

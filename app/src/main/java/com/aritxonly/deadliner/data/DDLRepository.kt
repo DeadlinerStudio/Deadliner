@@ -1,6 +1,8 @@
 package com.aritxonly.deadliner.data
 
+import android.content.Context
 import com.aritxonly.deadliner.AppSingletons
+import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.TaskStateMachine
@@ -17,7 +19,8 @@ import kotlinx.coroutines.launch
 
 class DDLRepository(
     private val db: DatabaseHelper = AppSingletons.db,
-    private val sync: SyncService = AppSingletons.sync
+    private val sync: SyncService = AppSingletons.sync,
+    private val notificationContext: Context? = AppSingletons.appContextOrNull()
 ) {
 
     // —— 同步去抖（避免连点导致频繁发网） —— //
@@ -42,13 +45,27 @@ class DDLRepository(
         calendarEventId: Long? = null
     ): Long {
         val id = db.insertDDL(name, startTime, endTime, note, type, calendarEventId)
+        val inserted = db.getDDLById(id)
+        inserted?.let { item ->
+            notificationContext?.let { context ->
+                DeadlineAlarmScheduler.syncScheduledNotifications(context, item)
+            }
+        }
         sync.onLocalInserted(id)
         scheduleSync()
         return id
     }
 
     fun updateDDL(item: DDLItem) {
+        val previous = db.getDDLById(item.id)
         db.updateDDL(item)
+        notificationContext?.let { context ->
+            DeadlineAlarmScheduler.syncScheduledNotifications(
+                context = context,
+                ddl = item,
+                resetDeadlineNotificationStatus = shouldResetTaskNotification(previous, item)
+            )
+        }
         sync.onLocalUpdated(item.id)
         scheduleSync()
     }
@@ -66,12 +83,26 @@ class DDLRepository(
         }
         val updated = latest.transition(using = action, confirmed = confirmed, now = now)
         db.updateDDL(updated)
+        notificationContext?.let { context ->
+            DeadlineAlarmScheduler.syncScheduledNotifications(
+                context = context,
+                ddl = updated,
+                resetDeadlineNotificationStatus = updated.type == DeadlineType.TASK && updated.state.isActionable()
+            )
+        }
         sync.onLocalUpdated(updated.id)
         scheduleSync()
         return updated
     }
 
     fun deleteDDL(id: Long) {
+        notificationContext?.let { context ->
+            DeadlineAlarmScheduler.cancelScheduledNotifications(
+                context = context,
+                ddlId = id,
+                clearDeadlineNotificationStatus = true
+            )
+        }
         sync.onLocalDeleting(id)   // 先记删除日志（包含远端识别用的 uid）
         db.deleteDDL(id)       // 再真实删除
         scheduleSync()
@@ -84,4 +115,16 @@ class DDLRepository(
 
     // —— 手动同步（给“立即同步”按钮用） —— //
     suspend fun syncNow(): Boolean = sync.syncOnce()
+
+    private fun shouldResetTaskNotification(previous: DDLItem?, updated: DDLItem): Boolean {
+        if (updated.type != DeadlineType.TASK) return false
+        val old = previous ?: return false
+
+        return old.type != updated.type ||
+            old.startTime != updated.startTime ||
+            old.endTime != updated.endTime ||
+            old.state != updated.state ||
+            old.isCompleted != updated.isCompleted ||
+            old.isArchived != updated.isArchived
+    }
 }

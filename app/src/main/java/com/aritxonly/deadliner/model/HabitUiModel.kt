@@ -17,5 +17,6 @@ data class HabitWithDailyStatus(
     val habit: Habit,
     val doneCount: Int,
     val targetCount: Int,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    val scheduleState: HabitScheduleState? = null,
 )

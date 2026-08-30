@@ -31,6 +31,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
 @Composable
 fun PromptSettingsScreen(
@@ -54,7 +55,7 @@ fun PromptSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = navIconPaddingModifier
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),
@@ -65,8 +66,11 @@ fun PromptSettingsScreen(
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).verticalScroll(rememberScrollState())) {
-            SvgCard(R.drawable.svg_prompt, modifier = Modifier.padding(16.dp))
+        SettingsScrollColumn(
+            contentPadding = padding,
+            modifier = Modifier,
+        ) {
+            SvgCard(R.drawable.svg_prompt, modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
                 stringResource(R.string.settings_ai_custom_prompt_description),
@@ -74,7 +78,10 @@ fun PromptSettingsScreen(
                 style = MaterialTheme.typography.bodySmall
             )
 
-            SettingsSection(customColor = MaterialTheme.colorScheme.surface) {
+            SettingsSection(
+                customColor = MaterialTheme.colorScheme.surface,
+                clipContent = false
+            ) {
                 RoundedTextField(
                     value = customPrompt?:"",
                     onValueChange = onPromptChange,
@@ -85,8 +92,8 @@ fun PromptSettingsScreen(
                 Button(
                     onClick = onSaveButtonClick,
                     modifier = Modifier
-                        .padding(top = 8.dp)
                         .fillMaxWidth()
+                        .padding(top = 8.dp)
                 ) {
                     Text(stringResource(R.string.save))
                 }

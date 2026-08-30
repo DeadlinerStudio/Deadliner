@@ -31,6 +31,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.theme.AppDesignSystem
@@ -84,12 +85,13 @@ fun SvgCard(
 @Composable
 fun PreviewCard(
     modifier: Modifier = Modifier.Companion,
+    height: Dp = 192.dp,
     content: @Composable () -> Unit
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(192.dp)
+            .height(height)
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .padding(horizontal = 24.dp)
@@ -141,6 +143,14 @@ val expressiveTypeModifier: Modifier
                 }
             }
             .padding(8.dp)
+    }
+
+val navIconPaddingModifier: Modifier
+    @Composable get() {
+        val isMaterial3 = LocalAppDesignSystem.current == AppDesignSystem.MATERIAL3
+
+        return Modifier
+            .padding(start = if (isMaterial3) 8.dp else 0.dp)
     }
 
 @SuppressLint("ComposableNaming")

@@ -2,6 +2,8 @@ package com.aritxonly.deadliner.sync
 
 import android.content.ContentValues
 import android.util.Log
+import com.aritxonly.deadliner.AppSingletons
+import com.aritxonly.deadliner.DeadlineAlarmScheduler
 import com.aritxonly.deadliner.data.DeletedDdlRow
 import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.data.HabitCarrierSyncRow
@@ -855,6 +857,10 @@ class SyncService(
             }
         }
         archiveMissingRemoteOwnedHabits(seenUids)
+        val cleaned = db.cleanupOrphanHabits()
+        if (cleaned > 0) {
+            Log.w("HabitSync", "Cleaned $cleaned orphan habit(s) after applying habit snapshot")
+        }
     }
 
     private fun shouldForceApplyDespiteAppliedVersion(
@@ -993,6 +999,7 @@ class SyncService(
                 val mergedHabit = mergeSnapshots(localHabit, remoteHabit.snapshot)
                 putSnapshot(habitSnapshotV2Path(), mergedHabit, remoteHabit)
                 applyHabitSnapshotToLocal(mergedHabit)
+                syncNotificationsAfterSnapshotApply()
                 val prunedCount = cleanupExpiredDeletedRows()
                 Log.d("Sync", "pruned $prunedCount expired tombstones")
                 return@withContext true
@@ -1001,5 +1008,21 @@ class SyncService(
             }
         }
         false
+    }
+
+    private fun syncNotificationsAfterSnapshotApply() {
+        val context = AppSingletons.appContextOrNull() ?: return
+
+        db.getDeletedDdlRows().forEach { tombstone ->
+            DeadlineAlarmScheduler.cancelScheduledNotifications(
+                context = context,
+                ddlId = tombstone.ddlId,
+                clearDeadlineNotificationStatus = true
+            )
+        }
+
+        db.getAllDDLs().forEach { ddl ->
+            DeadlineAlarmScheduler.syncScheduledNotifications(context, ddl)
+        }
     }
 }

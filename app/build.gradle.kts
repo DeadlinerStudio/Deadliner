@@ -39,19 +39,20 @@ val syncDeadlinerCoreAndroid by tasks.registering(Exec::class) {
 
     inputs.file(syncScript)
     outputs.dir(rootProject.file(".deadliner-core/android"))
+    outputs.upToDateWhen { false }
     onlyIf { deadlinerCoreSyncEnabled.get() }
 }
 
 android {
     namespace = "com.aritxonly.deadliner"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.aritxonly.deadliner"
         minSdk = 31
         targetSdk = 36
-        versionCode = 32
-        versionName = "4.1.0"
+        versionCode = 34
+        versionName = "5.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -103,6 +104,9 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -142,7 +146,8 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences-android:1.1.7")
     implementation("io.github.rroohit:ImageCropView:3.1.1")
     implementation("com.materialkolor:material-kolor:4.1.1")
-    implementation("top.yukonga.miuix.kmp:miuix-android:0.8.6")
+    implementation("top.yukonga.miuix.kmp:miuix-ui-android:0.9.0")
+    implementation("top.yukonga.miuix.kmp:miuix-blur-android:0.9.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

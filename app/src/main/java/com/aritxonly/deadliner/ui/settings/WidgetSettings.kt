@@ -36,6 +36,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
 @Composable
 fun WidgetSettingsScreen(
@@ -64,7 +65,7 @@ fun WidgetSettingsScreen(
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_widget),
         navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = Modifier.padding(start = 8.dp)) {
+            IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(
                     painter = painterResource(R.drawable.ic_back),
                     contentDescription = stringResource(R.string.back),
@@ -74,12 +75,11 @@ fun WidgetSettingsScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            Modifier
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
+        SettingsScrollColumn(
+            contentPadding = innerPadding,
+            modifier = Modifier,
         ) {
-            SvgCard(R.drawable.svg_space, modifier = Modifier.padding(16.dp))
+            SvgCard(R.drawable.svg_space, modifier = Modifier.padding(vertical = 8.dp))
 
             SettingsSection(topLabel = stringResource(R.string.settings_widget_tasks)) {
                 SettingsDetailSwitchItem(

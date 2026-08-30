@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -42,8 +43,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,6 +58,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -78,11 +79,18 @@ import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.model.DDLState
 import com.aritxonly.deadliner.model.SubTask
 import com.aritxonly.deadliner.model.TaskStateAction
+import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.RadioButton
-import com.aritxonly.deadliner.ui.base.Scaffold
+import com.aritxonly.deadliner.ui.base.TopAppBar
+import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
+import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
+import com.aritxonly.deadliner.ui.theme.rememberBlurColors
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.iconResource
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -93,6 +101,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import top.yukonga.miuix.kmp.blur.BlendColorEntry
 
 private enum class DetailAction(
     val iconRes: Int,
@@ -140,6 +149,8 @@ fun DeadlineDetailScreen(
     var editingSubTaskId by rememberSaveable(deadline.id) { mutableStateOf<String?>(null) }
     var editingSubTaskDraft by rememberSaveable(deadline.id) { mutableStateOf("") }
     var isMutatingPlan by remember(deadline.id) { mutableStateOf(false) }
+    var showGiveUpDialog by rememberSaveable(deadline.id) { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable(deadline.id) { mutableStateOf(false) }
     val composerFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(deadline.isStared) {
@@ -201,17 +212,7 @@ fun DeadlineDetailScreen(
             }
 
             DetailAction.GIVE_UP -> {
-                MaterialAlertDialogBuilder(activityContext)
-                    .setTitle(R.string.confirm_give_up_title)
-                    .setMessage(R.string.confirm_give_up_message)
-                    .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.accept) { _, _ ->
-                        onApplyTaskAction(TaskStateAction.MARK_GIVE_UP, true)
-                        Toast.makeText(activityContext, R.string.toast_give_up, Toast.LENGTH_SHORT)
-                            .show()
-                        finishActivity()
-                    }
-                    .show()
+                showGiveUpDialog = true
             }
 
             DetailAction.RESTORE_ACTIVE -> {
@@ -237,18 +238,7 @@ fun DeadlineDetailScreen(
             }
 
             DetailAction.DELETE -> {
-                MaterialAlertDialogBuilder(activityContext)
-                    .setTitle(R.string.alert_delete_title)
-                    .setMessage(R.string.alert_delete_message)
-                    .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.accept) { _, _ ->
-                        onDelete(deadline.id)
-                        DeadlineAlarmScheduler.cancelAlarm(applicationContext, deadline.id)
-                        Toast.makeText(activityContext, R.string.toast_deletion, Toast.LENGTH_SHORT)
-                            .show()
-                        finishActivity()
-                    }
-                    .show()
+                showDeleteDialog = true
             }
 
             DetailAction.SAVE_TO_CALENDAR -> {
@@ -282,19 +272,13 @@ fun DeadlineDetailScreen(
         )
     }
 
-    Scaffold(
+    AdaptiveMaterialScaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = deadline.name,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
+                title = deadline.name,
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(
@@ -304,6 +288,10 @@ fun DeadlineDetailScreen(
                         )
                     }
                 },
+                titleTextStyle = MaterialTheme.typography.titleLarge,
+                mode = TopAppBarStyle.SMALL,
+                forceMaterial3 = true,
+                useParentMaterialContainer = true,
                 actions = {
                     IconButton(onClick = onEdit) {
                         Icon(
@@ -344,49 +332,23 @@ fun DeadlineDetailScreen(
                             modifier = expressiveTypeModifier
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                ),
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 8.dp)
+                }
             )
         },
         bottomBar = {
             val actions = availableActions(deadline.state)
-            val split = actions.size / 2
-            FlexibleBottomAppBar(
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                contentPadding = PaddingValues(horizontal = 0.dp),
-                content = {
-                    actions.take(split).forEach { action ->
-                        IconButton(onClick = { executeAction(action) }) {
-                            Icon(
-                                imageVector = iconResource(action.iconRes),
-                                contentDescription = stringResource(action.labelRes)
-                            )
-                        }
-                    }
-                    actions.drop(split).forEach { action ->
-                        IconButton(onClick = { executeAction(action) }) {
-                            Icon(
-                                imageVector = iconResource(action.iconRes),
-                                contentDescription = stringResource(action.labelRes)
-                            )
-                        }
-                    }
-                }
+            DetailBottomActions(
+                actions = actions,
+                onActionClick = ::executeAction
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 modifier = Modifier
-                    .navigationBarsPadding()
                     .semantics {
                         contentDescription = activityContext.getString(R.string.detail_plan_add)
                     },
+                shape = RoundedCornerShape(20.dp),
                 onClick = {
                     showPlanComposer = true
                     openComposerSignal++
@@ -474,6 +436,116 @@ fun DeadlineDetailScreen(
             Spacer(modifier = Modifier.height(88.dp))
         }
     }
+
+    if (showGiveUpDialog) {
+        AlertDialog(
+            show = true,
+            onDismissRequest = { showGiveUpDialog = false },
+            title = { Text(stringResource(R.string.confirm_give_up_title)) },
+            text = { Text(stringResource(R.string.confirm_give_up_message)) },
+            miuixTitle = activityContext.getString(R.string.confirm_give_up_title),
+            miuixSummary = activityContext.getString(R.string.confirm_give_up_message),
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showGiveUpDialog = false
+                        onApplyTaskAction(TaskStateAction.MARK_GIVE_UP, true)
+                        Toast.makeText(activityContext, R.string.toast_give_up, Toast.LENGTH_SHORT)
+                            .show()
+                        finishActivity()
+                    }
+                ) {
+                    Text(stringResource(R.string.accept))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGiveUpDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            show = true,
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.alert_delete_title)) },
+            text = { Text(stringResource(R.string.alert_delete_message)) },
+            miuixTitle = activityContext.getString(R.string.alert_delete_title),
+            miuixSummary = activityContext.getString(R.string.alert_delete_message),
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDelete(deadline.id)
+                        DeadlineAlarmScheduler.cancelAlarm(applicationContext, deadline.id)
+                        Toast.makeText(activityContext, R.string.toast_deletion, Toast.LENGTH_SHORT)
+                            .show()
+                        finishActivity()
+                    }
+                ) {
+                    Text(stringResource(R.string.accept))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DetailBottomActions(
+    actions: List<DetailAction>,
+    onActionClick: (DetailAction) -> Unit,
+) {
+    val advancedMaterial = LocalAdvancedMaterialSpec.current
+    val backdrop = LocalAdvancedMaterialBackdrop.current
+    val surfaceTint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = advancedMaterial.navigationTintAlpha * 0.55f)
+    val materialColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (advancedMaterial.enabled && backdrop != null) {
+                    Modifier.advancedTextureBlur(
+                        advancedMaterial = advancedMaterial,
+                        backdrop = backdrop,
+                        shape = RectangleShape,
+                        colors = materialColors,
+                    )
+                } else {
+                    Modifier.background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RectangleShape
+                    )
+                }
+            )
+    ) {
+        FlexibleBottomAppBar(
+            modifier = Modifier
+                .fillMaxWidth(),
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            contentPadding = PaddingValues(horizontal = 0.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            content = {
+                actions.forEach { action ->
+                    IconButton(onClick = { onActionClick(action) }) {
+                        Icon(
+                            imageVector = iconResource(action.iconRes),
+                            contentDescription = stringResource(action.labelRes)
+                        )
+                    }
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -540,6 +612,7 @@ private fun ProgressCard(deadline: DDLItem) {
             )
         }
     }
+
 }
 
 @Composable

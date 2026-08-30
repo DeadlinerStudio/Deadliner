@@ -31,15 +31,15 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.aritxonly.deadliner.DeadlineDetailActivity
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.hashColor
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLItem
 import com.aritxonly.deadliner.ui.AnimatedItem
-import com.aritxonly.deadliner.ui.main.simplified.fadingTopEdge
+import com.aritxonly.deadliner.ui.main.shared.mainListContainerClip
 import java.time.Duration
 import java.time.LocalDateTime
 import kotlin.collections.component1
@@ -50,17 +50,18 @@ fun OverviewStatsScreen(
     activeStats: Map<String, Int>,
     historyStats: Map<String, Int>,
     completionTimeStats: List<Pair<String, Int>>,
-    overdueItems: List<DDLItem>,
     modifier: Modifier,
+    topContentPadding: Dp = 0.dp,
 ) {
     val overviewItems = listOf<@Composable () -> Unit>(
-        { ActiveStatsCard(activeStats, overdueItems) },
+        { ActiveStatsCard(activeStats) },
         { CompletionTimeCard(completionTimeStats) },
         { HistoryStatsCard(historyStats) }
     )
 
     LazyColumn(
-        modifier = modifier.fadingTopEdge(height = 4.dp),
+        modifier = modifier.mainListContainerClip(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = topContentPadding),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         itemsIndexed(overviewItems) { index, itemContent ->
@@ -69,7 +70,9 @@ fun OverviewStatsScreen(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(8.dp)) }
+        item {
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.overview_bottom_safe_area)))
+        }
     }
 }
 
@@ -77,6 +80,13 @@ fun OverviewStatsScreen(
 fun HistoryStatsCard(
     historyStats: Map<String, Int>,
 ) {
+    val indicatorPalette = rememberOverviewIndicatorPalette()
+    val indicatorRoles = listOf(
+        OverviewIndicatorRole.Completed,
+        OverviewIndicatorRole.Pending,
+        OverviewIndicatorRole.Abandoned,
+        OverviewIndicatorRole.Overdue,
+    )
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -102,7 +112,7 @@ fun HistoryStatsCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                historyStats.forEach { (key, value) ->
+                historyStats.entries.forEachIndexed { index, (key, value) ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.width(80.dp)
@@ -119,7 +129,9 @@ fun HistoryStatsCard(
                         Text(
                             text = value.toString(),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = hashColor(key = key),
+                            color = indicatorPalette.colorFor(
+                                indicatorRoles.getOrElse(index) { OverviewIndicatorRole.Total }
+                            ),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -140,6 +152,7 @@ fun HistoryStatsCard(
 fun CompletionTimeCard(
     completionTimeStats: List<Pair<String, Int>>,
 ) {
+    val indicatorPalette = rememberOverviewIndicatorPalette()
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -164,6 +177,7 @@ fun CompletionTimeCard(
             // 使用条形图展示完成时间段统计
             NewBarChartCompletionTimeStats(
                 data = completionTimeStats,
+                barColor = indicatorPalette.total,
                 textColor = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -173,8 +187,14 @@ fun CompletionTimeCard(
 @Composable
 fun ActiveStatsCard(
     activeStats: Map<String, Int>,
-    overdueItems: List<DDLItem>
 ) {
+    val indicatorPalette = rememberOverviewIndicatorPalette()
+    val indicatorRoles = listOf(
+        OverviewIndicatorRole.Completed,
+        OverviewIndicatorRole.Pending,
+        OverviewIndicatorRole.Overdue,
+        OverviewIndicatorRole.Abandoned,
+    )
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -201,7 +221,7 @@ fun ActiveStatsCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                activeStats.forEach { (key, value) ->
+                activeStats.entries.forEachIndexed { index, (key, value) ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.width(80.dp)
@@ -218,27 +238,11 @@ fun ActiveStatsCard(
                         Text(
                             text = value.toString(),
                             style = MaterialTheme.typography.titleLarge,
-                            color = hashColor(key = key),
+                            color = indicatorPalette.colorFor(
+                                indicatorRoles.getOrElse(index) { OverviewIndicatorRole.Total }
+                            ),
                             fontWeight = FontWeight.Bold
                         )
-                    }
-                }
-            }
-            val overdueCount = activeStats[stringResource(R.string.today_overdue)] ?: 0
-            if (overdueCount > 0 && overdueItems.isNotEmpty()) {
-                Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = stringResource(R.string.today_overdue),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.error,   // 错误色强调
-                    modifier = Modifier.padding(bottom = 8.dp).align(Alignment.CenterHorizontally)
-                )
-
-                // 用 Column 或 LazyColumn 渲染每个逾期条目
-                Column {
-                    overdueItems.forEach { item ->
-                        DeadlineItemXmlRow(item)
                     }
                 }
             }

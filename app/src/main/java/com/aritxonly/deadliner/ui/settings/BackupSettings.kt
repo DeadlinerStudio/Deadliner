@@ -23,6 +23,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import kotlinx.coroutines.launch
 
 @Composable
@@ -41,7 +42,7 @@ fun BackupSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = navIconPaddingModifier
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),
@@ -52,10 +53,11 @@ fun BackupSettingsScreen(
             }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier.padding(padding)
+        SettingsScrollColumn(
+            contentPadding = padding,
+            modifier = Modifier,
         ) {
-            SvgCard(R.drawable.svg_backup, modifier = Modifier.padding(16.dp))
+            SvgCard(R.drawable.svg_backup, modifier = Modifier.padding(vertical = 8.dp))
 
             SettingsSection {
                 SettingsTextButtonItem(

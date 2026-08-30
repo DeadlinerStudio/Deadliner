@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,10 +35,13 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ai.LlmPreset
 import com.aritxonly.deadliner.ai.AIUtils
+import com.aritxonly.deadliner.ui.base.AlertDialog
 import java.util.UUID
+import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 
 @Composable
 fun ModelSettingsScreen(
@@ -72,7 +74,7 @@ fun ModelSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = navIconPaddingModifier
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),
@@ -105,8 +107,10 @@ fun ModelSettingsScreen(
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding)
-            .verticalScroll(rememberScrollState())) {
+        SettingsScrollColumn(
+            contentPadding = padding,
+            modifier = Modifier,
+        ) {
             Text(
                 stringResource(R.string.settings_endpoint_description),
                 modifier = Modifier.padding(horizontal = 24.dp),
@@ -190,6 +194,7 @@ fun AddPresetDialog(
     var endpoint by remember { mutableStateOf("") }
 
     AlertDialog(
+        show = true,
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
@@ -240,6 +245,7 @@ fun EditPresetDialog(
     var model by remember { mutableStateOf(initial.model) }
     var endpoint by remember { mutableStateOf(initial.endpoint) }
     AlertDialog(
+        show = true,
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = { if (name.isNotBlank() && model.isNotBlank() && endpoint.isNotBlank()) onConfirm(name.trim(), model.trim(), endpoint.trim()) }) { Text(stringResource(R.string.save)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
@@ -279,6 +285,7 @@ fun ManagePresetsSheet(
     var confirmDelete by remember { mutableStateOf<LlmPreset?>(null) }
     var editTarget by remember { mutableStateOf<LlmPreset?>(null) }
 
+    RegisterAdvancedMaterialDialogBlur()
     ModalBottomSheet(onDismissRequest = onClose, sheetState = sheetState) {
         Text(stringResource(R.string.manage_presets), modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.titleMedium)
         presets.forEachIndexed { i, p ->
@@ -307,6 +314,7 @@ fun ManagePresetsSheet(
     // 删除确认
     confirmDelete?.let { target ->
         AlertDialog(
+            show = true,
             onDismissRequest = { confirmDelete = null },
             confirmButton = {
                 TextButton(onClick = { onDelete(target); confirmDelete = null }) { Text(stringResource(R.string.delete)) }

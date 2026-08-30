@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.aritxonly.deadliner.data.DatabaseHelper
 import com.aritxonly.deadliner.DeadlineAlarmScheduler
+import com.aritxonly.deadliner.localutils.AppIconManager
 import com.aritxonly.deadliner.localutils.GlobalUtils
 
 class BootReceiver : BroadcastReceiver() {
@@ -14,11 +15,11 @@ class BootReceiver : BroadcastReceiver() {
         when (intent?.action) {
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
+                AppIconManager.applyCurrentMode(context)
                 // 重新注册所有alarms
                 val allDDLs = DatabaseHelper.getInstance(context).getAllDDLs()
                 allDDLs.forEach {
-                    DeadlineAlarmScheduler.scheduleExactAlarm(context, it)
-                    DeadlineAlarmScheduler.scheduleUpcomingDDLAlarm(context, it)
+                    DeadlineAlarmScheduler.syncScheduledNotifications(context, it)
                 }
                 DeadlineAlarmScheduler.scheduleDailyAlarm(context)
             }

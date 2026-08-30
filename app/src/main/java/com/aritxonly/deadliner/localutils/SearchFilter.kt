@@ -10,6 +10,12 @@ data class SearchFilter(
     val day: Int? = null,
     val hour: Int? = null
 ) {
+    enum class VisibilityScope {
+        ACTIVE,
+        ARCHIVE,
+        ALL,
+    }
+
     companion object {
         // 正则表达式匹配字母与数字组合，如 y2025, d20 等
         private val regex = Regex("([ymdh])(\\d+)", RegexOption.IGNORE_CASE)
@@ -40,8 +46,17 @@ data class SearchFilter(
         }
     }
 
-    fun matches(ddlItem: DDLItem): Boolean {
-        if (!ddlItem.state.isMainListVisible()) return false
+    fun matches(
+        ddlItem: DDLItem,
+        visibilityScope: VisibilityScope = VisibilityScope.ACTIVE,
+    ): Boolean {
+        val matchesVisibility = when (visibilityScope) {
+            VisibilityScope.ACTIVE -> ddlItem.state.isMainListVisible()
+            VisibilityScope.ARCHIVE -> ddlItem.state.isArchiveListVisible()
+            VisibilityScope.ALL ->
+                ddlItem.state.isMainListVisible() || ddlItem.state.isArchiveListVisible()
+        }
+        if (!matchesVisibility) return false
 
         // 文本
         val matchesText = ddlItem.name.contains(query, ignoreCase = true) ||

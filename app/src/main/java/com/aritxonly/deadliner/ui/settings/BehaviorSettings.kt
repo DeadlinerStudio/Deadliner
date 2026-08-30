@@ -39,6 +39,7 @@ import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
+import com.aritxonly.deadliner.ui.navIconPaddingModifier
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -84,7 +85,7 @@ fun BehaviorSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = navIconPaddingModifier
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),
@@ -95,12 +96,11 @@ fun BehaviorSettingsScreen(
             }
         }
     ) { padding ->
-        Column(
-            Modifier
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
+        SettingsScrollColumn(
+            contentPadding = padding,
+            modifier = Modifier,
         ) {
-            SvgCard(R.drawable.svg_general, modifier = Modifier.padding(16.dp))
+            SvgCard(R.drawable.svg_general, modifier = Modifier.padding(vertical = 8.dp))
 
             SettingsSection(topLabel = stringResource(R.string.settings_general_main)) {
                 SettingsRoute.behaviorThirdRoutes.forEachIndexed { index, route ->

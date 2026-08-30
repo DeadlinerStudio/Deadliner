@@ -54,11 +54,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
+import kotlin.math.max
 import androidx.compose.ui.util.lerp
 import com.aritxonly.deadliner.ui.main.SelectionOverlay
 import kotlinx.coroutines.flow.collectLatest
@@ -409,7 +411,7 @@ private fun ClassicWizardBottomBar(
             }
             IconButton(onClick = { /* noop */ }) {
                 Icon(
-                    imageVector = iconResource(R.drawable.ic_chart),
+                    imageVector = iconResource(R.drawable.ic_overview),
                     contentDescription = null
                 )
             }
@@ -466,12 +468,23 @@ fun DDLItemCardSwipeableClassic(
     onToggleSelect: (() -> Unit)? = null
 ) {
     val swipeEnabled = !selectionMode
+    val density = LocalDensity.current
+    val minimumSwipeTriggerThresholdPx = with(density) { 120.dp.toPx() }
 
+    var widthPx by remember { mutableIntStateOf(1) }
     var hasTriggered by remember { mutableStateOf(false) }
+    var latestOffsetPx by remember { mutableStateOf(0f) }
 
     val dismissState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { totalDistance ->
+            max(totalDistance * 0.5f, minimumSwipeTriggerThresholdPx)
+        },
         confirmValueChange = { value ->
             if (!swipeEnabled) return@rememberSwipeToDismissBoxState false
+            val actualTriggerThresholdPx = max(widthPx * 0.5f, minimumSwipeTriggerThresholdPx)
+            if (abs(latestOffsetPx) < actualTriggerThresholdPx) {
+                return@rememberSwipeToDismissBoxState false
+            }
 
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> {
@@ -495,7 +508,6 @@ fun DDLItemCardSwipeableClassic(
 
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
 
-    var widthPx by remember { mutableIntStateOf(1) }
     val rawOffset = runCatching { dismissState.requireOffset() }.getOrElse { 0f }
     val fraction = (abs(rawOffset) / widthPx.toFloat()).coerceIn(0f, 1f)
 
@@ -503,13 +515,15 @@ fun DDLItemCardSwipeableClassic(
     LaunchedEffect(dismissState) {
         snapshotFlow {
             val off = runCatching { dismissState.requireOffset() }.getOrElse { 0f }
-            val atRest = abs(off) < 0.5f &&
-                    dismissState.currentValue == SwipeToDismissBoxValue.Settled &&
-                    dismissState.targetValue  == SwipeToDismissBoxValue.Settled
-            atRest
+            val currentValue = dismissState.currentValue
+            val targetValue = dismissState.targetValue
+            Triple(off, currentValue, targetValue)
         }
-            .distinctUntilChanged()
-            .collectLatest { atRest ->
+            .collectLatest { (off, currentValue, targetValue) ->
+            latestOffsetPx = off
+            val atRest = abs(off) < 0.5f &&
+                    currentValue == SwipeToDismissBoxValue.Settled &&
+                    targetValue == SwipeToDismissBoxValue.Settled
                 if (atRest) {
                     hasTriggered = false
                 }
