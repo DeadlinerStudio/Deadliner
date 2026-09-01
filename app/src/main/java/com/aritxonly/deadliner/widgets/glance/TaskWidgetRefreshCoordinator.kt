@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.glance.appwidget.updateAll
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.widgets.glance.ui.CompactTaskGlanceWidget
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,13 +20,14 @@ object TaskWidgetRefreshCoordinator {
     private const val PREFERENCES_NAME = "app_settings"
     private const val REFRESH_DEBOUNCE_MS = 150L
 
-    private val appearanceKeys = setOf(
+    private val widgetRefreshKeys = setOf(
         "appearance_design_mode",
         "seed_color",
         "appearance_color_source",
         "dynamic_palette_style",
         "modern_use_device_palette_strategy",
         "modern_color_palette",
+        TaskWidgetPreferences.PADDING_PRESET_KEY,
     )
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -41,7 +43,7 @@ object TaskWidgetRefreshCoordinator {
         applicationContext = context.applicationContext
         preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
         preferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key in appearanceKeys) requestRefresh(context)
+            if (key in widgetRefreshKeys) requestRefresh(context)
         }.also { preferences?.registerOnSharedPreferenceChangeListener(it) }
 
         scope.launch {

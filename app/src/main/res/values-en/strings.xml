@@ -30,7 +30,7 @@
     <string name="settings_support_deadliner_ai">Lifi AI · API integration · Custom prompt</string>
     <string name="settings_support_webdav">WebDAV cloud sync service</string>
     <string name="settings_support_lab">Debug options &amp; experimental features</string>
-    <string name="settings_support_widget">Widget configuration · Widget UI &amp; interaction settings</string>
+    <string name="settings_support_widget">2×2 task card · Top padding presets</string>
     <string name="settings_support_wiki">Visit GitHub Wiki · Quick start guide</string>
     <string name="settings_support_feedback">Send feedback or report a bug</string>
     <string name="settings_support_about">· Check for updates · Buy developer a bubble tea 🧋</string>
@@ -75,12 +75,10 @@
     <string name="settings_support_hide_from_recent">When enabled, the app will not appear in the recent apps screen</string>
     <string name="settings_embedded_activities">Parallel window</string>
     <string name="settings_support_embedded_activities">When enabled, the main screen is fixed on the left, and other pages are displayed on the right in split view</string>
-    <string name="settings_progress_widget">Widget forward progress bar</string>
-    <string name="settings_mdwidget_add_btn">Task small widget button actions</string>
-    <string name="settings_ldwidget_add_btn">Task large widget button actions</string>
-    <string name="settings_support_progress_widget">Show task progress on small widget progress bar</string>
-    <string name="settings_support_mdwidget_add_btn">Show a floating “+” button on the small widget to quickly add tasks</string>
-    <string name="settings_support_ldwidget_add_btn">Show a floating “+” button on the large widget to quickly add tasks</string>
+    <string name="settings_widget_padding">Task card top padding</string>
+    <string name="settings_widget_padding_standard">Standard (no extra padding)</string>
+    <string name="settings_widget_padding_4x6">4×6 home screen (26dp top)</string>
+    <string name="settings_widget_padding_4x7">4×7 home screen (18dp top)</string>
     <string name="settings_nearby_notification">Deadline reminder notifications</string>
     <string name="settings_everyday_notification">Daily deadline summary notifications</string>
     <string name="settings_excitement">Main menu encouraging message</string>
@@ -128,11 +126,6 @@
     <string name="settings_ai_custom_prompt_title">Prompt</string>
     <string name="settings_support_ai_custom_prompt">Custom user prompt (not recommended for beginners)</string>
     <string name="settings_ai_custom_prompt_success">Prompt saved</string>
-    <string name="add_widget">Add widget</string>
-    <string name="app_md_widget_description">Task small widget</string>
-    <string name="app_ld_widget_description">Task large widget</string>
-    <string name="app_mh_widget_description">Habit mini widget</string>
-    <string name="app_sh_widget_description">Habit widget</string>
     <string name="app_glance_task_widget_description">Deadliner task card (2×2)</string>
     <string name="glance_task_widget_all_done">All done</string>
     <string name="glance_task_widget_overdue">Overdue</string>
@@ -143,7 +136,6 @@
     <string name="go_next">Continue</string>
     <string name="welcome">Your Day,\nEnhanced by AI</string>
     <string name="welcome_version">New Deadliner v5, ready for you to experience</string>
-    <string name="finish_notice">No tasks remaining</string>
     <string name="add_ddl_tile_label">Add new task</string>
     <string name="end_time">End time</string>
     <string name="start_time">Start time</string>
@@ -341,7 +333,6 @@
     <string name="sync_done">Sync completed ✅</string>
     <string name="sync_conflict">Sync conflict detected. Auto retried / will try again later</string>
     <string name="sync_failed_with_msg">Sync failed: %1$s</string>
-    <string name="settings_widget_tasks">Task widget</string>
     <string name="frequency_daily">Daily</string>
     <string name="frequency_weekly">Weekly</string>
     <string name="frequency_monthly">Monthly</string>

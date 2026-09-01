@@ -1,45 +1,46 @@
-# Glance 2x2 Task Widget Module Plan
+# Glance Task Widgets Module Plan
 
 ## 模块拆分
 
-- `model`：`TaskWidgetSnapshot` 与 `TaskWidgetItem`，仅承载渲染所需的不可变数据。
-- `data`：`TaskWidgetDataSource`、KMP 适配器与 `TaskWidgetRepository`，负责过滤、时间解析、排序、紧急判断和相对时间。
-- `theme`：`TaskWidgetThemeResolver` 与背景位图生成器，读取 Android 外观首选项并输出日/夜颜色。
-- `presentation`：`CompactTaskGlanceWidget`、Glance composables 和 receiver，只消费快照与主题。
-- `infra`：`TaskWidgetRefreshCoordinator`，统一处理应用前台、外观设置和系统配置触发的刷新。
-- `preferences`：`TaskWidgetPaddingPreset` 与 `TaskWidgetPreferences`，定义标准/4×6/4×7 的持久化值、额外顶部 padding 和对应最大展示条数。
+- `model`：`TaskWidgetSnapshot`、`TaskWidgetItem`、`TaskWidgetStatus`、`TaskWidgetVisualState`，定义两种尺寸共享的不可变展示契约。
+- `data`：`TaskWidgetDataSource` 与 `TaskWidgetRepository`，负责 KMP 映射、ACTIVE/删除过滤、截止时间解析、排序、三态判断、相对时间和胶囊摘要。
+- `theme`：`TaskWidgetPaletteFactory`、`TaskWidgetThemeResolver`、`TaskWidgetColors`，把 Android 外观首选项映射到 MIUIX 语义表面/文字/主色/错误色和 Deadliner 临近、完成色。
+- `rendering`：`TaskWidgetBackgroundRenderer`，生成 2×2 背景、2×1 背景和三种任务行的小尺寸位图。
+- `presentation-2x2`：`CompactTaskGlanceWidget` 与共享任务行/顶栏/空态组件。
+- `presentation-2x1`：`CapsuleTaskGlanceWidget`，只消费共享快照与 palette，不重复数据计算。
+- `receivers`：两个 `GlanceAppWidgetReceiver` 分别注册 2×2 与 2×1 metadata。
+- `preferences`：`TaskWidgetPaddingPreset` / `TaskWidgetPreferences`，仅供 2×2 使用。
+- `infra`：`TaskWidgetRefreshCoordinator`，统一订阅任务与外观变化并更新两个 widget class。
 
 ## 平台映射
 
-- iOS：本轮不改；视觉语义可映射到 WidgetKit 的 timeline entry + SwiftUI view。
-- HarmonyOS：参考 `entry/src/main/ets/widget/pages/TaskWidgetCardSmall.ets` 的背景、顶栏、任务卡与空状态层级。
-- Android：新增 `app/src/main/java/com/aritxonly/deadliner/widgets/glance/{model,data,theme,ui}`；provider metadata 位于 `app/src/main/res/xml`。
-- Android 设置页：`ui/settings/WidgetSettings.kt` 只保留 Glance 卡片边距配置与既有控制中心入口；旧 RemoteViews 开关和 `GlobalUtils` 属性一并删除。
+- HarmonyOS 2×2：`entry/src/main/ets/widget/pages/TaskWidgetCardSmall.ets` → Android `CompactTaskGlanceWidget` + shared components。
+- iOS 2×2：`DeadlinerWidget/Views/SmallListWidgetView.swift` → Android 三态 palette、状态背景、任务行分层与计数规则。
+- HarmonyOS 2×1：`entry/src/main/ets/widget/pages/TaskWidgetCardCapsule.ets` → Android `CapsuleTaskGlanceWidget`。
+- HarmonyOS 数据：`utils/WidgetUpdater.ets`；iOS 数据：`Providers/KMPWidgetSnapshotReader.swift` 与 `DeadlinerWidgetHelpers.swift` → Android `TaskWidgetRepository`。
+- Android 落位：`app/src/main/java/com/aritxonly/deadliner/widgets/glance/{model,data,theme,ui,preferences}`，metadata 位于 `app/src/main/res/xml`。
 
 ## 文件拆分策略
 
-- 每个文件只承担单一职责，预计均低于 300 行，不在 `MainActivity` 或旧 widget 文件中堆叠新实现。
-- 共享快照不暴露 KMP `Task` 类型给 UI，降低 KMP AAR API 变化对 Glance 层的影响。
-- 背景生成与颜色推导独立于 Glance composition，便于 JVM 测试并避免大体积 `RemoteViews`。
-- 单个核心文件尽量不超过 1000 行有效代码；若必须逃逸，先申请开发者批准。
-- 旧 RemoteViews Kotlin、provider XML、布局、配置页和仅被其使用的资源按引用关系删除；`MainActivity` 只保留 Glance 主动刷新。
+- `CompactTaskGlanceWidget.kt` 只保留 2×2 provider/root 布局，任务行、顶栏和空态移入 `TaskWidgetComponents.kt`。
+- `CapsuleTaskGlanceWidget.kt` 独立维护 2×1 几何，不把尺寸分支塞入 2×2 文件。
+- receiver 各自独立，避免一个文件承担 provider、广播和 UI 三种职责。
+- palette 只返回颜色与状态行颜色组；Canvas/Bitmap 绘制留在 renderer。
+- KMP `Task_` 不泄漏到 model/UI；UI 不解析时间、不读取数据库。
+- 单个新增或重构文件目标低于 350 行，硬阈值 1000 行。
+
+## MIUIX 视觉映射
+
+- 背景/卡片表面：对应 `background` / `surfaceContainer` 角色。
+- 主要文字：对应实际容器的 `onBackground` / `onSurfaceContainer`；次要时间对应 `onSurfaceVariantSummary`。
+- 普通状态：`primary`；逾期状态：`error`；临近橙和完成绿使用 Deadliner 自有语义色。
+- 任务行以表面层级、高光与轻描边建立 MIUIX 深度，不引入 Material 组件或虚构 Miuix `warning/success` token。
+- Glance 不支持 Miuix squircle shader；圆角采用 24dp 外卡片、8–9dp 任务行和 16–20dp 胶囊的低阶兼容表达。
 
 ## 风险点
 
-- Glance 1.1.1 的布局与背景能力有限，不能直接复刻 ArkUI 的 `Rect.linearGradient` 与 `Circle`，需用轻量 Bitmap 生成器等价表达。
-- `KmpV6Runtime` 为 Android composition root；receiver 启动时依赖 `DeadlinerApp.onCreate()` 已完成初始化。
-- SharedPreferences 外观变更没有跨进程可靠内存通知，注册应用内监听并保留 30 分钟周期刷新作为兜底。
-- launcher 对 2×2 的实际 dp 尺寸不同，布局固定为紧凑信息层级并允许整体拉伸，不依赖精确像素。
-
-## 最终实现映射
-
-- `model`、`data`、`theme`、`presentation`、`infra` 均按计划拆分，没有把 KMP `Task` 泄漏到 Glance UI。
-- `TaskWidgetRefreshCoordinator` 除外观首选项监听外，还订阅 KMP `TaskListUiState.tasks`；旧组件的 Activity 生命周期刷新逻辑保持不变。
-- Glance 1.1.1 不提供线性布局权重，本 2×2 目标布局使用受控宽度保证标题省略和到期文本同时可见。
-
-## 本轮扩展计划
-
-- 新增独立 preferences 文件，避免把小组件布局设置继续堆入 `GlobalUtils`。
-- composition 读取 preset，并在现有 10dp 内容内边距之外追加 `0/26/18dp` 顶部 padding。
-- 非标准预设渲染前两条任务，标准预设维持最多三条。
-- manifest 最终只保留 `CompactTaskGlanceWidgetReceiver`。
+- 多个位图可能触发 RemoteViews/Binder 体积问题：2×2 背景控制在约 240×240，任务行约 180×40，并按状态复用；2×1 背景单独使用宽幅低分辨率图。
+- 无截止时间任务此前被 Android 排除，改为计数并置后会改变用户可见总数；这是与 HarmonyOS/iOS 数据语义对齐的预期变化。
+- 相对时间从向上取整/七天后日期切换为参考实现的向下取整分钟/小时/天语义，需更新测试。
+- 2×1 不消费 2×2 padding preset，防止 18/26dp 顶部偏移破坏单行胶囊。
+- 编译通过不能证明 launcher 实际缩放与位图层次；若本轮无法运行设备/模拟器，必须明确记录视觉运行验证待办。

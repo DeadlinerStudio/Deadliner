@@ -1,54 +1,80 @@
-# Glance 2x2 Task Widget
+# Glance Task Widgets（2×2 + 2×1）
 
 ## 背景
 
-- 创建日期：2026-08-16
-- 功能标识：`glance-task-widget`
-- Android 现有四个小组件基于 `AppWidgetProvider + RemoteViews + XML layout`，与已落地的 2×2 Glance 任务卡重复维护。
-- 新小组件参考 HarmonyOS `TaskWidgetCardSmall.ets`：渐变氛围背景、品牌顶栏、待办总数、最多三条紧凑任务卡，以及“全部搞定”空状态。
+- 创建日期：2026-08-16；完整跨端迁移扩展日期：2026-09-02。
+- Android 已有 2×2 Glance 任务卡片，并已清理旧 `AppWidgetProvider + RemoteViews + XML layout` 小组件。
+- 本轮以 HarmonyOS `TaskWidgetCardSmall.ets`、iOS `SmallListWidgetView.swift` 和 HarmonyOS `TaskWidgetCardCapsule.ets` 为事实参考，迁移显示逻辑、数据计算与 UI 层级；参考文件中的注释只用于理解实现，不扩大用户需求。
+- Jetpack Glance 不能直接调用 Miuix Composable，因此 Android 通过语义色映射、Glance primitives 和轻量位图背景表达 MIUIX/HyperOS 风格。
 
 ## 目标
 
-- 新增一个独立的 2×2 任务小组件，UI 完全由 Jetpack Glance 的 Compose 风格 API 声明。
-- 小组件能够直接读取现有 KMP `DeadlinerDatabase.tasks` 数据，并把平台任务映射为稳定的展示快照。
-- 小组件跟随 Android 的“现代 / 鲜明”设计模式、明暗模式、现代中性色板，以及鲜明模式的动态色或自定义种子色。
-- 应用前台任务变化、外观设置变化、系统配置变化和平台周期更新时能够刷新小组件。
-- 为不同桌面网格提供可选的顶部边距预设：标准、4×6、4×7。
-- 删除非 Glance 小组件，只保留 2×2 Glance 任务卡的 provider、设置与刷新链路。
+- 完整重构 2×2 任务列表卡片，使任务计数、排序、状态、相对时间、背景氛围、徽标、任务行和空态与 HarmonyOS/iOS 参考语义一致。
+- 新增独立的 2×1 Glance 胶囊卡片，共用同一份 KMP 数据快照和刷新链路。
+- 两张卡片跟随 Android 当前“现代 / 鲜明”模式、日夜模式、设备中性色板、动态色或自定义种子色。
+- 视觉角色与 MIUIX 对齐：主强调使用 `primary` 语义，任务容器对应 `surfaceContainer`，逾期使用 `error`，次要文字对应 summary role；临近橙色和完成绿色为 Deadliner 自有语义色。
+- 保留 2×2 的标准、4×6、4×7 顶部 padding 预设；2×1 不应用该预设。
 
 ## 非目标
 
-- 本轮不加入独立小组件配置 Activity、自定义背景图、任意数值边距输入，以及在小组件内直接完成或删除任务。
-- 不修改 HarmonyOS 附件文件；它只作为视觉与信息层级参考。
-- 不把标准 Compose UI 组件混入 Glance；Glance 最终仍受 `RemoteViews` 能力约束。
+- 不修改 HarmonyOS 或 iOS 源文件。
+- 不加入任意数值 padding、自定义背景图、独立配置 Activity、任务完成/删除按钮或逐任务深链。
+- 不把标准 Compose 或 Miuix Composable 混入 Glance；设置页继续复用应用现有 MIUIX/Material 兼容壳。
+- 不恢复已删除的习惯、任务大卡片或旧 RemoteViews 小组件。
+
+## 共享数据与显示规则
+
+1. 数据源读取 `KmpV6Runtime.database.tasks.list()`。
+2. 只保留未删除且状态为 `ACTIVE` 的任务；没有 `dueAt` 的活跃任务仍计入总数并可展示。
+3. 有效截止时间按时间升序排列；无效或缺失截止时间置于末尾。不再额外优先星标任务。
+4. 状态分为：
+   - `OVERDUE`：截止时间小于等于当前时间。
+   - `NEAR`：截止时间在当前时间之后且不超过 24 小时。
+   - `NORMAL`：超过 24 小时或没有有效截止时间。
+5. 相对时间采用参考实现的向下取整语义：不足 1 小时显示至少 1 分钟，1–23 小时显示整小时，24 小时及以上显示整天；逾期和未设截止分别使用本地化文案。
+6. 快照记录总活跃数、临近数、逾期数、最多三条展示任务和胶囊摘要。
+7. 胶囊摘要优先级：无任务 → 有任务已逾期 → 近期有 DDL → 有任务待完成。
 
 ## 用户场景
 
-1. 用户从桌面小组件选择器添加“Deadliner 任务卡片（2×2）”，立即看到最多三个按优先级与剩余时间排序的活跃任务。
-2. 用户在应用中切换“现代 / 鲜明”、明暗模式、现代品牌色板或鲜明种子色后，桌面卡片刷新为对应颜色。
-3. 用户新增、编辑或完成任务后，返回/离开主界面或等待平台周期更新，小组件从 KMP 数据库重新生成展示快照。
-4. 用户点击卡片任意位置，进入 Deadliner；没有活跃任务时显示本地化的完成状态。
-5. 用户在“小组件”设置中选择标准、4×6 或 4×7 后，已添加的 2×2 卡片立即刷新；4×6 仅增加 26dp 顶部 padding，4×7 仅增加 18dp 顶部 padding。
+1. 用户添加 2×2 卡片，看到最多三条最近任务；4×6/4×7 padding 模式最多显示两条，但总数徽标保持完整。
+2. 用户添加 2×1 卡片，左侧看到当前任务摘要与鼓励语，右侧看到活跃任务总数；没有任务时显示完成图形。
+3. 任务新增、编辑、完成、删除或外观设置变化后，两种卡片都主动刷新，并由系统 30 分钟周期更新兜底。
+4. 用户点击任一卡片进入 Deadliner 主界面。
+5. 明暗模式、现代/鲜明模式或品牌色变化时，背景、任务行、文字、强调色与状态色同步更新。
 
 ## 验收标准
 
-- 应用只注册一个目标尺寸为 2×2 的 Glance 小组件 provider；旧 `HabitMiniWidget`、`HabitMediumWidget`、`MultiDeadlineWidget`、`LargeDeadlineWidget` 及其配置 Activity、metadata/layout 专属资源被移除。
-- 小组件由 `GlanceAppWidget` / `GlanceAppWidgetReceiver` 实现；除平台要求的 provider metadata XML 外，不新增 UI layout XML。
-- 默认画面包含圆角渐变/氛围圆背景、18dp 品牌图标、`Deadliner` 标题、总数徽标、最多三条 30dp 左右的任务卡。
-- 每条任务卡包含状态色指示条、单行省略标题、相对到期时间；逾期或 24 小时内到期的任务使用紧急色。
-- 空列表显示庆祝图形和“全部搞定”本地化文本。
-- “现代”模式使用当前现代品牌中性色板和克制的品牌色混合；“鲜明”模式使用动态/种子强调色与更明显的渐变，两种模式都支持夜间颜色。
-- 数据源直接读取 `KmpV6Runtime.database.tasks.list()`，只展示未删除、`ACTIVE` 且存在 `dueAt` 的任务。
-- 数据映射、排序、紧急判断与相对时间格式有 JVM 单元测试覆盖；完整 Android debug 构建通过。
-- 标准预设不增加外层 padding；4×6 把参考实现的 12dp 顶部 + 14dp 底部合并为 26dp 顶部；4×7 把 8dp 顶部 + 10dp 底部合并为 18dp 顶部，两个预设的额外底部 padding 都为 0dp。
-- 边距设置写入持久化首选项，并由刷新协调器监听后主动刷新所有 Glance 实例。
+### 2×2 任务列表
+
+- 顶层为圆角氛围背景：基础表面、状态淡染、对角高光、右上径向高光和两层低透明度波纹。
+- 顶栏包含 18dp 应用图标、`Deadliner` 和总数徽标；徽标颜色优先逾期红、临近橙、普通主色。
+- 最多三条 30dp 任务行；每行包含 3dp 状态条、单行省略标题和紧凑相对时间。
+- 普通、临近、逾期任务行具有各自的底色、高光、淡染和描边；标题/时间字重随状态变化。
+- 空态显示庆祝图形和“全部搞定”。
+- padding 预设继续为标准 `0dp`、4×6 额外顶部 `26dp`、4×7 额外顶部 `18dp`，额外底部均为 `0dp`。
+
+### 2×1 胶囊
+
+- 新增独立 `GlanceAppWidget` / receiver / provider metadata，目标网格为 2×1。
+- 背景使用与 2×2 同源的 MIUIX 语义 palette、对角渐变与右上波纹；有任务时显示状态装饰点。
+- 左侧显示本地化摘要，有任务时显示本地化鼓励语；右侧显示 40sp 左右的大号任务数。
+- 无任务时不显示鼓励语和数字，改为绿色完成图形。
+
+### 数据、主题与质量
+
+- 总数包含无截止时间的活跃任务；无截止任务排在有截止任务之后并显示“未设截止”。
+- 逾期与临近状态分别计算，胶囊摘要和 2×2 背景状态由同一快照驱动。
+- `TaskWidgetRefreshCoordinator` 同时更新 2×2 和 2×1 全部实例。
+- 数据过滤、排序、时间格式、摘要优先级、状态映射和 palette 有 JVM 测试覆盖。
+- 完整 Android debug 单元测试与构建通过；manifest 最终只包含两个 Glance AppWidget provider。
 
 ## 风险与约束
 
-- Jetpack Glance 不是标准 Compose UI，不能直接复用 Material/Miuix Composable，也没有通用 Canvas；渐变与氛围圆通过运行时生成的小型位图背景表达。
-- 采用当前稳定版 `androidx.glance:glance-appwidget:1.1.1`，避免为预览 API 引入 RC/Alpha 依赖。
-- Widget 进程内存状态不可靠；每次 composition 都从持久化 KMP 数据和 SharedPreferences 重新构建快照。
-- 平台后台周期刷新下限为 30 分钟；前台数据与外观变更采用主动 `updateAll`，其余由系统广播和周期刷新兜底。
-- 核心文件不得超过 1000 行有效代码；本功能按 `model / data / theme / ui / refresh` 拆分。
-- 增加顶部 padding 后可用高度减少；非标准预设最多显示两条任务，避免固定高度内容溢出，总任务数徽标仍展示完整计数。
-- 删除 provider 会让升级后已有旧小组件从桌面失效；这是本轮明确接受的 breaking change，实施前需保留 Git 回退点。
+- Glance 1.1.1 受 RemoteViews 能力和 Binder 体积限制；复杂渐变、波纹、任务行高光与描边使用低分辨率、可复用位图表达，避免大图和每行唯一大位图。
+- Glance 不能读取 composition 中的 `MiuixTheme`；palette 从持久化外观设置和系统 accent 推导，使用 MIUIX 语义角色而非虚构 token。
+- launcher 对 2×2 / 2×1 的实际 dp 尺寸不同；布局使用响应式目标尺寸和固定紧凑层级，不依赖单一设备像素。
+- Widget 进程内存状态不可靠；每次 composition 从 KMP 持久化数据和 SharedPreferences 重建快照。
+- 后台周期刷新下限为 30 分钟；应用内任务流、外观首选项、生命周期和系统广播提供主动刷新。
+- 新增 provider 与数据/UI 重构属于大型变更；实施前创建全工作区 Git 回退点，完成一批实现后统一编译。
+- 核心文件不得超过 1000 行有效代码；UI、数据、主题、位图渲染和 receiver 必须分文件维护。

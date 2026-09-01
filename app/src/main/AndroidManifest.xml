@@ -50,13 +50,6 @@
             android:value="true" />
 
         <activity
-            android:name=".widgets.HabitWidgetConfigureActivity"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
-            </intent-filter>
-        </activity>
-        <activity
             android:name=".OverviewActivity"
             android:exported="false"
             android:label="@string/title_activity_overview"
@@ -104,57 +97,6 @@
             android:name=".IntroActivity"
             android:exported="false" />
 
-        <receiver
-            android:name=".widgets.HabitMiniWidget"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/habit_mini_widget_info" />
-        </receiver>
-        <receiver
-            android:name=".widgets.HabitMediumWidget"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/habit_medium_widget_info" />
-        </receiver>
-        <receiver
-            android:name=".widgets.MultiDeadlineWidget"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/multi_deadline_widget_info" />
-        </receiver>
-        <receiver
-            android:name=".widgets.LargeDeadlineWidget"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/large_deadline_widget_info" />
-        </receiver>
         <receiver
             android:name=".widgets.glance.ui.CompactTaskGlanceWidgetReceiver"
             android:exported="false">

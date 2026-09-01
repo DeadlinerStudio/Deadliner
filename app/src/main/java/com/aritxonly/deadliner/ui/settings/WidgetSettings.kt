@@ -27,9 +27,10 @@ import androidx.core.content.ContextCompat
 import com.aritxonly.deadliner.AddDDLTileService
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
-import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPaddingPreset
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPreferences
 
 @Composable
 fun WidgetSettingsScreen(
@@ -37,22 +38,8 @@ fun WidgetSettingsScreen(
 ) {
     val context = LocalContext.current
 
-    var progressWidget by remember { mutableStateOf(GlobalUtils.progressWidget) }
-    val onProgressWidgetChange: (Boolean) -> Unit = {
-        progressWidget = it
-        GlobalUtils.progressWidget = it
-    }
-
-    var mdWidgetAddBtn by remember { mutableStateOf(GlobalUtils.mdWidgetAddBtn) }
-    val onMdWidgetAddBtnChange: (Boolean) -> Unit = {
-        mdWidgetAddBtn = it
-        GlobalUtils.mdWidgetAddBtn = it
-    }
-
-    var ldWidgetAddBtn by remember { mutableStateOf(GlobalUtils.ldWidgetAddBtn) }
-    val onLdWidgetAddBtnChange: (Boolean) -> Unit = {
-        ldWidgetAddBtn = it
-        GlobalUtils.ldWidgetAddBtn = it
+    var paddingPreset by remember {
+        mutableStateOf(TaskWidgetPreferences.readPaddingPreset(context))
     }
 
     CollapsingTopBarScaffold(
@@ -74,29 +61,18 @@ fun WidgetSettingsScreen(
         ) {
             SvgCard(R.drawable.svg_space, modifier = Modifier.padding(vertical = 8.dp))
 
-            SettingsSection(topLabel = stringResource(R.string.settings_widget_tasks)) {
-                SettingsDetailSwitchItem(
-                    headline = R.string.settings_progress_widget,
-                    supportingText = R.string.settings_support_progress_widget,
-                    checked = progressWidget,
-                    onCheckedChange = onProgressWidgetChange
-                )
-                SettingsSectionDivider()
-
-                SettingsDetailSwitchItem(
-                    headline = R.string.settings_mdwidget_add_btn,
-                    supportingText = R.string.settings_support_mdwidget_add_btn,
-                    checked = mdWidgetAddBtn,
-                    onCheckedChange = onMdWidgetAddBtnChange
-                )
-
-                SettingsSectionDivider()
-
-                SettingsDetailSwitchItem(
-                    headline = R.string.settings_ldwidget_add_btn,
-                    supportingText = R.string.settings_support_ldwidget_add_btn,
-                    checked = ldWidgetAddBtn,
-                    onCheckedChange = onLdWidgetAddBtnChange
+            SettingsSection(topLabel = stringResource(R.string.settings_widget_padding)) {
+                SettingsRadioGroupItem(
+                    options = listOf(
+                        RadioOption(TaskWidgetPaddingPreset.Standard, R.string.settings_widget_padding_standard),
+                        RadioOption(TaskWidgetPaddingPreset.Grid4x6, R.string.settings_widget_padding_4x6),
+                        RadioOption(TaskWidgetPaddingPreset.Grid4x7, R.string.settings_widget_padding_4x7),
+                    ),
+                    selectedKey = paddingPreset,
+                    onOptionSelected = { preset ->
+                        paddingPreset = preset
+                        TaskWidgetPreferences.writePaddingPreset(context, preset)
+                    },
                 )
             }
 

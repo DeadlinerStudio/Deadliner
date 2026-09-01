@@ -41,6 +41,8 @@ import com.aritxonly.deadliner.widgets.glance.data.KmpTaskWidgetDataSource
 import com.aritxonly.deadliner.widgets.glance.data.TaskWidgetRepository
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetItem
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetSnapshot
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPaddingPreset
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPreferences
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetBackgroundRenderer
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetColors
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetThemeResolver
@@ -58,12 +60,14 @@ class CompactTaskGlanceWidget : GlanceAppWidget() {
         }
         val colors = TaskWidgetThemeResolver.resolve(context)
         val background = TaskWidgetBackgroundRenderer.render(colors)
+        val paddingPreset = TaskWidgetPreferences.readPaddingPreset(context)
 
         provideContent {
             CompactTaskWidgetContent(
                 snapshot = snapshot,
                 colors = colors,
                 background = ImageProvider(background),
+                paddingPreset = paddingPreset,
             )
         }
     }
@@ -74,6 +78,7 @@ private fun CompactTaskWidgetContent(
     snapshot: TaskWidgetSnapshot,
     colors: TaskWidgetColors,
     background: ImageProvider,
+    paddingPreset: TaskWidgetPaddingPreset,
 ) {
     Box(
         modifier = GlanceModifier
@@ -86,7 +91,12 @@ private fun CompactTaskWidgetContent(
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .padding(10.dp),
+                .padding(
+                    start = 10.dp,
+                    top = (10 + paddingPreset.extraTopPaddingDp).dp,
+                    end = 10.dp,
+                    bottom = 10.dp,
+                ),
         ) {
             WidgetHeader(snapshot.totalCount, colors)
             Spacer(modifier = GlanceModifier.height(7.dp))
@@ -94,9 +104,10 @@ private fun CompactTaskWidgetContent(
             if (snapshot.items.isEmpty()) {
                 EmptyState(colors)
             } else {
-                snapshot.items.forEachIndexed { index, item ->
+                val visibleItems = snapshot.items.take(paddingPreset.maxVisibleTasks)
+                visibleItems.forEachIndexed { index, item ->
                     CompactTaskItem(item, colors)
-                    if (index != snapshot.items.lastIndex) {
+                    if (index != visibleItems.lastIndex) {
                         Spacer(modifier = GlanceModifier.height(5.dp))
                     }
                 }

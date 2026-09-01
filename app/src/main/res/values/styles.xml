@@ -1,10 +1,5 @@
 <resources>
 
-    <style name="Widget.Deadliner.AppWidget.Container" parent="android:Widget">
-        <item name="android:id">@android:id/background</item>
-        <item name="android:background">?android:attr/colorBackground</item>
-    </style>
-
     <!-- 自定义动画 -->
 
     <style name="ShapeAppearanceOverlay.Snackbar.Corner16" parent="">

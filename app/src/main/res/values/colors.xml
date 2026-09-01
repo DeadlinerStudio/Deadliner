@@ -6,11 +6,6 @@
     <color name="chart_blue">#FF97A5C0</color>
     <color name="overview_heatmap_text_active">#FFFFFFFF</color>
 
-    <color name="progress_bg">#552C2C2C</color> <!-- 适合亮色模式的颜色 -->
-
-    <color name="widget_container_bg">?attr/colorPrimaryContainer</color>
-    <color name="widget_container_fg">?attr/colorOnPrimaryContainer</color>
-
     <color name="indicator_morandi_undergo">#FF6096F0</color>
     <color name="bg_morandi_undergo">#FFB8C4E0</color>
 

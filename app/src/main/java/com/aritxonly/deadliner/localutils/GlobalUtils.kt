@@ -132,12 +132,6 @@ object GlobalUtils {
             sharedPreferences.edit { putBoolean("main_progress_dir", value) }
         }
 
-    var progressWidget: Boolean
-        get() = sharedPreferences.getBoolean("widget_progress_dir", false)
-        set(value) {
-            sharedPreferences.edit { putBoolean("widget_progress_dir", value) }
-        }
-
     var deadlineNotification: Boolean
         get() = sharedPreferences.getBoolean("deadline_notification", false)
         set(value) {
@@ -550,18 +544,6 @@ object GlobalUtils {
     var permissionSetupDone: Boolean
         get() = true
         set(_) {}
-
-    var mdWidgetAddBtn: Boolean
-        get() = sharedPreferences.getBoolean("show_add_button_multi_ddl_widget", false)
-        set(value) {
-            sharedPreferences.edit { putBoolean("show_add_button_multi_ddl_widget", value) }
-        }
-
-    var ldWidgetAddBtn: Boolean
-        get() = sharedPreferences.getBoolean("show_add_button_large_ddl_widget", true)
-        set(value) {
-            sharedPreferences.edit { putBoolean("show_add_button_large_ddl_widget", value) }
-        }
 
     var hideDivider: Boolean
         get() = appearancePreferences.activeHideDivider

@@ -1,48 +1,55 @@
-# Glance 2x2 Task Widget Tasks
+# Glance Task Widgets Tasks
 
-## 阶段 1：规格冻结
+## 已完成基础阶段
 
-- [x] 完成 `spec.md`
-- [x] 完成 `module-plan.md`
-- [x] 对照 HarmonyOS 附件与 Android 现有主题/KMP 层完成自检
+- [x] 建立 2×2 Glance provider、KMP 数据源、主题解析和刷新协调器
+- [x] 清理旧 RemoteViews 小组件，仅保留 Glance 技术栈
+- [x] 增加标准 / 4×6 / 4×7 的 2×2 顶部 padding 预设
+- [x] 通过既有 JVM 测试、debug 构建、规格校验和大文件扫描
 
-## 阶段 2：基础设施
+## 阶段 6：跨端规格冻结（2026-09-02）
 
-- [x] 增加稳定版 Glance AppWidget 依赖
-- [x] 建立 widget snapshot、KMP data source 与 repository
-- [x] 建立现代/鲜明日夜主题解析与背景生成
-- [x] 建立统一刷新协调器
+- [x] 完整阅读 HarmonyOS `TaskWidgetCardSmall.ets` 与其 `WidgetUpdater` / model
+- [x] 完整阅读 iOS `SmallListWidgetView.swift` 与其 snapshot reader / helper
+- [x] 完整阅读 HarmonyOS `TaskWidgetCardCapsule.ets` 与其 model
+- [x] 冻结 ACTIVE 过滤、无截止计数、截止排序、三态、时间文案和摘要优先级
+- [x] 冻结 MIUIX 语义色、表面层级、圆角与位图体积约束
+- [ ] 创建大型重构前全工作区 Git 回退点
 
-## 阶段 3：功能实现
+## 阶段 7：共享数据与主题重构
 
-- [x] 实现 2×2 `GlanceAppWidget` 与 receiver
-- [x] 注册第五个 provider 和 provider metadata
-- [x] 接入 KMP `TaskListUiState`、应用前台、外观设置和系统配置刷新
-- [x] 补充中英文文案与数据映射单元测试
-- [x] 完成一批实现后统一编译，不对每个小 patch 单独编译
+- [ ] 扩展 snapshot/item/status/visual-state model
+- [ ] 重构 repository：包含无截止任务、按截止时间排序、三态与摘要计算
+- [ ] 扩展中英文 strings 与 repository JVM 测试
+- [ ] 重构 MIUIX 语义 palette 与状态行 colors
+- [ ] 扩展低分辨率背景/任务行 bitmap renderer
 
-## 阶段 4：验证与回写
+## 阶段 8：完整 2×2 迁移
 
-- [x] 执行 repository/theme JVM 单元测试
-- [x] 执行 Android debug 构建
-- [x] 执行规格校验
-- [x] 执行大文件扫描
-- [x] 回写最终实现状态与验证结果
+- [ ] 拆分共享顶栏、任务行和空态组件
+- [ ] 实现状态驱动背景、徽标和普通/临近/逾期任务行
+- [ ] 保留图标、三条任务及 2×2 padding preset 行为
+- [ ] 补充 palette / renderer 测试
 
-## 阶段 5：边距预设与旧栈清理（2026-09-02）
+## 阶段 9：2×1 胶囊迁移
 
-- [x] 对照参考实现确认标准 `0/0`、4×6 `12/14`、4×7 `8/10`
-- [x] 冻结本项目标准 `0`、4×6 顶部 `26dp`、4×7 顶部 `18dp` 的规格
-- [ ] 建立 padding preset 与持久化 preferences，并接入主动刷新
-- [ ] 在设置页提供三个单选预设，移除旧 RemoteViews 专属开关
-- [ ] 让 2×2 Glance 卡片按 preset 应用额外顶部 padding
-- [ ] 删除四个旧 RemoteViews provider、配置 Activity 与专属资源
-- [ ] 执行 JVM 测试、Android debug 编译、规格校验和大文件扫描
-- [ ] 回写本轮最终实现与验证结果
+- [ ] 实现 `CapsuleTaskGlanceWidget` 与 receiver
+- [ ] 新增 2×1 provider metadata 和中英文描述
+- [ ] 实现摘要、鼓励语、大数字、完成图形与状态装饰点
+- [ ] 将刷新协调器扩展为同时更新 2×2 / 2×1
 
-## 验证结果
+## 阶段 10：统一验证与回写
 
-- `./gradlew :app:testDebugUnitTest :app:assembleDebug`：通过，共 21 个 JVM 测试，0 失败；其中本功能新增 7 个测试。
-- `validate_feature_spec.py specs/glance-task-widget`：通过。
-- `.kt` 1000 行阈值扫描：本功能最大文件为 `CompactTaskGlanceWidget.kt`（221 行），无新增超限文件。
-- 全仓扫描仍报告 7 个既有超限文件：3 个生成的 UniFFI binding，以及 `AIOverlay.kt`、`SettingsComponents.kt`、`AddDDLActivity.kt`、`GlobalUtils.kt`；本轮没有扩大这些文件。
+- [ ] 执行 `git diff --check` 与旧栈残留扫描
+- [ ] 执行 Glance 相关 JVM 测试和完整 `testDebugUnitTest`
+- [ ] 执行 `assembleDebug`
+- [ ] 校验 manifest 恰好包含两个 Glance provider
+- [ ] 执行 `.kt` 1000 行阈值扫描
+- [ ] 执行规格校验并回写最终实现、测试和视觉验证状态
+
+## 历史验证记录
+
+- 2026-09-02：`./gradlew :app:testDebugUnitTest :app:assembleDebug` 通过。
+- 2026-09-02：padding preset 测试覆盖 `0/26/18dp` 映射与未知值回退。
+- 2026-09-02：旧 RemoteViews 类名、设置键与专属资源引用扫描无残留。
+- 既有 `.kt` 扫描报告 7 个超限文件：3 个生成的 UniFFI binding，以及 `AIOverlay.kt`、`SettingsComponents.kt`、`AddDDLActivity.kt`、`GlobalUtils.kt`；此前变更没有新增超限文件。
