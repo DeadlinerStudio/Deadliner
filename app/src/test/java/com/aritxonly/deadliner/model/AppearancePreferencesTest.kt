@@ -8,6 +8,12 @@ import org.junit.Test
 
 class AppearancePreferencesTest {
     @Test
+    fun semanticGlowDefaultsOnAndCanBeDisabled() {
+        assertTrue(AppearancePreferences().semanticGlowEnabled)
+        assertFalse(AppearancePreferences().copy(semanticGlowEnabled = false).semanticGlowEnabled)
+    }
+
+    @Test
     fun modernModeMapsToMiuixThemeAndModernDivider() {
         val appearance = AppearancePreferences(
             designMode = AppearanceDesignMode.Modern,

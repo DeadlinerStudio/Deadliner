@@ -1,6 +1,8 @@
 package com.aritxonly.deadliner.model
 
-import java.time.Duration
+import com.aritxonly.deadliner.model.semantic.DeadlineStatusResolver
+import com.aritxonly.deadliner.model.semantic.toDDLStatus
+import com.deadliner.domain.task.TaskState
 import java.time.LocalDateTime
 
 enum class DDLStatus {
@@ -15,26 +17,10 @@ enum class DDLStatus {
             endTime: LocalDateTime?,
             now: LocalDateTime = LocalDateTime.now(),
             isCompleted: Boolean
-        ): DDLStatus {
-            // 优先判断完成
-            if (isCompleted) return COMPLETED
-
-            // 如果没有 endTime，默认算进行中
-            if (endTime == null) return UNDERGO
-
-            // 逾期
-            if (now.isAfter(endTime)) {
-                return PASSED
-            }
-
-            // NEAR：距离结束时间 ≤ 12 小时
-            val remainHours = Duration.between(now, endTime).toHours()
-            if (remainHours <= 12) {
-                return NEAR
-            }
-
-            // 否则就是进行中
-            return UNDERGO
-        }
+        ): DDLStatus = DeadlineStatusResolver.resolve(
+            state = if (isCompleted) TaskState.COMPLETED else TaskState.ACTIVE,
+            dueAt = endTime,
+            now = now,
+        ).toDDLStatus()
     }
 }

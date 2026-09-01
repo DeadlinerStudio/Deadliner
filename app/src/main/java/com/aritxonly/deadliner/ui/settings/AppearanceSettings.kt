@@ -16,6 +16,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +41,7 @@ fun AppearanceSettingsScreen(
     nav: NavHostController,
     navigateUp: () -> Unit,
 ) {
+    val appearance by GlobalUtils.appearanceFlow.collectAsState()
     var progressDirEnabled by remember { mutableStateOf(GlobalUtils.progressDir) }
     var motivationalQuotesEnabled by remember { mutableStateOf(GlobalUtils.motivationalQuotes) }
     var fireworksOnFinishEnabled by remember { mutableStateOf(GlobalUtils.fireworksOnFinish) }
@@ -112,6 +114,17 @@ fun AppearanceSettingsScreen(
                 }
 
                 SettingsSection {
+                    SettingsDetailSwitchItem(
+                        headline = R.string.settings_semantic_glow,
+                        supportingText = R.string.settings_support_semantic_glow,
+                        checked = appearance.semanticGlowEnabled,
+                        onCheckedChange = { enabled ->
+                            GlobalUtils.updateAppearance { current ->
+                                current.copy(semanticGlowEnabled = enabled)
+                            }
+                        }
+                    )
+                    SettingsSectionDivider()
                     SettingsDetailSwitchItem(
                         headline = R.string.settings_progress_dir_main,
                         supportingText = R.string.settings_support_progress_dir,

@@ -1,6 +1,7 @@
 package com.aritxonly.deadliner.ui.base
 
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -85,6 +86,21 @@ internal fun Modifier.syncTopBarMaterialScroll(listState: LazyListState): Modifi
                 Float.MAX_VALUE
             } else {
                 listState.firstVisibleItemScrollOffset.toFloat()
+            }
+        }.collect(observer::updateAbsoluteScrollDistance)
+    }
+    return this
+}
+
+@Composable
+internal fun Modifier.syncTopBarMaterialScroll(gridState: LazyStaggeredGridState): Modifier {
+    val observer = LocalTopBarMaterialScrollObserver.current ?: return this
+    LaunchedEffect(observer, gridState) {
+        snapshotFlow {
+            if (gridState.firstVisibleItemIndex > 0) {
+                Float.MAX_VALUE
+            } else {
+                gridState.firstVisibleItemScrollOffset.toFloat()
             }
         }.collect(observer::updateAbsoluteScrollDistance)
     }

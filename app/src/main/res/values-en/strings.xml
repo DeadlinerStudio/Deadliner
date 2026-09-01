@@ -14,6 +14,8 @@
     <string name="settings_title">Settings</string>
     <string name="settings_behavior">Behavior</string>
     <string name="settings_interface_display">Appearance</string>
+    <string name="settings_semantic_glow">Top glow</string>
+    <string name="settings_support_semantic_glow">Show a gradient atmosphere that follows the page and task status</string>
     <string name="settings_widget">Widgets</string>
     <string name="settings_notification">Notifications</string>
     <string name="settings_backup">Backup</string>

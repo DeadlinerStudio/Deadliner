@@ -23,6 +23,9 @@ import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLStatus
+import com.aritxonly.deadliner.model.semantic.DeadlineSemanticStatus
+import com.aritxonly.deadliner.model.semantic.DeadlineStatusResolver
+import com.aritxonly.deadliner.model.semantic.toDDLStatus
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.TextButton
 import com.aritxonly.deadliner.ui.main.DDLItemCardSwipeable
@@ -91,8 +94,8 @@ fun TaskItem(
         onAbandonDialogVisibilityChange(showGiveUpDialog || showDeleteDialog)
     }
 
-    val startTime = item.startAt?.let(GlobalUtils::parseDateTime)
-    val endTime = item.dueAt?.let(GlobalUtils::parseDateTime)
+    val startTime = item.startAt?.let { runCatching { GlobalUtils.parseDateTime(it) }.getOrNull() }
+    val endTime = item.dueAt?.let { runCatching { GlobalUtils.parseDateTime(it) }.getOrNull() }
     val now = LocalDateTime.now()
 
     val remainingTimeText = formatTaskRemainingTime(
@@ -104,11 +107,8 @@ fun TaskItem(
     )
 
     val progress = computeProgress(startTime, endTime, now)
-    val status = if (item.state != TaskState.ACTIVE) {
-        DDLStatus.COMPLETED
-    } else {
-        DDLStatus.calculateStatus(startTime, endTime, now, false)
-    }
+    val semanticStatus = DeadlineStatusResolver.resolve(item.state, endTime, now)
+    val status = semanticStatus.toDDLStatus()
 
     val primaryAction = when (item.state) {
         TaskState.ACTIVE -> TaskAction.MARK_COMPLETE
@@ -155,7 +155,7 @@ fun TaskItem(
         progress = progress,
         isStarred = item.isStarred,
         status = status,
-        useDisabledCompletedStyle = item.state == TaskState.ABANDONED,
+        useDisabledCompletedStyle = semanticStatus == DeadlineSemanticStatus.ABANDONED,
         swipeKey = item.uid,
         activeSwipeKey = activeSwipeTaskId,
         onActiveSwipeChange = onActiveSwipeTaskChange,

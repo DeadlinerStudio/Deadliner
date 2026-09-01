@@ -36,6 +36,7 @@ data class AppearancePreferences(
     val modernHideDivider: Boolean = true,
     val vividHideDivider: Boolean = false,
     val useSettingsHomepageColoredIcons: Boolean = true,
+    val semanticGlowEnabled: Boolean = true,
     val appIconMode: AppIconMode = AppIconMode.Default,
 ) {
     val supportsMiuixTheme: Boolean

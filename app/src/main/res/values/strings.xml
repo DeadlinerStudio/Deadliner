@@ -18,6 +18,8 @@
     <string name="settings_title">设置</string>
     <string name="settings_behavior">交互与行为</string>
     <string name="settings_interface_display">界面外观</string>
+    <string name="settings_semantic_glow">顶部浮光</string>
+    <string name="settings_support_semantic_glow">在主要页面顶部显示随主题和任务状态变化的渐变氛围</string>
     <string name="settings_widget">小组件</string>
     <string name="settings_notification">通知</string>
     <string name="settings_deadliner_ai" translatable="false">Lifi AI</string>

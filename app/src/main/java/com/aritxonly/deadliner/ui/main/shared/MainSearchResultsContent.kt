@@ -59,6 +59,9 @@ import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DDLStatus
+import com.aritxonly.deadliner.model.semantic.DeadlineSemanticStatus
+import com.aritxonly.deadliner.model.semantic.DeadlineStatusResolver
+import com.aritxonly.deadliner.model.semantic.toDDLStatus
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.archive.ArchivedHabitCard
 import com.aritxonly.deadliner.ui.archive.ArchivedTaskCard
@@ -396,14 +399,11 @@ private fun SearchCaptureMenuItem(labelRes: Int, onClick: () -> Unit) {
 
 @Composable
 private fun SearchTaskCard(task: Task, activity: MainActivity) {
-    val start = task.startAt?.let(GlobalUtils::parseDateTime)
-    val end = task.dueAt?.let(GlobalUtils::parseDateTime)
+    val start = task.startAt?.let { runCatching { GlobalUtils.parseDateTime(it) }.getOrNull() }
+    val end = task.dueAt?.let { runCatching { GlobalUtils.parseDateTime(it) }.getOrNull() }
     val now = LocalDateTime.now()
-    val status = if (task.state == TaskState.ACTIVE) {
-        DDLStatus.calculateStatus(start, end, now, false)
-    } else {
-        DDLStatus.COMPLETED
-    }
+    val semanticStatus = DeadlineStatusResolver.resolve(task.state, end, now)
+    val status = semanticStatus.toDDLStatus()
     val remaining = when (task.state) {
         TaskState.ABANDONED, TaskState.ABANDONED_ARCHIVED -> stringResource(R.string.abandoned)
         TaskState.COMPLETED, TaskState.ARCHIVED -> stringResource(R.string.completed)
@@ -416,7 +416,7 @@ private fun SearchTaskCard(task: Task, activity: MainActivity) {
         progress = computeProgress(start, end, now),
         isStarred = task.isStarred,
         status = status,
-        useDisabledCompletedStyle = task.state in setOf(TaskState.ABANDONED, TaskState.ABANDONED_ARCHIVED),
+        useDisabledCompletedStyle = semanticStatus == DeadlineSemanticStatus.ABANDONED,
         onClick = { activity.startActivity(DeadlineDetailActivity.newIntent(activity, task.uid)) },
     )
 }

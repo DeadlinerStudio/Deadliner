@@ -228,6 +228,7 @@ fun OverviewContent(
     onSelectedTabChange: (Int) -> Unit = {},
     showTabsInContent: Boolean = true,
     topContentPadding: Dp = 0.dp,
+    transparentBackground: Boolean = false,
 ) {
     val snapshot = remember(overviewState) {
         KmpOverviewPresenter.present(activity, overviewState)
@@ -235,12 +236,17 @@ fun OverviewContent(
     val statsListState = rememberLazyListState()
     val trendListState = rememberLazyListState()
     val dashboardListState = rememberLazyListState()
+    val pageBackground = if (transparentBackground) {
+        Modifier
+    } else {
+        Modifier.background(MaterialTheme.colorScheme.surface)
+    }
 
     if (flattenedLayout) {
         Row(
             modifier = modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
+                .then(pageBackground)
                 .padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -251,7 +257,7 @@ fun OverviewContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surface),
+                    .then(pageBackground),
                 topContentPadding = topContentPadding,
                 listState = statsListState,
             )
@@ -260,7 +266,7 @@ fun OverviewContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surface),
+                    .then(pageBackground),
                 topContentPadding = topContentPadding,
                 listState = trendListState,
             )
@@ -270,9 +276,10 @@ fun OverviewContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surface),
+                    .then(pageBackground),
                 topContentPadding = topContentPadding,
                 listState = dashboardListState,
+                transparentBackground = transparentBackground,
             )
         }
         return
@@ -287,7 +294,7 @@ fun OverviewContent(
     val currentTab = if (showTabsInContent) internalSelectedTab else selectedTab
 
     Column(
-        modifier = modifier.background(MaterialTheme.colorScheme.surface)
+        modifier = modifier.then(pageBackground)
     ) {
         if (showTabsInContent) {
             TabRow(
@@ -307,14 +314,14 @@ fun OverviewContent(
                 activeStats = snapshot.activeStats,
                 historyStats = snapshot.historyStats,
                 completionTimeStats = snapshot.completionTimeStats,
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                modifier = pageBackground,
                 topContentPadding = topContentPadding,
                 listState = statsListState,
             )
 
             1 -> TrendAnalysisScreen(
                 snapshot = snapshot,
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                modifier = pageBackground,
                 topContentPadding = topContentPadding,
                 listState = trendListState,
             )
@@ -322,9 +329,10 @@ fun OverviewContent(
             else -> DashboardScreen(
                 snapshot = snapshot,
                 activity = activity,
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                modifier = pageBackground,
                 topContentPadding = topContentPadding,
                 listState = dashboardListState,
+                transparentBackground = transparentBackground,
             )
         }
     }

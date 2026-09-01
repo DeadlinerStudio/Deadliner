@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan.Companion.FullLine
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.aritxonly.deadliner.ui.base.Button
 import androidx.compose.material3.Card
@@ -239,6 +240,7 @@ fun CaptureContent(
     val selectedCount = ui.selectedUids.size
     var pendingDelete by remember { mutableStateOf<PendingCaptureDelete?>(null) }
     val listState = rememberLazyListState()
+    val gridState = rememberLazyStaggeredGridState()
     val listContentPadding = remember(contentPadding, topOverlayPadding, bottomLiftPadding, layoutDirection) {
         PaddingValues(
             top = contentPadding.calculateTopPadding() + topOverlayPadding,
@@ -406,6 +408,7 @@ fun CaptureContent(
 
     if (twoColumnLayout) {
         LazyVerticalStaggeredGrid(
+            state = gridState,
             columns = StaggeredGridCells.Adaptive(CaptureWideGridMinCardWidth),
             modifier = Modifier
                 .fillMaxSize()
@@ -413,6 +416,7 @@ fun CaptureContent(
                     start = contentPadding.calculateStartPadding(layoutDirection),
                     end = contentPadding.calculateEndPadding(layoutDirection),
                 )
+                .syncTopBarMaterialScroll(gridState)
                 .mainListContainerClip(),
             contentPadding = listContentPadding,
             verticalItemSpacing = 12.dp,

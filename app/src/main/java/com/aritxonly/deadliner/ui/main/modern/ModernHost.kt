@@ -89,6 +89,7 @@ import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
+import com.aritxonly.deadliner.ui.base.resolveTopBarButtonMaterialProgress
 import com.aritxonly.deadliner.ui.main.shared.MainSection
 import com.aritxonly.deadliner.ui.main.modern.components.ModernListTopAppBar
 import com.aritxonly.deadliner.ui.main.modern.components.ModernListSearchSlotHeight
@@ -110,6 +111,7 @@ import com.aritxonly.deadliner.ui.category.CategoryFilterResolver
 import com.aritxonly.deadliner.ui.category.CategoryFilterSheet
 import com.aritxonly.deadliner.ui.category.toPresentation
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButtonDefaults
+import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationAction
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.LocalHomeFabColors
@@ -440,6 +442,15 @@ fun ModernHost(
             CategoryFilterResolver.matches(categoryFilter, it.categoryUid, availableCategoryUids)
     }
     val sharedHabitState by sharedHabitVm.uiState.collectAsStateWithLifecycle()
+    val listSemanticMaterialProgress = if (hostState.selectedSection == MainSection.LIST) {
+        resolveTopBarButtonMaterialProgress(
+            collapsedFraction = listTopBarScrollBehavior.state.collapsedFraction,
+            scrollProgress = null,
+            overrideProgress = null,
+        )
+    } else {
+        0f
+    }
     val selectionActions = rememberMainSelectionActionController(
         activity = activity,
         taskViewModel = taskVm,
@@ -656,6 +667,26 @@ fun ModernHost(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface),
         ) {
+            val semanticMaterialProgress = semanticAtmosphereMaterialProgress(
+                section = hostState.selectedSection,
+                listProgress = listSemanticMaterialProgress,
+                observedScrollProgress = LocalTopBarScrollProgress.current,
+            )
+            if (
+                appearance.semanticGlowEnabled &&
+                shouldShowSemanticAtmosphere(hostState.selectedSection)
+            ) {
+                ModernSemanticAtmosphere(
+                    tasks = displayedTasks,
+                    visibleHabits = sharedHabitState.visibleHabits,
+                    categoryFilter = categoryFilter,
+                    availableCategoryUids = availableCategoryUids,
+                    selectedSection = hostState.selectedSection,
+                    selectedPage = hostState.selectedPage,
+                    materialProgress = semanticMaterialProgress,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                )
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -852,6 +883,7 @@ fun ModernHost(
                         onSelectedTabChange = { overviewSelectedTab = it },
                         showTabsInContent = useFlattenedOverview,
                         topContentPadding = if (!useFlattenedOverview) overlayTopBarPadding else 0.dp,
+                        transparentBackground = true,
                     )
                 }
                 MainSection.CAPTURE -> {

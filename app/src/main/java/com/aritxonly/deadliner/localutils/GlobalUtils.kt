@@ -350,6 +350,7 @@ object GlobalUtils {
             "settings_homepage_colored_icons",
             true
         )
+        val semanticGlowEnabled = sharedPreferences.getBoolean("semantic_glow_enabled", true)
         val appIconMode = AppIconMode.fromKey(sharedPreferences.getString("app_icon_mode", AppIconMode.Default.key))
 
         return AppearancePreferences(
@@ -375,6 +376,7 @@ object GlobalUtils {
             modernHideDivider = modernHideDivider,
             vividHideDivider = vividHideDivider,
             useSettingsHomepageColoredIcons = settingsHomepageColoredIcons,
+            semanticGlowEnabled = semanticGlowEnabled,
             appIconMode = appIconMode,
         )
     }
@@ -409,6 +411,7 @@ object GlobalUtils {
             putBoolean("vivid_hide_divider", appearance.vividHideDivider)
             putBoolean("hide_divider", appearance.activeHideDivider)
             putBoolean("settings_homepage_colored_icons", appearance.useSettingsHomepageColoredIcons)
+            putBoolean("semantic_glow_enabled", appearance.semanticGlowEnabled)
             putString("seed_color", appearance.seedColorHex)
             putString("appearance_color_source", appearance.colorSource.key)
             putString("dynamic_palette_style", appearance.dynamicPaletteStyle.key)

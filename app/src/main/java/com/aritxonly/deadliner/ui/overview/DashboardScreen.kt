@@ -90,9 +90,15 @@ fun DashboardScreen(
     modifier: Modifier = Modifier,
     topContentPadding: Dp = 0.dp,
     listState: LazyListState,
+    transparentBackground: Boolean = false,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val pageBackground = if (transparentBackground) {
+        Modifier
+    } else {
+        Modifier.background(MaterialTheme.colorScheme.surface)
+    }
 
     var analysis by remember(snapshot.lastMonthKey) {
         mutableStateOf(loadCachedMonthlyAnalysis(snapshot.lastMonthKey))
@@ -137,7 +143,7 @@ fun DashboardScreen(
         state = listState,
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+            .then(pageBackground)
             .syncTopBarMaterialScroll(listState)
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = topContentPadding)
