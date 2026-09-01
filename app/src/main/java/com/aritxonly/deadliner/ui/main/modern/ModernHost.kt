@@ -185,8 +185,9 @@ fun ModernHost(
         canScroll = { currentCanCollapseListTopBar },
     )
 
-    LaunchedEffect(canCollapseListTopBar) {
-        if (!canCollapseListTopBar) {
+    LaunchedEffect(canCollapseListTopBar, searchActive) {
+        // Keep the outgoing search entry at its current bounds while the shared container expands.
+        if (!canCollapseListTopBar && !searchActive) {
             listTopBarScrollBehavior.state.heightOffset = 0f
             listTopBarScrollBehavior.state.contentOffset = 0f
         }
@@ -424,7 +425,10 @@ fun ModernHost(
         MainSection.CAPTURE -> true
         MainSection.LIFI -> false
     }
-    val overlayTopBarPadding = if (useOverlayTopBar) {
+    // AnimatedContent keeps the list composed during its exit. Preserve its top inset so that
+    // hiding the overlay top bar does not re-layout the list behind the expanding search surface.
+    val preserveListTopBarGeometry = hostState.selectedSection == MainSection.LIST && searchActive
+    val overlayTopBarPadding = if (useOverlayTopBar || preserveListTopBarGeometry) {
         with(LocalDensity.current) { overlayTopBarHeightPx.toDp() }
     } else {
         0.dp

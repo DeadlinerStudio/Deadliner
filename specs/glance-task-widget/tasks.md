@@ -29,6 +29,17 @@
 - [x] 执行大文件扫描
 - [x] 回写最终实现状态与验证结果
 
+## 阶段 5：边距预设与旧栈清理（2026-09-02）
+
+- [x] 对照参考实现确认标准 `0/0`、4×6 `12/14`、4×7 `8/10`
+- [x] 冻结本项目标准 `0`、4×6 顶部 `26dp`、4×7 顶部 `18dp` 的规格
+- [ ] 建立 padding preset 与持久化 preferences，并接入主动刷新
+- [ ] 在设置页提供三个单选预设，移除旧 RemoteViews 专属开关
+- [ ] 让 2×2 Glance 卡片按 preset 应用额外顶部 padding
+- [ ] 删除四个旧 RemoteViews provider、配置 Activity 与专属资源
+- [ ] 执行 JVM 测试、Android debug 编译、规格校验和大文件扫描
+- [ ] 回写本轮最终实现与验证结果
+
 ## 验证结果
 
 - `./gradlew :app:testDebugUnitTest :app:assembleDebug`：通过，共 21 个 JVM 测试，0 失败；其中本功能新增 7 个测试。
