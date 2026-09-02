@@ -1,8 +1,8 @@
 package com.aritxonly.deadliner.widgets.glance.data
 
+import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetStatus
+import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetVisualState
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -12,56 +12,73 @@ class TaskWidgetRepositoryTest {
     private val strings = FakeStrings()
 
     @Test
-    fun `filters KMP records and prioritizes starred tasks before due time`() {
-        val repository = repository(
+    fun `filters active records and sorts missing deadlines last`() {
+        val snapshot = repository(
+            record("No deadline", null),
+            record("Later", "2026-08-19T12:00:00"),
             record("Soon", "2026-08-16T14:00:00"),
-            record("Starred", "2026-08-19T12:00:00", isStarred = true),
             record("Deleted", "2026-08-16T13:00:00", isDeleted = true),
             record("Completed", "2026-08-16T13:00:00", isActive = false),
-            record("No due time", null),
-        )
+        ).load(strings)
 
-        val snapshot = repository.load(strings)
-
-        assertEquals(2, snapshot.totalCount)
-        assertEquals(listOf("Starred", "Soon"), snapshot.items.map { it.title })
-        assertFalse(snapshot.items[0].isUrgent)
-        assertTrue(snapshot.items[1].isUrgent)
+        assertEquals(3, snapshot.totalCount)
+        assertEquals(listOf("Soon", "Later", "No deadline"), snapshot.items.map { it.title })
+        assertEquals("unscheduled", snapshot.items.last().timeDescription)
     }
 
     @Test
     fun `limits content to three rows while preserving total count`() {
-        val repository = repository(
+        val snapshot = repository(
             record("One", "2026-08-17T12:00:00"),
             record("Two", "2026-08-18T12:00:00"),
             record("Three", "2026-08-19T12:00:00"),
             record("Four", "2026-08-20T12:00:00"),
-        )
-
-        val snapshot = repository.load(strings)
+        ).load(strings)
 
         assertEquals(4, snapshot.totalCount)
         assertEquals(listOf("One", "Two", "Three"), snapshot.items.map { it.title })
     }
 
     @Test
-    fun `formats overdue minute hour day and date ranges`() {
-        val repository = repository(
-            record("Overdue", "2026-08-16T11:59:00", isStarred = true),
+    fun `calculates overdue near and normal states from one day window`() {
+        val snapshot = repository(
+            record("Overdue", "2026-08-16T11:59:00"),
+            record("Near", "2026-08-17T12:00:00"),
+            record("Normal", "2026-08-17T12:01:00"),
+        ).load(strings)
+
+        assertEquals(1, snapshot.overdueCount)
+        assertEquals(1, snapshot.nearCount)
+        assertEquals(TaskWidgetVisualState.OVERDUE, snapshot.visualState)
+        assertEquals(
+            listOf(TaskWidgetStatus.OVERDUE, TaskWidgetStatus.NEAR, TaskWidgetStatus.NORMAL),
+            snapshot.items.map { it.status },
+        )
+        assertEquals("overdue-summary", snapshot.summary)
+    }
+
+    @Test
+    fun `formats relative time with reference floor semantics`() {
+        val firstPage = repository(
             record("Minutes", "2026-08-16T12:45:00"),
-            record("Hours", "2026-08-16T13:01:00"),
-            record("Days", "2026-08-18T12:01:00"),
-            record("Date", "2026-08-24T12:00:00"),
-        )
+            record("Hours", "2026-08-16T13:59:00"),
+            record("Days", "2026-08-18T23:59:00"),
+        ).load(strings)
 
-        val firstPage = repository.load(strings)
-        assertEquals(listOf("overdue", "45m", "2h"), firstPage.items.map { it.timeDescription })
+        assertEquals(listOf("45m", "1h", "2d"), firstPage.items.map { it.timeDescription })
+    }
 
-        val laterRepository = repository(
-            record("Days", "2026-08-18T12:01:00"),
-            record("Date", "2026-08-24T12:00:00"),
+    @Test
+    fun `summary precedence is empty then overdue then near then pending`() {
+        assertEquals("empty-summary", repository().load(strings).summary)
+        assertEquals(
+            "near-summary",
+            repository(record("Near", "2026-08-16T13:00:00")).load(strings).summary,
         )
-        assertEquals(listOf("3d", "8/24"), laterRepository.load(strings).items.map { it.timeDescription })
+        assertEquals(
+            "pending-summary",
+            repository(record("Later", "2026-08-20T12:00:00")).load(strings).summary,
+        )
     }
 
     @Test
@@ -88,13 +105,11 @@ class TaskWidgetRepositoryTest {
     private fun record(
         title: String,
         dueAt: String?,
-        isStarred: Boolean = false,
         isDeleted: Boolean = false,
         isActive: Boolean = true,
     ) = TaskWidgetTaskRecord(
         title = title,
         dueAt = dueAt,
-        isStarred = isStarred,
         isDeleted = isDeleted,
         isActive = isActive,
     )
@@ -104,6 +119,10 @@ class TaskWidgetRepositoryTest {
         override fun dueInMinutes(minutes: Long): String = "${minutes}m"
         override fun dueInHours(hours: Long): String = "${hours}h"
         override fun dueInDays(days: Long): String = "${days}d"
-        override fun dueOn(month: Int, day: Int): String = "$month/$day"
+        override fun unscheduled(): String = "unscheduled"
+        override fun emptySummary(): String = "empty-summary"
+        override fun overdueSummary(): String = "overdue-summary"
+        override fun nearSummary(): String = "near-summary"
+        override fun pendingSummary(): String = "pending-summary"
     }
 }

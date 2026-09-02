@@ -17,6 +17,18 @@ internal class AndroidTaskWidgetStrings(
     override fun dueInDays(days: Long): String =
         context.getString(R.string.glance_task_widget_due_days, days)
 
-    override fun dueOn(month: Int, day: Int): String =
-        context.getString(R.string.glance_task_widget_due_date, month, day)
+    override fun unscheduled(): String =
+        context.getString(R.string.glance_task_widget_unscheduled)
+
+    override fun emptySummary(): String =
+        context.getString(R.string.glance_task_widget_summary_empty)
+
+    override fun overdueSummary(): String =
+        context.getString(R.string.glance_task_widget_summary_overdue)
+
+    override fun nearSummary(): String =
+        context.getString(R.string.glance_task_widget_summary_near)
+
+    override fun pendingSummary(): String =
+        context.getString(R.string.glance_task_widget_summary_pending)
 }

@@ -3,9 +3,10 @@ package com.aritxonly.deadliner.widgets.glance.theme
 import android.content.Context
 import android.content.res.Configuration
 import com.aritxonly.deadliner.localutils.GlobalUtils
+import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetVisualState
 
 internal object TaskWidgetThemeResolver {
-    fun resolve(context: Context): TaskWidgetColors {
+    fun resolve(context: Context, visualState: TaskWidgetVisualState): TaskWidgetColors {
         val isDark = context.resources.configuration.uiMode and
             Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
         val systemAccent = context.getColor(
@@ -16,6 +17,7 @@ internal object TaskWidgetThemeResolver {
             isDark = isDark,
             systemAccent = systemAccent,
             devicePalette = GlobalUtils.getCurrentDeviceColorPalette(),
+            visualState = visualState,
         )
     }
 }

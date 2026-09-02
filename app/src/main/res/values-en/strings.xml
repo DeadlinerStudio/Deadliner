@@ -30,7 +30,7 @@
     <string name="settings_support_deadliner_ai">Lifi AI · API integration · Custom prompt</string>
     <string name="settings_support_webdav">WebDAV cloud sync service</string>
     <string name="settings_support_lab">Debug options &amp; experimental features</string>
-    <string name="settings_support_widget">2×2 task card · Top padding presets</string>
+    <string name="settings_support_widget">2×2 task card · Top margin presets</string>
     <string name="settings_support_wiki">Visit GitHub Wiki · Quick start guide</string>
     <string name="settings_support_feedback">Send feedback or report a bug</string>
     <string name="settings_support_about">· Check for updates · Buy developer a bubble tea 🧋</string>
@@ -75,8 +75,8 @@
     <string name="settings_support_hide_from_recent">When enabled, the app will not appear in the recent apps screen</string>
     <string name="settings_embedded_activities">Parallel window</string>
     <string name="settings_support_embedded_activities">When enabled, the main screen is fixed on the left, and other pages are displayed on the right in split view</string>
-    <string name="settings_widget_padding">Task card top padding</string>
-    <string name="settings_widget_padding_standard">Standard (no extra padding)</string>
+    <string name="settings_widget_padding">Task card top margin</string>
+    <string name="settings_widget_padding_standard">Standard (no extra margin)</string>
     <string name="settings_widget_padding_4x6">4×6 home screen (26dp top)</string>
     <string name="settings_widget_padding_4x7">4×7 home screen (18dp top)</string>
     <string name="settings_nearby_notification">Deadline reminder notifications</string>
@@ -132,7 +132,13 @@
     <string name="glance_task_widget_due_minutes">in %1$d min</string>
     <string name="glance_task_widget_due_hours">in %1$d hr</string>
     <string name="glance_task_widget_due_days">in %1$d days</string>
-    <string name="glance_task_widget_due_date">%1$d/%2$d</string>
+    <string name="glance_task_widget_unscheduled">No deadline</string>
+    <string name="glance_task_widget_summary_empty">No tasks today</string>
+    <string name="glance_task_widget_summary_overdue">Some tasks are overdue</string>
+    <string name="glance_task_widget_summary_near">A deadline is near</string>
+    <string name="glance_task_widget_summary_pending">Tasks to complete</string>
+    <string name="glance_task_widget_keep_going">Keep going</string>
+    <string name="app_glance_capsule_widget_description">Deadliner task capsule (2×1)</string>
     <string name="go_next">Continue</string>
     <string name="welcome">Your Day,\nEnhanced by AI</string>
     <string name="welcome_version">New Deadliner v5, ready for you to experience</string>

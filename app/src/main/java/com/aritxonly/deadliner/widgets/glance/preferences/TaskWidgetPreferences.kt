@@ -4,12 +4,12 @@ import android.content.Context
 
 enum class TaskWidgetPaddingPreset(
     val storedValue: Int,
-    val extraTopPaddingDp: Int,
+    val cardTopMarginDp: Int,
     val maxVisibleTasks: Int,
 ) {
-    Standard(storedValue = 0, extraTopPaddingDp = 0, maxVisibleTasks = 3),
-    Grid4x6(storedValue = 1, extraTopPaddingDp = 26, maxVisibleTasks = 2),
-    Grid4x7(storedValue = 2, extraTopPaddingDp = 18, maxVisibleTasks = 2);
+    Standard(storedValue = 0, cardTopMarginDp = 0, maxVisibleTasks = 3),
+    Grid4x6(storedValue = 1, cardTopMarginDp = 26, maxVisibleTasks = 2),
+    Grid4x7(storedValue = 2, cardTopMarginDp = 18, maxVisibleTasks = 2);
 
     companion object {
         fun fromStoredValue(value: Int): TaskWidgetPaddingPreset =

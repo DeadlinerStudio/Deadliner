@@ -9,7 +9,7 @@
 - `presentation-2x2`：`CompactTaskGlanceWidget` 与共享任务行/顶栏/空态组件。
 - `presentation-2x1`：`CapsuleTaskGlanceWidget`，只消费共享快照与 palette，不重复数据计算。
 - `receivers`：两个 `GlanceAppWidgetReceiver` 分别注册 2×2 与 2×1 metadata。
-- `preferences`：`TaskWidgetPaddingPreset` / `TaskWidgetPreferences`，仅供 2×2 使用。
+- `preferences`：`TaskWidgetPaddingPreset` / `TaskWidgetPreferences`，保留既有存储键，但其数值表示 2×2 卡片顶部外边距，仅供 2×2 使用。
 - `infra`：`TaskWidgetRefreshCoordinator`，统一订阅任务与外观变化并更新两个 widget class。
 
 ## 平台映射
@@ -42,5 +42,5 @@
 - 多个位图可能触发 RemoteViews/Binder 体积问题：2×2 背景控制在约 240×240，任务行约 180×40，并按状态复用；2×1 背景单独使用宽幅低分辨率图。
 - 无截止时间任务此前被 Android 排除，改为计数并置后会改变用户可见总数；这是与 HarmonyOS/iOS 数据语义对齐的预期变化。
 - 相对时间从向上取整/七天后日期切换为参考实现的向下取整分钟/小时/天语义，需更新测试。
-- 2×1 不消费 2×2 padding preset，防止 18/26dp 顶部偏移破坏单行胶囊。
+- 2×1 不消费 2×2 卡片顶部外边距预设，防止 18/26dp 整体偏移破坏单行胶囊。
 - 编译通过不能证明 launcher 实际缩放与位图层次；若本轮无法运行设备/模拟器，必须明确记录视觉运行验证待办。

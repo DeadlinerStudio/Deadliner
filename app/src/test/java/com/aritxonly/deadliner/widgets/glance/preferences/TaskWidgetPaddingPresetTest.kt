@@ -5,10 +5,10 @@ import org.junit.Test
 
 class TaskWidgetPaddingPresetTest {
     @Test
-    fun `presets merge reference vertical padding into top only`() {
-        assertEquals(0, TaskWidgetPaddingPreset.Standard.extraTopPaddingDp)
-        assertEquals(26, TaskWidgetPaddingPreset.Grid4x6.extraTopPaddingDp)
-        assertEquals(18, TaskWidgetPaddingPreset.Grid4x7.extraTopPaddingDp)
+    fun `presets expose whole card top margin`() {
+        assertEquals(0, TaskWidgetPaddingPreset.Standard.cardTopMarginDp)
+        assertEquals(26, TaskWidgetPaddingPreset.Grid4x6.cardTopMarginDp)
+        assertEquals(18, TaskWidgetPaddingPreset.Grid4x7.cardTopMarginDp)
     }
 
     @Test

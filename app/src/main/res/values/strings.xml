@@ -41,7 +41,7 @@
     <string name="settings_support_webdav">WebDAV 云同步服务</string>
     <string name="settings_support_byos">连接自己的 DeadlinerServer</string>
     <string name="settings_support_lab">调试选项与实验性内容</string>
-    <string name="settings_support_widget">2×2 任务卡片 · 顶部边距预设</string>
+    <string name="settings_support_widget">2×2 任务卡片 · 顶部外边距预设</string>
     <string name="settings_support_wiki">访问 Github Wiki 快速入门</string>
     <string name="settings_support_feedback">向开发者反馈建议或提交bug</string>
     <string name="settings_support_about"> · 检查更新 · 请开发者喝杯奶茶🧋</string>
@@ -89,8 +89,8 @@
     <string name="settings_embedded_activities">平行视窗</string>
     <string name="settings_support_embedded_activities">开启选项后，主界面将固定在左侧；其他页面分屏在右侧展示</string>
 
-    <string name="settings_widget_padding">任务卡片顶部边距</string>
-    <string name="settings_widget_padding_standard">标准（不增加边距）</string>
+    <string name="settings_widget_padding">任务卡片顶部外边距</string>
+    <string name="settings_widget_padding_standard">标准（不增加外边距）</string>
     <string name="settings_widget_padding_4x6">4×6 桌面（顶部 26dp）</string>
     <string name="settings_widget_padding_4x7">4×7 桌面（顶部 18dp）</string>
 
@@ -191,7 +191,13 @@
     <string name="glance_task_widget_due_minutes">%1$d分钟后</string>
     <string name="glance_task_widget_due_hours">%1$d小时后</string>
     <string name="glance_task_widget_due_days">%1$d天后</string>
-    <string name="glance_task_widget_due_date">%1$d/%2$d</string>
+    <string name="glance_task_widget_unscheduled">未设截止</string>
+    <string name="glance_task_widget_summary_empty">今日无待办</string>
+    <string name="glance_task_widget_summary_overdue">有任务已逾期</string>
+    <string name="glance_task_widget_summary_near">近期有 DDL</string>
+    <string name="glance_task_widget_summary_pending">有任务待完成</string>
+    <string name="glance_task_widget_keep_going">继续加油</string>
+    <string name="app_glance_capsule_widget_description">Deadliner 任务胶囊（2×1）</string>
 
     <string name="go_next">继续</string>
 

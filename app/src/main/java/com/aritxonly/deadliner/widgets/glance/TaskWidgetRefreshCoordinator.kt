@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.glance.appwidget.updateAll
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.aritxonly.deadliner.widgets.glance.ui.CapsuleTaskGlanceWidget
 import com.aritxonly.deadliner.widgets.glance.ui.CompactTaskGlanceWidget
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPreferences
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +63,7 @@ object TaskWidgetRefreshCoordinator {
         refreshJob = scope.launch {
             delay(REFRESH_DEBOUNCE_MS)
             runCatching { CompactTaskGlanceWidget().updateAll(appContext) }
+            runCatching { CapsuleTaskGlanceWidget().updateAll(appContext) }
         }
     }
 }

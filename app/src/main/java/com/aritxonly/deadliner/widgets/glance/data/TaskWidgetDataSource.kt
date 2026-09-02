@@ -6,7 +6,6 @@ import com.deadliner.domain.task.TaskState
 internal data class TaskWidgetTaskRecord(
     val title: String,
     val dueAt: String?,
-    val isStarred: Boolean,
     val isDeleted: Boolean,
     val isActive: Boolean,
 )
@@ -21,7 +20,6 @@ internal class KmpTaskWidgetDataSource : TaskWidgetDataSource {
             TaskWidgetTaskRecord(
                 title = task.title,
                 dueAt = task.dueAt,
-                isStarred = task.isStarred,
                 isDeleted = task.isDeleted,
                 isActive = task.state == TaskState.ACTIVE,
             )
