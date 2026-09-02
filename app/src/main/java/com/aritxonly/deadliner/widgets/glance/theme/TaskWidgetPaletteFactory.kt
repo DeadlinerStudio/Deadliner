@@ -6,6 +6,7 @@ import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.AppearancePreferences
 import com.aritxonly.deadliner.model.ModernColorPalette
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetVisualState
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetColorScheme
 
 internal object TaskWidgetPaletteFactory {
     fun create(
@@ -14,9 +15,15 @@ internal object TaskWidgetPaletteFactory {
         systemAccent: Int,
         devicePalette: ModernColorPalette,
         visualState: TaskWidgetVisualState = TaskWidgetVisualState.NORMAL,
+        appAccent: Int? = null,
+        widgetColorScheme: TaskWidgetColorScheme = TaskWidgetColorScheme.FOLLOW_APP,
     ): TaskWidgetColors {
-        val accent = parseSeedColor(appearance.seedColorHex) ?: systemAccent
-        val neutrals = when (appearance.designMode) {
+        val customColors = TaskWidgetColorSchemePalette.resolve(widgetColorScheme, isDark)
+        val accent = customColors?.accent
+            ?: appAccent
+            ?: parseSeedColor(appearance.seedColorHex)
+            ?: systemAccent
+        val neutrals = customColors?.let { customNeutrals(it.background, isDark) } ?: when (appearance.designMode) {
             AppearanceDesignMode.Modern -> modernNeutrals(
                 palette = if (appearance.modernUseDevicePaletteStrategy) {
                     devicePalette
@@ -151,6 +158,16 @@ internal object TaskWidgetPaletteFactory {
             container = blend(surface, accent, if (isDark) 0.12f else 0.055f),
             text = if (isDark) 0xFFF7F7FA.toInt() else 0xEB000000.toInt(),
             textSecondary = if (isDark) 0xADFFFFFF.toInt() else 0x85000000.toInt(),
+        )
+    }
+
+    private fun customNeutrals(background: Int, isDark: Boolean): WidgetNeutrals {
+        val text = if (isDark) 0xFFF2F2F7.toInt() else 0xFF191919.toInt()
+        return WidgetNeutrals(
+            surface = background,
+            container = blend(background, text, if (isDark) 0.08f else 0.035f),
+            text = text,
+            textSecondary = withAlpha(text, if (isDark) 0.60f else 0.62f),
         )
     }
 

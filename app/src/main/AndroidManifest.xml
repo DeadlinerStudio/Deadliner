@@ -94,6 +94,16 @@
             android:foregroundServiceType="specialUse" />
 
         <activity
+            android:name=".widgets.glance.configuration.TaskWidgetConfigurationActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:theme="@style/Theme.Deadliner">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".IntroActivity"
             android:exported="false" />
 

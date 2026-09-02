@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.theme
 
+import android.content.Context
 import android.os.Build
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
@@ -15,6 +16,7 @@ import com.aritxonly.deadliner.model.AppearanceColorSource
 import com.aritxonly.deadliner.model.DynamicPaletteStyle
 import com.aritxonly.deadliner.model.ModernColorPalette
 import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.materialkolor.rememberDynamicColorScheme
 import com.materialkolor.scheme.DynamicScheme
@@ -46,6 +48,33 @@ object DeadlinerColorTokenFactory {
         dynamicColor: Boolean,
     ): ColorScheme {
         val context = LocalContext.current
+        return androidx.compose.runtime.remember(
+            context,
+            seedColorHex,
+            colorSource,
+            dynamicPaletteStyle,
+            darkTheme,
+            dynamicColor,
+        ) {
+            createBaseMaterialColorScheme(
+                context = context,
+                seedColorHex = seedColorHex,
+                colorSource = colorSource,
+                dynamicPaletteStyle = dynamicPaletteStyle,
+                darkTheme = darkTheme,
+                dynamicColor = dynamicColor,
+            )
+        }
+    }
+
+    fun createBaseMaterialColorScheme(
+        context: Context,
+        seedColorHex: String?,
+        colorSource: AppearanceColorSource,
+        dynamicPaletteStyle: DynamicPaletteStyle,
+        darkTheme: Boolean,
+        dynamicColor: Boolean,
+    ): ColorScheme {
         val parsedSeedColor = seedColorHex
             ?.takeIf { it.isNotBlank() }
             ?.let { runCatching { Color(it.toColorInt()) }.getOrNull() }
@@ -65,7 +94,7 @@ object DeadlinerColorTokenFactory {
                     fallbackLightScheme
                 }
             }
-            parsedSeedColor != null -> createDynamicScheme(
+            parsedSeedColor != null -> createDynamicSchemeValue(
                 seedColor = parsedSeedColor,
                 darkTheme = darkTheme,
                 dynamicPaletteStyle = dynamicPaletteStyle,
@@ -78,7 +107,7 @@ object DeadlinerColorTokenFactory {
                 } else {
                     dynamicLightColorScheme(context)
                 }
-                createDynamicScheme(
+                createDynamicSchemeValue(
                     seedColor = systemScheme.primary,
                     darkTheme = darkTheme,
                     dynamicPaletteStyle = dynamicPaletteStyle,
@@ -146,6 +175,19 @@ object DeadlinerColorTokenFactory {
         style = dynamicPaletteStyle.toPaletteStyle(),
         specVersion = ColorSpec.SpecVersion.SPEC_2025,
         platform = DynamicScheme.Platform.PHONE
+    )
+
+    private fun createDynamicSchemeValue(
+        seedColor: Color,
+        darkTheme: Boolean,
+        dynamicPaletteStyle: DynamicPaletteStyle,
+    ): ColorScheme = dynamicColorScheme(
+        seedColor = seedColor,
+        isDark = darkTheme,
+        isAmoled = false,
+        style = dynamicPaletteStyle.toPaletteStyle(),
+        specVersion = ColorSpec.SpecVersion.SPEC_2025,
+        platform = DynamicScheme.Platform.PHONE,
     )
 
     private fun DynamicPaletteStyle.toPaletteStyle(): PaletteStyle = when (this) {

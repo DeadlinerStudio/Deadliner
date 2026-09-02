@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import com.aritxonly.deadliner.widgets.glance.TaskWidgetRefreshCoordinator
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationStore
 
 class CompactTaskGlanceWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = CompactTaskGlanceWidget()
@@ -14,6 +15,11 @@ class CompactTaskGlanceWidgetReceiver : GlanceAppWidgetReceiver() {
         if (intent.action in refreshActions) {
             TaskWidgetRefreshCoordinator.requestRefresh(context)
         }
+    }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        TaskWidgetConfigurationStore.from(context).delete(appWidgetIds)
+        super.onDeleted(context, appWidgetIds)
     }
 
     private companion object {

@@ -10,6 +10,7 @@ import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
@@ -27,8 +28,9 @@ import com.aritxonly.deadliner.widgets.glance.data.KmpTaskWidgetDataSource
 import com.aritxonly.deadliner.widgets.glance.data.TaskWidgetRepository
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetStatus
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetSnapshot
-import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPaddingPreset
-import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPreferences
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfiguration
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationStore
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetBackgroundRenderer
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetColors
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetThemeResolver
@@ -44,21 +46,28 @@ class CompactTaskGlanceWidget : GlanceAppWidget() {
         val snapshot = withContext(Dispatchers.IO) {
             TaskWidgetRepository(KmpTaskWidgetDataSource()).load(AndroidTaskWidgetStrings(context))
         }
-        val colors = TaskWidgetThemeResolver.resolve(context, snapshot.visualState)
+        val appWidgetId = (id as AppWidgetId).appWidgetId
+        val configuration = TaskWidgetConfigurationStore.from(context).read(
+            appWidgetId = appWidgetId,
+            kind = TaskWidgetKind.SQUARE,
+        )
+        val colors = TaskWidgetThemeResolver.resolve(
+            context = context,
+            visualState = snapshot.visualState,
+            widgetColorScheme = configuration.colorScheme,
+        )
         val rowBackgrounds = TaskWidgetRowBackgrounds(
             normal = ImageProvider(TaskWidgetBackgroundRenderer.renderRow(colors, TaskWidgetStatus.NORMAL)),
             near = ImageProvider(TaskWidgetBackgroundRenderer.renderRow(colors, TaskWidgetStatus.NEAR)),
             overdue = ImageProvider(TaskWidgetBackgroundRenderer.renderRow(colors, TaskWidgetStatus.OVERDUE)),
         )
-        val paddingPreset = TaskWidgetPreferences.readPaddingPreset(context)
-
         provideContent {
             CompactTaskWidgetContent(
                 snapshot = snapshot,
                 colors = colors,
                 background = ImageProvider(TaskWidgetBackgroundRenderer.renderSquare(colors)),
                 rowBackgrounds = rowBackgrounds,
-                paddingPreset = paddingPreset,
+                configuration = configuration,
             )
         }
     }
@@ -70,18 +79,21 @@ private fun CompactTaskWidgetContent(
     colors: TaskWidgetColors,
     background: ImageProvider,
     rowBackgrounds: TaskWidgetRowBackgrounds,
-    paddingPreset: TaskWidgetPaddingPreset,
+    configuration: TaskWidgetConfiguration,
 ) {
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
-            .padding(top = paddingPreset.cardTopMarginDp.dp),
+            .padding(
+                top = configuration.topMarginDp().dp,
+                bottom = configuration.bottomMarginDp().dp,
+            ),
     ) {
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(imageProvider = background)
-                .cornerRadius(24.dp)
+                .cornerRadius(configuration.cornerRadiusDp.dp)
                 .appWidgetBackground()
                 .clickable(actionStartActivity<LauncherActivity>()),
         ) {
@@ -96,7 +108,7 @@ private fun CompactTaskWidgetContent(
                 if (snapshot.items.isEmpty()) {
                     TaskWidgetEmptyState(colors)
                 } else {
-                    val visibleItems = snapshot.items.take(paddingPreset.maxVisibleTasks)
+                    val visibleItems = snapshot.items.take(configuration.maxVisibleTasks())
                     visibleItems.forEachIndexed { index, item ->
                         TaskWidgetItemRow(item, colors, rowBackgrounds.forStatus(item.status))
                         if (index != visibleItems.lastIndex) {

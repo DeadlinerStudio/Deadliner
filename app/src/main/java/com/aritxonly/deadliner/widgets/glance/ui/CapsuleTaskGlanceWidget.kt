@@ -14,6 +14,7 @@ import androidx.glance.LocalContext
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
@@ -38,6 +39,9 @@ import com.aritxonly.deadliner.widgets.glance.data.AndroidTaskWidgetStrings
 import com.aritxonly.deadliner.widgets.glance.data.KmpTaskWidgetDataSource
 import com.aritxonly.deadliner.widgets.glance.data.TaskWidgetRepository
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetSnapshot
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfiguration
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationStore
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetBackgroundRenderer
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetColors
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetThemeResolver
@@ -53,13 +57,23 @@ class CapsuleTaskGlanceWidget : GlanceAppWidget() {
         val snapshot = withContext(Dispatchers.IO) {
             TaskWidgetRepository(KmpTaskWidgetDataSource()).load(AndroidTaskWidgetStrings(context))
         }
-        val colors = TaskWidgetThemeResolver.resolve(context, snapshot.visualState)
+        val appWidgetId = (id as AppWidgetId).appWidgetId
+        val configuration = TaskWidgetConfigurationStore.from(context).read(
+            appWidgetId = appWidgetId,
+            kind = TaskWidgetKind.CAPSULE,
+        )
+        val colors = TaskWidgetThemeResolver.resolve(
+            context = context,
+            visualState = snapshot.visualState,
+            widgetColorScheme = configuration.colorScheme,
+        )
 
         provideContent {
             CapsuleTaskWidgetContent(
                 snapshot = snapshot,
                 colors = colors,
                 background = ImageProvider(TaskWidgetBackgroundRenderer.renderCapsule(colors)),
+                configuration = configuration,
             )
         }
     }
@@ -70,28 +84,38 @@ private fun CapsuleTaskWidgetContent(
     snapshot: TaskWidgetSnapshot,
     colors: TaskWidgetColors,
     background: ImageProvider,
+    configuration: TaskWidgetConfiguration,
 ) {
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(imageProvider = background)
-            .cornerRadius(22.dp)
-            .appWidgetBackground()
-            .clickable(actionStartActivity<LauncherActivity>()),
-        contentAlignment = Alignment.Center,
+            .padding(
+                top = configuration.topMarginDp().dp,
+                bottom = configuration.bottomMarginDp().dp,
+            ),
     ) {
-        CapsuleMainRow(snapshot = snapshot, colors = colors)
-        if (snapshot.totalCount > 0) {
-            Box(
-                modifier = GlanceModifier.fillMaxSize().padding(top = 8.dp, end = 10.dp),
-                contentAlignment = Alignment.TopEnd,
-            ) {
+        Box(
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .background(imageProvider = background)
+                .cornerRadius(configuration.cornerRadiusDp.dp)
+                .appWidgetBackground()
+                .clickable(actionStartActivity<LauncherActivity>()),
+            contentAlignment = Alignment.Center,
+        ) {
+            CapsuleMainRow(snapshot = snapshot, colors = colors)
+            if (snapshot.totalCount > 0) {
                 Box(
-                    modifier = GlanceModifier
-                        .size(7.dp)
-                        .background(colors.badgeContentColor(snapshot.visualState).asProvider())
-                        .cornerRadius(4.dp),
-                ) {}
+                    modifier = GlanceModifier.fillMaxSize().padding(top = 8.dp, end = 10.dp),
+                    contentAlignment = Alignment.TopEnd,
+                ) {
+                    Box(
+                        modifier = GlanceModifier
+                            .size(7.dp)
+                            .background(colors.badgeContentColor(snapshot.visualState).asProvider())
+                            .cornerRadius(4.dp),
+                    ) {}
+                }
             }
         }
     }

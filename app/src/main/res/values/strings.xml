@@ -91,8 +91,23 @@
 
     <string name="settings_widget_padding">任务卡片顶部外边距</string>
     <string name="settings_widget_padding_standard">标准（不增加外边距）</string>
-    <string name="settings_widget_padding_4x6">4×6 桌面（顶部 26dp）</string>
-    <string name="settings_widget_padding_4x7">4×7 桌面（顶部 18dp）</string>
+    <string name="settings_widget_padding_4x6">4×6 桌面（顶部 18dp）</string>
+    <string name="settings_widget_padding_4x7">4×7 桌面（顶部 12dp）</string>
+    <string name="widget_configuration_square_title">编辑 2×2 任务卡片</string>
+    <string name="widget_configuration_capsule_title">编辑 2×1 任务胶囊</string>
+    <string name="widget_configuration_color">背景与强调色</string>
+    <string name="widget_configuration_corner">卡片圆角</string>
+    <string name="widget_configuration_corner_value">圆角大小</string>
+    <string name="widget_configuration_margin_preset">桌面边距预设</string>
+    <string name="widget_configuration_custom_margin">自定义上下外边距</string>
+    <string name="widget_configuration_top_margin">顶部外边距</string>
+    <string name="widget_configuration_bottom_margin">底部外边距</string>
+    <string name="widget_color_follow_app">跟随应用</string>
+    <string name="widget_color_miuix_blue">MIUIX 蓝</string>
+    <string name="widget_color_purple">暮光紫</string>
+    <string name="widget_color_green">森林绿</string>
+    <string name="widget_color_orange">落日橙</string>
+    <string name="widget_color_graphite">石墨灰</string>
 
     <string name="settings_nearby_notification">Deadline临近通知</string>
     <string name="settings_everyday_notification">每日摘要通知</string>
