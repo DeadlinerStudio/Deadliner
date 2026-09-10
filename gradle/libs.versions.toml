@@ -22,7 +22,7 @@ composeBom = "2025.08.00"
 coreAnimation = "1.0.0"
 navigationComposeJvmstubs = "2.9.3"
 uiViewbinding = "1.10.0"
-glance = "1.1.1"
+glance = "1.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

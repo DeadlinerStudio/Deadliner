@@ -34,4 +34,19 @@ class CategoryFilterResolverTest {
         assertFalse(CategoryFilterResolver.matches(filter, "preset.work", catalog))
         assertTrue(CategoryFilterResolver.matches(filter, null, catalog))
     }
+
+    @Test
+    fun deleted_categories_are_removed_from_the_active_filter() {
+        val selectedDeletedCategory = CategoryFilterResolver.selected(setOf("category.deleted"), false)
+        val selectedWithUncategorized = CategoryFilterResolver.selected(
+            setOf("preset.work", "category.deleted"),
+            includesUncategorized = true,
+        )
+
+        assertEquals(CategoryFilter.All, CategoryFilterResolver.reconcile(selectedDeletedCategory, catalog))
+        assertEquals(
+            CategoryFilter.Selected(setOf("preset.work"), includesUncategorized = true),
+            CategoryFilterResolver.reconcile(selectedWithUncategorized, catalog),
+        )
+    }
 }

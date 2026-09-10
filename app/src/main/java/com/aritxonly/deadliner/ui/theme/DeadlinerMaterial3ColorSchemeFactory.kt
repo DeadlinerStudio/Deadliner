@@ -8,7 +8,9 @@ object DeadlinerMaterial3ColorSchemeFactory {
     fun create(
         tokens: DeadlinerColorTokens,
         darkTheme: Boolean,
-    ): ColorScheme = if (darkTheme) {
+    ): ColorScheme {
+        val scrim = modalScrim(darkTheme)
+        return if (darkTheme) {
         darkColorScheme(
             primary = tokens.primary,
             onPrimary = tokens.onPrimary,
@@ -38,7 +40,7 @@ object DeadlinerMaterial3ColorSchemeFactory {
             onErrorContainer = tokens.onErrorContainer,
             outline = tokens.outline,
             outlineVariant = tokens.outlineVariant,
-            scrim = tokens.scrim,
+            scrim = scrim,
             surfaceBright = tokens.surfaceBright,
             surfaceContainer = tokens.surfaceContainer,
             surfaceContainerHigh = tokens.surfaceContainerHigh,
@@ -89,7 +91,7 @@ object DeadlinerMaterial3ColorSchemeFactory {
             onErrorContainer = tokens.onErrorContainer,
             outline = tokens.outline,
             outlineVariant = tokens.outlineVariant,
-            scrim = tokens.scrim,
+            scrim = scrim,
             surfaceBright = tokens.surfaceBright,
             surfaceContainer = tokens.surfaceContainer,
             surfaceContainerHigh = tokens.surfaceContainerHigh,
@@ -110,5 +112,6 @@ object DeadlinerMaterial3ColorSchemeFactory {
             onTertiaryFixed = tokens.onTertiaryContainer,
             onTertiaryFixedVariant = tokens.onTertiary,
         )
+        }
     }
 }

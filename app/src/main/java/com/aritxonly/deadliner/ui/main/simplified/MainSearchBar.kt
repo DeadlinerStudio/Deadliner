@@ -40,8 +40,6 @@ import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,7 +58,7 @@ fun MainSearchBar(
     onArchiveClick: (() -> Unit)? = null,
     onCategoryFilterClick: () -> Unit = {},
     useSurfaceColors: Boolean = false,
-    miuixMode: Boolean = LocalAppDesignSystem.current == AppDesignSystem.MIUIX,
+    miuixMode: Boolean = true,
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current

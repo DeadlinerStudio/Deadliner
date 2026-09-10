@@ -31,10 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -103,7 +101,6 @@ private fun FloatingTabBarPreviewScene(darkTheme: Boolean) {
     MiuixTheme(colors = if (darkTheme) darkColorScheme() else lightColorScheme()) {
         MaterialTheme {
             CompositionLocalProvider(
-                LocalAppDesignSystem provides AppDesignSystem.MIUIX,
                 LocalAdvancedMaterialSpec provides AdvancedMaterialSpec(
                     enabled = true,
                     blurRadius = 48f,

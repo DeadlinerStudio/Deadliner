@@ -67,10 +67,8 @@ import androidx.compose.ui.unit.sp
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
 import com.aritxonly.deadliner.ui.material.glass.GlassMaterialInteraction
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassSurface
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.kyant.shapes.Capsule
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -108,9 +106,7 @@ object MiuixFloatingTabBarDefaults {
 }
 
 /**
- * Deadliner's compact floating bottom tab bar for the Modern/MIUIX design system.
- *
- * The component intentionally emits no layout in Material 3 mode. A caller that enables
+ * Deadliner's compact floating bottom tab bar for the MIUIX design system. A caller that enables
  * advanced material should register its content with a [LayerBackdrop] and either pass that
  * backdrop here or provide it through [LocalAdvancedMaterialBackdrop].
  */
@@ -124,7 +120,7 @@ fun MiuixFloatingTabBar(
     selectionVisible: Boolean = true,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
 ) {
-    if (LocalAppDesignSystem.current != AppDesignSystem.MIUIX || items.isEmpty()) return
+    if (items.isEmpty()) return
 
     val selectedIndex = items.indexOfFirst { it.key == selectedKey }.coerceAtLeast(0)
     val advancedMaterial = LocalAdvancedMaterialSpec.current

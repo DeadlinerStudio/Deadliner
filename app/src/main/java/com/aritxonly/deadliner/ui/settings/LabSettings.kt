@@ -4,12 +4,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
@@ -22,6 +25,7 @@ fun LabSettingsScreen(
     onClickShowIntro: () -> Unit,
     navigateUp: () -> Unit
 ) {
+    val appearance by GlobalUtils.appearanceFlow.collectAsState()
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_lab),
         navigationIcon = {
@@ -50,6 +54,16 @@ fun LabSettingsScreen(
                     supporting = R.string.settings_support_display_size_lab
                 ) { onClickCustomDisplayScale() }
             }
+
+            MiuixModalMaterialLab(
+                value = appearance.advancedMaterialFineTuning,
+                enabled = appearance.usesMiuixTheme && appearance.useAdvancedMaterial,
+                onValueChangeFinished = { updated ->
+                    GlobalUtils.updateAppearance { current ->
+                        current.copy(advancedMaterialFineTuning = updated.normalized())
+                    }
+                },
+            )
 
             SettingsSection(topLabel = stringResource(R.string.settings_advance)) {
                 SettingsDetailTextButtonItem(

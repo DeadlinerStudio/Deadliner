@@ -41,11 +41,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.material.glass.LocalProgressiveTopBarMaterialHosted
@@ -93,15 +91,7 @@ fun TopAppBar(
     val backdrop = LocalAdvancedMaterialBackdrop.current
     val immersiveTopBar = LocalImmersiveExperienceEnabled.current
     val progressiveMaterialHosted = LocalProgressiveTopBarMaterialHosted.current
-    val appDesignSystem = if (forceMaterial3) {
-        AppDesignSystem.MATERIAL3
-    } else {
-        LocalAppDesignSystem.current
-    }
-    val collapsedFraction = when (appDesignSystem) {
-        AppDesignSystem.MATERIAL3 -> material3ScrollBehavior?.state?.collapsedFraction
-        AppDesignSystem.MIUIX -> miuixScrollBehavior?.state?.collapsedFraction
-    }
+    val collapsedFraction = miuixScrollBehavior?.state?.collapsedFraction
     val isFullyCollapsed = collapsedFraction?.let { it >= 0.999f } ?: false
     val advancedMaterialBlurEligible =
         allowAdvancedMaterialBlur &&
@@ -159,102 +149,12 @@ fun TopAppBar(
     }
 
     val platformTopBar = @Composable {
-        when (appDesignSystem) {
-            AppDesignSystem.MATERIAL3 -> AdvancedMaterialTopBarContainer(
+        AdvancedMaterialTopBarContainer(
                 advancedMaterial = advancedMaterial,
                 advancedMaterialBlurred = advancedMaterialBlurred,
                 backdrop = backdrop,
                 surfaceTint = surfaceTint,
-            ) {
-                when (mode) {
-                TopAppBarStyle.CENTER ->
-                    CenterAlignedTopAppBar(
-                        title = {
-                            if (titleTextStyle != null) {
-                                Text(
-                                    text = title,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    style = titleTextStyle,
-                                )
-                            } else {
-                                Text(
-                                    text = title,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                            }
-                        },
-                        navigationIcon = resolvedNavigationIcon,
-                        actions = actions,
-                        colors = topBarColors,
-                    )
-
-                TopAppBarStyle.LARGE ->
-                    LargeTopAppBar(
-                        title = {
-                            Text(
-                                text = title,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        },
-                        navigationIcon = resolvedNavigationIcon,
-                        actions = actions,
-                        colors = topBarColors,
-                        scrollBehavior = material3ScrollBehavior,
-                    )
-
-                else ->
-                    if (!isMainTitle) {
-                        MaterialTopAppBar(
-                            title = {
-                                Text(
-                                    text = title,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                            },
-                            navigationIcon = resolvedNavigationIcon,
-                            actions = actions,
-                            colors = topBarColors,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                    } else {
-                        MaterialTopAppBar(
-                            title = {
-                                Column {
-                                    Text(
-                                        text = title,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        style = if (subtitle != null)
-                                            MaterialTheme.typography.headlineSmall
-                                        else MaterialTheme.typography.headlineMedium,
-                                        fontWeight = FontWeight.Medium
-                                    )
-
-                                    if (subtitle != null) {
-                                        Text(
-                                            text = subtitle,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            style = MaterialTheme.typography.titleSmall
-                                        )
-                                    }
-                                }
-                            },
-                            actions = {
-                                navigationIcon?.invoke()
-                                actions()
-                            },
-                            colors = topBarColors,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                    }
-                }
-            }
-
-            AppDesignSystem.MIUIX -> AdvancedMaterialTopBarContainer(
-                advancedMaterial = advancedMaterial,
-                advancedMaterialBlurred = advancedMaterialBlurred,
-                backdrop = backdrop,
-                surfaceTint = surfaceTint,
-            ) {
+        ) {
                 val miuixContainerColor = when {
                     immersiveTopBar -> Color.Transparent
                     useParentMaterialContainer -> Color.Transparent
@@ -285,7 +185,6 @@ fun TopAppBar(
                             titleColor = MaterialTheme.colorScheme.onSurface,
                         )
                 }
-            }
         }
     }
 

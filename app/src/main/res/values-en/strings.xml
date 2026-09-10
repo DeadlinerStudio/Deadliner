@@ -88,6 +88,13 @@
     <string name="widget_configuration_custom_margin">Custom vertical margins</string>
     <string name="widget_configuration_top_margin">Top margin</string>
     <string name="widget_configuration_bottom_margin">Bottom margin</string>
+    <string name="widget_configuration_list">Task list</string>
+    <string name="widget_configuration_scrollable">Allow scrolling inside the widget</string>
+    <string name="widget_settings_added_instances">Added widgets</string>
+    <string name="widget_settings_no_instances">No Deadliner widgets are currently on the home screen</string>
+    <string name="widget_settings_instance_square">2×2 task card</string>
+    <string name="widget_settings_instance_capsule">2×1 task capsule</string>
+    <string name="widget_settings_instance_id">Widget ID: %1$d · Tap to edit</string>
     <string name="widget_color_follow_app">Follow app</string>
     <string name="widget_color_miuix_blue">MIUIX blue</string>
     <string name="widget_color_purple">Twilight purple</string>
@@ -630,6 +637,8 @@
     <string name="settings_design_mode_section_title">%1$s mode</string>
     <string name="settings_background_strategy_title">Background color strategy</string>
     <string name="settings_background_strategy_value">Aligned with device</string>
+    <string name="settings_background_strategy_miuix">MIUIX / HyperOS</string>
+    <string name="settings_background_strategy_material_monet">Material Monet</string>
     <string name="settings_color_generation_strategy_title">Color generation strategy</string>
     <string name="settings_color_generation_strategy_value">Material 3 colors</string>
     <string name="settings_palette_style_system">System</string>
@@ -699,6 +708,21 @@
     <string name="settings_advanced_material_value_decimal">%1$.2f</string>
     <string name="settings_advanced_material_value_dp">%1$.1f dp</string>
     <string name="settings_advanced_material_value_gray">Gray %1$d</string>
+    <string name="settings_miuix_modal_material_title">MIUIX modal material lab</string>
+    <string name="settings_miuix_modal_material_summary">Changes are saved globally when you release a slider. Open a preview to inspect the real Dialog and Sheet surfaces.</string>
+    <string name="settings_miuix_modal_material_disabled_summary">Enable Modern mode and advanced material before adjusting or previewing modal surfaces.</string>
+    <string name="settings_miuix_dialog_background_alpha">Dialog background opacity</string>
+    <string name="settings_miuix_dialog_blur_radius">Dialog blur radius</string>
+    <string name="settings_miuix_sheet_background_alpha">Sheet background opacity</string>
+    <string name="settings_miuix_sheet_blur_radius">Sheet blur radius</string>
+    <string name="settings_miuix_preview_dialog">Preview Dialog</string>
+    <string name="settings_miuix_preview_sheet">Preview Sheet</string>
+    <string name="settings_miuix_modal_reset">Restore lab starting values</string>
+    <string name="settings_miuix_preview_dialog_title">Dialog material preview</string>
+    <string name="settings_miuix_preview_dialog_summary">This uses the same MIUIX Dialog wrapper as production screens.</string>
+    <string name="settings_miuix_preview_sheet_title">Sheet material preview</string>
+    <string name="settings_miuix_preview_sheet_summary">This uses the same MIUIX Bottom Sheet wrapper as production screens.</string>
+    <string name="settings_miuix_preview_value">Background opacity %1$d%% · blur radius %2$d dp</string>
     <string name="settings_advanced_material_level_clear">Crystal Clear</string>
     <string name="settings_advanced_material_level_light">Light</string>
     <string name="settings_advanced_material_level_soft">Soft</string>
@@ -896,5 +920,26 @@
     <string name="state_abandoned">Abandoned</string>
     <string name="state_abandoned_archived">Abandoned &amp; archived</string>
     <string name="legacy">Legacy</string>
+
+    <string name="category_management_title">Categories</string>
+    <string name="category_management_section">All categories</string>
+    <string name="category_add">Add category</string>
+    <string name="category_edit">Edit category</string>
+    <string name="category_manage">Manage categories</string>
+    <string name="category_select">Choose category</string>
+    <string name="category_filter">Filter categories</string>
+    <string name="category_uncategorized">Uncategorized</string>
+    <string name="category_name">Category name</string>
+    <string name="category_name_required">Enter a category name</string>
+    <string name="category_color">Category color</string>
+    <string name="category_icon">Category icon</string>
+    <string name="category_icon_option">Category icon %1$d</string>
+    <string name="category_saved">Category saved</string>
+    <string name="category_save_failed">Couldn’t save. Try again.</string>
+    <string name="category_delete">Delete category</string>
+    <string name="category_delete_confirm_title">Delete “%1$s”?</string>
+    <string name="category_delete_confirm_message">Tasks and habits in this category will be kept and shown as uncategorized. This can’t be undone.</string>
+    <string name="category_deleted">Category deleted</string>
+    <string name="category_delete_failed">Couldn’t delete. Try again.</string>
 
 </resources>

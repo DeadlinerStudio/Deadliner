@@ -29,6 +29,8 @@ import com.deadliner.lifi.memory.KmpMemoryStoreAdapter
 import com.deadliner.sync.WebDavChangeLogSyncOutcome
 import com.deadliner.sync.webdav.WebDavCredentials
 import com.deadliner.sync.webdav.WebDavTransportConfiguration
+import com.deadliner.platform.WidgetUpdateReason
+import com.deadliner.platform.updateWidget
 import com.deadliner.sync.server.engine.DeadlinerServerSyncConfiguration
 import com.deadliner.sync.server.transport.DeadlinerServerTransportConfiguration
 import com.deadliner.sync.server.transport.KtorDeadlinerServerTransport
@@ -233,6 +235,7 @@ internal object KmpV6Runtime {
         syncOnce()
     } finally {
         reloadMainLists()
+        updateWidget(WidgetUpdateReason.USER_REFRESH)
     }
 
     private fun reloadMainLists() {

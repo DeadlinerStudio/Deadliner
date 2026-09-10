@@ -16,15 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
-
-// 别名防止冲突
-import androidx.compose.material3.AlertDialog as Material3AlertDialog
 
 /**
  * Deadliner 基础 AlertDialog 组件
- * 融合了 M3 的插槽机制与 MIUIX 的 state-based 显示机制
+ * 使用 MIUIX 的 state-based 显示机制。
  */
 @Composable
 fun AlertDialog(
@@ -46,62 +41,27 @@ fun AlertDialog(
     miuixTitle: String? = null,
     miuixSummary: String? = null
 ) {
-    when (LocalAppDesignSystem.current) {
-
-        AppDesignSystem.MATERIAL3 -> {
-            RegisterAdvancedMaterialDialogBlur(show = show)
-            // M3 分支：只有当 show 为 true 时，才将其挂载到 Compose 树上
-            if (show) {
-                Material3AlertDialog(
-                    onDismissRequest = onDismissRequest,
-                    confirmButton = confirmButton,
-                    modifier = modifier,
-                    dismissButton = dismissButton,
-                    title = title,
-                    text = text,
-                    shape = shape,
-                    containerColor = containerColor
-                )
-            }
-        }
-
-        AppDesignSystem.MIUIX -> {
-            val showInlineTitle = title != null && miuixTitle == null
-            val showInlineText = text != null && (renderTextContentInMiuix || miuixSummary == null)
-            val showInlineContent = showInlineTitle || showInlineText
-            val hasTextAboveActions =
-                showInlineContent || miuixTitle != null || miuixSummary != null
-
-            MiuixDialog(
-                show = show,
-                onDismissRequest = onDismissRequest,
-                modifier = modifier,
-                title = miuixTitle,
-                summary = miuixSummary,
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    if (showInlineTitle) {
-                        title?.invoke()
-                    }
-                    if (showInlineText) {
-                        text?.invoke()
-                    }
-
-                    MiuixDialogActions(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                top = if (hasTextAboveActions) {
-                                    DeadlinerMiuixDefaults.DialogActionTopSpacing
-                                } else {
-                                    0.dp
-                                },
-                            ),
-                        secondaryButton = dismissButton,
-                        primaryButton = confirmButton,
-                    )
-                }
-            }
+    val showInlineTitle = title != null && miuixTitle == null
+    val showInlineText = text != null && (renderTextContentInMiuix || miuixSummary == null)
+    val showInlineContent = showInlineTitle || showInlineText
+    val hasTextAboveActions = showInlineContent || miuixTitle != null || miuixSummary != null
+    MiuixDialog(
+        show = show,
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        title = miuixTitle,
+        summary = miuixSummary,
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            if (showInlineTitle) title?.invoke()
+            if (showInlineText) text?.invoke()
+            MiuixDialogActions(
+                modifier = Modifier.fillMaxWidth().padding(
+                    top = if (hasTextAboveActions) DeadlinerMiuixDefaults.DialogActionTopSpacing else 0.dp,
+                ),
+                secondaryButton = dismissButton,
+                primaryButton = confirmButton,
+            )
         }
     }
 }

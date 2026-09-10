@@ -31,7 +31,6 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.AdvancedMaterialLevel
 import com.aritxonly.deadliner.model.AppearanceColorSource
-import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.DynamicPaletteStyle
 import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.settings.AdvancedMaterialPreviewCard
@@ -49,7 +48,6 @@ import com.aritxonly.deadliner.ui.settings.UiModeSelectionRow
 
 @Composable
 fun DesignIntroScreen(
-    onRequestDesignModeChange: (AppearanceDesignMode) -> Unit,
 ) {
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
 
@@ -63,29 +61,11 @@ fun DesignIntroScreen(
         bottomSpacer = 8.dp,
     ) {
         DesignColorPreviewCard(
-            designMode = appearance.designMode,
             colorfulIndicator = GlobalUtils.presetIndicatorColor,
             colorfulIndicatorStyle = GlobalUtils.colorfulIndicatorStyle,
             modifier = Modifier.padding(top = 2.dp, bottom = 2.dp),
         )
 
-        SettingsSection(
-            topLabel = stringResource(R.string.settings_design),
-            modifier = Modifier.padding(vertical = 0.dp),
-        ) {
-            SettingsRadioGroupItem(
-                options = listOf(
-                    RadioOption(AppearanceDesignMode.Modern, R.string.settings_design_mode_modern),
-                    RadioOption(AppearanceDesignMode.Vivid, R.string.settings_design_mode_vivid),
-                ),
-                selectedKey = appearance.designMode,
-                onOptionSelected = { mode ->
-                    if (mode != appearance.designMode) {
-                        onRequestDesignModeChange(mode)
-                    }
-                }
-            )
-        }
     }
 }
 
@@ -106,7 +86,6 @@ fun ColorIntroScreen() {
         bottomSpacer = 8.dp,
     ) {
         DesignColorPreviewCard(
-            designMode = appearance.designMode,
             colorfulIndicator = colorfulIndicatorEnabled,
             colorfulIndicatorStyle = colorfulIndicatorStyle,
             simpleColorPreview = true,
@@ -120,7 +99,7 @@ fun ColorIntroScreen() {
             ThemeColorPicker(
                 currentSource = appearance.effectiveColorSource,
                 currentSeed = selectedSeed,
-                showPreset = appearance.designMode == AppearanceDesignMode.Modern,
+                showPreset = true,
                 onColorSelected = { source, seed ->
                     GlobalUtils.updateAppearance {
                         it.copy(

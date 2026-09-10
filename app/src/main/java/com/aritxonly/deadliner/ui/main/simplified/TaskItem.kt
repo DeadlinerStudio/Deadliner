@@ -208,7 +208,9 @@ fun TaskItem(
         selected = selected,
         onLongPressSelect = onLongPressSelect,
         onToggleSelect = onToggleSelect,
-        categoryContent = category?.let { selectedCategory -> { CategoryBadge(selectedCategory) } },
+        categoryContent = category?.let { selectedCategory ->
+            { CategoryBadge(category = selectedCategory, compact = true) }
+        },
     )
 
     if (showGiveUpDialog) {

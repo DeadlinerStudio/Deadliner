@@ -1,10 +1,12 @@
 package com.aritxonly.deadliner.widgets.glance.ui
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import com.aritxonly.deadliner.widgets.glance.TaskWidgetRefreshCoordinator
+import com.aritxonly.deadliner.widgets.glance.configuration.TaskWidgetHostEditor
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationStore
 
 class CapsuleTaskGlanceWidgetReceiver : GlanceAppWidgetReceiver() {
@@ -12,8 +14,12 @@ class CapsuleTaskGlanceWidgetReceiver : GlanceAppWidgetReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
+        if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE) {
+            val appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS) ?: intArrayOf()
+            TaskWidgetHostEditor.registerMiuiEditUri(context, appWidgetIds)
+        }
         if (intent.action in refreshActions) {
-            TaskWidgetRefreshCoordinator.requestRefresh(context)
+            TaskWidgetRefreshCoordinator.requestRefresh(context, force = true)
         }
     }
 

@@ -7,6 +7,10 @@ data class AdvancedMaterialFineTuning(
     val contrast: Float = 1f,
     val topBarTintAlpha: Float = 0.75f,
     val navigationTintAlpha: Float = 0.75f,
+    val dialogBackgroundAlpha: Float = MiuixModalMaterialTuning.DialogDefaultBackgroundAlpha,
+    val dialogBlurRadiusDp: Float = MiuixModalMaterialTuning.DialogDefaultBlurRadiusDp,
+    val bottomSheetBackgroundAlpha: Float = MiuixModalMaterialTuning.BottomSheetDefaultBackgroundAlpha,
+    val bottomSheetBlurRadiusDp: Float = MiuixModalMaterialTuning.BottomSheetDefaultBlurRadiusDp,
     val glassBlurRadiusMultiplier: Float = 0.25f,
     val glassNoiseMultiplier: Float = 1f,
     val glassTintAlphaMultiplier: Float = 0.90f,
@@ -33,6 +37,26 @@ data class AdvancedMaterialFineTuning(
         contrast = contrast.safeCoerceIn(0.75f, 1.25f, 1f),
         topBarTintAlpha = topBarTintAlpha.safeCoerceIn(0.20f, 1f, 0.75f),
         navigationTintAlpha = navigationTintAlpha.safeCoerceIn(0.20f, 1f, 0.75f),
+        dialogBackgroundAlpha = dialogBackgroundAlpha.safeCoerceIn(
+            MiuixModalMaterialTuning.MinBackgroundAlpha,
+            MiuixModalMaterialTuning.MaxBackgroundAlpha,
+            MiuixModalMaterialTuning.DialogDefaultBackgroundAlpha,
+        ),
+        dialogBlurRadiusDp = dialogBlurRadiusDp.safeCoerceIn(
+            MiuixModalMaterialTuning.MinBlurRadiusDp,
+            MiuixModalMaterialTuning.MaxBlurRadiusDp,
+            MiuixModalMaterialTuning.DialogDefaultBlurRadiusDp,
+        ),
+        bottomSheetBackgroundAlpha = bottomSheetBackgroundAlpha.safeCoerceIn(
+            MiuixModalMaterialTuning.MinBackgroundAlpha,
+            MiuixModalMaterialTuning.MaxBackgroundAlpha,
+            MiuixModalMaterialTuning.BottomSheetDefaultBackgroundAlpha,
+        ),
+        bottomSheetBlurRadiusDp = bottomSheetBlurRadiusDp.safeCoerceIn(
+            MiuixModalMaterialTuning.MinBlurRadiusDp,
+            MiuixModalMaterialTuning.MaxBlurRadiusDp,
+            MiuixModalMaterialTuning.BottomSheetDefaultBlurRadiusDp,
+        ),
         glassBlurRadiusMultiplier = glassBlurRadiusMultiplier.safeCoerceIn(0.10f, 1f, 0.25f),
         glassNoiseMultiplier = glassNoiseMultiplier.safeCoerceIn(0f, 2f, 1f),
         glassTintAlphaMultiplier = glassTintAlphaMultiplier.safeCoerceIn(0.50f, 1.50f, 0.90f),
@@ -53,6 +77,13 @@ data class AdvancedMaterialFineTuning(
 
     companion object {
         val Default = AdvancedMaterialFineTuning()
+
+        internal val DefaultsV3 = AdvancedMaterialFineTuning(
+            dialogBackgroundAlpha = 0.62f,
+            dialogBlurRadiusDp = 48f,
+            bottomSheetBackgroundAlpha = 0.66f,
+            bottomSheetBlurRadiusDp = 64f,
+        )
 
         internal val DefaultsV2 = AdvancedMaterialFineTuning(
             saturationMultiplier = 1f,

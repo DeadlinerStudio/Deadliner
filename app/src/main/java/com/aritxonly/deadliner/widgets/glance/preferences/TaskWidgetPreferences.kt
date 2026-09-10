@@ -6,12 +6,11 @@ enum class TaskWidgetPaddingPreset(
     val storedValue: Int,
     val cardTopMarginDp: Int,
     val cardBottomMarginDp: Int,
-    val maxVisibleTasks: Int,
 ) {
-    Standard(storedValue = 0, cardTopMarginDp = 0, cardBottomMarginDp = 0, maxVisibleTasks = 3),
-    Grid4x6(storedValue = 1, cardTopMarginDp = 18, cardBottomMarginDp = 0, maxVisibleTasks = 2),
-    Grid4x7(storedValue = 2, cardTopMarginDp = 12, cardBottomMarginDp = 0, maxVisibleTasks = 2),
-    Custom(storedValue = 3, cardTopMarginDp = 0, cardBottomMarginDp = 0, maxVisibleTasks = 2);
+    Standard(storedValue = 0, cardTopMarginDp = 0, cardBottomMarginDp = 0),
+    Grid4x6(storedValue = 1, cardTopMarginDp = 16, cardBottomMarginDp = 2),
+    Grid4x7(storedValue = 2, cardTopMarginDp = 12, cardBottomMarginDp = 0),
+    Custom(storedValue = 3, cardTopMarginDp = 0, cardBottomMarginDp = 0);
 
     companion object {
         fun fromStoredValue(value: Int): TaskWidgetPaddingPreset =

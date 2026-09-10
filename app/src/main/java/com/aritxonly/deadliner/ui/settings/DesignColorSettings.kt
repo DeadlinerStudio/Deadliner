@@ -47,7 +47,7 @@ import androidx.core.graphics.toColorInt
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.AppearanceColorSource
-import com.aritxonly.deadliner.model.AppearanceDesignMode
+import com.aritxonly.deadliner.model.BackgroundColorStrategy
 import com.aritxonly.deadliner.model.ColorfulIndicatorStyle
 import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DynamicPaletteStyle
@@ -63,7 +63,6 @@ import com.aritxonly.deadliner.ui.theme.rememberTaskIndicatorColors
 @Composable
 fun DesignColorSettingsScreen(
     navigateUp: () -> Unit,
-    onRequestDesignModeChange: (AppearanceDesignMode) -> Unit,
 ) {
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
     var selectedSeed by remember { mutableStateOf(GlobalUtils.seedColor) }
@@ -92,22 +91,21 @@ fun DesignColorSettingsScreen(
             modifier = Modifier,
         ) {
             DesignColorPreviewCard(
-                designMode = appearance.designMode,
                 colorfulIndicator = colorfulIndicatorEnabled,
                 colorfulIndicatorStyle = colorfulIndicatorStyle,
                 modifier = Modifier.padding(vertical = 8.dp),
             )
 
-            SettingsSection(topLabel = stringResource(R.string.settings_design)) {
+            SettingsSection(topLabel = stringResource(R.string.settings_background_strategy_title)) {
                 SettingsRadioGroupItem(
                     options = listOf(
-                        RadioOption(AppearanceDesignMode.Modern, R.string.settings_design_mode_modern),
-                        RadioOption(AppearanceDesignMode.Vivid, R.string.settings_design_mode_vivid),
+                        RadioOption(BackgroundColorStrategy.MiuixHyperOs, R.string.settings_background_strategy_miuix),
+                        RadioOption(BackgroundColorStrategy.MaterialMonet, R.string.settings_background_strategy_material_monet),
                     ),
-                    selectedKey = appearance.designMode,
-                    onOptionSelected = { mode ->
-                        if (mode != appearance.designMode) {
-                            onRequestDesignModeChange(mode)
+                    selectedKey = appearance.backgroundColorStrategy,
+                    onOptionSelected = { strategy ->
+                        GlobalUtils.updateAppearance { current ->
+                            current.copy(backgroundColorStrategy = strategy)
                         }
                     }
                 )
@@ -117,7 +115,7 @@ fun DesignColorSettingsScreen(
                 ThemeColorPicker(
                     currentSource = appearance.effectiveColorSource,
                     currentSeed = selectedSeed,
-                    showPreset = appearance.designMode == AppearanceDesignMode.Modern,
+                    showPreset = true,
                     onColorSelected = { source, seed ->
                         GlobalUtils.updateAppearance {
                             it.copy(
@@ -143,31 +141,24 @@ fun DesignColorSettingsScreen(
                 }
             }
 
-            SettingsSection(topLabel = stringResource(R.string.settings_design_mode_section_title, stringResource(modeTitleRes(appearance.designMode)))) {
-                if (appearance.designMode == AppearanceDesignMode.Modern) {
-                    SettingsDetailSwitchItem(
-                        headline = R.string.settings_immersive_experience,
-                        supportingText = R.string.settings_support_immersive_experience,
-                        checked = appearance.useImmersiveExperience,
-                        onCheckedChange = { checked ->
-                            GlobalUtils.updateAppearance { current ->
-                                current.copy(useImmersiveExperience = checked)
-                            }
-                        },
-                    )
-                    SettingsSectionDivider()
-                }
+            SettingsSection(topLabel = stringResource(R.string.settings_design_color_title)) {
+                SettingsDetailSwitchItem(
+                    headline = R.string.settings_immersive_experience,
+                    supportingText = R.string.settings_support_immersive_experience,
+                    checked = appearance.useImmersiveExperience,
+                    onCheckedChange = { checked ->
+                        GlobalUtils.updateAppearance { current ->
+                            current.copy(useImmersiveExperience = checked)
+                        }
+                    },
+                )
+                SettingsSectionDivider()
                 SettingsDetailSwitchItem(
                     headline = R.string.settings_hide_divider,
                     supportingText = R.string.settings_support_hide_divider,
                     checked = appearance.activeHideDivider,
                     onCheckedChange = { checked ->
-                        GlobalUtils.updateAppearance { current ->
-                            when (current.designMode) {
-                                AppearanceDesignMode.Modern -> current.copy(modernHideDivider = checked)
-                                AppearanceDesignMode.Vivid -> current.copy(vividHideDivider = checked)
-                            }
-                        }
+                        GlobalUtils.updateAppearance { current -> current.copy(modernHideDivider = checked) }
                     }
                 )
                 SettingsSectionDivider()
@@ -180,7 +171,7 @@ fun DesignColorSettingsScreen(
                     }
                 )
                 SettingsSectionDivider()
-                if (appearance.designMode == AppearanceDesignMode.Modern) {
+                if (appearance.backgroundColorStrategy == BackgroundColorStrategy.MiuixHyperOs) {
                     val devicePalette = GlobalUtils.getCurrentDeviceColorPalette()
                     SettingsDetailSwitchItem(
                         headline = R.string.settings_background_strategy_title,
@@ -209,26 +200,28 @@ fun DesignColorSettingsScreen(
                 } else {
                     SettingsSectionDivider()
                 }
-                StaticSettingStrategyRow(
-                    headline = stringResource(R.string.settings_color_generation_strategy_title),
-                    supporting = if (appearance.effectiveColorSource == AppearanceColorSource.Preset) {
-                        stringResource(R.string.settings_color_source_preset_support)
-                    } else {
-                        "${stringResource(R.string.settings_color_generation_strategy_value)} · ${stringResource(appearance.dynamicPaletteStyle.labelRes())}"
-                    }
-                )
-                SettingsSectionDivider()
-                DynamicPaletteStylePicker(
-                    selectedStyle = appearance.dynamicPaletteStyle,
-                    onStyleSelected = { style ->
-                        if (style == DynamicPaletteStyle.System) {
-                            GlobalUtils.seedColor = null
-                            selectedSeed = null
+                if (appearance.backgroundColorStrategy == BackgroundColorStrategy.MaterialMonet) {
+                    StaticSettingStrategyRow(
+                        headline = stringResource(R.string.settings_color_generation_strategy_title),
+                        supporting = if (appearance.effectiveColorSource == AppearanceColorSource.Preset) {
+                            stringResource(R.string.settings_color_source_preset_support)
+                        } else {
+                            "${stringResource(R.string.settings_color_generation_strategy_value)} · ${stringResource(appearance.dynamicPaletteStyle.labelRes())}"
                         }
-                        GlobalUtils.dynamicPaletteStyle = style
-                    },
-                )
-                SettingsSectionDivider()
+                    )
+                    SettingsSectionDivider()
+                    DynamicPaletteStylePicker(
+                        selectedStyle = appearance.dynamicPaletteStyle,
+                        onStyleSelected = { style ->
+                            if (style == DynamicPaletteStyle.System) {
+                                GlobalUtils.seedColor = null
+                                selectedSeed = null
+                            }
+                            GlobalUtils.dynamicPaletteStyle = style
+                        },
+                    )
+                    SettingsSectionDivider()
+                }
                 SettingsDetailSwitchItem(
                     headline = R.string.settings_preset_indicator,
                     supportingText = R.string.settings_support_preset_indicator,
@@ -318,20 +311,13 @@ fun ColorfulIndicatorStylePicker(
 
 @Composable
 fun DesignColorPreviewCard(
-    designMode: AppearanceDesignMode,
     colorfulIndicator: Boolean,
     colorfulIndicatorStyle: ColorfulIndicatorStyle,
     simpleColorPreview: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    var previewSwitchChecked by remember(designMode) {
-        mutableStateOf(designMode == AppearanceDesignMode.Modern)
-    }
-    val designBadgeColor = if (designMode == AppearanceDesignMode.Modern) {
-        MaterialTheme.colorScheme.surface.copy(alpha = 0.86f)
-    } else {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.92f)
-    }
+    var previewSwitchChecked by remember { mutableStateOf(true) }
+    val designBadgeColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f)
 
     SettingsHeroSection(modifier = modifier) {
         androidx.compose.foundation.layout.Column(
@@ -353,7 +339,7 @@ fun DesignColorPreviewCard(
                 )
                 androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(modeTitleRes(designMode)),
+                        text = stringResource(R.string.settings_background_strategy_miuix),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
@@ -921,9 +907,4 @@ private fun DynamicPaletteStyle.labelRes(): Int = when (this) {
 private fun ColorfulIndicatorStyle.labelRes(): Int = when (this) {
     ColorfulIndicatorStyle.Harmonize -> R.string.settings_indicator_style_harmonize
     ColorfulIndicatorStyle.Morandi -> R.string.settings_indicator_style_morandi
-}
-
-private fun modeTitleRes(mode: AppearanceDesignMode): Int = when (mode) {
-    AppearanceDesignMode.Modern -> R.string.settings_design_mode_modern
-    AppearanceDesignMode.Vivid -> R.string.settings_design_mode_vivid
 }

@@ -73,4 +73,16 @@ class GlassMaterialRecipeTuningTest {
         assertEquals(1.6f, dialog.blur.radiusMultiplier, 0.0001f)
         assertEquals(3.2f, bottomSheet.blur.radiusMultiplier, 0.0001f)
     }
+
+    @Test
+    fun immersiveDialogUsesAdvancedMaterialAndWeakHighlightBorder() {
+        val recipe = DeadlinerGlassRecipes.immersiveDialogAdvancedHighlight(
+            AdvancedMaterialFineTuning.Default,
+        )
+
+        assertFalse(recipe.refraction.enabled)
+        assertEquals(0.5.dp, recipe.edgeOptics.fallbackWidth)
+        assertEquals(0.16f, recipe.edgeOptics.fallbackLightAlpha, 0.0001f)
+        assertEquals(0.10f, recipe.edgeOptics.fallbackDarkAlpha, 0.0001f)
+    }
 }

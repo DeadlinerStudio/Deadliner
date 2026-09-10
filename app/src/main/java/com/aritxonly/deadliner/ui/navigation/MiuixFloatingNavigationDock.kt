@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.layout.navigationBarsPadding
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButton
@@ -66,7 +67,8 @@ fun MiuixFloatingNavigationDock(
             .widthIn(max = FloatingNavigationDockMaximumWidth)
             .fillMaxWidth()
             .height(MiuixFloatingTabBarDefaults.Height)
-            .padding(horizontal = 6.dp),
+            .padding(horizontal = 8.dp)
+            .navigationBarsPadding(),
         horizontalArrangement = Arrangement.spacedBy(FloatingNavigationDockSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {

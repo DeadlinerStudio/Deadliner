@@ -70,7 +70,6 @@ import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.agent.AIOverlayHost
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
-import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.main.TextPageIndicator
@@ -86,7 +85,7 @@ import com.aritxonly.deadliner.ui.main.shared.rememberMainHostState
 import com.aritxonly.deadliner.ui.category.CategoryFilter
 import com.aritxonly.deadliner.ui.category.CategoryFilterResolver
 import com.aritxonly.deadliner.ui.category.CategoryFilterSheet
-import com.aritxonly.deadliner.ui.category.toPresentation
+import com.aritxonly.deadliner.ui.category.rememberActiveCategories
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nl.dionsegijn.konfetti.compose.KonfettiView
@@ -148,10 +147,11 @@ fun SimplifiedHost(
     val taskState by taskVm.uiState.collectAsStateWithLifecycle()
     var showCategoryFilter by rememberSaveable { mutableStateOf(false) }
     var categoryFilter by remember { mutableStateOf<CategoryFilter>(CategoryFilter.All) }
-    val categories = remember(taskState) {
-        KmpV6Runtime.database.categories.list().filterNot { it.isDeleted }.sortedBy { it.sortOrder }.map { it.toPresentation() }
-    }
+    val categories = rememberActiveCategories(taskState)
     val availableCategoryUids = remember(categories) { categories.mapTo(mutableSetOf()) { it.uid } }
+    LaunchedEffect(availableCategoryUids) {
+        categoryFilter = CategoryFilterResolver.reconcile(categoryFilter, availableCategoryUids)
+    }
     val displayedTasks = taskVm.getFilteredTasks().filter {
         it.state != com.deadliner.domain.task.TaskState.ARCHIVED &&
             it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED &&
@@ -222,10 +222,6 @@ fun SimplifiedHost(
         uiState.childRequestsBlur ||
         uiState.moreExpanded ||
         selectionActions.showDeleteDialog
-    val advancedMaterialBlur = uiState.childRequestsBlur ||
-        uiState.moreExpanded ||
-        selectionActions.showDeleteDialog
-
     val jumpAnim = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         jumpAnim.snapTo(40f)
@@ -304,13 +300,7 @@ fun SimplifiedHost(
 
     ProvideAdvancedMaterialDialogBlurHost {
         Scaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .advancedMaterialDialogBlurHost(
-                active = advancedMaterialBlur,
-                forceActive = uiState.showOverlay,
-                activeScale = if (uiState.showOverlay) 0.98f else 1f,
-            ),
+        modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0),
         snackbarHost = {
             Box(
@@ -547,6 +537,9 @@ fun SimplifiedHost(
             categories = categories,
             filter = categoryFilter,
             onFilterChange = { categoryFilter = it },
+            onManageCategories = {
+                activity.startActivity(com.aritxonly.deadliner.CategoryManagementActivity.newIntent(activity))
+            },
             onDismiss = { showCategoryFilter = false },
         )
     }

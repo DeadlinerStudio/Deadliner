@@ -21,6 +21,8 @@ import com.aritxonly.deadliner.sync.SyncScheduler
 import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.widgets.glance.TaskWidgetRefreshCoordinator
+import com.deadliner.platform.WidgetUpdateReason
+import com.deadliner.platform.updateWidget
 
 class DeadlinerApp : Application() {
     override fun onCreate() {
@@ -29,19 +31,23 @@ class DeadlinerApp : Application() {
         ApiKeystore.createKeyIfNeeded()
         AIUtils.init(this)
         AppSingletons.init(this)
-        KmpV6Runtime.initialize(this)
         TaskWidgetRefreshCoordinator.start(this)
+        KmpV6Runtime.initialize(this)
         AppIconManager.applyCurrentMode(this)
         var startedActivityCount = 0
+        var changingConfigurations = false
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityStarted(activity: android.app.Activity) {
-                if (startedActivityCount == 0) {
+                if (startedActivityCount == 0 && !changingConfigurations) {
                     AppIconManager.applyCurrentMode(this@DeadlinerApp)
+                    updateWidget(WidgetUpdateReason.APP_FOREGROUND)
                 }
+                changingConfigurations = false
                 startedActivityCount++
             }
 
             override fun onActivityStopped(activity: android.app.Activity) {
+                changingConfigurations = activity.isChangingConfigurations
                 startedActivityCount = (startedActivityCount - 1).coerceAtLeast(0)
             }
 

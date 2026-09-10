@@ -117,9 +117,7 @@ import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.base.Scaffold
 import com.aritxonly.deadliner.ui.base.Switch
 import com.aritxonly.deadliner.ui.base.Slider
@@ -137,13 +135,7 @@ fun SettingItem(
     expressiveTypeModifier: Modifier = Modifier
         .size(24.dp)
         .clip(CircleShape)
-        .let { baseModifier ->
-            if (LocalAppDesignSystem.current == AppDesignSystem.MATERIAL3) {
-                baseModifier.background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
-            } else {
-                baseModifier // MIUIX 模式下，保持纯净透明
-            }
-        },
+        .let { baseModifier -> baseModifier },
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = {
         Icon(
@@ -358,67 +350,7 @@ fun CollapsingTopBarScaffold(
     val canCollapseTopBar = collapsible && canScrollState.value
     val useLegacyTopBar = !advancedMaterial.enabled && !forceOverlayTopBar
 
-    when (LocalAppDesignSystem.current) {
-        AppDesignSystem.MATERIAL3 -> {
-            val scrollBehavior = if (collapsible && topBarStyle == TopAppBarStyle.LARGE) {
-                TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-                    state = rememberTopAppBarState(),
-                    canScroll = { canCollapseTopBar },
-                )
-            } else {
-                null
-            }
-            val overlayTopBar: @Composable () -> Unit = {
-                TopAppBar(
-                    title = title,
-                    mode = topBarStyle,
-                    navigationIcon = navigationIcon,
-                    actions = actions,
-                    titleTextStyle = MaterialTheme.typography.headlineMedium,
-                    useParentMaterialContainer = false,
-                    allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
-                    advancedMaterialBlurOnlyWhenCollapsed = advancedMaterialTopBarBlurOnlyWhenCollapsed,
-                    material3ScrollBehavior = scrollBehavior,
-                )
-            }
-            val legacyTopBar: @Composable () -> Unit = {
-                TopAppBar(
-                    title = title,
-                    mode = topBarStyle,
-                    navigationIcon = navigationIcon,
-                    actions = actions,
-                    titleTextStyle = if (topBarStyle == TopAppBarStyle.LARGE) {
-                        MaterialTheme.typography.headlineMedium
-                    } else {
-                        null
-                    },
-                    forceMaterial3 = true,
-                    allowAdvancedMaterialBlur = false,
-                    material3ScrollBehavior = scrollBehavior,
-                )
-            }
-            AdaptiveMaterialScaffold(
-                modifier = if (scrollBehavior != null) {
-                    modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-                } else {
-                    modifier
-                },
-                topBar = if (useLegacyTopBar) ({}) else overlayTopBar,
-                legacyTopBar = if (useLegacyTopBar) legacyTopBar else ({}),
-                bottomBar = bottomBar,
-                contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                wrapTopBarInMaterialContainer = false,
-                useCurrentTopBarHeightForContentPadding = !useLegacyTopBar,
-                snackbarHost = snackbarHost,
-                content = { paddingValues ->
-                    CompositionLocalProvider(LocalSettingsTopBarCanScrollState provides canScrollState) {
-                        content(paddingValues)
-                    }
-                },
-            )
-        }
-
-        AppDesignSystem.MIUIX -> {
+    run {
             val scrollBehavior = if (collapsible && topBarStyle == TopAppBarStyle.LARGE) {
                 top.yukonga.miuix.kmp.basic.MiuixScrollBehavior(
                     canScroll = { canCollapseTopBar },
@@ -467,7 +399,6 @@ fun CollapsingTopBarScaffold(
                     }
                 },
             )
-        }
     }
 }
 
@@ -703,14 +634,12 @@ fun SettingsSliderItemWithLabel(
                     style = MaterialTheme.typography.bodyMedium
                 )
 
-                if (LocalAppDesignSystem.current == AppDesignSystem.MIUIX) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        text = sliderPosition.toInt().toString(),
-                        style = MaterialTheme.typography.bodyMediumEmphasized,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = sliderPosition.toInt().toString(),
+                    style = MaterialTheme.typography.bodyMediumEmphasized,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
 
             Spacer(Modifier.height(8.dp))

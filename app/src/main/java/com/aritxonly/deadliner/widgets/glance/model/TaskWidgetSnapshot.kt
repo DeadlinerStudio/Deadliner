@@ -17,10 +17,14 @@ internal data class TaskWidgetSnapshot(
 }
 
 internal data class TaskWidgetItem(
+    val stableId: Long,
     val title: String,
     val timeDescription: String,
     val status: TaskWidgetStatus,
-)
+    val categoryColorArgb: Int? = null,
+) {
+    fun indicatorColorArgb(semanticColorArgb: Int): Int = categoryColorArgb ?: semanticColorArgb
+}
 
 internal enum class TaskWidgetStatus {
     NORMAL,

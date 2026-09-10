@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -88,7 +89,6 @@ import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
-import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.base.resolveTopBarButtonMaterialProgress
 import com.aritxonly.deadliner.ui.main.shared.MainSection
 import com.aritxonly.deadliner.ui.main.modern.components.ModernListTopAppBar
@@ -109,7 +109,7 @@ import com.aritxonly.deadliner.ui.main.simplified.MainSearchBar
 import com.aritxonly.deadliner.ui.category.CategoryFilter
 import com.aritxonly.deadliner.ui.category.CategoryFilterResolver
 import com.aritxonly.deadliner.ui.category.CategoryFilterSheet
-import com.aritxonly.deadliner.ui.category.toPresentation
+import com.aritxonly.deadliner.ui.category.rememberActiveCategories
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButtonDefaults
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationAction
@@ -183,6 +183,13 @@ fun ModernHost(
     val currentCanCollapseListTopBar by rememberUpdatedState(canCollapseListTopBar)
     val listTopBarScrollBehavior = MiuixScrollBehavior(
         canScroll = { currentCanCollapseListTopBar },
+    )
+    val currentSelectedSection by rememberUpdatedState(hostState.selectedSection)
+    val overviewTopBarScrollBehavior = MiuixScrollBehavior(
+        canScroll = { currentSelectedSection == MainSection.OVERVIEW },
+    )
+    val captureTopBarScrollBehavior = MiuixScrollBehavior(
+        canScroll = { currentSelectedSection == MainSection.CAPTURE },
     )
 
     LaunchedEffect(canCollapseListTopBar, searchActive) {
@@ -436,10 +443,11 @@ fun ModernHost(
     val forceMaterialTopBarsInMiuix = appearance.usesMiuixTheme && appearance.useMaterialTopAppBarInMiuix
 
     val taskState by taskVm.uiState.collectAsStateWithLifecycle()
-    val categories = remember(taskState) {
-        KmpV6Runtime.database.categories.list().filterNot { it.isDeleted }.sortedBy { it.sortOrder }.map { it.toPresentation() }
-    }
+    val categories = rememberActiveCategories(taskState)
     val availableCategoryUids = remember(categories) { categories.mapTo(mutableSetOf()) { it.uid } }
+    LaunchedEffect(availableCategoryUids) {
+        categoryFilter = CategoryFilterResolver.reconcile(categoryFilter, availableCategoryUids)
+    }
     val displayedTasks = taskVm.getFilteredTasks().filter {
         it.state != com.deadliner.domain.task.TaskState.ARCHIVED &&
             it.state != com.deadliner.domain.task.TaskState.ABANDONED_ARCHIVED &&
@@ -462,18 +470,10 @@ fun ModernHost(
         hostState = hostState,
     )
 
-    val advancedMaterialBlur = uiState.childRequestsBlur ||
-        selectionActions.showDeleteDialog ||
-        (hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings) ||
-        (hostState.selectedSection == MainSection.CAPTURE && showCaptureMergeSheet)
     ProvideAdvancedMaterialDialogBlurHost {
         ModernListSharedTransitionLayout(modifier = Modifier.fillMaxSize()) { sharedTransitionScope ->
         AdaptiveNavigationSuiteScaffold(
-            modifier = modifier
-                .fillMaxSize()
-                .advancedMaterialDialogBlurHost(
-                    active = advancedMaterialBlur,
-                ),
+            modifier = modifier.fillMaxSize(),
         items = navItems,
         selectedKey = selectedKey,
         useImmersiveExperience = appearance.useImmersiveExperience,
@@ -613,7 +613,8 @@ fun ModernHost(
                                 OverviewTopBar(
                                     showNavigationIcon = false,
                                     onShowSettings = { showOverviewSettings = true },
-                                    mode = TopAppBarStyle.SMALL,
+                                    mode = TopAppBarStyle.LARGE,
+                                    scrollBehavior = overviewTopBarScrollBehavior,
                                     forceMaterial3 = forceMaterialTopBarsInMiuix,
                                 )
                             } else {
@@ -622,7 +623,8 @@ fun ModernHost(
                                     onTabSelected = { overviewSelectedTab = it },
                                     showNavigationIcon = false,
                                     onShowSettings = { showOverviewSettings = true },
-                                    mode = TopAppBarStyle.SMALL,
+                                    mode = TopAppBarStyle.LARGE,
+                                    scrollBehavior = overviewTopBarScrollBehavior,
                                     forceMaterial3 = forceMaterialTopBarsInMiuix,
                                 )
                             }
@@ -633,6 +635,8 @@ fun ModernHost(
                                 onClose = { hostState.selectedSection = MainSection.LIST },
                                 showNavigationIcon = false,
                                 onRequestMerge = { showCaptureMergeSheet = true },
+                                mode = TopAppBarStyle.LARGE,
+                                scrollBehavior = captureTopBarScrollBehavior,
                                 forceMaterial3 = forceMaterialTopBarsInMiuix,
                             )
                         }
@@ -879,30 +883,34 @@ fun ModernHost(
                     )
                 }
                 MainSection.OVERVIEW -> {
-                    OverviewContent(
-                        overviewState = overviewState,
-                        activity = activity,
-                        flattenedLayout = useFlattenedOverview,
-                        selectedTab = overviewSelectedTab,
-                        onSelectedTabChange = { overviewSelectedTab = it },
-                        showTabsInContent = useFlattenedOverview,
-                        topContentPadding = if (!useFlattenedOverview) overlayTopBarPadding else 0.dp,
-                        transparentBackground = true,
-                    )
+                    Box(modifier = Modifier.nestedScroll(overviewTopBarScrollBehavior.nestedScrollConnection)) {
+                        OverviewContent(
+                            overviewState = overviewState,
+                            activity = activity,
+                            flattenedLayout = useFlattenedOverview,
+                            selectedTab = overviewSelectedTab,
+                            onSelectedTabChange = { overviewSelectedTab = it },
+                            showTabsInContent = useFlattenedOverview,
+                            topContentPadding = if (!useFlattenedOverview) overlayTopBarPadding else 0.dp,
+                            transparentBackground = true,
+                        )
+                    }
                 }
                 MainSection.CAPTURE -> {
-                    CaptureContent(
-                        vm = captureVm,
-                        twoColumnLayout = isWideLayout,
-                        showMergeSheet = showCaptureMergeSheet,
-                        onShowMergeSheetChange = { showCaptureMergeSheet = it },
-                        topOverlayPadding = overlayTopBarPadding,
-                        bottomLiftPadding = when {
-                            isImmersiveCompactNavigation -> 96.dp
-                            isShortBottomNavigation -> 96.dp
-                            else -> 28.dp
-                        },
-                    )
+                    Box(modifier = Modifier.nestedScroll(captureTopBarScrollBehavior.nestedScrollConnection)) {
+                        CaptureContent(
+                            vm = captureVm,
+                            twoColumnLayout = isWideLayout,
+                            showMergeSheet = showCaptureMergeSheet,
+                            onShowMergeSheetChange = { showCaptureMergeSheet = it },
+                            topOverlayPadding = overlayTopBarPadding,
+                            bottomLiftPadding = when {
+                                isImmersiveCompactNavigation -> 96.dp
+                                isShortBottomNavigation -> 96.dp
+                                else -> 28.dp
+                            },
+                        )
+                    }
                 }
                 MainSection.LIFI -> {
                     AIAgentPage(
@@ -935,6 +943,9 @@ fun ModernHost(
             categories = categories,
             filter = categoryFilter,
             onFilterChange = { categoryFilter = it },
+            onManageCategories = {
+                activity.startActivity(com.aritxonly.deadliner.CategoryManagementActivity.newIntent(activity))
+            },
             onDismiss = { showCategoryFilter = false },
         )
     }

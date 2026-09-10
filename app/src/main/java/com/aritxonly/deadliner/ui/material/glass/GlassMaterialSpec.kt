@@ -204,6 +204,22 @@ object DeadlinerGlassRecipes {
             ),
         )
     }
+
+    /** Uses pure Miuix advanced material for the dialog body plus a restrained gradient border. */
+    fun immersiveDialogAdvancedHighlight(
+        fineTuning: AdvancedMaterialFineTuning,
+    ): GlassMaterialRecipe {
+        val tuning = fineTuning.normalized()
+        return dialog(tuning).copy(
+            refraction = GlassRefractionSpec(enabled = false),
+            edgeOptics = GlassEdgeOpticsSpec(
+                highlightGray = tuning.edgeHighlightGray,
+                fallbackWidth = tuning.fallbackEdgeWidthDp.coerceAtMost(0.5f).dp,
+                fallbackLightAlpha = (tuning.fallbackLightAlpha * 0.35f).coerceIn(0f, 0.16f),
+                fallbackDarkAlpha = (tuning.fallbackDarkAlpha * 1.25f).coerceIn(0f, 0.10f),
+            ),
+        )
+    }
 }
 
 fun AdvancedMaterialFineTuning.softGlassTintColor(isDark: Boolean): Color {

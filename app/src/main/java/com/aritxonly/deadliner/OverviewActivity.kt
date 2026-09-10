@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.colorResource
@@ -65,6 +66,8 @@ import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import androidx.compose.ui.platform.LocalLayoutDirection
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.ScrollBehavior
 
 class OverviewActivity : DeadlinerComponentActivity() {
 
@@ -130,6 +133,7 @@ fun OverviewTopBar(
     mode: TopAppBarStyle = TopAppBarStyle.CENTER,
     forceMaterial3: Boolean = false,
     useParentMaterialContainer: Boolean = false,
+    scrollBehavior: ScrollBehavior? = null,
 ) {
     TopAppBar(
         title = stringResource(R.string.title_activity_overview),
@@ -160,7 +164,8 @@ fun OverviewTopBar(
                 )
             }
         },
-        isMainTitle = !showNavigationIcon
+        isMainTitle = !showNavigationIcon,
+        miuixScrollBehavior = scrollBehavior,
     )
 }
 
@@ -349,6 +354,7 @@ fun OverviewTopBarWithTabs(
     onShowSettings: () -> Unit = {},
     mode: TopAppBarStyle = TopAppBarStyle.CENTER,
     forceMaterial3: Boolean = false,
+    scrollBehavior: ScrollBehavior? = null,
 ) {
     val tabs = listOf(
         stringResource(R.string.tab_overview),
@@ -386,6 +392,7 @@ fun OverviewTopBarWithTabs(
                 mode = mode,
                 forceMaterial3 = forceMaterial3,
                 useParentMaterialContainer = true,
+                scrollBehavior = scrollBehavior,
             )
             TabRow(
                 tabs = tabs,
@@ -437,6 +444,7 @@ fun OverviewScreen(
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var selectedTab by rememberSaveable { mutableStateOf(0) }
     val layoutDirection = LocalLayoutDirection.current
+    val topBarScrollBehavior = MiuixScrollBehavior()
 
     AdaptiveMaterialScaffold(
         containerColor = Color.Transparent,
@@ -451,6 +459,8 @@ fun OverviewScreen(
                     showNavigationIcon = showNavigationIcon,
                     onClose = onClose,
                     onShowSettings = { showSettings = true },
+                    mode = TopAppBarStyle.LARGE,
+                    scrollBehavior = topBarScrollBehavior,
                 )
             } else {
                 OverviewTopBarWithTabs(
@@ -459,6 +469,8 @@ fun OverviewScreen(
                     showNavigationIcon = showNavigationIcon,
                     onClose = onClose,
                     onShowSettings = { showSettings = true },
+                    mode = TopAppBarStyle.LARGE,
+                    scrollBehavior = topBarScrollBehavior,
                 )
             }
         },
@@ -468,15 +480,25 @@ fun OverviewScreen(
         } else {
             0.dp
         }
-        val contentModifier = if (showTopBar && !flattenedLayout) {
-            Modifier.padding(
+        val contentModifier = Modifier
+            .then(
+                if (showTopBar) {
+                    Modifier.nestedScroll(topBarScrollBehavior.nestedScrollConnection)
+                } else {
+                    Modifier
+                },
+            )
+            .then(
+                if (showTopBar && !flattenedLayout) {
+                    Modifier.padding(
                 start = paddingValues.calculateStartPadding(layoutDirection),
                 end = paddingValues.calculateEndPadding(layoutDirection),
                 bottom = paddingValues.calculateBottomPadding(),
             )
-        } else {
-            Modifier.padding(paddingValues)
-        }
+                } else {
+                    Modifier.padding(paddingValues)
+                },
+            )
         OverviewContent(
             overviewState = overviewState,
             activity = activity,

@@ -28,7 +28,7 @@ internal object TaskWidgetBackgroundRenderer {
         val row = colors.rowColors(status)
         val bitmap = Bitmap.createBitmap(ROW_WIDTH, ROW_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        val bounds = RectF(1f, 1f, ROW_WIDTH - 1f, ROW_HEIGHT - 1f)
+        val bounds = RectF(0f, 0f, ROW_WIDTH.toFloat(), ROW_HEIGHT.toFloat())
         val radius = 13f
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
@@ -50,10 +50,6 @@ internal object TaskWidgetBackgroundRenderer {
         paint.color = row.tint
         canvas.drawRoundRect(bounds, radius, radius, paint)
 
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 2f
-        paint.color = row.stroke
-        canvas.drawRoundRect(bounds, radius, radius, paint)
         return bitmap
     }
 
@@ -67,6 +63,10 @@ internal object TaskWidgetBackgroundRenderer {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         val widthF = width.toFloat()
         val heightF = height.toFloat()
+
+        // Keep the provider bitmap opaque. The 2x2 card translucency is applied by
+        // Glance so launchers do not have to interpret a translucent source bitmap.
+        canvas.drawColor(colors.backgroundBase)
 
         paint.shader = LinearGradient(
             0f,
@@ -106,6 +106,8 @@ internal object TaskWidgetBackgroundRenderer {
 
         paint.color = ColorUtils.setAlphaComponent(colors.decoration, if (colors.isDark) 10 else 14)
         canvas.drawCircle(widthF * 0.92f, heightF * 0.76f, heightF * 0.66f, paint)
+        bitmap.setHasAlpha(false)
         return bitmap
     }
+
 }

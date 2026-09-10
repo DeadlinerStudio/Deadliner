@@ -14,9 +14,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
-import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.detail.DeadlineDetailScreen
-import com.aritxonly.deadliner.ui.category.toPresentation
+import com.aritxonly.deadliner.ui.category.rememberActiveCategories
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.deadliner.viewmodel.task.SubtaskCreateConfig
 
@@ -41,9 +40,9 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
             DeadlinerTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 val task = state.task
-                val categories = KmpV6Runtime.database.categories.list().filterNot { it.isDeleted }.sortedBy { it.sortOrder }.map { it.toPresentation() }
+                val categories = rememberActiveCategories(state)
                 ProvideAdvancedMaterialDialogBlurHost {
-                    Box(Modifier.fillMaxSize().advancedMaterialDialogBlurHost()) {
+                    Box(Modifier.fillMaxSize()) {
                         if (task != null) {
                             DeadlineDetailScreen(
                                 applicationContext = applicationContext,
@@ -55,6 +54,9 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
                                 onSetCategory = { categoryUid ->
                                     KmpV6Runtime.updateTaskCategory(task, categoryUid)
                                     viewModel.initialize()
+                                },
+                                onManageCategories = {
+                                    startActivity(CategoryManagementActivity.newIntent(this@DeadlineDetailActivity))
                                 },
                                 onApplyTaskAction = { action ->
                                     when (action) {

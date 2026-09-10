@@ -12,6 +12,7 @@ object DeadlinerMiuixColorSchemeFactory {
         darkTheme: Boolean,
     ): Colors {
         val miuixDefaults = if (darkTheme) darkMiuixColorScheme() else lightMiuixColorScheme()
+        val windowDimming = modalScrim(darkTheme)
         val sliderBackground = tokens.outlineVariant
             .copy(alpha = if (darkTheme) 0.48f else 0.28f)
             .compositeOver(tokens.surfaceContainerHigh)
@@ -67,7 +68,7 @@ object DeadlinerMiuixColorSchemeFactory {
             onSurfaceContainerHighest = tokens.onSurface,
             outline = tokens.outline,
             dividerLine = tokens.outlineVariant,
-            windowDimming = tokens.scrim,
+            windowDimming = windowDimming,
             sliderKeyPoint = tokens.outlineVariant.copy(alpha = 0.35f),
             sliderKeyPointForeground = tokens.primary,
             sliderBackground = sliderBackground,
@@ -123,7 +124,7 @@ object DeadlinerMiuixColorSchemeFactory {
             onSurfaceContainerHighest = tokens.onSurface,
             outline = tokens.outline,
             dividerLine = tokens.outlineVariant,
-            windowDimming = tokens.scrim,
+            windowDimming = windowDimming,
             sliderKeyPoint = tokens.outlineVariant.copy(alpha = 0.35f),
             sliderKeyPointForeground = tokens.primary,
             sliderBackground = sliderBackground,

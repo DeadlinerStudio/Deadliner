@@ -11,6 +11,7 @@ class CategoryPresentationRegistryTest {
     fun documented_color_token_has_stable_android_color() {
         assertEquals(Color(0xFF3B82F6), CategoryPresentationRegistry.color("blue_500"))
         assertEquals(Color(0xFF8B5CF6), CategoryPresentationRegistry.color("#8B5CF6"))
+        assertEquals(Color(0xFF3481FF), CategoryPresentationRegistry.color("#3481FF"))
     }
 
     @Test

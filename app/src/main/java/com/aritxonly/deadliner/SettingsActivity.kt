@@ -91,13 +91,11 @@ import com.aritxonly.deadliner.ui.settings.WikiScreen
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.DisplayScaleManager
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
-import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.ui.settings.UiSettingsScreen
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.Checkbox
 import com.aritxonly.deadliner.ui.base.OutlinedTextField
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
-import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import java.text.SimpleDateFormat
@@ -185,13 +183,6 @@ sealed class SettingsRoute(
     }
 }
 
-private data class SettingsDesignModeTransition(
-    val targetMode: AppearanceDesignMode,
-    val snapshotBitmap: Bitmap?,
-    val overlayColorArgb: Int,
-    val indicatorColorArgb: Int,
-)
-
 private data class CustomCalendarFilterDialogState(
     val allItems: List<String>,
     val selectedItems: Set<String>,
@@ -207,8 +198,6 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
     }
 
     private var latestRoute: String = SettingsRoute.Main.route
-    private var designModeTransitionOverlay: View? = null
-    private var designModeTransitionInFlight: Boolean = false
     private var customCalendarFilterDialogState by mutableStateOf<CustomCalendarFilterDialogState?>(null)
     private var showCustomCalendarNewItemDialog by mutableStateOf(false)
     private var customCalendarNewItemDraft by mutableStateOf("")
@@ -273,11 +262,7 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
             DeadlinerTheme {
                 val colorScheme = MaterialTheme.colorScheme
                 ProvideAdvancedMaterialDialogBlurHost {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .advancedMaterialDialogBlurHost()
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
                         Surface(
                             modifier = Modifier.fillMaxSize(),
                             color = colorScheme.surface
@@ -375,16 +360,6 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
                         composable(SettingsRoute.AppearanceDesign.route) {
                             DesignColorSettingsScreen(
                                 navigateUp = { navController.navigateUp() },
-                                onRequestDesignModeChange = { mode ->
-                                    requestDesignModeTransition(
-                                        transition = SettingsDesignModeTransition(
-                                            targetMode = mode,
-                                            snapshotBitmap = window.decorView.rootView.drawToBitmap(Bitmap.Config.ARGB_8888),
-                                            overlayColorArgb = colorScheme.surface.toArgb(),
-                                            indicatorColorArgb = colorScheme.primary.toArgb(),
-                                        )
-                                    )
-                                }
                             )
                         }
                         composable(SettingsRoute.AppearanceMaterial.route) { AdvancedMaterialSettingsScreen { navController.navigateUp() } }
@@ -588,132 +563,6 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
         }
     }
 
-    private fun requestDesignModeTransition(transition: SettingsDesignModeTransition) {
-        if (designModeTransitionInFlight) return
-
-        val contentRoot = window.decorView.findViewById<ViewGroup>(android.R.id.content)
-            ?: run {
-                GlobalUtils.designMode = transition.targetMode
-                return
-            }
-
-        designModeTransitionInFlight = true
-        designModeTransitionOverlay?.let { existing ->
-            contentRoot.removeView(existing)
-        }
-
-        val overlay = buildDesignModeTransitionOverlay(transition)
-        designModeTransitionOverlay = overlay
-        contentRoot.addView(overlay)
-
-        overlay.animate()
-            .alpha(1f)
-            .setDuration(220L)
-            .withEndAction {
-                GlobalUtils.designMode = transition.targetMode
-                dismissDesignModeTransitionOverlayAfterNextDraw(
-                    contentRoot = contentRoot,
-                    overlay = overlay,
-                    snapshotBitmap = transition.snapshotBitmap,
-                )
-            }
-            .start()
-    }
-
-    private fun buildDesignModeTransitionOverlay(
-        transition: SettingsDesignModeTransition,
-    ): View {
-        val overlay = FrameLayout(this).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-            )
-            alpha = 0f
-            isClickable = true
-            isFocusable = true
-        }
-
-        transition.snapshotBitmap?.let { snapshot ->
-            overlay.addView(
-                ImageView(this).apply {
-                    layoutParams = FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                    )
-                    scaleType = ImageView.ScaleType.FIT_XY
-                    setImageBitmap(snapshot)
-                }
-            )
-        }
-
-        overlay.addView(
-            View(this).apply {
-                layoutParams = FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                )
-                setBackgroundColor(applyAlpha(transition.overlayColorArgb, 0.92f))
-            }
-        )
-
-        overlay.addView(
-            CircularProgressIndicator(this).apply {
-                layoutParams = FrameLayout.LayoutParams(dpToPx(64), dpToPx(64)).apply {
-                    gravity = Gravity.CENTER
-                }
-                isIndeterminate = true
-                setIndicatorColor(transition.indicatorColorArgb)
-                trackThickness = dpToPx(4)
-                trackColor = applyAlpha(transition.indicatorColorArgb, 0.16f)
-            }
-        )
-
-        return overlay
-    }
-
-    private fun dismissDesignModeTransitionOverlayAfterNextDraw(
-        contentRoot: ViewGroup,
-        overlay: View,
-        snapshotBitmap: Bitmap?,
-    ) {
-        contentRoot.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
-            override fun onPreDraw(): Boolean {
-                if (contentRoot.viewTreeObserver.isAlive) {
-                    contentRoot.viewTreeObserver.removeOnPreDrawListener(this)
-                }
-
-                contentRoot.post {
-                    contentRoot.post {
-                        overlay.animate()
-                            .alpha(0f)
-                            .setDuration(320L)
-                            .withEndAction {
-                                if (overlay.parent === contentRoot) {
-                                    contentRoot.removeView(overlay)
-                                }
-                                if (designModeTransitionOverlay === overlay) {
-                                    designModeTransitionOverlay = null
-                                }
-                                snapshotBitmap?.recycle()
-                                designModeTransitionInFlight = false
-                            }
-                            .start()
-                    }
-                }
-
-                return true
-            }
-        })
-        contentRoot.invalidate()
-    }
-
-    private fun dpToPx(dp: Int): Int =
-        (dp * resources.displayMetrics.density).toInt()
-
-    private fun applyAlpha(color: Int, alphaFraction: Float): Int {
-        val alpha = (255 * alphaFraction.coerceIn(0f, 1f)).toInt()
-        return (color and 0x00FFFFFF) or (alpha shl 24)
-    }
 
     private fun openCustomCalendarFilterDialog() {
         val allItems = GlobalUtils.customCalendarFilterList?.filterNotNull()?.distinct().orEmpty()

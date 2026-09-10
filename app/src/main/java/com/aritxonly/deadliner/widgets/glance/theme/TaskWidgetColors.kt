@@ -34,13 +34,20 @@ internal data class TaskWidgetColors(
         TaskWidgetStatus.NEAR -> nearRow
         TaskWidgetStatus.OVERDUE -> overdueRow
     }
+
+    /** Lightweight row background that does not duplicate bitmaps in RemoteCollectionItems. */
+    fun rowBackgroundColor(status: TaskWidgetStatus): Int =
+        (rowColors(status).base and 0x00FFFFFF) or (ROW_BACKGROUND_ALPHA shl 24)
+
+    private companion object {
+        const val ROW_BACKGROUND_ALPHA = 0xD9
+    }
 }
 
 internal data class TaskWidgetRowColors(
     val base: Int,
     val tint: Int,
     val highlight: Int,
-    val stroke: Int,
     val indicator: Int,
     val timeText: Int,
 )

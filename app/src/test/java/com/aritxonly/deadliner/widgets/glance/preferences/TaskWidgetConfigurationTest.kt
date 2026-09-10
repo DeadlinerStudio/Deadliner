@@ -12,6 +12,14 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35], application = Application::class)
 class TaskWidgetConfigurationTest {
     @Test
+    fun `new square widgets use 22dp corners and static list`() {
+        val value = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE)
+
+        assertEquals(22, value.cornerRadiusDp)
+        assertEquals(false, value.isScrollable)
+    }
+
+    @Test
     fun `square configuration clamps corner and combined custom margins`() {
         val value = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE).copy(
             cornerRadiusDp = 99,
@@ -23,22 +31,23 @@ class TaskWidgetConfigurationTest {
         assertEquals(32, value.cornerRadiusDp)
         assertEquals(28, value.topMarginDp())
         assertEquals(12, value.bottomMarginDp())
-        assertEquals(1, value.maxVisibleTasks())
     }
 
     @Test
-    fun `capsule rejects desktop preset and keeps a safe total margin`() {
+    fun `capsule rejects desktop preset and shares square adjustment limits`() {
         val value = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.CAPSULE).copy(
             cornerRadiusDp = 1,
             marginPreset = TaskWidgetPaddingPreset.Grid4x6,
-            customTopMarginDp = 8,
-            customBottomMarginDp = 8,
+            customTopMarginDp = 28,
+            customBottomMarginDp = 28,
+            isScrollable = true,
         ).sanitized(TaskWidgetKind.CAPSULE)
 
-        assertEquals(12, value.cornerRadiusDp)
+        assertEquals(8, value.cornerRadiusDp)
         assertEquals(TaskWidgetPaddingPreset.Custom, value.marginPreset)
-        assertEquals(8, value.topMarginDp())
-        assertEquals(4, value.bottomMarginDp())
+        assertEquals(28, value.topMarginDp())
+        assertEquals(12, value.bottomMarginDp())
+        assertEquals(false, value.isScrollable)
     }
 
     @Test
@@ -48,9 +57,11 @@ class TaskWidgetConfigurationTest {
         val store = TaskWidgetConfigurationStore.createForTest(preferences)
         val first = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE).copy(
             colorScheme = TaskWidgetColorScheme.PURPLE,
+            isScrollable = true,
         )
         val second = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE).copy(
             colorScheme = TaskWidgetColorScheme.GREEN,
+            isScrollable = true,
         )
 
         store.write(10, TaskWidgetKind.SQUARE, first)
@@ -59,6 +70,8 @@ class TaskWidgetConfigurationTest {
 
         assertEquals(TaskWidgetColorScheme.FOLLOW_APP, store.read(10, TaskWidgetKind.SQUARE).colorScheme)
         assertEquals(TaskWidgetColorScheme.GREEN, store.read(20, TaskWidgetKind.SQUARE).colorScheme)
+        assertEquals(false, store.read(10, TaskWidgetKind.SQUARE).isScrollable)
+        assertEquals(true, store.read(20, TaskWidgetKind.SQUARE).isScrollable)
     }
 
     @Test

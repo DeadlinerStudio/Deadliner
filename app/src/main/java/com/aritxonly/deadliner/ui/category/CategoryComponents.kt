@@ -12,48 +12,79 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
 import com.aritxonly.deadliner.ui.iconResource
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import top.yukonga.miuix.kmp.basic.Checkbox as MiuixCheckbox
 import top.yukonga.miuix.kmp.basic.RadioButton as MiuixRadioButton
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
-fun CategoryBadge(category: CategoryPresentation, modifier: Modifier = Modifier) {
+fun CategoryBadge(
+    category: CategoryPresentation,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+) {
     val color = CategoryPresentationRegistry.color(category.colorToken)
-    Surface(
-        modifier = modifier,
-        color = color.copy(alpha = 0.14f),
-        contentColor = color,
-        shape = MaterialTheme.shapes.small,
+    val isMiuix = true
+    val horizontalPadding = if (compact) 6.dp else 9.dp
+    val verticalPadding = if (compact) 0.dp else 5.dp
+    val iconSize = if (compact) 12.dp else 16.dp
+    Row(
+        modifier = modifier
+            .background(color.copy(alpha = 0.15f), CategoryBadgeShape)
+            .padding(horizontal = horizontalPadding, vertical = verticalPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 4.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Icon(
-                painter = iconResource(CategoryPresentationRegistry.icon(category.iconSemanticId)),
-                contentDescription = null,
-                modifier = Modifier.size(14.dp),
+        Icon(
+            painter = iconResource(CategoryPresentationRegistry.icon(category.iconSemanticId)),
+            contentDescription = null,
+            modifier = Modifier.size(iconSize),
+            tint = color,
+        )
+        if (compact) {
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.labelSmall,
+                color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            Text(category.name, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        } else if (isMiuix) {
+            MiuixText(
+                text = category.name,
+                style = MiuixTheme.textStyles.body2,
+                color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        } else {
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.bodyMedium,
+                color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -66,7 +97,7 @@ fun CategoryAssignmentField(
     modifier: Modifier = Modifier,
 ) {
     val category = categories.firstOrNull { it.uid == categoryUid }
-    val isMiuix = LocalAppDesignSystem.current == AppDesignSystem.MIUIX
+    val isMiuix = true
     val containerColor = if (isMiuix) {
         MiuixTheme.colorScheme.surfaceContainer
     } else {
@@ -84,9 +115,9 @@ fun CategoryAssignmentField(
         shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)),
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (category != null) CategoryBadge(category) else Text("未分类", style = MaterialTheme.typography.bodyLarge)
+            if (category != null) CategoryBadge(category) else Text(stringResource(R.string.category_uncategorized), style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.weight(1f))
-            Text("选择分类", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.category_select), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -96,17 +127,31 @@ fun CategoryPickerSheet(
     categories: List<CategoryPresentation>,
     selectedUid: String?,
     onSelected: (String?) -> Unit,
+    onManageCategories: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    var sheetVisible by remember { mutableStateOf(true) }
+    var manageAfterDismiss by remember { mutableStateOf(false) }
     MiuixBottomSheet(
-        show = true,
-        title = "选择分类",
-        onDismissRequest = onDismiss,
+        show = sheetVisible,
+        title = stringResource(R.string.category_select),
+        onDismissRequest = { sheetVisible = false },
+        onDismissFinished = {
+            onDismiss()
+            if (manageAfterDismiss) onManageCategories()
+        },
     ) {
         CategoryChoiceContent(
             categories = categories,
             selectedUid = selectedUid,
-            onSelected = { onSelected(it); onDismiss() },
+            onSelected = {
+                onSelected(it)
+                sheetVisible = false
+            },
+            onManageCategories = {
+                manageAfterDismiss = true
+                sheetVisible = false
+            },
         )
     }
 }
@@ -116,22 +161,39 @@ fun CategoryFilterSheet(
     categories: List<CategoryPresentation>,
     filter: CategoryFilter,
     onFilterChange: (CategoryFilter) -> Unit,
+    onManageCategories: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    var sheetVisible by remember { mutableStateOf(true) }
+    var manageAfterDismiss by remember { mutableStateOf(false) }
     val selected = (filter as? CategoryFilter.Selected)?.categoryUids.orEmpty()
     val includesUncategorized = (filter as? CategoryFilter.Selected)?.includesUncategorized == true
     fun update(categoryUids: Set<String> = selected, uncategorized: Boolean = includesUncategorized) {
         onFilterChange(CategoryFilterResolver.selected(categoryUids, uncategorized))
     }
     MiuixBottomSheet(
-        show = true,
-        title = "筛选分类",
-        onDismissRequest = onDismiss,
+        show = sheetVisible,
+        title = stringResource(R.string.category_filter),
+        onDismissRequest = { sheetVisible = false },
+        onDismissFinished = {
+            onDismiss()
+            if (manageAfterDismiss) onManageCategories()
+        },
     ) {
         Column(Modifier.fillMaxWidth().padding(bottom = 20.dp)) {
             CategorySheetRow(
-                title = "未分类",
-                leading = { Icon(iconResource(R.drawable.msr_flag_wght400), null) },
+                title = stringResource(R.string.category_uncategorized),
+                leading = {
+                    Icon(
+                        painter = iconResource(R.drawable.msr_flag_wght400),
+                        contentDescription = null,
+                        tint = if (includesUncategorized) {
+                            MiuixTheme.colorScheme.primary
+                        } else {
+                            MiuixTheme.colorScheme.onSurface
+                        },
+                    )
+                },
                 selected = includesUncategorized,
                 onClick = { update(uncategorized = !includesUncategorized) },
                 control = {
@@ -146,8 +208,8 @@ fun CategoryFilterSheet(
                     val checked = category.uid in selected
                     val toggle = { update(if (checked) selected - category.uid else selected + category.uid) }
                     CategorySheetRow(
-                        title = category.name,
-                        leading = { MiuixCategoryBadge(category) },
+                        title = null,
+                        leading = { CategoryBadge(category) },
                         selected = checked,
                         onClick = toggle,
                         control = {
@@ -159,6 +221,12 @@ fun CategoryFilterSheet(
                     )
                 }
             }
+            ManageCategoriesRow(
+                onClick = {
+                    manageAfterDismiss = true
+                    sheetVisible = false
+                },
+            )
         }
     }
 }
@@ -168,10 +236,11 @@ private fun CategoryChoiceContent(
     categories: List<CategoryPresentation>,
     selectedUid: String?,
     onSelected: (String?) -> Unit,
+    onManageCategories: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().padding(bottom = 20.dp)) {
         CategorySheetRow(
-            title = "未分类",
+            title = stringResource(R.string.category_uncategorized),
             selected = selectedUid == null,
             onClick = { onSelected(null) },
             control = {
@@ -184,8 +253,8 @@ private fun CategoryChoiceContent(
         LazyColumn(Modifier.heightIn(max = 420.dp)) {
             items(categories, key = CategoryPresentation::uid) { category ->
                 CategorySheetRow(
-                    title = category.name,
-                    leading = { MiuixCategoryBadge(category) },
+                    title = null,
+                    leading = { CategoryBadge(category) },
                     selected = selectedUid == category.uid,
                     onClick = { onSelected(category.uid) },
                     control = {
@@ -197,12 +266,34 @@ private fun CategoryChoiceContent(
                 )
             }
         }
+        ManageCategoriesRow(onClick = onManageCategories)
+    }
+}
+
+@Composable
+private fun ManageCategoriesRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            painter = iconResource(R.drawable.msr_edit_wght400),
+            contentDescription = null,
+            tint = MiuixTheme.colorScheme.primary,
+        )
+        MiuixText(
+            text = stringResource(R.string.category_manage),
+            color = MiuixTheme.colorScheme.primary,
+            style = MiuixTheme.textStyles.main,
+        )
     }
 }
 
 @Composable
 private fun CategorySheetRow(
-    title: String,
+    title: String?,
     selected: Boolean,
     onClick: () -> Unit,
     control: @Composable () -> Unit,
@@ -217,38 +308,18 @@ private fun CategorySheetRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         leading?.invoke()
-        MiuixText(
-            text = title,
-            modifier = Modifier.weight(1f),
-            color = if (selected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface,
-            style = MiuixTheme.textStyles.main,
-        )
+        if (title != null) {
+            MiuixText(
+                text = title,
+                modifier = Modifier.weight(1f),
+                color = if (selected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface,
+                style = MiuixTheme.textStyles.main,
+            )
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
         control()
     }
 }
 
-@Composable
-private fun MiuixCategoryBadge(category: CategoryPresentation) {
-    val color = CategoryPresentationRegistry.color(category.colorToken)
-    Row(
-        modifier = Modifier
-            .background(color.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Icon(
-            painter = iconResource(CategoryPresentationRegistry.icon(category.iconSemanticId)),
-            contentDescription = null,
-            modifier = Modifier.size(14.dp),
-            tint = color,
-        )
-        MiuixText(
-            text = category.name,
-            style = MiuixTheme.textStyles.body2,
-            color = color,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
+private val CategoryBadgeShape = RoundedCornerShape(12.dp)

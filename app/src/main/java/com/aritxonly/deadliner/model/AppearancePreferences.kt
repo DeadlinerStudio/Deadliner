@@ -15,8 +15,7 @@ enum class AppearanceColorSource(val key: String) {
 
 data class AppearancePreferences(
     val uiStyle: UiStyle = UiStyle.Simplified,
-    val designMode: AppearanceDesignMode = AppearanceDesignMode.Modern,
-    val themeStyle: AppThemeStyle = AppThemeStyle.Material3,
+    val backgroundColorStrategy: BackgroundColorStrategy = BackgroundColorStrategy.MiuixHyperOs,
     val colorSource: AppearanceColorSource = AppearanceColorSource.SystemDynamic,
     val seedColorHex: String? = null,
     val dynamicPaletteStyle: DynamicPaletteStyle = DynamicPaletteStyle.TonalSpot,
@@ -34,44 +33,19 @@ data class AppearancePreferences(
     val advancedMaterialBlurRadius: Float = AdvancedMaterialTuning.DefaultBlurRadius,
     val advancedMaterialFineTuning: AdvancedMaterialFineTuning = AdvancedMaterialFineTuning.Default,
     val modernHideDivider: Boolean = true,
-    val vividHideDivider: Boolean = false,
     val useSettingsHomepageColoredIcons: Boolean = true,
     val semanticGlowEnabled: Boolean = true,
     val appIconMode: AppIconMode = AppIconMode.Default,
 ) {
-    val supportsMiuixTheme: Boolean
+    val usesMiuixTheme: Boolean
         get() = true
 
-    val usesMiuixThemePreference: Boolean
-        get() = designMode == AppearanceDesignMode.Modern
-
-    val effectiveThemeStyle: AppThemeStyle
-        get() = if (!supportsMiuixTheme) {
-            AppThemeStyle.Material3
-        } else {
-            when (designMode) {
-                AppearanceDesignMode.Modern -> AppThemeStyle.Miuix
-                AppearanceDesignMode.Vivid -> AppThemeStyle.Material3
-            }
-        }
-
-    val usesMiuixTheme: Boolean
-        get() = effectiveThemeStyle == AppThemeStyle.Miuix
-
     val effectiveColorSource: AppearanceColorSource
-        get() = if (usesMiuixTheme || colorSource != AppearanceColorSource.Preset) {
-            colorSource
-        } else {
-            AppearanceColorSource.SystemDynamic
-        }
+        get() = colorSource
 
     val activeHideDivider: Boolean
-        get() = when (designMode) {
-            AppearanceDesignMode.Modern -> modernHideDivider
-            AppearanceDesignMode.Vivid -> vividHideDivider
-        }
+        get() = modernHideDivider
 
     val showsContrastingHomeFabOption: Boolean
-        get() = designMode == AppearanceDesignMode.Modern &&
-            effectiveColorSource == AppearanceColorSource.Preset
+        get() = effectiveColorSource == AppearanceColorSource.Preset
 }

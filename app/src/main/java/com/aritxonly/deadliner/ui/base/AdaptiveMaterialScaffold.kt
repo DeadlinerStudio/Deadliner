@@ -29,11 +29,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
@@ -77,8 +75,18 @@ fun AdaptiveMaterialScaffold(
     }
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
-    val designSystem = LocalAppDesignSystem.current
-    val backdrop = if (advancedMaterial.enabled) rememberLayerBackdrop() else null
+    val backdropCaptureColor = resolveBackdropCaptureColor(
+        containerColor = containerColor,
+        miuixSurfaceColor = MiuixTheme.colorScheme.surface,
+    )
+    val backdrop = if (advancedMaterial.enabled) {
+        rememberLayerBackdrop {
+            drawRect(backdropCaptureColor)
+            drawContent()
+        }
+    } else {
+        null
+    }
     var currentTopBarHeightPx by remember { mutableIntStateOf(0) }
     var maxTopBarHeightPx by remember { mutableIntStateOf(0) }
     val topBarHeight = with(density) {
@@ -88,10 +96,7 @@ fun AdaptiveMaterialScaffold(
             maxTopBarHeightPx.toDp()
         }
     }
-    val tintBaseColor = advancedMaterialTopBarTintColor ?: when (designSystem) {
-        AppDesignSystem.MATERIAL3 -> MaterialTheme.colorScheme.surfaceContainer
-        AppDesignSystem.MIUIX -> MiuixTheme.colorScheme.surface
-    }
+    val tintBaseColor = advancedMaterialTopBarTintColor ?: MiuixTheme.colorScheme.surface
     val surfaceTint = tintBaseColor.copy(alpha = advancedMaterial.topBarTintAlpha)
     val blurColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
     val hostedTopBar: @Composable () -> Unit = {
@@ -126,8 +131,7 @@ fun AdaptiveMaterialScaffold(
                 } else {
                     scaffoldModifier
                 }
-            }
-            .advancedMaterialDialogBlurHost(),
+            },
         topBar = {
             if (backdrop != null) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
@@ -177,6 +181,9 @@ fun AdaptiveMaterialScaffold(
         ) {
             if (backdrop != null) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
+                    // The recorder must contain page content only. Backdrop consumers such as
+                    // top/bottom bars are siblings below; recording an ancestor that contains
+                    // those consumers creates a cyclic RenderNode tree on Android HWUI.
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -249,4 +256,13 @@ fun AdaptiveMaterialScaffold(
         }
     }
 }
+}
+
+internal fun resolveBackdropCaptureColor(
+    containerColor: Color,
+    miuixSurfaceColor: Color,
+): Color = if (containerColor.alpha >= 0.999f) {
+    containerColor
+} else {
+    miuixSurfaceColor
 }

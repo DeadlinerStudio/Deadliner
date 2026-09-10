@@ -56,11 +56,9 @@ import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationAction
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import top.yukonga.miuix.kmp.basic.NavigationBar as MiuixNavigationBar
 import top.yukonga.miuix.kmp.basic.NavigationBarItem as MiuixNavigationBarItem
@@ -108,7 +106,6 @@ fun AdaptiveNavigationSuiteScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val designSystem = LocalAppDesignSystem.current
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(adaptiveInfo)
@@ -118,10 +115,9 @@ fun AdaptiveNavigationSuiteScaffold(
         WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND,
     )
     val shouldUseImmersiveExperience = useImmersiveExperience &&
-        designSystem == AppDesignSystem.MIUIX &&
         isCompactWidth &&
         navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
-    val observeTopBarScroll = useImmersiveExperience && designSystem == AppDesignSystem.MIUIX
+    val observeTopBarScroll = useImmersiveExperience
     val topBarScrollObserver = rememberTopBarMaterialScrollObserver(
         scrollKey = listOf(selectedKey, topBarMaterialScrollKey),
     )
@@ -180,7 +176,6 @@ fun AdaptiveNavigationSuiteScaffold(
                 items = items,
                 selectedKey = selectedKey,
                 onItemSelected = onItemSelected,
-                designSystem = designSystem,
                 backdrop = backdrop,
                 modifier = observedModifier,
                 topBar = hostedTopBar,
@@ -202,7 +197,6 @@ fun AdaptiveNavigationSuiteScaffold(
                 items = items,
                 selectedKey = selectedKey,
                 onItemSelected = onItemSelected,
-                designSystem = designSystem,
                 useHorizontalItems = navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium,
                 modifier = observedModifier,
                 topBar = hostedTopBar,
@@ -225,7 +219,6 @@ fun AdaptiveNavigationSuiteScaffold(
             items = items,
             selectedKey = selectedKey,
             onItemSelected = onItemSelected,
-            designSystem = designSystem,
             advancedMaterial = advancedMaterial,
             useHorizontalItems = navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium,
             backdrop = backdrop,
@@ -244,7 +237,6 @@ private fun LegacyCompactNavigationScaffold(
     items: List<AdaptiveNavItem>,
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
-    designSystem: AppDesignSystem,
     useHorizontalItems: Boolean,
     modifier: Modifier,
     topBar: @Composable () -> Unit,
@@ -259,31 +251,21 @@ private fun LegacyCompactNavigationScaffold(
         snackbarHost = snackbarHost,
         floatingActionButton = floatingActionButton,
         bottomBar = {
-            when (designSystem) {
-                AppDesignSystem.MATERIAL3 -> Material3CompactBarContent(
-                    items = items,
-                    selectedKey = selectedKey,
-                    onItemSelected = onItemSelected,
-                    useHorizontalItems = useHorizontalItems,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                )
-
-                AppDesignSystem.MIUIX -> MiuixNavigationBar(
-                    color = MiuixTheme.colorScheme.surface,
-                    showDivider = false,
-                ) {
-                    items.forEach { item ->
-                        val selected = selectedKey == item.key
-                        MiuixNavigationBarItem(
-                            selected = selected,
-                            onClick = { onItemSelected(item) },
-                            icon = ImageVector.vectorResource(
-                                if (selected) item.selectedIconResource else item.unselectedIconResource,
-                            ),
-                            label = item.label,
-                            enabled = item.enabled,
-                        )
-                    }
+            MiuixNavigationBar(
+                color = MiuixTheme.colorScheme.surface,
+                showDivider = false,
+            ) {
+                items.forEach { item ->
+                    val selected = selectedKey == item.key
+                    MiuixNavigationBarItem(
+                        selected = selected,
+                        onClick = { onItemSelected(item) },
+                        icon = ImageVector.vectorResource(
+                            if (selected) item.selectedIconResource else item.unselectedIconResource,
+                        ),
+                        label = item.label,
+                        enabled = item.enabled,
+                    )
                 }
             }
         },
@@ -307,7 +289,6 @@ private fun LegacyWideNavigationScaffold(
     items: List<AdaptiveNavItem>,
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
-    designSystem: AppDesignSystem,
     backdrop: LayerBackdrop?,
     modifier: Modifier,
     topBar: @Composable () -> Unit,
@@ -325,46 +306,21 @@ private fun LegacyWideNavigationScaffold(
                 .statusBarsPadding()
                 .padding(top = 48.dp),
         ) {
-            when (designSystem) {
-                AppDesignSystem.MATERIAL3 -> NavigationRail(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ) {
-                    items.forEach { item ->
-                        val selected = selectedKey == item.key
-                        NavigationRailItem(
-                            selected = selected,
-                            enabled = item.enabled,
-                            onClick = { onItemSelected(item) },
-                            icon = {
-                                AnimatedNavIcon(
-                                    selected = selected,
-                                    selectedIcon = item.selectedIcon,
-                                    unselectedIcon = item.unselectedIcon,
-                                    contentDescription = item.label,
-                                )
-                            },
-                            label = { Text(item.label) },
-                            colors = material3RailItemColors(),
-                        )
-                    }
-                }
-
-                AppDesignSystem.MIUIX -> MiuixNavigationRail(
-                    color = MiuixTheme.colorScheme.surface,
-                    showDivider = false,
-                ) {
-                    items.forEach { item ->
-                        val selected = selectedKey == item.key
-                        MiuixNavigationRailItem(
-                            selected = selected,
-                            onClick = { onItemSelected(item) },
-                            icon = ImageVector.vectorResource(
-                                if (selected) item.selectedIconResource else item.unselectedIconResource,
-                            ),
-                            label = item.label,
-                            enabled = item.enabled,
-                        )
-                    }
+            MiuixNavigationRail(
+                color = MiuixTheme.colorScheme.surface,
+                showDivider = false,
+            ) {
+                items.forEach { item ->
+                    val selected = selectedKey == item.key
+                    MiuixNavigationRailItem(
+                        selected = selected,
+                        onClick = { onItemSelected(item) },
+                        icon = ImageVector.vectorResource(
+                            if (selected) item.selectedIconResource else item.unselectedIconResource,
+                        ),
+                        label = item.label,
+                        enabled = item.enabled,
+                    )
                 }
             }
         }
@@ -427,7 +383,6 @@ private fun AdvancedCompactNavigationScaffold(
     items: List<AdaptiveNavItem>,
     selectedKey: String,
     onItemSelected: (AdaptiveNavItem) -> Unit,
-    designSystem: AppDesignSystem,
     advancedMaterial: AdvancedMaterialSpec,
     useHorizontalItems: Boolean,
     backdrop: LayerBackdrop,
@@ -476,26 +431,14 @@ private fun AdvancedCompactNavigationScaffold(
                     topBar()
                 }
             }
-            when (designSystem) {
-                AppDesignSystem.MATERIAL3 -> Material3BottomNavigationBar(
-                    items = items,
-                    selectedKey = selectedKey,
-                    onItemSelected = onItemSelected,
-                    advancedMaterial = advancedMaterial,
-                    useHorizontalItems = useHorizontalItems,
-                    backdrop = backdrop,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-
-                AppDesignSystem.MIUIX -> MiuixBottomNavigationBar(
-                    items = items,
-                    selectedKey = selectedKey,
-                    onItemSelected = onItemSelected,
-                    advancedMaterial = advancedMaterial,
-                    backdrop = backdrop,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-            }
+            MiuixBottomNavigationBar(
+                items = items,
+                selectedKey = selectedKey,
+                onItemSelected = onItemSelected,
+                advancedMaterial = advancedMaterial,
+                backdrop = backdrop,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
     }
 }

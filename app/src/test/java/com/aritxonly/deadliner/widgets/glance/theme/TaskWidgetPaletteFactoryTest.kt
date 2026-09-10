@@ -2,8 +2,8 @@ package com.aritxonly.deadliner.widgets.glance.theme
 
 import android.app.Application
 import android.graphics.Color
-import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.AppearancePreferences
+import com.aritxonly.deadliner.model.BackgroundColorStrategy
 import com.aritxonly.deadliner.model.ModernColorPalette
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetVisualState
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetColorScheme
@@ -18,10 +18,9 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35], application = Application::class)
 class TaskWidgetPaletteFactoryTest {
     @Test
-    fun `modern mode uses selected neutral palette and current accent`() {
+    fun `miuix strategy uses selected neutral palette and current accent`() {
         val colors = createColors(
             appearance = AppearancePreferences(
-                designMode = AppearanceDesignMode.Modern,
                 modernColorPalette = ModernColorPalette.Honor,
                 seedColorHex = "#3366FF",
             ),
@@ -35,7 +34,6 @@ class TaskWidgetPaletteFactoryTest {
     fun `device palette strategy overrides stored modern palette`() {
         val colors = createColors(
             appearance = AppearancePreferences(
-                designMode = AppearanceDesignMode.Modern,
                 modernColorPalette = ModernColorPalette.Honor,
                 modernUseDevicePaletteStrategy = true,
             ),
@@ -48,7 +46,6 @@ class TaskWidgetPaletteFactoryTest {
     @Test
     fun `visual state changes tint and semantic badge color`() {
         val appearance = AppearancePreferences(
-            designMode = AppearanceDesignMode.Modern,
             modernColorPalette = ModernColorPalette.HyperOs,
             seedColorHex = "#6750A4",
         )
@@ -100,9 +97,9 @@ class TaskWidgetPaletteFactoryTest {
     }
 
     @Test
-    fun `vivid mode and night mode produce distinct theme surfaces`() {
+    fun `material monet strategy and night mode produce distinct theme surfaces`() {
         val appearance = AppearancePreferences(
-            designMode = AppearanceDesignMode.Vivid,
+            backgroundColorStrategy = BackgroundColorStrategy.MaterialMonet,
             seedColorHex = "6750A4",
         )
 

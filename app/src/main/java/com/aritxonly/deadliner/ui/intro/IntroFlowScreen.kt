@@ -61,7 +61,6 @@ import com.aritxonly.deadliner.intro.IntroGuideSceneConfig
 import com.aritxonly.deadliner.intro.IntroGuideScenes
 import com.aritxonly.deadliner.intro.IntroPageType
 import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.model.UiStyle
 import com.google.android.material.color.MaterialColors
@@ -85,8 +84,6 @@ fun IntroFlowScreen(
     )
     val scope = rememberCoroutineScope()
     var celebrationTick by remember { mutableIntStateOf(0) }
-    var pendingDesignMode by remember { mutableStateOf<AppearanceDesignMode?>(null) }
-    var designModeTransitionVisible by remember { mutableStateOf(false) }
 
     val currentPage = pagerState.currentPage.coerceIn(0, pages.lastIndex)
     val currentPageType = pages[currentPage]
@@ -119,16 +116,6 @@ fun IntroFlowScreen(
         }
     }
 
-    LaunchedEffect(pendingDesignMode) {
-        val targetMode = pendingDesignMode ?: return@LaunchedEffect
-        designModeTransitionVisible = true
-        delay(120)
-        GlobalUtils.designMode = targetMode
-        delay(260)
-        designModeTransitionVisible = false
-        delay(220)
-        pendingDesignMode = null
-    }
 
     Box(
         modifier = Modifier
@@ -143,13 +130,7 @@ fun IntroFlowScreen(
             when (val pageType = pages[page]) {
                 IntroPageType.Cover -> IntroCoverPage()
                 IntroPageType.Permissions -> PermissionsScreen()
-                IntroPageType.Design -> DesignIntroScreen(
-                    onRequestDesignModeChange = { mode ->
-                        if (mode != appearance.designMode && pendingDesignMode == null) {
-                            pendingDesignMode = mode
-                        }
-                    }
-                )
+                IntroPageType.Design -> DesignIntroScreen()
                 IntroPageType.Color -> ColorIntroScreen()
                 IntroPageType.AdvancedMaterial -> AdvancedMaterialIntroScreen()
                 IntroPageType.UiStyleChoice -> UiModeScreen()
@@ -212,24 +193,6 @@ fun IntroFlowScreen(
             modifier = Modifier.fillMaxSize()
         )
 
-        AnimatedVisibility(
-            visible = designModeTransitionVisible,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                )
-            }
-        }
     }
 }
 

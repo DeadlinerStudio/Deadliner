@@ -136,6 +136,7 @@ fun DeadlineDetailScreen(
     onToggleStar: (Boolean) -> Unit,
     categories: List<CategoryPresentation>,
     onSetCategory: (String?) -> Unit,
+    onManageCategories: () -> Unit,
     onApplyTaskAction: (TaskAction) -> Unit,
     onDelete: () -> Unit,
     onAddSubtask: (String) -> Unit,
@@ -430,6 +431,7 @@ fun DeadlineDetailScreen(
             categories = categories,
             selectedUid = deadline.categoryUid,
             onSelected = onSetCategory,
+            onManageCategories = onManageCategories,
             onDismiss = { showCategoryPicker = false },
         )
     }

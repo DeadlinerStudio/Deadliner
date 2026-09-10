@@ -3,6 +3,7 @@ package com.aritxonly.deadliner.widgets.glance.data
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetItem
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetSnapshot
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetStatus
+import com.aritxonly.deadliner.model.category.CategoryColorResolver
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -57,12 +58,14 @@ internal class TaskWidgetRepository(
             nearCount = nearCount,
             overdueCount = overdueCount,
             summary = summary,
-            items = tasks.take(MAX_VISIBLE_TASKS).map { parsed ->
+            items = tasks.map { parsed ->
                 val remaining = parsed.dueAt?.let { Duration.between(now, it) }
                 TaskWidgetItem(
+                    stableId = parsed.record.id.toStableWidgetId(),
                     title = parsed.record.title,
                     timeDescription = remaining?.format(strings) ?: strings.unscheduled(),
                     status = statuses.getValue(parsed),
+                    categoryColorArgb = parsed.record.categoryColorHex?.let(CategoryColorResolver::argb),
                 )
             },
         )
@@ -94,13 +97,23 @@ internal class TaskWidgetRepository(
         }
     }
 
+    private fun String.toStableWidgetId(): Long {
+        var hash = FNV_OFFSET_BASIS
+        forEach { character ->
+            hash = (hash xor character.code.toLong()) * FNV_PRIME
+        }
+        return (hash and Long.MAX_VALUE).coerceAtLeast(MIN_GLANCE_ITEM_ID)
+    }
+
     private data class ParsedTask(
         val record: TaskWidgetTaskRecord,
         val dueAt: LocalDateTime?,
     )
 
     private companion object {
-        const val MAX_VISIBLE_TASKS = 3
+        const val FNV_OFFSET_BASIS = -3750763034362895579L
+        const val FNV_PRIME = 1099511628211L
+        const val MIN_GLANCE_ITEM_ID = 1L
         const val MINUTES_PER_DAY = 24L * 60L
         val NEAR_WINDOW: Duration = Duration.ofHours(24)
     }

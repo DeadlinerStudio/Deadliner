@@ -2,72 +2,44 @@ package com.aritxonly.deadliner.widgets.glance.ui
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.DpSize
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
-import androidx.glance.action.actionStartActivity
-import androidx.glance.action.clickable
+import androidx.glance.LocalContext
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.appWidgetBackground
-import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
-import androidx.glance.background
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import com.aritxonly.deadliner.LauncherActivity
-import com.aritxonly.deadliner.widgets.glance.data.AndroidTaskWidgetStrings
-import com.aritxonly.deadliner.widgets.glance.data.KmpTaskWidgetDataSource
-import com.aritxonly.deadliner.widgets.glance.data.TaskWidgetRepository
-import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetStatus
+import com.aritxonly.deadliner.widgets.glance.data.TaskWidgetSnapshotLoader
+import com.aritxonly.deadliner.widgets.glance.interaction.TaskWidgetActions
+import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetRenderStateSource
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetSnapshot
-import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfiguration
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationStore
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetBackgroundRenderer
-import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetColors
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetThemeResolver
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class CompactTaskGlanceWidget : GlanceAppWidget() {
-    override val sizeMode: SizeMode = SizeMode.Responsive(
-        setOf(DpSize(150.dp, 150.dp))
-    )
+    override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val snapshot = withContext(Dispatchers.IO) {
-            TaskWidgetRepository(KmpTaskWidgetDataSource()).load(AndroidTaskWidgetStrings(context))
-        }
+        val snapshot = TaskWidgetSnapshotLoader.load(context)
+        TaskWidgetRenderStateSource.store.publish(snapshot)
         val appWidgetId = (id as AppWidgetId).appWidgetId
-        val configuration = TaskWidgetConfigurationStore.from(context).read(
-            appWidgetId = appWidgetId,
-            kind = TaskWidgetKind.SQUARE,
-        )
-        val colors = TaskWidgetThemeResolver.resolve(
-            context = context,
-            visualState = snapshot.visualState,
-            widgetColorScheme = configuration.colorScheme,
-        )
-        val rowBackgrounds = TaskWidgetRowBackgrounds(
-            normal = ImageProvider(TaskWidgetBackgroundRenderer.renderRow(colors, TaskWidgetStatus.NORMAL)),
-            near = ImageProvider(TaskWidgetBackgroundRenderer.renderRow(colors, TaskWidgetStatus.NEAR)),
-            overdue = ImageProvider(TaskWidgetBackgroundRenderer.renderRow(colors, TaskWidgetStatus.OVERDUE)),
-        )
         provideContent {
             CompactTaskWidgetContent(
                 snapshot = snapshot,
-                colors = colors,
-                background = ImageProvider(TaskWidgetBackgroundRenderer.renderSquare(colors)),
-                rowBackgrounds = rowBackgrounds,
-                configuration = configuration,
+                appWidgetId = appWidgetId,
             )
         }
     }
@@ -76,11 +48,30 @@ class CompactTaskGlanceWidget : GlanceAppWidget() {
 @Composable
 private fun CompactTaskWidgetContent(
     snapshot: TaskWidgetSnapshot,
-    colors: TaskWidgetColors,
-    background: ImageProvider,
-    rowBackgrounds: TaskWidgetRowBackgrounds,
-    configuration: TaskWidgetConfiguration,
+    appWidgetId: Int,
 ) {
+    // update() does not restart provideGlance while its composition is active. Observe the
+    // published render state so database and per-instance configuration changes are immediate.
+    val renderState by TaskWidgetRenderStateSource.store.state.collectAsState()
+    val currentSnapshot = renderState.snapshot ?: snapshot
+    val context = LocalContext.current
+    val configuration = remember(renderState.revision, appWidgetId) {
+        TaskWidgetConfigurationStore.from(context).read(
+            appWidgetId = appWidgetId,
+            kind = TaskWidgetKind.SQUARE,
+        )
+    }
+    val colors = TaskWidgetThemeResolver.resolve(
+        context = context,
+        visualState = currentSnapshot.visualState,
+        widgetColorScheme = configuration.colorScheme,
+    )
+    val background = remember(colors) {
+        ImageProvider(TaskWidgetBackgroundRenderer.renderSquare(colors))
+    }
+    val openAppAction = remember(appWidgetId) {
+        TaskWidgetActions.openAppAction(context, appWidgetId)
+    }
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -89,32 +80,35 @@ private fun CompactTaskWidgetContent(
                 bottom = configuration.bottomMarginDp().dp,
             ),
     ) {
-        Box(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .background(imageProvider = background)
-                .cornerRadius(configuration.cornerRadiusDp.dp)
-                .appWidgetBackground()
-                .clickable(actionStartActivity<LauncherActivity>()),
+        TaskWidgetLayeredCard(
+            background = background,
+            backgroundAlpha = TaskWidgetLayoutMetrics.CARD_BACKGROUND_ALPHA,
+            cornerRadiusDp = configuration.cornerRadiusDp,
+            openAppAction = openAppAction,
         ) {
             Column(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .padding(10.dp),
+                    .padding(TaskWidgetLayoutMetrics.CARD_CONTENT_PADDING_DP.dp),
             ) {
-                TaskWidgetHeader(snapshot = snapshot, colors = colors)
-                Spacer(modifier = GlanceModifier.height(7.dp))
+                TaskWidgetHeader(snapshot = currentSnapshot, colors = colors)
+                Spacer(modifier = GlanceModifier.height(TaskWidgetLayoutMetrics.HEADER_GAP_DP.dp))
 
-                if (snapshot.items.isEmpty()) {
-                    TaskWidgetEmptyState(colors)
+                if (currentSnapshot.items.isEmpty()) {
+                    TaskWidgetEmptyState(
+                        colors = colors,
+                        modifier = GlanceModifier.defaultWeight(),
+                    )
+                } else if (configuration.isScrollable) {
+                    ScrollableCompactTaskList(
+                        colors = colors,
+                        appWidgetId = appWidgetId,
+                    )
                 } else {
-                    val visibleItems = snapshot.items.take(configuration.maxVisibleTasks())
-                    visibleItems.forEachIndexed { index, item ->
-                        TaskWidgetItemRow(item, colors, rowBackgrounds.forStatus(item.status))
-                        if (index != visibleItems.lastIndex) {
-                            Spacer(modifier = GlanceModifier.height(5.dp))
-                        }
-                    }
+                    StaticCompactTaskList(
+                        snapshot = currentSnapshot,
+                        colors = colors,
+                    )
                 }
             }
         }

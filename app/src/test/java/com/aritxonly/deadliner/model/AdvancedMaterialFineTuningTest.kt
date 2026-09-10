@@ -13,6 +13,10 @@ class AdvancedMaterialFineTuningTest {
         )
         assertEquals(1.05f, AdvancedMaterialFineTuning.Default.saturationMultiplier, 0.0001f)
         assertEquals(0.095f, AdvancedMaterialFineTuning.Default.noiseCoefficient, 0.0001f)
+        assertEquals(0.65f, AdvancedMaterialFineTuning.Default.dialogBackgroundAlpha, 0.0001f)
+        assertEquals(80f, AdvancedMaterialFineTuning.Default.dialogBlurRadiusDp, 0.0001f)
+        assertEquals(0.70f, AdvancedMaterialFineTuning.Default.bottomSheetBackgroundAlpha, 0.0001f)
+        assertEquals(80f, AdvancedMaterialFineTuning.Default.bottomSheetBlurRadiusDp, 0.0001f)
         assertEquals(0.25f, AdvancedMaterialFineTuning.Default.glassBlurRadiusMultiplier, 0.0001f)
         assertEquals(0.60f, AdvancedMaterialFineTuning.Default.refractionDepthEffect, 0.0001f)
         assertEquals(0.95f, AdvancedMaterialFineTuning.Default.edgeHighlightAlpha, 0.0001f)
@@ -28,6 +32,10 @@ class AdvancedMaterialFineTuningTest {
             noiseCoefficient = 2f,
             brightness = -2f,
             contrast = 4f,
+            dialogBackgroundAlpha = Float.NaN,
+            dialogBlurRadiusDp = -4f,
+            bottomSheetBackgroundAlpha = 4f,
+            bottomSheetBlurRadiusDp = Float.POSITIVE_INFINITY,
             glassBlurRadiusMultiplier = 0f,
             glassTintLightGray = 2f,
             glassTintDarkGray = -1f,
@@ -45,6 +53,10 @@ class AdvancedMaterialFineTuningTest {
         assertEquals(0.20f, normalized.noiseCoefficient, 0.0001f)
         assertEquals(-0.20f, normalized.brightness, 0.0001f)
         assertEquals(1.25f, normalized.contrast, 0.0001f)
+        assertEquals(0.65f, normalized.dialogBackgroundAlpha, 0.0001f)
+        assertEquals(0f, normalized.dialogBlurRadiusDp, 0.0001f)
+        assertEquals(0.95f, normalized.bottomSheetBackgroundAlpha, 0.0001f)
+        assertEquals(80f, normalized.bottomSheetBlurRadiusDp, 0.0001f)
         assertEquals(0.10f, normalized.glassBlurRadiusMultiplier, 0.0001f)
         assertEquals(1f, normalized.glassTintLightGray, 0.0001f)
         assertEquals(0f, normalized.glassTintDarkGray, 0.0001f)

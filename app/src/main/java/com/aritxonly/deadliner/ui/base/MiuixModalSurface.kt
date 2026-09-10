@@ -9,6 +9,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.aritxonly.deadliner.model.MiuixModalKind
+import com.aritxonly.deadliner.model.miuixModalMaterial
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
 import com.aritxonly.deadliner.ui.material.glass.GlassMaterialRecipe
 import com.aritxonly.deadliner.ui.material.glass.GlassTintStyle
@@ -20,8 +22,8 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.BlurDefaults
 import top.yukonga.miuix.kmp.blur.textureBlur
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Immutable
 data class MiuixModalSurface(
@@ -37,6 +39,7 @@ data class MiuixModalSurface(
  */
 @Composable
 fun rememberMiuixModalSurface(
+    kind: MiuixModalKind,
     shape: Shape,
     recipe: GlassMaterialRecipe,
 ): MiuixModalSurface {
@@ -46,6 +49,7 @@ fun rememberMiuixModalSurface(
     val immersive = LocalImmersiveExperienceEnabled.current
     val container = MiuixTheme.colorScheme.surfaceContainer
     val isDark = MiuixTheme.colorScheme.background.luminance() < 0.5f
+    val modalMaterial = advancedMaterial.fineTuning.miuixModalMaterial(kind)
 
     if (!advancedMaterial.enabled) {
         return MiuixModalSurface(Modifier, container)
@@ -55,7 +59,12 @@ fun rememberMiuixModalSurface(
         if (backdrop == null) {
             return MiuixModalSurface(Modifier, container)
         }
-        val tint = advancedMaterial.fineTuning.softGlassTintColor(isDark)
+        val usesAdvancedDialogBase = kind == MiuixModalKind.Dialog
+        val tint = if (usesAdvancedDialogBase) {
+            container
+        } else {
+            advancedMaterial.fineTuning.softGlassTintColor(isDark)
+        }
         return MiuixModalSurface(
             modifier = Modifier.deadlinerGlassMaterial(
                 advancedMaterial = advancedMaterial,
@@ -65,6 +74,8 @@ fun rememberMiuixModalSurface(
                 tintStyle = GlassTintStyle.Neutral,
                 isDark = isDark,
                 recipe = recipe,
+                blurRadiusOverride = modalMaterial.blurRadiusDp,
+                tintAlphaOverride = modalMaterial.backgroundAlpha,
             ),
             backgroundColor = Color.Transparent,
         )
@@ -72,12 +83,16 @@ fun rememberMiuixModalSurface(
 
     if (backdrop != null) {
         val colors = BlurDefaults.blurColors(
-            blendColors = listOf(BlendColorEntry(container.copy(alpha = 0.84f))),
+            blendColors = listOf(
+                BlendColorEntry(container.copy(alpha = modalMaterial.backgroundAlpha)),
+            ),
         )
         return MiuixModalSurface(
             modifier = Modifier.textureBlur(
                 backdrop = backdrop,
                 shape = shape,
+                blurRadius = modalMaterial.blurRadiusDp,
+                noiseCoefficient = advancedMaterial.noiseCoefficient,
                 colors = colors,
             ),
             backgroundColor = Color.Transparent,
@@ -101,8 +116,11 @@ fun MiuixDialog(
     val shape = RoundedCornerShape(DeadlinerMiuixDefaults.DialogCornerRadius)
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val surface = rememberMiuixModalSurface(
+        kind = MiuixModalKind.Dialog,
         shape = shape,
-        recipe = DeadlinerGlassRecipes.dialog(advancedMaterial.fineTuning),
+        recipe = DeadlinerGlassRecipes.immersiveDialogAdvancedHighlight(
+            advancedMaterial.fineTuning,
+        ),
     )
 
     OverlayDialog(

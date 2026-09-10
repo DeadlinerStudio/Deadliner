@@ -2,8 +2,8 @@ package com.aritxonly.deadliner.widgets.glance.theme
 
 import android.graphics.Color
 import androidx.core.graphics.ColorUtils
-import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.AppearancePreferences
+import com.aritxonly.deadliner.model.BackgroundColorStrategy
 import com.aritxonly.deadliner.model.ModernColorPalette
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetVisualState
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetColorScheme
@@ -23,8 +23,8 @@ internal object TaskWidgetPaletteFactory {
             ?: appAccent
             ?: parseSeedColor(appearance.seedColorHex)
             ?: systemAccent
-        val neutrals = customColors?.let { customNeutrals(it.background, isDark) } ?: when (appearance.designMode) {
-            AppearanceDesignMode.Modern -> modernNeutrals(
+        val neutrals = customColors?.let { customNeutrals(it.background, isDark) } ?: when (appearance.backgroundColorStrategy) {
+            BackgroundColorStrategy.MiuixHyperOs -> modernNeutrals(
                 palette = if (appearance.modernUseDevicePaletteStrategy) {
                     devicePalette
                 } else {
@@ -33,14 +33,14 @@ internal object TaskWidgetPaletteFactory {
                 isDark = isDark,
             )
 
-            AppearanceDesignMode.Vivid -> vividNeutrals(accent = accent, isDark = isDark)
+            BackgroundColorStrategy.MaterialMonet -> monetNeutrals(accent = accent, isDark = isDark)
         }
         return createColors(
             neutrals = neutrals,
             accent = accent,
             isDark = isDark,
             visualState = visualState,
-            vivid = appearance.designMode == AppearanceDesignMode.Vivid,
+            vivid = appearance.backgroundColorStrategy == BackgroundColorStrategy.MaterialMonet,
         )
     }
 
@@ -70,7 +70,6 @@ internal object TaskWidgetPaletteFactory {
         }
         val normalBase = blend(neutrals.surface, neutrals.container, if (isDark) 0.84f else 0.92f)
         val normalHighlight = withAlpha(Color.WHITE, if (isDark) 0.03f else 0.42f)
-        val normalStroke = withAlpha(Color.WHITE, if (isDark) 0.08f else 0.74f)
 
         return TaskWidgetColors(
             isDark = isDark,
@@ -91,7 +90,6 @@ internal object TaskWidgetPaletteFactory {
                 base = normalBase,
                 tint = withAlpha(accent, if (isDark) 0.018f else 0.03f),
                 highlight = normalHighlight,
-                stroke = normalStroke,
                 indicator = accent,
                 timeText = neutrals.textSecondary,
             ),
@@ -119,7 +117,6 @@ internal object TaskWidgetPaletteFactory {
         base = if (isDark) blend(surface, statusColor, 0.10f) else normalBase,
         tint = withAlpha(statusColor, if (isDark) 0.07f else 0.08f),
         highlight = withAlpha(Color.WHITE, if (isDark) 0.04f else 0.24f),
-        stroke = withAlpha(statusColor, if (isDark) 0.28f else 0.20f),
         indicator = statusColor,
         timeText = statusColor,
     )
@@ -151,7 +148,7 @@ internal object TaskWidgetPaletteFactory {
         }
     }
 
-    private fun vividNeutrals(accent: Int, isDark: Boolean): WidgetNeutrals {
+    private fun monetNeutrals(accent: Int, isDark: Boolean): WidgetNeutrals {
         val surface = if (isDark) 0xFF08090C.toInt() else Color.WHITE
         return WidgetNeutrals(
             surface = blend(surface, accent, if (isDark) 0.06f else 0.025f),

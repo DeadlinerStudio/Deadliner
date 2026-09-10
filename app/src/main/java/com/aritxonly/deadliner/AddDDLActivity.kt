@@ -3,13 +3,8 @@ package com.aritxonly.deadliner
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.RenderEffect
-import android.graphics.Shader
-import android.os.Build
 import com.aritxonly.deadliner.logging.AppLog
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,9 +27,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,10 +36,8 @@ import androidx.compose.material3.Text
 import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -76,12 +65,10 @@ import com.aritxonly.deadliner.ui.base.Checkbox
 import com.aritxonly.deadliner.ui.base.OutlinedTextField
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.base.RadioButton
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
-import com.aritxonly.deadliner.ui.base.advancedMaterialDialogBlurHost
 import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.editor.DeadlineAiQuickAddCard
 import com.aritxonly.deadliner.ui.editor.DeadlineBottomActions
@@ -93,7 +80,7 @@ import com.aritxonly.deadliner.ui.editor.TaskEditorDraft
 import com.aritxonly.deadliner.ui.editor.TaskEditorSection
 import com.aritxonly.deadliner.ui.category.CategoryAssignmentField
 import com.aritxonly.deadliner.ui.category.CategoryPickerSheet
-import com.aritxonly.deadliner.ui.category.toPresentation
+import com.aritxonly.deadliner.ui.category.rememberActiveCategories
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
@@ -101,8 +88,6 @@ import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.deadliner.domain.habit.HabitGoalType
 import com.deadliner.domain.habit.HabitPeriod
 import com.deadliner.domain.habit.HabitReminder
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -124,7 +109,6 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     private var autoRunAiOnAppear by mutableStateOf(false)
     private var aiAutoTriggered by mutableStateOf(false)
     private var showDonatePrompt by mutableStateOf(false)
-    private var showPickerDialogBlur by mutableStateOf(false)
     private var showCalendarEmptyDialog by mutableStateOf(false)
     private var showCalendarImportDialog by mutableStateOf(false)
     private var calendarImportEvents by mutableStateOf<List<CalendarEvent>>(emptyList())
@@ -134,7 +118,6 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     private var showCategoryPicker by mutableStateOf(false)
     private var calendarAccountOptions by mutableStateOf<List<String>>(emptyList())
     private var selectedCalendarAccounts by mutableStateOf<Set<String>>(emptySet())
-    private var pendingPickerLaunchJob: Job? = null
 
     private var calendarEventId: Long? = null
     private var pendingCalendarAction: PendingCalendarAction? = null
@@ -345,7 +328,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         val pageSurfaceColor = MaterialTheme.colorScheme.surface
         val advancedMaterial = LocalAdvancedMaterialSpec.current
         val layoutDirection = LocalLayoutDirection.current
-        val categories = remember { KmpV6Runtime.database.categories.list().filterNot { it.isDeleted }.sortedBy { it.sortOrder }.map { it.toPresentation() } }
+        val categories = rememberActiveCategories()
         val filteredCalendarEvents = calendarImportEvents.filter { event ->
             val query = calendarImportSearchQuery.trim()
             if (query.isBlank()) {
@@ -362,18 +345,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         }
 
         ProvideAdvancedMaterialDialogBlurHost {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .advancedMaterialDialogBlurHost()
-            ) {
-                if (showPickerDialogBlur) {
-                    RegisterAdvancedMaterialDialogBlur()
-                }
-                PickerWindowBlurEffect(
-                    active = showPickerDialogBlur,
-                    surfaceColor = MaterialTheme.colorScheme.surface
-                )
+            Box(modifier = Modifier.fillMaxSize()) {
 
                 val taskEditorListState = rememberLazyListState()
                 val habitEditorListState = rememberLazyListState()
@@ -500,10 +472,9 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                     onDraftChange = { taskDraft = it },
                                     formatDateTime = ::formatLocalDateTime,
                                     onPickStartTime = {
-                                        launchPickerWithBlur {
+                                        launchPicker {
                                             GlobalUtils.showDateTimePicker(
                                                 supportFragmentManager,
-                                                onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
                                             ) { selected ->
                                                 taskDraft = taskDraft.copy(
                                                     startTime = selected,
@@ -517,7 +488,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                         }
                                     },
                                     onPickEndTime = {
-                                        launchPickerWithBlur {
+                                        launchPicker {
                                             GlobalUtils.showDateTimePicker(
                                                 supportFragmentManager,
                                                 taskDraft.startTime,
@@ -528,7 +499,6 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                                         Toast.LENGTH_SHORT
                                                     ).show()
                                                 },
-                                                onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
                                             ) { selected ->
                                                 taskDraft = taskDraft.copy(endTime = selected)
                                             }
@@ -544,11 +514,10 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                     summaryText = buildHabitSummary(),
                                     reminderTimeLabel = habitDraft.reminderTime.format(REMINDER_TIME_FORMATTER),
                                     onPickReminderTime = {
-                                        launchPickerWithBlur {
+                                        launchPicker {
                                             GlobalUtils.showTimePicker(
                                                 supportFragmentManager,
                                                 initialTime = habitDraft.reminderTime,
-                                                onDialogVisibilityChanged = ::onPickerDialogVisibilityChanged
                                             ) { selected ->
                                                 habitDraft = habitDraft.copy(
                                                     reminderEnabled = true,
@@ -573,6 +542,9 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                         onSelected = { uid ->
                             if (selectedPage == 0) taskDraft = taskDraft.copy(categoryUid = uid)
                             else habitDraft = habitDraft.copy(categoryUid = uid)
+                        },
+                        onManageCategories = {
+                            startActivity(CategoryManagementActivity.newIntent(this@AddDDLActivity))
                         },
                         onDismiss = { showCategoryPicker = false },
                     )
@@ -1083,85 +1055,7 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         return dateTime.format(formatter)
     }
 
-    private fun launchPickerWithBlur(showPicker: () -> Unit) {
-        pendingPickerLaunchJob?.cancel()
-        showPickerDialogBlur = true
-        pendingPickerLaunchJob = lifecycleScope.launch {
-            delay(PICKER_BLUR_LEAD_IN_MS)
-            showPicker()
-        }
-    }
-
-    private fun onPickerDialogVisibilityChanged(visible: Boolean) {
-        if (!visible) {
-            showPickerDialogBlur = false
-        }
-    }
-
-    @Composable
-    private fun PickerWindowBlurEffect(active: Boolean, surfaceColor: Color) {
-        val blurProgress by animateFloatAsState(
-            targetValue = if (active) 1f else 0f,
-            animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
-            label = "add-ddl-picker-blur"
-        )
-        val scale by animateFloatAsState(
-            targetValue = if (active) 0.98f else 1f,
-            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
-            label = "add-ddl-picker-scale"
-        )
-        val blurRadius = (24f * blurProgress).coerceIn(0f, 24f)
-        val saturation = 1f - ((1f - 0.5f) * blurProgress)
-
-        val decorView = window?.decorView
-        val contentView = decorView?.findViewById<android.view.View>(android.R.id.content) ?: decorView
-
-        DisposableEffect(decorView, contentView) {
-            val originalBackground = decorView?.background
-
-            onDispose {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && contentView != null) {
-                    contentView.setRenderEffect(null)
-                }
-                contentView?.scaleX = 1f
-                contentView?.scaleY = 1f
-                decorView?.background = originalBackground
-            }
-        }
-
-        SideEffect {
-            decorView?.setBackgroundColor(surfaceColor.toArgb())
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && contentView != null) {
-                val effects = mutableListOf<RenderEffect>()
-
-                if (blurRadius >= 0.5f) {
-                    effects += RenderEffect.createBlurEffect(
-                        blurRadius,
-                        blurRadius,
-                        Shader.TileMode.CLAMP
-                    )
-                }
-                if (saturation < 1f - 1e-3f) {
-                    val colorMatrix = ColorMatrix().apply { setSaturation(saturation) }
-                    effects += RenderEffect.createColorFilterEffect(
-                        ColorMatrixColorFilter(colorMatrix)
-                    )
-                }
-
-                contentView.setRenderEffect(
-                    when (effects.size) {
-                        0 -> null
-                        1 -> effects[0]
-                        else -> RenderEffect.createChainEffect(effects[0], effects[1])
-                    }
-                )
-            }
-
-            contentView?.scaleX = scale
-            contentView?.scaleY = scale
-        }
-    }
+    private fun launchPicker(showPicker: () -> Unit) = showPicker()
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -1173,5 +1067,3 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         enableEdgeToEdgeForAllDevices()
     }
 }
-
-private const val PICKER_BLUR_LEAD_IN_MS = 45L

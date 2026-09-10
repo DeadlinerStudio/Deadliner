@@ -73,11 +73,16 @@
             android:exported="false"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+        <activity
+            android:name=".CategoryManagementActivity"
+            android:exported="false"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
 
         <service
             android:name=".AddDDLTileService"
             android:exported="true"
-            android:icon="@drawable/msr_alarm_add_wght400"
+            android:icon="@drawable/qs_add_ddl_tile"
             android:label="@string/add_ddl_tile_label"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
@@ -92,14 +97,29 @@
             android:name=".notification.UpcomingLiveUpdateService"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
-
+        <service
+            android:name=".widgets.glance.collection.TaskWidgetCollectionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
         <activity
             android:name=".widgets.glance.configuration.TaskWidgetConfigurationActivity"
             android:excludeFromRecents="true"
             android:exported="true"
+            android:taskAffinity=""
             android:theme="@style/Theme.Deadliner">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="com.aritxonly.deadliner"
+                    android:path="/widget/TaskWidgetConfigurationActivity"
+                    android:scheme="deadliner" />
             </intent-filter>
         </activity>
 

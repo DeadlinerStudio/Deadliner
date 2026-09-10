@@ -16,6 +16,8 @@ class AdvancedMaterialPresetJsonTest {
                 glassTintDarkGray = 0.12f,
                 edgeHighlightGray = 0.78f,
                 refractionAmountDp = 21f,
+                dialogBackgroundAlpha = 0.54f,
+                bottomSheetBlurRadiusDp = 58f,
             ),
         )
         val root = JsonParser.parseString(json).asJsonObject
@@ -28,6 +30,8 @@ class AdvancedMaterialPresetJsonTest {
         assertEquals(0.12f, tuning["glassTintDarkGray"].asFloat, 0.0001f)
         assertEquals(0.78f, tuning["edgeHighlightGray"].asFloat, 0.0001f)
         assertEquals(21f, tuning["refractionAmountDp"].asFloat, 0.0001f)
+        assertEquals(0.54f, tuning["dialogBackgroundAlpha"].asFloat, 0.0001f)
+        assertEquals(58f, tuning["bottomSheetBlurRadiusDp"].asFloat, 0.0001f)
         assertTrue(tuning.has("postRefractionBlurRadiusDp"))
     }
 }

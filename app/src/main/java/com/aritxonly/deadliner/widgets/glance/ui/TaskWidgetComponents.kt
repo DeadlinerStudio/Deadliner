@@ -9,44 +9,62 @@ import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
+import androidx.glance.action.Action
+import androidx.glance.action.clickable
+import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
-import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import androidx.glance.text.FontWeight
 import androidx.glance.unit.ColorProvider
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetItem
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetSnapshot
-import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetStatus
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetColors
 
-internal data class TaskWidgetRowBackgrounds(
-    val normal: ImageProvider,
-    val near: ImageProvider,
-    val overdue: ImageProvider,
+@Composable
+internal fun TaskWidgetLayeredCard(
+    background: ImageProvider,
+    backgroundAlpha: Float,
+    cornerRadiusDp: Int,
+    openAppAction: Action,
+    content: @Composable () -> Unit,
 ) {
-    fun forStatus(status: TaskWidgetStatus): ImageProvider = when (status) {
-        TaskWidgetStatus.NORMAL -> normal
-        TaskWidgetStatus.NEAR -> near
-        TaskWidgetStatus.OVERDUE -> overdue
+    Box(modifier = GlanceModifier.fillMaxSize()) {
+        Image(
+            provider = background,
+            contentDescription = null,
+            alpha = backgroundAlpha,
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .cornerRadius(cornerRadiusDp.dp)
+                .appWidgetBackground()
+                .clickable(openAppAction),
+            contentScale = ContentScale.FillBounds,
+        )
+        content()
     }
 }
 
 @Composable
 internal fun TaskWidgetHeader(snapshot: TaskWidgetSnapshot, colors: TaskWidgetColors) {
     Row(
-        modifier = GlanceModifier.fillMaxWidth().height(19.dp),
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .height(TaskWidgetLayoutMetrics.HEADER_HEIGHT_DP.dp),
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
         Image(
@@ -60,8 +78,9 @@ internal fun TaskWidgetHeader(snapshot: TaskWidgetSnapshot, colors: TaskWidgetCo
             modifier = GlanceModifier.defaultWeight(),
             style = TextStyle(
                 color = colors.textPrimary.asProvider(),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = TaskWidgetTypography.BRAND_SIZE_SP.sp,
+                fontFamily = TaskWidgetTypography.EMPHASIS_FONT_FAMILY,
+                fontWeight = FontWeight.Normal,
             ),
             maxLines = 1,
         )
@@ -74,7 +93,8 @@ internal fun TaskWidgetHeader(snapshot: TaskWidgetSnapshot, colors: TaskWidgetCo
                     .padding(horizontal = 6.dp, vertical = 1.dp),
                 style = TextStyle(
                     color = colors.badgeContentColor(snapshot.visualState).asProvider(),
-                    fontSize = 10.sp,
+                    fontSize = TaskWidgetTypography.BADGE_SIZE_SP.sp,
+                    fontFamily = TaskWidgetTypography.EMPHASIS_FONT_FAMILY,
                     fontWeight = FontWeight.Bold,
                 ),
                 maxLines = 1,
@@ -87,15 +107,19 @@ internal fun TaskWidgetHeader(snapshot: TaskWidgetSnapshot, colors: TaskWidgetCo
 internal fun TaskWidgetItemRow(
     item: TaskWidgetItem,
     colors: TaskWidgetColors,
-    background: ImageProvider,
+    openAppAction: Action?,
+    modifier: GlanceModifier,
 ) {
     val rowColors = colors.rowColors(item.status)
+    val rowModifier = modifier
+        .fillMaxWidth()
+        .background(colors.rowBackgroundColor(item.status).asProvider())
+        .cornerRadius(9.dp)
+        .let { base ->
+            if (openAppAction == null) base else base.clickable(openAppAction)
+        }
     Row(
-        modifier = GlanceModifier
-            .fillMaxWidth()
-            .height(29.dp)
-            .background(imageProvider = background)
-            .cornerRadius(9.dp)
+        modifier = rowModifier
             .padding(start = 6.dp, end = 8.dp),
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
@@ -103,7 +127,7 @@ internal fun TaskWidgetItemRow(
             modifier = GlanceModifier
                 .width(3.dp)
                 .height(12.dp)
-                .background(rowColors.indicator.asProvider())
+                .background(item.indicatorColorArgb(rowColors.indicator).asProvider())
                 .cornerRadius(2.dp),
         ) {}
         Spacer(modifier = GlanceModifier.width(6.dp))
@@ -112,12 +136,9 @@ internal fun TaskWidgetItemRow(
             modifier = GlanceModifier.defaultWeight(),
             style = TextStyle(
                 color = colors.textPrimary.asProvider(),
-                fontSize = 12.sp,
-                fontWeight = if (item.status == TaskWidgetStatus.NORMAL) {
-                    FontWeight.Medium
-                } else {
-                    FontWeight.Bold
-                },
+                fontSize = TaskWidgetTypography.TASK_TITLE_SIZE_SP.sp,
+                fontFamily = TaskWidgetTypography.EMPHASIS_FONT_FAMILY,
+                fontWeight = FontWeight.Normal,
             ),
             maxLines = 1,
         )
@@ -126,12 +147,9 @@ internal fun TaskWidgetItemRow(
             text = item.timeDescription,
             style = TextStyle(
                 color = rowColors.timeText.asProvider(),
-                fontSize = 10.sp,
-                fontWeight = if (item.status == TaskWidgetStatus.NORMAL) {
-                    FontWeight.Normal
-                } else {
-                    FontWeight.Medium
-                },
+                fontSize = TaskWidgetTypography.TASK_TIME_SIZE_SP.sp,
+                fontFamily = TaskWidgetTypography.SUPPORTING_FONT_FAMILY,
+                fontWeight = FontWeight.Normal,
             ),
             maxLines = 1,
         )
@@ -139,10 +157,13 @@ internal fun TaskWidgetItemRow(
 }
 
 @Composable
-internal fun TaskWidgetEmptyState(colors: TaskWidgetColors) {
+internal fun TaskWidgetEmptyState(
+    colors: TaskWidgetColors,
+    modifier: GlanceModifier = GlanceModifier.height(100.dp),
+) {
     val context = LocalContext.current
     Column(
-        modifier = GlanceModifier.fillMaxWidth().height(100.dp),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
@@ -157,8 +178,9 @@ internal fun TaskWidgetEmptyState(colors: TaskWidgetColors) {
             text = context.getString(R.string.glance_task_widget_all_done),
             style = TextStyle(
                 color = colors.textPrimary.asProvider(),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = TaskWidgetTypography.EMPTY_SIZE_SP.sp,
+                fontFamily = TaskWidgetTypography.EMPHASIS_FONT_FAMILY,
+                fontWeight = FontWeight.Normal,
             ),
         )
     }

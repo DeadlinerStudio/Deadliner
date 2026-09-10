@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +26,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aritxonly.deadliner.AddDDLTileService
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
@@ -31,15 +36,31 @@ import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPaddingPreset
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPreferences
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
+import com.aritxonly.deadliner.widgets.glance.configuration.TaskWidgetHostEditor
 
 @Composable
 fun WidgetSettingsScreen(
     navigateUp: () -> Unit
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     var paddingPreset by remember {
         mutableStateOf(TaskWidgetPreferences.readPaddingPreset(context))
+    }
+    var widgetInstances by remember {
+        mutableStateOf(TaskWidgetHostEditor.installedWidgets(context))
+    }
+
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                widgetInstances = TaskWidgetHostEditor.installedWidgets(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     CollapsingTopBarScaffold(
@@ -60,6 +81,41 @@ fun WidgetSettingsScreen(
             modifier = Modifier,
         ) {
             SvgCard(R.drawable.svg_space, modifier = Modifier.padding(vertical = 8.dp))
+
+            SettingsSection(topLabel = stringResource(R.string.widget_settings_added_instances)) {
+                if (widgetInstances.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.widget_settings_no_instances),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                    )
+                } else {
+                    widgetInstances.forEach { instance ->
+                        SettingsDetailTextButtonItem(
+                            headlineText = stringResource(
+                                if (instance.kind == TaskWidgetKind.SQUARE) {
+                                    R.string.widget_settings_instance_square
+                                } else {
+                                    R.string.widget_settings_instance_capsule
+                                },
+                            ),
+                            supportingText = stringResource(
+                                R.string.widget_settings_instance_id,
+                                instance.appWidgetId,
+                            ),
+                            iconRes = R.drawable.msr_edit_wght400,
+                        ) {
+                            context.startActivity(
+                                TaskWidgetHostEditor.settingsEditIntent(
+                                    context = context,
+                                    appWidgetId = instance.appWidgetId,
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
 
             SettingsSection(topLabel = stringResource(R.string.settings_widget_padding)) {
                 SettingsRadioGroupItem(
@@ -85,7 +141,7 @@ fun WidgetSettingsScreen(
                     requestTile(
                         context,
                         component,
-                        R.drawable.msr_alarm_add_wght400,
+                        R.drawable.qs_add_ddl_tile,
                         ContextCompat.getString(context, R.string.add_ddl_tile_label)
                     )
                 }

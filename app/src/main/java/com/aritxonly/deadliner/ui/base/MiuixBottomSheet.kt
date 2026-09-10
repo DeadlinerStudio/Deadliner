@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
+import com.aritxonly.deadliner.model.MiuixModalKind
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
 
@@ -19,6 +20,7 @@ fun MiuixBottomSheet(
     show: Boolean,
     title: String? = null,
     onDismissRequest: () -> Unit,
+    onDismissFinished: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
@@ -27,6 +29,7 @@ fun MiuixBottomSheet(
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val shape = RoundedCornerShape(36.dp)
     val surface = rememberMiuixModalSurface(
+        kind = MiuixModalKind.BottomSheet,
         shape = shape,
         recipe = DeadlinerGlassRecipes.bottomSheet(advancedMaterial.fineTuning),
     )
@@ -45,6 +48,7 @@ fun MiuixBottomSheet(
         insideMargin = DpSize(0.dp, 0.dp),
         renderInRootScaffold = true,
         onDismissRequest = onDismissRequest,
+        onDismissFinished = onDismissFinished,
         content = content,
     )
 }

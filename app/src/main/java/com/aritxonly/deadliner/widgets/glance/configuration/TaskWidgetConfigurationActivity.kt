@@ -5,31 +5,30 @@ import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.glance.appwidget.AppWidgetId
 import androidx.lifecycle.lifecycleScope
 import com.aritxonly.deadliner.DeadlinerComponentActivity
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
+import com.aritxonly.deadliner.widgets.glance.TaskWidgetRefreshCoordinator
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfiguration
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationStore
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
-import com.aritxonly.deadliner.widgets.glance.ui.CapsuleTaskGlanceWidget
 import com.aritxonly.deadliner.widgets.glance.ui.CapsuleTaskGlanceWidgetReceiver
-import com.aritxonly.deadliner.widgets.glance.ui.CompactTaskGlanceWidget
 import com.aritxonly.deadliner.widgets.glance.ui.CompactTaskGlanceWidgetReceiver
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class TaskWidgetConfigurationActivity : DeadlinerComponentActivity() {
     private var appWidgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
+    private var editorSource: TaskWidgetEditorSource = TaskWidgetEditorSource.HOST
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdgeForAllDevices()
         super.onCreate(savedInstanceState)
 
-        appWidgetId = intent.getIntExtra(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        )
+        appWidgetId = TaskWidgetHostEditor.resolveAppWidgetId(intent)
+        editorSource = TaskWidgetHostEditor.resolveEditorSource(intent)
         val kind = resolveKind(appWidgetId)
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID || kind == null) {
             finish()
@@ -44,7 +43,7 @@ class TaskWidgetConfigurationActivity : DeadlinerComponentActivity() {
                 TaskWidgetConfigurationScreen(
                     kind = kind,
                     initialConfiguration = initial,
-                    onCancel = ::finish,
+                    onCancel = { finishEditor() },
                     onSave = { configuration -> save(kind, configuration, store) },
                 )
             }
@@ -70,16 +69,28 @@ class TaskWidgetConfigurationActivity : DeadlinerComponentActivity() {
         configuration: TaskWidgetConfiguration,
         store: TaskWidgetConfigurationStore,
     ) {
-        store.write(appWidgetId, kind, configuration)
         lifecycleScope.launch {
-            val glanceId = AppWidgetId(appWidgetId)
-            runCatching {
-                when (kind) {
-                    TaskWidgetKind.SQUARE -> CompactTaskGlanceWidget().update(this@TaskWidgetConfigurationActivity, glanceId)
-                    TaskWidgetKind.CAPSULE -> CapsuleTaskGlanceWidget().update(this@TaskWidgetConfigurationActivity, glanceId)
-                }
+            withContext(Dispatchers.IO) {
+                store.write(appWidgetId, kind, configuration)
             }
+            TaskWidgetHostEditor.registerMiuiEditUri(
+                this@TaskWidgetConfigurationActivity,
+                intArrayOf(appWidgetId),
+            )
+            TaskWidgetRefreshCoordinator.requestRefreshAfterConfiguration(
+                context = this@TaskWidgetConfigurationActivity,
+                appWidgetId = appWidgetId,
+                kind = kind,
+            )
             setResult(Activity.RESULT_OK, resultIntent())
+            finishEditor()
+        }
+    }
+
+    private fun finishEditor() {
+        if (TaskWidgetHostEditor.shouldRemoveEditorTask(editorSource, isTaskRoot)) {
+            finishAndRemoveTask()
+        } else {
             finish()
         }
     }

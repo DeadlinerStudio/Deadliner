@@ -7,7 +7,7 @@ import com.aritxonly.deadliner.model.AdvancedMaterialTuning
 
 object AdvancedMaterialFineTuningPreferences {
     private const val Prefix = "advanced_material_fine_"
-    private const val CurrentDefaultsVersion = 3
+    private const val CurrentDefaultsVersion = 4
     private const val PreviousBlurRadiusDefault = 128f
     private const val BlurRadiusKey = "advanced_material_blur_radius"
     private const val LegacyLevelKey = "advanced_material_level"
@@ -37,10 +37,10 @@ object AdvancedMaterialFineTuningPreferences {
     fun read(preferences: SharedPreferences): AdvancedMaterialFineTuning {
         val defaults = AdvancedMaterialFineTuning.Default
         val defaultsVersion = preferences.getInt(key("defaults_version"), 1)
-        val previousDefaults = if (defaultsVersion < 2) {
-            AdvancedMaterialFineTuning.DefaultsV1
-        } else {
-            AdvancedMaterialFineTuning.DefaultsV2
+        val previousDefaults = when {
+            defaultsVersion < 2 -> AdvancedMaterialFineTuning.DefaultsV1
+            defaultsVersion < 3 -> AdvancedMaterialFineTuning.DefaultsV2
+            else -> AdvancedMaterialFineTuning.DefaultsV3
         }
         val migrateDefaults = defaultsVersion < CurrentDefaultsVersion
         return AdvancedMaterialFineTuning(
@@ -78,6 +78,30 @@ object AdvancedMaterialFineTuningPreferences {
                 "navigation_tint_alpha",
                 defaults.navigationTintAlpha,
                 previousDefaults.navigationTintAlpha,
+                migrateDefaults,
+            ),
+            dialogBackgroundAlpha = preferences.migratedFloat(
+                "dialog_background_alpha",
+                defaults.dialogBackgroundAlpha,
+                previousDefaults.dialogBackgroundAlpha,
+                migrateDefaults,
+            ),
+            dialogBlurRadiusDp = preferences.migratedFloat(
+                "dialog_blur_radius_dp",
+                defaults.dialogBlurRadiusDp,
+                previousDefaults.dialogBlurRadiusDp,
+                migrateDefaults,
+            ),
+            bottomSheetBackgroundAlpha = preferences.migratedFloat(
+                "bottom_sheet_background_alpha",
+                defaults.bottomSheetBackgroundAlpha,
+                previousDefaults.bottomSheetBackgroundAlpha,
+                migrateDefaults,
+            ),
+            bottomSheetBlurRadiusDp = preferences.migratedFloat(
+                "bottom_sheet_blur_radius_dp",
+                defaults.bottomSheetBlurRadiusDp,
+                previousDefaults.bottomSheetBlurRadiusDp,
                 migrateDefaults,
             ),
             glassBlurRadiusMultiplier = preferences.migratedFloat(
@@ -198,6 +222,10 @@ object AdvancedMaterialFineTuningPreferences {
         editor.putFloat(key("contrast"), contrast)
         editor.putFloat(key("top_bar_tint_alpha"), topBarTintAlpha)
         editor.putFloat(key("navigation_tint_alpha"), navigationTintAlpha)
+        editor.putFloat(key("dialog_background_alpha"), dialogBackgroundAlpha)
+        editor.putFloat(key("dialog_blur_radius_dp"), dialogBlurRadiusDp)
+        editor.putFloat(key("bottom_sheet_background_alpha"), bottomSheetBackgroundAlpha)
+        editor.putFloat(key("bottom_sheet_blur_radius_dp"), bottomSheetBlurRadiusDp)
         editor.putFloat(key("glass_blur_radius_multiplier"), glassBlurRadiusMultiplier)
         editor.putFloat(key("glass_noise_multiplier"), glassNoiseMultiplier)
         editor.putFloat(key("glass_tint_alpha_multiplier"), glassTintAlphaMultiplier)

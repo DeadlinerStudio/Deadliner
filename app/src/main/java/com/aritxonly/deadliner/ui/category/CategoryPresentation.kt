@@ -3,6 +3,7 @@ package com.aritxonly.deadliner.ui.category
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.model.category.CategoryColorResolver
 import com.deadliner.domain.category.Category
 import com.deadliner.domain.category.CategoryMutation
 
@@ -28,21 +29,6 @@ fun Category.toPresentation() = CategoryPresentation(
 
 object CategoryPresentationRegistry {
     private const val FallbackIcon = "tag"
-    private const val FallbackColor = "blue_500"
-
-    private val colors = mapOf(
-        "blue_500" to 0xFF3B82F6, "blue_600" to 0xFF2563EB,
-        "indigo_500" to 0xFF6366F1, "violet_500" to 0xFF8B5CF6,
-        "purple_500" to 0xFFA855F7, "pink_500" to 0xFFEC4899,
-        "rose_500" to 0xFFF43F5E, "red_500" to 0xFFEF4444,
-        "orange_500" to 0xFFF97316, "amber_500" to 0xFFF59E0B,
-        "yellow_500" to 0xFFEAB308, "lime_500" to 0xFF84CC16,
-        "green_500" to 0xFF22C55E, "emerald_500" to 0xFF10B981,
-        "teal_500" to 0xFF14B8A6, "cyan_500" to 0xFF06B6D4,
-        "sky_500" to 0xFF0EA5E9, "slate_500" to 0xFF64748B,
-        "gray_500" to 0xFF8E8E93, "gray_900" to 0xFF111827,
-    )
-
     // Each entry mirrors the documented semantic primitive. Resource names remain Android-only.
     private val icons = mapOf(
         "tag" to R.drawable.msr_bookmark_wght400,
@@ -83,16 +69,12 @@ object CategoryPresentationRegistry {
         "nature" to R.drawable.msr_eco_wght400,
     )
 
+    val iconSemanticIds: List<String> = icons.keys.toList()
+    val selectableColorHexes: List<String> = CategoryColorResolver.selectableHexColors
+
     @DrawableRes fun icon(iconSemanticId: String): Int = icons[iconSemanticId] ?: icons.getValue(FallbackIcon)
 
-    fun color(colorTokenOrHex: String): Color {
-        val normalized = colorTokenOrHex.trim().lowercase()
-        colors[normalized]?.let { return Color(it) }
-        return normalized.removePrefix("#").toLongOrNull(16)
-            ?.takeIf { it <= 0xFFFFFF }
-            ?.let { Color(0xFF000000 or it) }
-            ?: Color(colors.getValue(FallbackColor))
-    }
+    fun color(colorTokenOrHex: String): Color = Color(CategoryColorResolver.argb(colorTokenOrHex))
 }
 
 sealed interface CategoryFilter {
@@ -116,4 +98,12 @@ object CategoryFilterResolver {
     fun selected(categoryUids: Set<String>, includesUncategorized: Boolean): CategoryFilter =
         if (categoryUids.isEmpty() && !includesUncategorized) CategoryFilter.All
         else CategoryFilter.Selected(categoryUids, includesUncategorized)
+
+    fun reconcile(filter: CategoryFilter, availableCategoryUids: Set<String>): CategoryFilter = when (filter) {
+        CategoryFilter.All -> CategoryFilter.All
+        is CategoryFilter.Selected -> selected(
+            categoryUids = filter.categoryUids.intersect(availableCategoryUids),
+            includesUncategorized = filter.includesUncategorized,
+        )
+    }
 }

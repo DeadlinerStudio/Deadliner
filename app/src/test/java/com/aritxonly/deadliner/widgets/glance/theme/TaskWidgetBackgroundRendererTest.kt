@@ -6,6 +6,7 @@ import com.aritxonly.deadliner.model.AppearancePreferences
 import com.aritxonly.deadliner.model.ModernColorPalette
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetStatus
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -32,6 +33,8 @@ class TaskWidgetBackgroundRendererTest {
         assertEquals(128, capsule.height)
         assertEquals(240 * 240 * 4, square.allocationByteCount)
         assertEquals(300 * 128 * 4, capsule.allocationByteCount)
+        assertFalse(square.hasAlpha())
+        assertFalse(capsule.hasAlpha())
     }
 
     @Test
@@ -42,4 +45,5 @@ class TaskWidgetBackgroundRendererTest {
         assertEquals(40, row.height)
         assertEquals(180 * 40 * 4, row.allocationByteCount)
     }
+
 }

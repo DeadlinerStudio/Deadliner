@@ -32,17 +32,33 @@ fun Modifier.deadlinerGlassMaterial(
     isDark: Boolean,
     recipe: GlassMaterialRecipe,
     interaction: GlassMaterialInteraction = GlassMaterialInteraction(),
+    blurRadiusOverride: Float? = null,
+    tintAlphaOverride: Float? = null,
 ): Modifier {
     val blurSpec = recipe.blur
+    val resolvedBlurRadius = blurRadiusOverride
+        ?.takeIf { it.isFinite() }
+        ?.coerceIn(0f, blurSpec.maxRadius)
     val resolvedMaterial = advancedMaterial.copy(
-        blurRadius = advancedMaterial.blurRadius * blurSpec.radiusMultiplier,
-        blurRadiusX = advancedMaterial.blurRadiusX?.times(blurSpec.radiusMultiplier),
-        blurRadiusY = advancedMaterial.blurRadiusY?.times(blurSpec.radiusMultiplier),
+        blurRadius = resolvedBlurRadius ?: advancedMaterial.blurRadius * blurSpec.radiusMultiplier,
+        blurRadiusX = if (resolvedBlurRadius != null) {
+            null
+        } else {
+            advancedMaterial.blurRadiusX?.times(blurSpec.radiusMultiplier)
+        },
+        blurRadiusY = if (resolvedBlurRadius != null) {
+            null
+        } else {
+            advancedMaterial.blurRadiusY?.times(blurSpec.radiusMultiplier)
+        },
         noiseCoefficient = (advancedMaterial.noiseCoefficient * blurSpec.noiseMultiplier)
             .coerceAtLeast(0f),
     )
     val resolvedTint = tint.copy(
-        alpha = (tint.alpha * blurSpec.tintAlphaMultiplier).coerceIn(0f, 1f),
+        alpha = tintAlphaOverride
+            ?.takeIf { it.isFinite() }
+            ?.coerceIn(0f, 1f)
+            ?: (tint.alpha * blurSpec.tintAlphaMultiplier).coerceIn(0f, 1f),
     )
     val tintComposite = resolveGlassTintComposite(
         tint = resolvedTint,
@@ -53,7 +69,6 @@ fun Modifier.deadlinerGlassMaterial(
     val canDrawOpticalStack = canDrawBackdrop &&
         recipe.refraction.enabled &&
         isRuntimeShaderSupported()
-
     val material = when {
         canDrawOpticalStack -> Modifier.glassOpticalBackdrop(
             backdrop = requireNotNull(backdrop),

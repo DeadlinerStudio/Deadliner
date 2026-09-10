@@ -3,6 +3,7 @@ package com.aritxonly.deadliner.widgets.glance.data
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetStatus
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetVisualState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -27,7 +28,7 @@ class TaskWidgetRepositoryTest {
     }
 
     @Test
-    fun `limits content to three rows while preserving total count`() {
+    fun `keeps the full sorted list for optional widget scrolling`() {
         val snapshot = repository(
             record("One", "2026-08-17T12:00:00"),
             record("Two", "2026-08-18T12:00:00"),
@@ -36,7 +37,9 @@ class TaskWidgetRepositoryTest {
         ).load(strings)
 
         assertEquals(4, snapshot.totalCount)
-        assertEquals(listOf("One", "Two", "Three"), snapshot.items.map { it.title })
+        assertEquals(listOf("One", "Two", "Three", "Four"), snapshot.items.map { it.title })
+        assertEquals(4, snapshot.items.map { it.stableId }.distinct().size)
+        assertTrue(snapshot.items.all { it.stableId > 0L })
     }
 
     @Test
@@ -95,6 +98,15 @@ class TaskWidgetRepositoryTest {
         assertEquals("1h", repository.load(strings).items.single().timeDescription)
     }
 
+    @Test
+    fun `keeps category color for the widget indicator and leaves uncategorized unset`() {
+        val categorized = record("Work", null, categoryColorHex = "#3481FF")
+        val snapshot = repository(categorized, record("Plain", null)).load(strings)
+
+        assertEquals(0xFF3481FF.toInt(), snapshot.items.first { it.title == "Work" }.categoryColorArgb)
+        assertEquals(null, snapshot.items.first { it.title == "Plain" }.categoryColorArgb)
+    }
+
     private fun repository(vararg records: TaskWidgetTaskRecord): TaskWidgetRepository =
         TaskWidgetRepository(
             source = TaskWidgetDataSource { records.toList() },
@@ -107,11 +119,14 @@ class TaskWidgetRepositoryTest {
         dueAt: String?,
         isDeleted: Boolean = false,
         isActive: Boolean = true,
+        categoryColorHex: String? = null,
     ) = TaskWidgetTaskRecord(
+        id = "$title:$dueAt",
         title = title,
         dueAt = dueAt,
         isDeleted = isDeleted,
         isActive = isActive,
+        categoryColorHex = categoryColorHex,
     )
 
     private class FakeStrings : TaskWidgetStrings {

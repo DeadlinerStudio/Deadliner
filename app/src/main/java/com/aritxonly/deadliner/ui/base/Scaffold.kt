@@ -12,11 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-import androidx.compose.material3.Scaffold as Material3Scaffold
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 
 /**
@@ -36,36 +33,16 @@ fun Scaffold(
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    when (LocalAppDesignSystem.current) {
-        AppDesignSystem.MATERIAL3 -> {
-            Material3Scaffold(
-                modifier = modifier,
-                topBar = topBar,
-                bottomBar = bottomBar,
-                snackbarHost = snackbarHost,
-                floatingActionButton = floatingActionButton,
-                floatingActionButtonPosition = floatingActionButtonPosition,
-                containerColor = containerColor,
-                contentColor = contentColor,
-                contentWindowInsets = contentWindowInsets,
-                content = content
-            )
-        }
-        AppDesignSystem.MIUIX -> {
-            CompositionLocalProvider(LocalContentColor provides contentColor) {
-                MiuixScaffold(
-                    modifier = modifier,
-                    topBar = topBar,
-                    bottomBar = bottomBar,
-                    snackbarHost = snackbarHost,
-                    floatingActionButton = floatingActionButton,
-
-                    containerColor = containerColor,
-                    contentWindowInsets = contentWindowInsets,
-
-                    content = content
-                )
-            }
-        }
+    CompositionLocalProvider(LocalContentColor provides contentColor) {
+        MiuixScaffold(
+            modifier = modifier,
+            topBar = topBar,
+            bottomBar = bottomBar,
+            snackbarHost = snackbarHost,
+            floatingActionButton = floatingActionButton,
+            containerColor = containerColor,
+            contentWindowInsets = contentWindowInsets,
+            content = content,
+        )
     }
 }

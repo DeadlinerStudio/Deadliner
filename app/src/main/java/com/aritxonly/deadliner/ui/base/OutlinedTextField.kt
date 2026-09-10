@@ -13,11 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
 // 别名防止冲突
-import androidx.compose.material3.OutlinedTextField as Material3OutlinedTextField
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -51,65 +48,31 @@ fun OutlinedTextField(
     miuixLabel: String = "",
     miuixFormStyle: Boolean = false,
 ) {
-    when (LocalAppDesignSystem.current) {
-        AppDesignSystem.MATERIAL3 -> {
-            Material3OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = modifier,
-                enabled = enabled,
-                readOnly = readOnly,
-                textStyle = textStyle,
-                label = label,
-                placeholder = placeholder,
-                leadingIcon = leadingIcon,
-                trailingIcon = trailingIcon,
-                prefix = prefix,
-                suffix = suffix,
-                supportingText = supportingText,
-                isError = isError,
-                visualTransformation = visualTransformation,
-                keyboardOptions = keyboardOptions,
-                keyboardActions = keyboardActions,
-                singleLine = singleLine,
-                maxLines = maxLines,
-                minLines = minLines,
-                interactionSource = interactionSource,
-                shape = shape,
-                colors = colors
-            )
-        }
-        AppDesignSystem.MIUIX -> {
-            MiuixTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = modifier,
-                enabled = enabled,
-                readOnly = readOnly,
-                // 把辅助参数喂给 MIUIX
-                label = miuixLabel,
-                colors =
-                    MiuixTextFieldDefaults.textFieldColors(
-                        backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
-                        labelColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
-                ),
-                useLabelAsPlaceholder = true, // 让 MIUIX 的行为更接近 M3 的 placeholder 习惯
-                cornerRadius = if (miuixFormStyle) {
-                    DeadlinerMiuixDefaults.FormInputCornerRadius
-                } else {
-                    DeadlinerMiuixDefaults.InputCornerRadius
-                },
-
-                leadingIcon = leadingIcon,
-                trailingIcon = trailingIcon,
-                visualTransformation = visualTransformation,
-                keyboardOptions = keyboardOptions,
-                keyboardActions = keyboardActions,
-                singleLine = singleLine,
-                maxLines = maxLines,
-                minLines = minLines,
-                interactionSource = interactionSource,
-            )
-        }
-    }
+    MiuixTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        readOnly = readOnly,
+        label = miuixLabel,
+        colors = MiuixTextFieldDefaults.textFieldColors(
+            backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
+            labelColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
+        ),
+        useLabelAsPlaceholder = true,
+        cornerRadius = if (miuixFormStyle) {
+            DeadlinerMiuixDefaults.FormInputCornerRadius
+        } else {
+            DeadlinerMiuixDefaults.InputCornerRadius
+        },
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        visualTransformation = visualTransformation,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        minLines = minLines,
+        interactionSource = interactionSource,
+    )
 }

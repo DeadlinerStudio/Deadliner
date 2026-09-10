@@ -19,7 +19,6 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.SvgCard
-import com.aritxonly.deadliner.ui.base.RegisterAdvancedMaterialDialogBlur
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.localutils.GlobalUtils
@@ -48,8 +47,6 @@ fun NotificationSettingsScreen(
 
     var dailyMinute by remember { mutableStateOf(GlobalUtils.dailyNotificationMinute) }
     var dailyHour by remember { mutableStateOf(GlobalUtils.dailyNotificationHour) }
-    var showDailyTimePickerDialogBlur by remember { mutableStateOf(false) }
-
     var notifyBefore by remember { mutableStateOf(GlobalUtils.deadlineNotificationBefore) }
     val onNotifyBeforeChange: (Float) -> Unit = {
         notifyBefore = it.toLong()
@@ -87,7 +84,6 @@ fun NotificationSettingsScreen(
     val onDailyNotificationLongPress: (Boolean) -> Unit = {
         if (!it) {
             fragmentManager?.let { supportFragmentManager ->
-                showDailyTimePickerDialogBlur = true
                 showDailyTimePicker(
                     context = context,
                     supportFragmentManager = supportFragmentManager,
@@ -95,9 +91,6 @@ fun NotificationSettingsScreen(
                         dailyMinute = minute
                         dailyHour = hour
                     },
-                    onDismiss = {
-                        showDailyTimePickerDialogBlur = false
-                    }
                 )
             }
         }
@@ -122,10 +115,6 @@ fun NotificationSettingsScreen(
             }
         }
     ) { padding ->
-        if (showDailyTimePickerDialogBlur) {
-            RegisterAdvancedMaterialDialogBlur()
-        }
-
         SettingsScrollColumn(
             contentPadding = padding,
             modifier = Modifier,
@@ -179,7 +168,7 @@ private fun showDailyTimePicker(
     context: Context,
     supportFragmentManager: FragmentManager,
     onChange:(Int, Int) -> Unit,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit = {},
 ) {
     val currentHour = GlobalUtils.dailyNotificationHour
     val currentMinute = GlobalUtils.dailyNotificationMinute

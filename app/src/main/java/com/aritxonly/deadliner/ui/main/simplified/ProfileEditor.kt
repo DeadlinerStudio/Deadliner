@@ -58,8 +58,6 @@ import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.base.MiuixDialog
 import com.aritxonly.deadliner.ui.base.MiuixDialogActions
 import com.aritxonly.deadliner.ui.base.TextButton
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.image.cropview.CropType
 import com.image.cropview.EdgeType
 import com.image.cropview.ImageCrop
@@ -272,43 +270,19 @@ fun AvatarCropperDialog(
         ))
     }
 
-    when (LocalAppDesignSystem.current) {
-        AppDesignSystem.MATERIAL3 -> androidx.compose.ui.window.Dialog(onDismissRequest = onCancel) {
-            Surface(
-                modifier = Modifier
-                    .widthIn(max = 560.dp)
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(24.dp),
-                tonalElevation = 6.dp,
-                shadowElevation = 6.dp,
-                color = MaterialTheme.colorScheme.surfaceContainer,
-            ) {
-                AvatarCropperDialogContent(
-                    imageCrop = imageCrop,
-                    aspect = aspect,
-                    contentPadding = 20.dp,
-                    useMiuixActions = false,
-                    onCancel = onCancel,
-                    onCompleteCrop = onCompleteCrop,
-                )
-            }
-        }
-
-        AppDesignSystem.MIUIX -> MiuixDialog(
-            show = true,
-            onDismissRequest = onCancel,
-            maxWidth = 560.dp,
-        ) {
-            AvatarCropperDialogContent(
-                imageCrop = imageCrop,
-                aspect = aspect,
-                contentPadding = 0.dp,
-                useMiuixActions = true,
-                onCancel = onCancel,
-                onCompleteCrop = onCompleteCrop,
-            )
-        }
+    MiuixDialog(
+        show = true,
+        onDismissRequest = onCancel,
+        maxWidth = 560.dp,
+    ) {
+        AvatarCropperDialogContent(
+            imageCrop = imageCrop,
+            aspect = aspect,
+            contentPadding = 0.dp,
+            useMiuixActions = true,
+            onCancel = onCancel,
+            onCompleteCrop = onCompleteCrop,
+        )
     }
 }
 

@@ -1,17 +1,8 @@
 package com.aritxonly.deadliner.ui.base
 
-import androidx.compose.material3.Icon
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 import com.aritxonly.deadliner.ui.navigation.ImmersiveTextTabRow
 
 /**
@@ -24,43 +15,15 @@ fun TabRow(
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    // M3 专属：传入对应的图标列表。如果不传或切到 MIUIX，就会自动忽略
+    // 保留以兼容已有调用；MIUIX 文本 Tab 不展示图标。
     tabIcons: List<Painter>? = null,
-    // M3 专属：底部分割线
+    // 保留以兼容已有调用；分割线由 MIUIX 容器管理。
     divider: @Composable () -> Unit = {}
 ) {
-    if (LocalAppDesignSystem.current == AppDesignSystem.MIUIX) {
-        ImmersiveTextTabRow(
-            tabs = tabs,
-            selectedTabIndex = selectedTabIndex,
-            onTabSelected = onTabSelected,
-            modifier = modifier,
-        )
-        return
-    }
-
-    when (LocalAppDesignSystem.current) {
-
-        AppDesignSystem.MATERIAL3 -> {
-            PrimaryTabRow(
-                selectedTabIndex = selectedTabIndex,
-                modifier = modifier,
-                divider = divider,
-                containerColor = Color.Transparent
-            ) {
-                // 在 M3 分支内部，我们帮你把 forEach 循环写掉
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = index == selectedTabIndex,
-                        onClick = { onTabSelected(index) },
-                        icon = tabIcons?.getOrNull(index)?.let { painter ->
-                            { Icon(painter, contentDescription = title) }
-                        },
-                        text = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                    )
-                }
-            }
-        }
-        AppDesignSystem.MIUIX -> Unit
-    }
+    ImmersiveTextTabRow(
+        tabs = tabs,
+        selectedTabIndex = selectedTabIndex,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+    )
 }

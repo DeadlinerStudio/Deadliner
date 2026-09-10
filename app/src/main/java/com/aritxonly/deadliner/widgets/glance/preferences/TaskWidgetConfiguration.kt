@@ -25,6 +25,7 @@ internal data class TaskWidgetConfiguration(
     val customTopMarginDp: Int,
     val customBottomMarginDp: Int,
     val colorScheme: TaskWidgetColorScheme,
+    val isScrollable: Boolean,
 ) {
     fun topMarginDp(): Int = when (marginPreset) {
         TaskWidgetPaddingPreset.Custom -> customTopMarginDp
@@ -34,12 +35,6 @@ internal data class TaskWidgetConfiguration(
     fun bottomMarginDp(): Int = when (marginPreset) {
         TaskWidgetPaddingPreset.Custom -> customBottomMarginDp
         else -> marginPreset.cardBottomMarginDp
-    }
-
-    fun maxVisibleTasks(): Int = when {
-        topMarginDp() + bottomMarginDp() > LARGE_SQUARE_MARGIN_DP -> 1
-        topMarginDp() + bottomMarginDp() > 0 -> 2
-        else -> 3
     }
 
     fun sanitized(kind: TaskWidgetKind): TaskWidgetConfiguration {
@@ -58,23 +53,23 @@ internal data class TaskWidgetConfiguration(
             marginPreset = allowedPreset,
             customTopMarginDp = top,
             customBottomMarginDp = bottom,
+            isScrollable = kind == TaskWidgetKind.SQUARE && isScrollable,
         )
     }
 
     companion object {
-        private const val LARGE_SQUARE_MARGIN_DP = 30
-
         fun defaultFor(
             kind: TaskWidgetKind,
             squarePreset: TaskWidgetPaddingPreset = TaskWidgetPaddingPreset.Standard,
         ): TaskWidgetConfiguration = when (kind) {
             TaskWidgetKind.SQUARE -> TaskWidgetConfiguration(
-                cornerRadiusDp = 24,
+                cornerRadiusDp = 22,
                 marginPreset = squarePreset.takeUnless { it == TaskWidgetPaddingPreset.Custom }
                     ?: TaskWidgetPaddingPreset.Standard,
                 customTopMarginDp = 0,
                 customBottomMarginDp = 0,
                 colorScheme = TaskWidgetColorScheme.FOLLOW_APP,
+                isScrollable = false,
             )
 
             TaskWidgetKind.CAPSULE -> TaskWidgetConfiguration(
@@ -83,6 +78,7 @@ internal data class TaskWidgetConfiguration(
                 customTopMarginDp = 0,
                 customBottomMarginDp = 0,
                 colorScheme = TaskWidgetColorScheme.FOLLOW_APP,
+                isScrollable = false,
             )
         }
     }
@@ -95,20 +91,17 @@ internal data class TaskWidgetConfigurationLimits(
     val maxCombinedMarginDp: Int,
 ) {
     companion object {
-        fun forKind(kind: TaskWidgetKind): TaskWidgetConfigurationLimits = when (kind) {
-            TaskWidgetKind.SQUARE -> TaskWidgetConfigurationLimits(
-                minCornerRadiusDp = 8,
-                maxCornerRadiusDp = 32,
-                maxSingleMarginDp = 28,
-                maxCombinedMarginDp = 40,
-            )
+        private val SharedLimits = TaskWidgetConfigurationLimits(
+            minCornerRadiusDp = 8,
+            maxCornerRadiusDp = 32,
+            maxSingleMarginDp = 28,
+            maxCombinedMarginDp = 40,
+        )
 
-            TaskWidgetKind.CAPSULE -> TaskWidgetConfigurationLimits(
-                minCornerRadiusDp = 12,
-                maxCornerRadiusDp = 35,
-                maxSingleMarginDp = 12,
-                maxCombinedMarginDp = 12,
-            )
+        fun forKind(kind: TaskWidgetKind): TaskWidgetConfigurationLimits = when (kind) {
+            TaskWidgetKind.SQUARE,
+            TaskWidgetKind.CAPSULE,
+            -> SharedLimits
         }
     }
 }

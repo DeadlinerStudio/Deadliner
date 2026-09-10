@@ -14,7 +14,6 @@ import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.main.modern.ModernHost
 import com.aritxonly.deadliner.ui.main.simplified.SimplifiedHost
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
-import com.aritxonly.deadliner.widgets.glance.TaskWidgetRefreshCoordinator
 import com.deadliner.platform.PlatformLogSink
 import com.deadliner.platform.PlatformLogger
 import com.deadliner.platform.KmpBuildMetadata
@@ -62,16 +61,6 @@ class MainActivity : DeadlinerAppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        updateWidget()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        updateWidget()
-    }
-
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
@@ -89,7 +78,4 @@ class MainActivity : DeadlinerAppCompatActivity() {
         super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
     }
 
-    fun updateWidget() {
-        TaskWidgetRefreshCoordinator.requestRefresh(this)
-    }
 }

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,15 +40,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.ui.base.Button
 import com.aritxonly.deadliner.ui.base.Slider
 import com.aritxonly.deadliner.ui.settings.CollapsingTopBarScaffold
 import com.aritxonly.deadliner.ui.settings.RadioOptionText
 import com.aritxonly.deadliner.ui.settings.SettingsRadioGroupItem
 import com.aritxonly.deadliner.ui.settings.SettingsScrollColumn
 import com.aritxonly.deadliner.ui.settings.SettingsSection
+import com.aritxonly.deadliner.ui.settings.SettingsSwitchItem
 import com.aritxonly.deadliner.ui.symbolPainterResource
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
+import com.aritxonly.deadliner.ui.editor.DeadlineBottomActions
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetColorScheme
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfiguration
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationLimits
@@ -88,6 +88,13 @@ internal fun TaskWidgetConfigurationScreen(
                     contentDescription = stringResource(R.string.cancel),
                 )
             }
+        },
+        bottomBar = {
+            DeadlineBottomActions(
+                showSaveToCalendar = false,
+                onSave = { onSave(configuration.sanitized(kind)) },
+                onSaveToCalendar = {},
+            )
         },
     ) { innerPadding ->
         SettingsScrollColumn(contentPadding = innerPadding) {
@@ -149,13 +156,18 @@ internal fun TaskWidgetConfigurationScreen(
                 }
             }
 
-            Button(
-                onClick = { onSave(configuration.sanitized(kind)) },
-                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-            ) {
-                Text(stringResource(R.string.save))
+            if (kind == TaskWidgetKind.SQUARE) {
+                SettingsSection(topLabel = stringResource(R.string.widget_configuration_list)) {
+                    SettingsSwitchItem(
+                        label = R.string.widget_configuration_scrollable,
+                        checked = configuration.isScrollable,
+                        onCheckedChange = {
+                            configuration = configuration.copy(isScrollable = it).sanitized(kind)
+                        },
+                    )
+                }
             }
-            Spacer(modifier = Modifier.navigationBarsPadding())
+
         }
     }
 }
@@ -285,7 +297,7 @@ private fun TaskWidgetConfigurationPreview(
                 if (kind == TaskWidgetKind.SQUARE) {
                     Text("Deadliner   3", color = accent, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     Spacer(Modifier.height(8.dp))
-                    repeat(configuration.maxVisibleTasks().coerceAtMost(3)) {
+                    repeat(3) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()

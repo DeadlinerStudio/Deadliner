@@ -20,12 +20,11 @@ import androidx.fragment.app.FragmentManager
 import com.aritxonly.deadliner.BuildConfig
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.AppIconMode
-import com.aritxonly.deadliner.model.AppThemeStyle
 import com.aritxonly.deadliner.model.AdvancedMaterialLevel
 import com.aritxonly.deadliner.model.AdvancedMaterialTuning
 import com.aritxonly.deadliner.model.AppearanceColorSource
-import com.aritxonly.deadliner.model.AppearanceDesignMode
 import com.aritxonly.deadliner.model.AppearancePreferences
+import com.aritxonly.deadliner.model.BackgroundColorStrategy
 import com.aritxonly.deadliner.model.ColorfulIndicatorStyle
 import com.aritxonly.deadliner.model.DynamicPaletteStyle
 import com.aritxonly.deadliner.model.DisplayScalePreset
@@ -275,18 +274,14 @@ object GlobalUtils {
         }
 
         val style = UiStyle.fromKey(sharedPreferences.getString("style", UiStyle.Simplified.key))
-        val legacyThemeStyle = sharedPreferences.getString("theme_style", null)?.let(AppThemeStyle::fromKey)
-            ?: if (sharedPreferences.getBoolean("miuix_mode", false)) {
-                AppThemeStyle.Miuix
-            } else {
-                AppThemeStyle.Material3
-            }
-        val designMode = sharedPreferences.getString("appearance_design_mode", null)
-            ?.let(AppearanceDesignMode::fromKey)
-            ?: when (legacyThemeStyle) {
-                AppThemeStyle.Miuix -> AppearanceDesignMode.Modern
-                AppThemeStyle.Material3 -> AppearanceDesignMode.Vivid
-            }
+        val legacyUsedMaterialTheme =
+            sharedPreferences.getString("theme_style", null) == "material3" ||
+                sharedPreferences.getString("appearance_design_mode", null) == "vivid" ||
+                !sharedPreferences.getBoolean("miuix_mode", true)
+        val backgroundColorStrategy = BackgroundColorStrategy.resolvePersisted(
+            value = sharedPreferences.getString("background_color_strategy", null),
+            legacyUsedMaterialTheme = legacyUsedMaterialTheme,
+        )
         val seedColor = sharedPreferences.getString("seed_color", null)
         val colorSource = AppearanceColorSource.resolvePersisted(
             sharedPreferences.getString("appearance_color_source", null), seedColor,
@@ -325,20 +320,12 @@ object GlobalUtils {
         val advancedMaterialFineTuning = AdvancedMaterialFineTuningPreferences.read(sharedPreferences)
         val legacyHideDivider = sharedPreferences.getBoolean("hide_divider", false)
         val hasModernHideDivider = sharedPreferences.contains("modern_hide_divider")
-        val hasVividHideDivider = sharedPreferences.contains("vivid_hide_divider")
         val modernHideDivider = if (hasModernHideDivider) {
             sharedPreferences.getBoolean("modern_hide_divider", true)
         } else if (sharedPreferences.contains("hide_divider")) {
             legacyHideDivider
         } else {
             true
-        }
-        val vividHideDivider = if (hasVividHideDivider) {
-            sharedPreferences.getBoolean("vivid_hide_divider", false)
-        } else if (sharedPreferences.contains("hide_divider")) {
-            legacyHideDivider
-        } else {
-            false
         }
         val settingsHomepageColoredIcons = sharedPreferences.getBoolean(
             "settings_homepage_colored_icons",
@@ -349,8 +336,7 @@ object GlobalUtils {
 
         return AppearancePreferences(
             uiStyle = style,
-            designMode = designMode,
-            themeStyle = legacyThemeStyle,
+            backgroundColorStrategy = backgroundColorStrategy,
             colorSource = colorSource,
             seedColorHex = seedColor,
             dynamicPaletteStyle = dynamicPaletteStyle,
@@ -368,7 +354,6 @@ object GlobalUtils {
             advancedMaterialBlurRadius = advancedMaterialBlurRadius,
             advancedMaterialFineTuning = advancedMaterialFineTuning,
             modernHideDivider = modernHideDivider,
-            vividHideDivider = vividHideDivider,
             useSettingsHomepageColoredIcons = settingsHomepageColoredIcons,
             semanticGlowEnabled = semanticGlowEnabled,
             appIconMode = appIconMode,
@@ -380,15 +365,12 @@ object GlobalUtils {
         commit: Boolean = false
     ) {
         check(::sharedPreferences.isInitialized) { "GlobalUtils not initialized" }
-        val normalizedThemeStyle = when (appearance.designMode) {
-            AppearanceDesignMode.Modern -> AppThemeStyle.Miuix
-            AppearanceDesignMode.Vivid -> AppThemeStyle.Material3
-        }
         sharedPreferences.edit(commit = commit) {
             putString("style", appearance.uiStyle.key)
-            putString("appearance_design_mode", appearance.designMode.key)
-            putString("theme_style", normalizedThemeStyle.key)
-            putBoolean("miuix_mode", appearance.designMode == AppearanceDesignMode.Modern)
+            putString("background_color_strategy", appearance.backgroundColorStrategy.key)
+            remove("appearance_design_mode")
+            remove("theme_style")
+            remove("miuix_mode")
             putBoolean("miuix_color", false)
             putBoolean("miuix_neutral_surfaces", appearance.useMiuixNeutralSurfaces)
             putBoolean("miuix_material_top_bar", appearance.useMaterialTopAppBarInMiuix)
@@ -402,7 +384,7 @@ object GlobalUtils {
             )
             AdvancedMaterialFineTuningPreferences.write(this, appearance.advancedMaterialFineTuning)
             putBoolean("modern_hide_divider", appearance.modernHideDivider)
-            putBoolean("vivid_hide_divider", appearance.vividHideDivider)
+            remove("vivid_hide_divider")
             putBoolean("hide_divider", appearance.activeHideDivider)
             putBoolean("settings_homepage_colored_icons", appearance.useSettingsHomepageColoredIcons)
             putBoolean("semantic_glow_enabled", appearance.semanticGlowEnabled)
@@ -440,9 +422,9 @@ object GlobalUtils {
         }
 
         if (_miuixModeFlow == null) {
-            _miuixModeFlow = MutableStateFlow(appearance.usesMiuixThemePreference)
+            _miuixModeFlow = MutableStateFlow(true)
         } else {
-            _miuixModeFlow!!.value = appearance.usesMiuixThemePreference
+            _miuixModeFlow!!.value = true
         }
 
         if (_miuixColorFlow == null) {
@@ -461,21 +443,16 @@ object GlobalUtils {
     }
 
     var miuixMode: Boolean
-        get() = appearancePreferences.designMode == AppearanceDesignMode.Modern
+        get() = true
         set(value) {
-            updateAppearance { current ->
-                current.copy(
-                    designMode = if (value) AppearanceDesignMode.Modern else AppearanceDesignMode.Vivid,
-                    themeStyle = if (value) AppThemeStyle.Miuix else AppThemeStyle.Material3,
-                )
-            }
+            // MIUIX is now the only component system. Keep this setter as a no-op for legacy callers.
         }
 
     private var _miuixModeFlow: MutableStateFlow<Boolean>? = null
 
     val miuixModeFlow: StateFlow<Boolean>
         get() = _miuixModeFlow ?: MutableStateFlow(
-            appearancePreferences.usesMiuixThemePreference
+            true
         ).also { _miuixModeFlow = it }
 
     var miuixColor: Boolean
@@ -548,12 +525,7 @@ object GlobalUtils {
     var hideDivider: Boolean
         get() = appearancePreferences.activeHideDivider
         set(value) {
-            updateAppearance { current ->
-                when (current.designMode) {
-                    AppearanceDesignMode.Modern -> current.copy(modernHideDivider = value)
-                    AppearanceDesignMode.Vivid -> current.copy(vividHideDivider = value)
-                }
-            }
+            updateAppearance { current -> current.copy(modernHideDivider = value) }
             hideDividerUi = value
         }
 
@@ -690,20 +662,6 @@ object GlobalUtils {
         get() = appearancePreferences.useSettingsHomepageColoredIcons
         set(value) {
             updateAppearance { it.copy(useSettingsHomepageColoredIcons = value) }
-        }
-
-    var designMode: AppearanceDesignMode
-        get() = appearancePreferences.designMode
-        set(value) {
-            updateAppearance {
-                it.copy(
-                    designMode = value,
-                    themeStyle = when (value) {
-                        AppearanceDesignMode.Modern -> AppThemeStyle.Miuix
-                        AppearanceDesignMode.Vivid -> AppThemeStyle.Material3
-                    },
-                )
-            }
         }
 
     var advancedMaterialLevel: AdvancedMaterialLevel

@@ -16,13 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.ui.theme.AppDesignSystem
-import com.aritxonly.deadliner.ui.theme.LocalAppDesignSystem
 
 // 为官方和 MIUIX 的组件起别名，防止重名冲突
-import androidx.compose.material3.Button as Material3Button
 import androidx.compose.material3.LocalContentColor as Material3LocalContentColor
-import androidx.compose.material3.TextButton as Material3TextButton
 import top.yukonga.miuix.kmp.basic.Button as MiuixButton
 import top.yukonga.miuix.kmp.basic.ButtonColors as MiuixButtonColors
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
@@ -94,41 +90,21 @@ fun Button(
     forceMaterial3: Boolean = false,
     content: @Composable RowScope.() -> Unit
 ) {
-    val designSystem = if (forceMaterial3) AppDesignSystem.MATERIAL3 else LocalAppDesignSystem.current
-    when (designSystem) {
-        AppDesignSystem.MATERIAL3 -> {
-            Material3Button(
-                onClick = onClick,
-                modifier = modifier,
-                enabled = enabled,
-                shape = shape,
-                colors = colors,
-                elevation = elevation,
-                border = border,
-                contentPadding = contentPadding,
-                interactionSource = interactionSource,
-                content = content
-            )
-        }
-        AppDesignSystem.MIUIX -> {
-            val dialogActionStyle = LocalMiuixDialogActionStyle.current
-            val miuixColors = resolveMiuixButtonColors(dialogActionStyle, colors)
-            val resolvedContentColor =
-                if (enabled) miuixColors.contentColor else miuixColors.disabledContentColor
-            MiuixButton(
-                onClick = onClick,
-                modifier = modifier.miuixDialogActionWidth(dialogActionStyle),
-                enabled = enabled,
-                cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
-                colors = miuixColors,
-            ) {
-                CompositionLocalProvider(
-                    Material3LocalContentColor provides resolvedContentColor,
-                    MiuixLocalContentColor provides resolvedContentColor,
-                ) {
-                    content()
-                }
-            }
+    val dialogActionStyle = LocalMiuixDialogActionStyle.current
+    val miuixColors = resolveMiuixButtonColors(dialogActionStyle, colors)
+    val resolvedContentColor = if (enabled) miuixColors.contentColor else miuixColors.disabledContentColor
+    MiuixButton(
+        onClick = onClick,
+        modifier = modifier.miuixDialogActionWidth(dialogActionStyle),
+        enabled = enabled,
+        cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
+        colors = miuixColors,
+    ) {
+        CompositionLocalProvider(
+            Material3LocalContentColor provides resolvedContentColor,
+            MiuixLocalContentColor provides resolvedContentColor,
+        ) {
+            content()
         }
     }
 }
@@ -151,55 +127,39 @@ fun TextButton(
 
     // MIUIX 专属辅助参数
     miuixText: String = "",
+    useMiuixDialogActionColors: Boolean = true,
 
     content: @Composable RowScope.() -> Unit
 ) {
-    val designSystem = if (forceMaterial3) AppDesignSystem.MATERIAL3 else LocalAppDesignSystem.current
-    when (designSystem) {
-        AppDesignSystem.MATERIAL3 -> {
-            Material3TextButton(
-                onClick = onClick,
-                modifier = modifier,
-                enabled = enabled,
-                shape = shape,
-                colors = colors,
-                elevation = elevation,
-                border = border,
-                contentPadding = contentPadding,
-                interactionSource = interactionSource,
-                content = content
-            )
-        }
-        AppDesignSystem.MIUIX -> {
-            val dialogActionStyle = LocalMiuixDialogActionStyle.current
-            val miuixModifier = modifier.miuixDialogActionWidth(dialogActionStyle)
-            if (miuixText.isNotBlank()) {
-                MiuixTextButton(
-                    text = miuixText,
-                    onClick = onClick,
-                    modifier = miuixModifier,
-                    enabled = enabled,
-                    cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
-                    colors = resolveMiuixTextButtonColors(dialogActionStyle),
-                )
-            } else {
-                val miuixColors = resolveMiuixButtonColors(dialogActionStyle, colors)
-                val resolvedContentColor =
-                    if (enabled) miuixColors.contentColor else miuixColors.disabledContentColor
-                MiuixButton(
-                    onClick = onClick,
-                    modifier = miuixModifier,
-                    enabled = enabled,
-                    cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
-                    colors = miuixColors,
-                ) {
-                    CompositionLocalProvider(
-                        Material3LocalContentColor provides resolvedContentColor,
-                        MiuixLocalContentColor provides resolvedContentColor,
-                    ) {
-                        content()
-                    }
-                }
+    val dialogActionStyle = LocalMiuixDialogActionStyle.current
+    val miuixModifier = modifier.miuixDialogActionWidth(dialogActionStyle)
+    if (miuixText.isNotBlank()) {
+        MiuixTextButton(
+            text = miuixText,
+            onClick = onClick,
+            modifier = miuixModifier,
+            enabled = enabled,
+            cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
+            colors = resolveMiuixTextButtonColors(dialogActionStyle),
+        )
+    } else {
+        val miuixColors = resolveMiuixButtonColors(
+            style = if (useMiuixDialogActionColors) dialogActionStyle else MiuixDialogActionStyle.Default,
+            fallback = colors,
+        )
+        val resolvedContentColor = if (enabled) miuixColors.contentColor else miuixColors.disabledContentColor
+        MiuixButton(
+            onClick = onClick,
+            modifier = miuixModifier,
+            enabled = enabled,
+            cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
+            colors = miuixColors,
+        ) {
+            CompositionLocalProvider(
+                Material3LocalContentColor provides resolvedContentColor,
+                MiuixLocalContentColor provides resolvedContentColor,
+            ) {
+                content()
             }
         }
     }

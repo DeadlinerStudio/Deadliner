@@ -14,27 +14,13 @@ class AppearancePreferencesTest {
     }
 
     @Test
-    fun modernModeMapsToMiuixThemeAndModernDivider() {
+    fun miuixIsTheOnlyComponentThemeAndUsesOneDividerPreference() {
         val appearance = AppearancePreferences(
-            designMode = AppearanceDesignMode.Modern,
             modernHideDivider = true,
-            vividHideDivider = false,
         )
 
         assertTrue(appearance.usesMiuixTheme)
         assertEquals(true, appearance.activeHideDivider)
-    }
-
-    @Test
-    fun vividModeMapsToMaterialThemeAndVividDivider() {
-        val appearance = AppearancePreferences(
-            designMode = AppearanceDesignMode.Vivid,
-            modernHideDivider = true,
-            vividHideDivider = false,
-        )
-
-        assertEquals(AppThemeStyle.Material3, appearance.effectiveThemeStyle)
-        assertEquals(false, appearance.activeHideDivider)
     }
 
     @Test
@@ -46,32 +32,26 @@ class AppearancePreferencesTest {
     }
 
     @Test
-    fun presetColorSourceIsScopedToModernDesign() {
-        val modern = AppearancePreferences(
-            designMode = AppearanceDesignMode.Modern,
+    fun presetColorSourceWorksWithBothBackgroundStrategies() {
+        val miuix = AppearancePreferences(
             colorSource = AppearanceColorSource.Preset,
         )
-        val vivid = modern.copy(designMode = AppearanceDesignMode.Vivid)
+        val monet = miuix.copy(backgroundColorStrategy = BackgroundColorStrategy.MaterialMonet)
 
-        assertEquals(AppearanceColorSource.Preset, modern.effectiveColorSource)
-        assertEquals(AppearanceColorSource.SystemDynamic, vivid.effectiveColorSource)
+        assertEquals(AppearanceColorSource.Preset, miuix.effectiveColorSource)
+        assertEquals(AppearanceColorSource.Preset, monet.effectiveColorSource)
     }
 
     @Test
-    fun contrastingHomeFabDefaultsOnAndOnlyAppearsForModernPreset() {
-        val modernPreset = AppearancePreferences(
-            designMode = AppearanceDesignMode.Modern,
+    fun contrastingHomeFabDefaultsOnAndAppearsForPreset() {
+        val preset = AppearancePreferences(
             colorSource = AppearanceColorSource.Preset,
         )
 
-        assertTrue(modernPreset.useContrastingHomeFab)
-        assertTrue(modernPreset.showsContrastingHomeFabOption)
+        assertTrue(preset.useContrastingHomeFab)
+        assertTrue(preset.showsContrastingHomeFabOption)
         assertFalse(
-            modernPreset.copy(colorSource = AppearanceColorSource.SeedColor)
-                .showsContrastingHomeFabOption,
-        )
-        assertFalse(
-            modernPreset.copy(designMode = AppearanceDesignMode.Vivid)
+            preset.copy(colorSource = AppearanceColorSource.SeedColor)
                 .showsContrastingHomeFabOption,
         )
     }
@@ -97,6 +77,18 @@ class AppearancePreferencesTest {
         assertEquals(
             AppearanceColorSource.Preset,
             AppearanceColorSource.resolvePersisted(value = "preset", seedColorHex = "#3482FF"),
+        )
+    }
+
+    @Test
+    fun legacyMaterialThemeMigratesToMaterialMonetBackground() {
+        assertEquals(
+            BackgroundColorStrategy.MaterialMonet,
+            BackgroundColorStrategy.resolvePersisted(value = null, legacyUsedMaterialTheme = true),
+        )
+        assertEquals(
+            BackgroundColorStrategy.MiuixHyperOs,
+            BackgroundColorStrategy.resolvePersisted(value = null, legacyUsedMaterialTheme = false),
         )
     }
 }
