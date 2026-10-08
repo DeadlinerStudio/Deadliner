@@ -8,6 +8,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -114,9 +115,10 @@ fun AdaptiveNavigationSuiteScaffold(
     val isCompactWidth = !adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(
         WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND,
     )
-    val shouldUseImmersiveExperience = useImmersiveExperience &&
-        isCompactWidth &&
-        navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
+    val isWideWidth = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(
+        WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND,
+    )
+    val shouldUseImmersiveExperience = useImmersiveExperience && !isWideWidth
     val observeTopBarScroll = useImmersiveExperience
     val topBarScrollObserver = rememberTopBarMaterialScrollObserver(
         scrollKey = listOf(selectedKey, topBarMaterialScrollKey),
@@ -149,6 +151,30 @@ fun AdaptiveNavigationSuiteScaffold(
                 onItemSelected = onItemSelected,
                 detachedItemKey = immersiveDetachedItemKey,
                 detachedAction = immersiveDetachedAction,
+                backdrop = backdrop,
+                horizontalItems = !isCompactWidth,
+                modifier = observedModifier,
+                topBar = hostedTopBar,
+                legacyTopBar = legacyTopBar,
+                snackbarHost = snackbarHost,
+                floatingActionButton = floatingActionButton,
+                content = content,
+            )
+        }
+        return
+    }
+
+    if (useImmersiveExperience && isWideWidth) {
+        val backdrop = if (advancedMaterial.enabled) rememberLayerBackdrop() else null
+        RegisterAdvancedMaterialModalBackdrop(backdrop)
+        CompositionLocalProvider(
+            LocalTopBarScrollProgress provides topBarScrollProgress,
+            LocalTopBarMaterialScrollObserver provides topBarScrollObserver,
+        ) {
+            TabletNavigationScaffold(
+                items = items,
+                selectedKey = selectedKey,
+                onItemSelected = onItemSelected,
                 backdrop = backdrop,
                 modifier = observedModifier,
                 topBar = hostedTopBar,
@@ -280,6 +306,7 @@ private fun LegacyCompactNavigationScaffold(
             Box(modifier = Modifier.align(Alignment.TopCenter)) {
                 topBar()
             }
+            NavigationOverlay(null, Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
         }
     }
 }
@@ -373,6 +400,8 @@ private fun LegacyWideNavigationScaffold(
                         topBar()
                     }
                 }
+                NavigationOverlay(backdrop, Modifier.align(Alignment.BottomCenter)
+                    .navigationBarsPadding().padding(bottom = 16.dp))
             }
         }
     }
@@ -401,12 +430,12 @@ private fun AdvancedCompactNavigationScaffold(
             }
         },
         snackbarHost = {
-            Box(modifier = Modifier.padding(bottom = CompactOverlayHostPadding)) {
+            Box(modifier = Modifier.padding(bottom = CompactOverlayHostPadding + LocalNavigationOverlayContentPadding.current)) {
                 snackbarHost()
             }
         },
         floatingActionButton = {
-            Box(modifier = Modifier.padding(bottom = CompactOverlayHostPadding)) {
+            Box(modifier = Modifier.padding(bottom = CompactOverlayHostPadding + LocalNavigationOverlayContentPadding.current)) {
                 floatingActionButton()
             }
         },
@@ -431,6 +460,11 @@ private fun AdvancedCompactNavigationScaffold(
                     topBar()
                 }
             }
+            NavigationOverlay(
+                backdrop = backdrop,
+                modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding()
+                    .padding(bottom = CompactOverlayHostPadding),
+            )
             MiuixBottomNavigationBar(
                 items = items,
                 selectedKey = selectedKey,

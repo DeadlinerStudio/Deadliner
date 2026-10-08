@@ -3,6 +3,9 @@
   "weights": [400],
   "icons": {
     "ic_add": { "symbol": "add" },
+    "focus_pause": { "symbol": "pause" },
+    "focus_resume": { "symbol": "play_arrow" },
+    "focus_finish": { "symbol": "stop" },
     "ic_add_ddl_tile": { "symbol": "alarm_add" },
     "ic_add_imm": { "symbol": "add" },
     "ic_ai": { "symbol": "rocket_launch" },

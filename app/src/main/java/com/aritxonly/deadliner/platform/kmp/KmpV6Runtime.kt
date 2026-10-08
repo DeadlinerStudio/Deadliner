@@ -5,6 +5,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.CloudSyncProvider
 import com.aritxonly.deadliner.localutils.CloudSyncPreferences
 import com.aritxonly.deadliner.notification.AndroidNotificationGateway
+import com.aritxonly.deadliner.notification.AndroidFocusAlarmPort
 import com.deadliner.db.AndroidDatabaseDriverFactory
 import com.deadliner.db.DeadlinerDatabase
 import com.deadliner.viewmodel.habit.HabitListViewModel
@@ -17,10 +18,10 @@ import com.deadliner.viewmodel.task.TaskListViewModel
 import com.deadliner.viewmodel.task.TaskDetailViewModel
 import com.deadliner.viewmodel.task.TaskEditorViewModel
 import com.deadliner.viewmodel.search.SearchViewModel
+import com.deadliner.viewmodel.focus.FocusTimerViewModel
 import com.deadliner.domain.habit.Habit
 import com.deadliner.domain.task.Task
 import com.deadliner.service.LifiToolExecutor
-import com.deadliner.service.NotificationOrchestrator
 import com.deadliner.platform.DailySummaryConfig
 import com.deadliner.domain.ai.model.AIConfig
 import com.deadliner.interfaces.DeadlinerCore
@@ -35,17 +36,25 @@ import com.deadliner.sync.server.engine.DeadlinerServerSyncConfiguration
 import com.deadliner.sync.server.transport.DeadlinerServerTransportConfiguration
 import com.deadliner.sync.server.transport.KtorDeadlinerServerTransport
 import kotlinx.coroutines.runBlocking
+import com.deadliner.domain.task.TaskAction
+import com.deadliner.domain.task.TaskActionOutcome
+import com.deadliner.db.repository.TaskActionResult
+import kotlinx.datetime.Clock
 
 /** Android-private composition root for the v6 shared layer. */
 internal object KmpV6Runtime {
     lateinit var database: DeadlinerDatabase
         private set
 
+    private lateinit var notificationContext: Context
     private lateinit var notificationGateway: AndroidNotificationGateway
+    private lateinit var focusAlarmPort: AndroidFocusAlarmPort
 
     private val notificationOrchestrator by lazy {
         check(::database.isInitialized && ::notificationGateway.isInitialized) { "KmpV6Runtime is not initialized" }
-        NotificationOrchestrator(notificationGateway)
+        database.configureNotificationUpdates(notificationGateway,
+            policyProvider = { com.aritxonly.deadliner.notification.NotificationPolicyPreferences.read(notificationContext) },
+            interactionsProvider = { com.aritxonly.deadliner.notification.NotificationInteractionStore.read(notificationContext) })
     }
 
     private val lifiToolExecutor by lazy {
@@ -91,6 +100,15 @@ internal object KmpV6Runtime {
         SearchViewModel(database.tasks, database.habits)
     }
 
+    val focusTimerViewModel: FocusTimerViewModel by lazy {
+        check(::database.isInitialized && ::focusAlarmPort.isInitialized) { "KmpV6Runtime is not initialized" }
+        FocusTimerViewModel(
+            timerService = database.createFocusTimerService(focusAlarmPort),
+            sessionRepository = database.focusSessions,
+            taskRepository = database.tasks,
+        )
+    }
+
     fun createTaskEditorViewModel(editingUid: String? = null): TaskEditorViewModel =
         TaskEditorViewModel(
             taskRepository = database.tasks,
@@ -120,32 +138,69 @@ internal object KmpV6Runtime {
         notificationOrchestrator.onTaskUpdated(updated)
     }
 
-    fun refreshNotifications() {
-        notificationOrchestrator.refreshAll(database.tasks.list(), database.habits.list())
-        if (GlobalUtils.dailyStatsNotification) {
-            notificationGateway.setDailySummaryNotification(
-                DailySummaryConfig(
-                    "%02d:%02d".format(GlobalUtils.dailyNotificationHour, GlobalUtils.dailyNotificationMinute),
-                ),
-            )
+    fun applyTaskAction(taskUid: String, action: TaskAction): TaskActionResult {
+        val hadRealtime = notificationMetadata().realtime.any { it.ownerUid == taskUid && it.kind == com.deadliner.platform.NotificationKind.TASK_REALTIME }
+        val result = database.tasks.applyAction(taskUid, action, Clock.System.now().toString())
+        if (result.outcome == TaskActionOutcome.APPLIED) {
+            result.task?.let { task ->
+                if (hadRealtime && task.state in listOf(com.deadliner.domain.task.TaskState.COMPLETED, com.deadliner.domain.task.TaskState.ABANDONED)) {
+                    com.aritxonly.deadliner.notification.NotificationInteractionStore.result(notificationContext,
+                        com.deadliner.platform.TaskNotificationResult(task.uid, task.updatedAt,
+                            if (task.state == com.deadliner.domain.task.TaskState.COMPLETED) com.deadliner.platform.NotificationPhase.COMPLETED
+                            else com.deadliner.platform.NotificationPhase.ABANDONED, Clock.System.now().toString()))
+                }
+                if (task.state == com.deadliner.domain.task.TaskState.ACTIVE) {
+                    com.aritxonly.deadliner.notification.NotificationInteractionStore.clearResult(notificationContext, task.uid)
+                }
+                notificationOrchestrator.onTaskUpdated(task)
+            }
         }
+        return result
     }
 
+    fun deleteTask(taskUid: String): TaskActionResult {
+        val result = database.tasks.delete(taskUid, Clock.System.now().toString())
+        if (result.outcome == TaskActionOutcome.APPLIED) notificationOrchestrator.onTaskDeleted(taskUid)
+        return result
+    }
+
+    fun triggerNotificationInfoUpdate(force: Boolean = false) {
+        com.aritxonly.deadliner.notification.NotificationDiagnostics.event("update.requested", "force" to force)
+        notificationOrchestrator.triggerNotificationInfoUpdate(force)
+        scheduleDailySummary()
+    }
+
+    // Settings/boot explicitly reapply native preferences and recover OS registrations.
+    fun refreshNotifications() = triggerNotificationInfoUpdate(force = true)
+
     fun cancelNotifications() {
-        notificationGateway.cancelAll()
+        notificationOrchestrator.cancelAllNotifications()
     }
 
     fun onHabitNotificationDelivered(habit: Habit) {
-        notificationOrchestrator.onHabitUpdated(habit)
+        notificationOrchestrator.onHabitNotificationDelivered(habit)
     }
 
-    fun scheduleDailySummary() {
-        notificationGateway.setDailySummaryNotification(
-            DailySummaryConfig(
-                "%02d:%02d".format(GlobalUtils.dailyNotificationHour, GlobalUtils.dailyNotificationMinute),
-            ),
-        )
+    fun scheduleDailySummary() = notificationGateway.cancelDailySummaryNotification()
+
+    fun usesNotificationMetadata(): Boolean = ::notificationContext.isInitialized
+
+    fun notificationMetadata(): com.deadliner.platform.NotificationMetadata {
+        val cached = notificationOrchestrator.lastMetadata
+        if (cached != null && (cached.nextRefreshAt == null || kotlinx.datetime.Instant.parse(cached.nextRefreshAt!!) > Clock.System.now())) return cached
+        notificationOrchestrator.triggerNotificationInfoUpdate()
+        return requireNotNull(notificationOrchestrator.lastMetadata)
     }
+
+    fun notificationMetadata(now: kotlinx.datetime.Instant): com.deadliner.platform.NotificationMetadata =
+        com.deadliner.service.NotificationMetadataPlanner.plan(database.tasks.list(), database.habits.list(), database.habits::recordsIncludingDeleted,
+            com.aritxonly.deadliner.notification.NotificationPolicyPreferences.read(notificationContext),
+            com.aritxonly.deadliner.notification.NotificationInteractionStore.read(notificationContext), now)
+
+    fun isNotificationEntryValid(entry: com.deadliner.platform.NotificationMetadataEntry): Boolean =
+        notificationMetadata(kotlinx.datetime.Instant.parse(entry.triggerAt) - kotlin.time.Duration.parse("1ms"))
+            .alarms.any { it == entry }
+
 
     fun executeLifiTool(toolName: String, argumentsJson: String): String =
         lifiToolExecutor.execute(toolName, argumentsJson)
@@ -286,7 +341,9 @@ internal object KmpV6Runtime {
         database = DeadlinerDatabase.create(
             AndroidDatabaseDriverFactory(context.applicationContext)
         )
+        notificationContext = context.applicationContext
         notificationGateway = AndroidNotificationGateway(context.applicationContext)
+        focusAlarmPort = AndroidFocusAlarmPort(context.applicationContext)
 
         migrateV5IfPresent(context.applicationContext)
 

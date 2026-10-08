@@ -24,6 +24,7 @@ fun MiuixBottomSheet(
     modifier: Modifier = Modifier,
     startAction: @Composable (() -> Unit)? = null,
     endAction: @Composable (() -> Unit)? = null,
+    allowDismiss: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
@@ -47,6 +48,7 @@ fun MiuixBottomSheet(
         // here would be added again to their 20dp content padding.
         insideMargin = DpSize(0.dp, 0.dp),
         renderInRootScaffold = true,
+        allowDismiss = allowDismiss,
         onDismissRequest = onDismissRequest,
         onDismissFinished = onDismissFinished,
         content = content,

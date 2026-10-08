@@ -10,6 +10,9 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 
 internal data class SoftGlassShadowTokens(
+    val ambientRadius: Dp,
+    val ambientSpread: Dp,
+    val ambientAlpha: Float,
     val outerRadius: Dp,
     val outerSpread: Dp,
     val outerAlpha: Float,
@@ -23,21 +26,27 @@ internal fun softGlassShadowTokens(
     isDark: Boolean,
 ): SoftGlassShadowTokens = if (isDark) {
     SoftGlassShadowTokens(
-        outerRadius = 7.dp,
-        outerSpread = (-0.75).dp,
-        outerAlpha = 0.052f,
-        edgeRadius = 3.dp,
-        edgeSpread = (-0.75).dp,
-        edgeAlpha = 0.010f,
+        ambientRadius = 22.dp,
+        ambientSpread = (-1).dp,
+        ambientAlpha = 0.020f,
+        outerRadius = 11.dp,
+        outerSpread = (-0.5).dp,
+        outerAlpha = 0.038f,
+        edgeRadius = 4.dp,
+        edgeSpread = (-0.5).dp,
+        edgeAlpha = 0.008f,
     )
 } else {
     SoftGlassShadowTokens(
-        outerRadius = 8.dp,
-        outerSpread = (-0.75).dp,
-        outerAlpha = 0.068f,
-        edgeRadius = 3.5.dp,
-        edgeSpread = (-0.75).dp,
-        edgeAlpha = 0.014f,
+        ambientRadius = 24.dp,
+        ambientSpread = (-1).dp,
+        ambientAlpha = 0.025f,
+        outerRadius = 12.dp,
+        outerSpread = (-0.5).dp,
+        outerAlpha = 0.050f,
+        edgeRadius = 4.5.dp,
+        edgeSpread = (-0.5).dp,
+        edgeAlpha = 0.012f,
     )
 }
 
@@ -49,6 +58,15 @@ internal fun Modifier.softGlassShadow(
     val tokens = softGlassShadowTokens(isDark)
     val resolvedAlpha = alpha.coerceIn(0f, 1f)
     return dropShadow(
+        shape = shape,
+        shadow = Shadow(
+            radius = tokens.ambientRadius,
+            spread = tokens.ambientSpread,
+            offset = tokens.offset,
+            color = Color.Black,
+            alpha = tokens.ambientAlpha * resolvedAlpha,
+        ),
+    ).dropShadow(
         shape = shape,
         shadow = Shadow(
             radius = tokens.outerRadius,

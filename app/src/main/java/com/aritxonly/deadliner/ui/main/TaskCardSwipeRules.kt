@@ -12,6 +12,7 @@ internal object TaskCardSwipeDefaults {
     const val MAX_OFFSET_FRACTION = 0.82f
     const val FULL_SWIPE_THRESHOLD_FRACTION = 0.62f
     const val REVEAL_WIDTH_DP = 112f
+    const val FOCUS_REVEAL_WIDTH_DP = 168f
     const val REVEAL_TRIGGER_DISTANCE_DP = 84f
     const val CLOSE_DISTANCE_DP = 32f
 }
@@ -24,10 +25,13 @@ internal fun resolveTaskCardSwipeSettle(
     revealThreshold: Float,
     closeDistance: Float,
     hasTrailingActions: Boolean,
+    leadingRevealWidth: Float = 0f,
 ): TaskCardSwipeSettleResult {
     val fullSwipeThreshold = cardWidth * TaskCardSwipeDefaults.FULL_SWIPE_THRESHOLD_FRACTION
 
-    if (offset > fullSwipeThreshold) {
+    // A revealed three-action menu must not count as a full swipe on compact cards.
+    val leadingFullSwipeThreshold = maxOf(fullSwipeThreshold, leadingRevealWidth + closeDistance)
+    if (offset > leadingFullSwipeThreshold) {
         return TaskCardSwipeSettleResult.RUN_PRIMARY_ACTION
     }
     if (offset < -fullSwipeThreshold && hasTrailingActions) {

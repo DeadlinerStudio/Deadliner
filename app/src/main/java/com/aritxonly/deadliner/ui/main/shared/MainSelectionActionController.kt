@@ -7,11 +7,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.aritxonly.deadliner.FocusTimerActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DeadlineType
 import com.deadliner.domain.task.TaskAction
+import com.deadliner.domain.task.TaskActionOutcome
 import com.deadliner.domain.task.TaskState
 import com.deadliner.viewmodel.habit.HabitListViewModel
 import com.deadliner.viewmodel.task.TaskListViewModel
@@ -48,6 +50,9 @@ class MainSelectionActionController(
         }
 
         val tasks = taskViewModel.uiState.value.tasks.associateBy { it.uid }
+        var appliedCount = 0
+        var blockedTaskUid: String? = null
+        var blockedTaskTitle: String? = null
         hostState.selectedIds.forEach { uid ->
             val action = when (tasks[uid]?.state) {
                 TaskState.ACTIVE -> TaskAction.MARK_COMPLETE
@@ -55,11 +60,25 @@ class MainSelectionActionController(
                 else -> null
             }
             if (action != null) {
-                taskViewModel.applyTaskActionNow(uid, action, Instant.now().toString())
+                when (
+                    taskViewModel.applyTaskActionNow(uid, action, Instant.now().toString())
+                        .lastActionOutcome
+                ) {
+                    TaskActionOutcome.APPLIED -> appliedCount++
+                    TaskActionOutcome.TIMER_REQUIRES_RESOLUTION -> if (blockedTaskUid == null) {
+                        blockedTaskUid = uid
+                        blockedTaskTitle = tasks[uid]?.title
+                    }
+                    else -> Unit
+                }
             }
         }
         hostState.clearSelection()
-        toast(R.string.toast_finished)
+        if (appliedCount > 0) {
+            onCelebrate()
+            toast(R.string.toast_finished)
+        }
+        openFocusTimerIfBlocked(blockedTaskUid, blockedTaskTitle)
     }
 
     fun onArchiveClick() {
@@ -71,8 +90,10 @@ class MainSelectionActionController(
         val tasks = taskViewModel.uiState.value.tasks.associateBy { it.uid }
         hostState.selectedIds.forEach { uid ->
             if (tasks[uid]?.state in setOf(TaskState.COMPLETED, TaskState.ABANDONED)) {
-                taskViewModel.applyTaskActionNow(uid, TaskAction.MARK_ARCHIVE, Instant.now().toString())
-                count++
+                val outcome = taskViewModel
+                    .applyTaskActionNow(uid, TaskAction.MARK_ARCHIVE, Instant.now().toString())
+                    .lastActionOutcome
+                if (outcome == TaskActionOutcome.APPLIED) count++
             }
         }
         hostState.clearSelection()
@@ -95,12 +116,41 @@ class MainSelectionActionController(
     fun confirmDeleteSelected() {
         val now = Instant.now().toString()
         when (hostState.selectedPage) {
-            DeadlineType.TASK -> hostState.selectedIds.forEach { taskViewModel.deleteTaskNow(it, now) }
-            DeadlineType.HABIT -> hostState.selectedIds.forEach { habitViewModel.deleteHabitNow(it, now) }
+            DeadlineType.TASK -> {
+                val tasks = taskViewModel.uiState.value.tasks.associateBy { it.uid }
+                var appliedCount = 0
+                var blockedTaskUid: String? = null
+                var blockedTaskTitle: String? = null
+                hostState.selectedIds.forEach { uid ->
+                    when (taskViewModel.deleteTaskNow(uid, now).lastActionOutcome) {
+                        TaskActionOutcome.APPLIED -> appliedCount++
+                        TaskActionOutcome.TIMER_REQUIRES_RESOLUTION -> if (blockedTaskUid == null) {
+                            blockedTaskUid = uid
+                            blockedTaskTitle = tasks[uid]?.title
+                        }
+                        else -> Unit
+                    }
+                }
+                if (appliedCount > 0) toast(R.string.toast_deletion)
+                openFocusTimerIfBlocked(blockedTaskUid, blockedTaskTitle)
+            }
+            DeadlineType.HABIT -> {
+                hostState.selectedIds.forEach { habitViewModel.deleteHabitNow(it, now) }
+                toast(R.string.toast_deletion)
+            }
         }
         hostState.clearSelection()
         showDeleteDialog = false
-        toast(R.string.toast_deletion)
+    }
+
+    private fun openFocusTimerIfBlocked(taskUid: String?, taskTitle: String?) {
+        if (taskUid == null) return
+        Toast.makeText(
+            activity,
+            activity.getString(R.string.focus_resolve_before_task_change),
+            Toast.LENGTH_LONG,
+        ).show()
+        activity.startActivity(FocusTimerActivity.newIntent(activity, taskUid, taskTitle.orEmpty()))
     }
 
     private fun toast(messageRes: Int) {

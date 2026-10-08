@@ -64,18 +64,38 @@ class TaskCardSwipeRulesTest {
         )
     }
 
+    @Test
+    fun focusMenuOnCompactCardDoesNotRunCompleteWhenRevealedOrClosing() {
+        assertEquals(TaskCardSwipeSettleResult.LEADING_REVEALED,
+            settle(offset = 168f, cardWidth = 260f, leadingRevealWidth = 168f))
+        assertEquals(TaskCardSwipeSettleResult.CLOSED,
+            settle(offset = 136f, dragStartOffset = 168f, gestureOffset = -32f,
+                cardWidth = 260f, leadingRevealWidth = 168f))
+    }
+
+    @Test
+    fun focusMenuStillAllowsDeliberateFullSwipeToComplete() {
+        assertEquals(TaskCardSwipeSettleResult.RUN_PRIMARY_ACTION,
+            settle(offset = 205f, cardWidth = 260f, leadingRevealWidth = 168f))
+        assertEquals(TaskCardSwipeSettleResult.RUN_DELETE_ACTION,
+            settle(offset = -165f, cardWidth = 260f, leadingRevealWidth = 168f))
+    }
+
     private fun settle(
         offset: Float,
         dragStartOffset: Float = 0f,
         gestureOffset: Float = offset - dragStartOffset,
         hasTrailingActions: Boolean = true,
+        cardWidth: Float = width,
+        leadingRevealWidth: Float = 0f,
     ): TaskCardSwipeSettleResult = resolveTaskCardSwipeSettle(
         offset = offset,
         dragStartOffset = dragStartOffset,
         gestureOffset = gestureOffset,
-        cardWidth = width,
+        cardWidth = cardWidth,
         revealThreshold = revealThreshold,
         closeDistance = closeDistance,
         hasTrailingActions = hasTrailingActions,
+        leadingRevealWidth = leadingRevealWidth,
     )
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +28,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +47,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
+import kotlin.math.roundToInt
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.AppearanceColorSource
@@ -154,6 +158,28 @@ fun DesignColorSettingsScreen(
                 )
                 SettingsSectionDivider()
                 SettingsDetailSwitchItem(
+                    headline = R.string.settings_follow_myhypermodifier_navigation_lift,
+                    supportingText = R.string.settings_support_follow_myhypermodifier_navigation_lift,
+                    checked = appearance.useMyHyperModifierNavigationLift,
+                    onCheckedChange = { checked ->
+                        GlobalUtils.updateAppearance { current ->
+                            current.copy(useMyHyperModifierNavigationLift = checked)
+                        }
+                    },
+                )
+                if (!appearance.useMyHyperModifierNavigationLift) {
+                    SettingsSectionDivider()
+                    FloatingNavigationLiftSlider(
+                        value = appearance.floatingNavigationBottomLift,
+                        onValueChange = { value ->
+                            GlobalUtils.updateAppearance { current ->
+                                current.copy(floatingNavigationBottomLift = value)
+                            }
+                        },
+                    )
+                }
+                SettingsSectionDivider()
+                SettingsDetailSwitchItem(
                     headline = R.string.settings_hide_divider,
                     supportingText = R.string.settings_support_hide_divider,
                     checked = appearance.activeHideDivider,
@@ -245,6 +271,46 @@ fun DesignColorSettingsScreen(
 
             Spacer(Modifier.navigationBarsPadding())
         }
+    }
+}
+
+@Composable
+private fun FloatingNavigationLiftSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.settings_floating_navigation_lift),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = "${value.roundToInt()} dp",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Text(
+            text = stringResource(R.string.settings_support_floating_navigation_lift),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Slider(
+            value = value,
+            onValueChange = { onValueChange(it.roundToInt().toFloat()) },
+            valueRange = 0f..48f,
+            steps = 47,
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+            ),
+        )
     }
 }
 

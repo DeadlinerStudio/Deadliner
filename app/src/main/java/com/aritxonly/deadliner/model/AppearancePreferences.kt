@@ -27,6 +27,8 @@ data class AppearancePreferences(
     val useMiuixNeutralSurfaces: Boolean = true,
     val useMaterialTopAppBarInMiuix: Boolean = false,
     val useImmersiveExperience: Boolean = false,
+    val floatingNavigationBottomLift: Float = 0f,
+    val useMyHyperModifierNavigationLift: Boolean = false,
     val useContrastingHomeFab: Boolean = true,
     val useAdvancedMaterial: Boolean = false,
     val advancedMaterialLevel: AdvancedMaterialLevel = AdvancedMaterialLevel.Light,

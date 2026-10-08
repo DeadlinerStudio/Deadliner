@@ -94,7 +94,8 @@ enum class MiuixFloatingTabLayout {
 
 object MiuixFloatingTabBarDefaults {
     val Height = 54.dp
-    val HorizontalContentPadding = 7.dp
+    // 6dp content padding - 3dp indicator overflow = the same 3dp visible edge as top/bottom.
+    val HorizontalContentPadding = 6.dp
     val VerticalContentPadding = 3.dp
     val IndicatorHorizontalOverflow = 3.dp
     val MaximumWidth = 380.dp

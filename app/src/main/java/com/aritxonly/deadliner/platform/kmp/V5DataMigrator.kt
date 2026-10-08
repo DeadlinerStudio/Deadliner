@@ -212,7 +212,9 @@ internal class V5DataMigrator(
         return if (stored == "active" && legacyFlags != "active") legacyFlags else stored
     }
 
-    private fun canonicalInstantOrBlank(raw: String?): String = raw?.takeIf { it.isNotBlank() }
+    // V5 persisted nullable dates via toString(), so an unset date can be the literal "null".
+    private fun canonicalInstantOrBlank(raw: String?): String = raw?.trim()
+        ?.takeUnless { it.isEmpty() || it.equals("null", ignoreCase = true) }
         ?.let(::canonicalInstant)
         .orEmpty()
 

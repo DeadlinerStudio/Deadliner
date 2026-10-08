@@ -10,7 +10,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
@@ -228,7 +227,7 @@ private fun Modifier.glassOpticalBackdrop(
             shaderString = GlassRefractionShader,
             uniformShaderName = "source",
         ) {
-            val highlight = recipe.edgeOptics.highlightAlpha *
+            val highlight = recipe.edgeOptics.highlightAlpha * EDGE_HIGHLIGHT_SCALE *
                 if (isDark) recipe.edgeOptics.darkHighlightMultiplier else 1f
             setFloatUniform("content_origin", effectPaddingPx, effectPaddingPx)
             setFloatUniform("content_size", size.width, size.height)
@@ -286,7 +285,8 @@ private fun Modifier.fallbackGlassEdge(
     spec: GlassEdgeOpticsSpec,
     isDark: Boolean,
 ): Modifier {
-    val baseAlpha = if (isDark) spec.fallbackDarkAlpha else spec.fallbackLightAlpha
+    val baseAlpha = (if (isDark) spec.fallbackDarkAlpha else spec.fallbackLightAlpha) *
+        FALLBACK_EDGE_ALPHA_SCALE
     val edgeColor = grayscaleColor(spec.highlightGray)
     val edgeBrush = Brush.verticalGradient(
         colors = listOf(
@@ -295,7 +295,11 @@ private fun Modifier.fallbackGlassEdge(
             edgeColor.copy(alpha = baseAlpha * 0.42f),
         ),
     )
-    return border(width = spec.fallbackWidth, brush = edgeBrush, shape = shape)
+    return border(
+        width = spec.fallbackWidth * EDGE_WIDTH_SCALE,
+        brush = edgeBrush,
+        shape = shape,
+    )
 }
 
 private fun Modifier.opticalGlassEdge(
@@ -304,7 +308,7 @@ private fun Modifier.opticalGlassEdge(
     isDark: Boolean,
 ): Modifier {
     val darkMultiplier = if (isDark) spec.darkHighlightMultiplier else 1f
-    val alpha = (spec.highlightAlpha * darkMultiplier).coerceIn(0f, 1f)
+    val alpha = (spec.highlightAlpha * EDGE_HIGHLIGHT_SCALE * darkMultiplier).coerceIn(0f, 1f)
     val edgeColor = grayscaleColor(spec.highlightGray)
     val edgeBrush = Brush.verticalGradient(
         colors = listOf(
@@ -313,10 +317,18 @@ private fun Modifier.opticalGlassEdge(
             edgeColor.copy(alpha = alpha * 0.30f),
         ),
     )
-    return border(width = 0.5.dp, brush = edgeBrush, shape = shape)
+    return border(
+        width = spec.fallbackWidth * EDGE_WIDTH_SCALE,
+        brush = edgeBrush,
+        shape = shape,
+    )
 }
 
 private fun grayscaleColor(value: Float): Color {
     val gray = value.coerceIn(0f, 1f)
     return Color(red = gray, green = gray, blue = gray, alpha = 1f)
 }
+
+private const val EDGE_HIGHLIGHT_SCALE = 0.85f
+private const val EDGE_WIDTH_SCALE = 1f
+private const val FALLBACK_EDGE_ALPHA_SCALE = 0.45f

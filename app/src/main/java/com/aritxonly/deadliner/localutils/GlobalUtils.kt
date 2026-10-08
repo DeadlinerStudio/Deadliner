@@ -308,6 +308,13 @@ object GlobalUtils {
         val miuixNeutralSurfaces = sharedPreferences.getBoolean("miuix_neutral_surfaces", true)
         val useMaterialTopAppBarInMiuix = sharedPreferences.getBoolean("miuix_material_top_bar", true)
         val useImmersiveExperience = ImmersiveExperiencePreferences.read(sharedPreferences)
+        val floatingNavigationBottomLift = sharedPreferences
+            .getFloat("floating_navigation_bottom_lift", 0f)
+            .coerceIn(0f, 48f)
+        val useMyHyperModifierNavigationLift = sharedPreferences.getBoolean(
+            "use_myhypermodifier_navigation_lift",
+            false,
+        )
         val useContrastingHomeFab = sharedPreferences.getBoolean("contrasting_home_fab", true)
         val advancedMaterial = sharedPreferences.getBoolean("advanced_material", false)
         val advancedMaterialLevel = sharedPreferences.getString("advanced_material_level", null)
@@ -348,6 +355,8 @@ object GlobalUtils {
             useMiuixNeutralSurfaces = miuixNeutralSurfaces,
             useMaterialTopAppBarInMiuix = useMaterialTopAppBarInMiuix,
             useImmersiveExperience = useImmersiveExperience,
+            floatingNavigationBottomLift = floatingNavigationBottomLift,
+            useMyHyperModifierNavigationLift = useMyHyperModifierNavigationLift,
             useContrastingHomeFab = useContrastingHomeFab,
             useAdvancedMaterial = advancedMaterial,
             advancedMaterialLevel = advancedMaterialLevel,
@@ -375,6 +384,14 @@ object GlobalUtils {
             putBoolean("miuix_neutral_surfaces", appearance.useMiuixNeutralSurfaces)
             putBoolean("miuix_material_top_bar", appearance.useMaterialTopAppBarInMiuix)
             ImmersiveExperiencePreferences.write(this, appearance.useImmersiveExperience)
+            putFloat(
+                "floating_navigation_bottom_lift",
+                appearance.floatingNavigationBottomLift.coerceIn(0f, 48f),
+            )
+            putBoolean(
+                "use_myhypermodifier_navigation_lift",
+                appearance.useMyHyperModifierNavigationLift,
+            )
             putBoolean("contrasting_home_fab", appearance.useContrastingHomeFab)
             putBoolean("advanced_material", appearance.useAdvancedMaterial)
             putString("advanced_material_level", appearance.advancedMaterialLevel.key)

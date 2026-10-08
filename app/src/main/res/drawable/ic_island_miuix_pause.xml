@@ -1,0 +1,7 @@
+<!-- Copyright 2025 compose-miuix-ui contributors. SPDX-License-Identifier: Apache-2.0.
+     Miuix Pause.Medium, 0.9.4-rc01 / 4a6b750b; converted unchanged path to VectorDrawable. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="1156.6" android:viewportHeight="1156.6">
+    <group android:scaleY="-1" android:translateY="1156.6">
+        <path android:fillColor="#FFFFFFFF" android:fillType="nonZero" android:pathData="M 913.2  139.3 V 1017.3 Q 912.6  1040.1  903.4  1050.1 Q 894.3  1060.2  873.2  1060.2 H 844.4 Q 823.3  1060.2  813.9  1049.9 Q 804.4  1039.5  804.4  1017.3 V 139.3 Q 804.4  117.1  813.9  106.7 Q 823.3  96.4  843.8  96.4 H 872.6 Q 894.9  96.4  904.0  106.7 Q 913.2  117.1  913.2  139.3 Z M 352.2  139.3 V 1017.3 Q 351.6  1040.7  342.4  1050.4 Q 333.3  1060.2  312.2  1060.2 H 283.4 Q 261.7  1060.2  252.6  1049.9 Q 243.4  1039.5  243.4  1017.3 V 139.3 Q 243.4  117.1  252.3  106.7 Q 261.1  96.4  283.4  96.4 H 312.2 Q 334.4  96.4  343.3  106.7 Q 352.2  117.1  352.2  139.3 Z" />
+    </group>
+</vector>

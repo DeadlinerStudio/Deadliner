@@ -81,6 +81,9 @@ import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.agent.AIAgentPage
 import com.aritxonly.deadliner.ui.agent.AIAgentPageDefaults
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Home
 import com.aritxonly.deadliner.ui.base.AdaptiveNavItem
 import com.aritxonly.deadliner.ui.base.AdaptiveNavigationSuiteScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
@@ -310,9 +313,7 @@ fun ModernHost(
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
             selectedIconResource = R.drawable.miuix_home_fill,
             unselectedIconResource = R.drawable.miuix_home,
-            immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
-            immersiveIconResource = R.drawable.msr_home_wght400,
-            immersiveIconScale = 1.10f,
+            immersiveIcon = rememberVectorPainter(MiuixIcons.Home),
         ),
         AdaptiveNavItem(
             "overview",
@@ -321,9 +322,7 @@ fun ModernHost(
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_wght400),
             selectedIconResource = R.drawable.miuix_overview_fill,
             unselectedIconResource = R.drawable.miuix_overview,
-            immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_wght400),
-            immersiveIconResource = R.drawable.msr_pie_chart_wght400,
-            immersiveIconScale = 1.05f,
+            immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_chart_pie_fill),
         ),
         AdaptiveNavItem(
             "capture",
@@ -357,18 +356,16 @@ fun ModernHost(
         ),
     )
 
-    val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
-    val isShortBottomNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact ||
-        navigationSuiteType == NavigationSuiteType.ShortNavigationBarMedium
+    val isShortBottomNavigation = !currentWindowAdaptiveInfo().windowSizeClass
+        .isWidthAtLeastBreakpoint(androidx.window.core.layout.WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
     val isImmersiveCompactNavigation = appearance.usesMiuixTheme &&
-        appearance.useImmersiveExperience &&
-        navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact
+        appearance.useImmersiveExperience && isShortBottomNavigation
     val navigationOverlaysContent = isShortBottomNavigation &&
         (isImmersiveCompactNavigation || LocalAdvancedMaterialSpec.current.enabled)
     val showImmersiveListSearchEntry = shouldShowImmersiveListSearchEntry(
         usesMiuixTheme = appearance.usesMiuixTheme,
         useImmersiveExperience = appearance.useImmersiveExperience,
-        isCompactFloatingNavigation = navigationSuiteType == NavigationSuiteType.ShortNavigationBarCompact,
+        isCompactFloatingNavigation = isShortBottomNavigation,
         selectedSection = hostState.selectedSection,
         selectedPage = hostState.selectedPage,
         selectionMode = hostState.selectionMode,

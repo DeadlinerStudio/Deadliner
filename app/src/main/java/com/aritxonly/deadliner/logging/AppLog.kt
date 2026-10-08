@@ -9,6 +9,8 @@ import com.google.gson.annotations.SerializedName
 import java.io.File
 import java.time.Instant
 import java.util.UUID
+import java.util.concurrent.Executors
+import com.deadliner.platform.PlatformLogSink
 
 /**
  * Android's file-backed diagnostic log. The record schema and text projection
@@ -23,15 +25,33 @@ object AppLog {
     private const val MAXIMUM_FILE_BYTES = 8L * 1_024L * 1_024L
 
     private val lock = Any()
+    private val writer = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "deadliner-diagnostics").apply { isDaemon = true }
+    }
     private val gson = Gson()
     private val sessionId = UUID.randomUUID().toString().lowercase()
-    private var directory: File? = null
+    @Volatile private var directory: File? = null
     private var lastPrunedAtMillis = 0L
+    private var exportDirectory: File? = null
 
     fun initialize(context: Context) {
         synchronized(lock) {
-            directory = File(context.filesDir, DIRECTORY).also { it.mkdirs() }
-            pruneLocked(force = true)
+            if (directory != null) return
+            directory = File(context.filesDir, DIRECTORY)
+            exportDirectory = File(context.cacheDir, "DiagnosticExports")
+            // Core submits to this same queue so pruning never races its appends.
+            PlatformLogSink.configureFileWriter { json, text ->
+                writer.execute { appendLines(json, text) }
+            }
+            writer.execute {
+                runCatching {
+                    directory?.mkdirs()
+                    val expiredBefore = System.currentTimeMillis() - 24 * 60 * 60 * 1_000L
+                    exportDirectory?.listFiles()?.filter { it.lastModified() < expiredBefore }
+                        ?.forEach { it.deleteRecursively() }
+                    pruneLocked(force = true)
+                }.onFailure { Log.w(TAG, "Unable to clean diagnostic history", it) }
+            }
             event("app.launch", domain = "lifecycle")
             event("app.environment", domain = "environment", context = environmentContext(context))
         }
@@ -52,11 +72,17 @@ object AppLog {
         context: Map<String, String> = emptyMap(),
     ) = write(level, domain, "[$name]", context = context)
 
-    fun exportFiles(): List<File> = synchronized(lock) {
-        pruneLocked(force = true)
-        val activeDirectory = directory ?: return emptyList()
-        listOf(File(activeDirectory, STANDARD_FILE), File(activeDirectory, JSONL_FILE))
-    }
+    /** Blocking export barrier; UI callers run this on Dispatchers.IO. */
+    fun exportFiles(): List<File> = writer.submit<List<File>> {
+        val activeDirectory = directory ?: return@submit emptyList()
+        pruneLocked(force = false)
+        // A unique snapshot remains stable while notifications continue logging.
+        val snapshot = File(exportDirectory, UUID.randomUUID().toString())
+        snapshot.mkdirs()
+        listOf(STANDARD_FILE, JSONL_FILE).map { name ->
+            File(activeDirectory, name).copyTo(File(snapshot, name), overwrite = true)
+        }
+    }.get()
 
     private fun environmentContext(context: Context): Map<String, String> {
         val appVersion = runCatching {
@@ -91,17 +117,15 @@ object AppLog {
             message = message,
             context = safeContext.takeIf { it.isNotEmpty() },
         )
-        synchronized(lock) {
-            appendLocked(record)
-        }
+        writer.execute { appendLines(gson.toJson(record) + "\n", standardLine(record)) }
         mirrorToLogcat(level, category, message, error)
     }
 
-    private fun appendLocked(record: Record) {
+    private fun appendLines(json: String, text: String) {
         val activeDirectory = directory ?: return
         runCatching {
-            File(activeDirectory, JSONL_FILE).appendText(gson.toJson(record) + "\n")
-            File(activeDirectory, STANDARD_FILE).appendText(standardLine(record))
+            File(activeDirectory, JSONL_FILE).appendText(json)
+            File(activeDirectory, STANDARD_FILE).appendText(text)
             pruneLocked(force = false)
         }.onFailure { failure ->
             Log.w(TAG, "Unable to persist diagnostic log", failure)
@@ -111,28 +135,40 @@ object AppLog {
     private fun pruneLocked(force: Boolean) {
         val activeDirectory = directory ?: return
         val jsonFile = File(activeDirectory, JSONL_FILE)
+        val textFile = File(activeDirectory, STANDARD_FILE)
         val now = System.currentTimeMillis()
-        if (!force && now - lastPrunedAtMillis < 5 * 60 * 1_000L && jsonFile.length() <= MAXIMUM_FILE_BYTES) return
-        val cutoff = now.toDouble() / 1_000.0 - RETENTION_MILLIS.toDouble() / 1_000.0
-        val chronologicalRecords = jsonFile.takeIf(File::isFile)
-            ?.useLines { lines -> lines.mapNotNull { gson.fromJsonOrNull(it) }.filter { it.timestamp >= cutoff }.toList() }
-            .orEmpty()
-        val newestFirst = mutableListOf<Record>()
-        var retainedBytes = 0L
-        chronologicalRecords.asReversed().forEach { item ->
-            val bytes = (gson.toJson(item) + "\n").toByteArray().size.toLong()
-            if (retainedBytes + bytes <= MAXIMUM_FILE_BYTES || newestFirst.isEmpty()) {
-                newestFirst += item
-                retainedBytes += bytes
+        if (!force && now - lastPrunedAtMillis < 5 * 60 * 1_000L &&
+            maxOf(jsonFile.length(), textFile.length()) <= MAXIMUM_FILE_BYTES) return
+        val cutoff = (now - RETENTION_MILLIS).toDouble() / 1_000.0
+        val targetBytes = MAXIMUM_FILE_BYTES * 3 / 4
+        val retained = ArrayDeque<RetainedLine>()
+        var retainedJsonBytes = 0L
+        var retainedTextBytes = 0L
+        // Parse each line once; never materialize or reserialize the entire history.
+        jsonFile.takeIf(File::isFile)?.useLines { lines ->
+            lines.forEach { line ->
+                val record = gson.fromJsonOrNull(line) ?: return@forEach
+                if (record.timestamp < cutoff) return@forEach
+                val json = line + "\n"
+                val text = runCatching { standardLine(record) }.getOrNull() ?: return@forEach
+                val entry = RetainedLine(json, text, json.toByteArray().size, text.toByteArray().size)
+                if (maxOf(entry.jsonBytes, entry.textBytes) > targetBytes) return@forEach
+                retained.addLast(entry)
+                retainedJsonBytes += entry.jsonBytes
+                retainedTextBytes += entry.textBytes
+                while (maxOf(retainedJsonBytes, retainedTextBytes) > targetBytes) {
+                    val removed = retained.removeFirst()
+                    retainedJsonBytes -= removed.jsonBytes
+                    retainedTextBytes -= removed.textBytes
+                }
             }
         }
-        val retained = newestFirst.asReversed()
-        runCatching {
-            jsonFile.writeText(retained.joinToString(separator = "") { gson.toJson(it) + "\n" })
-            File(activeDirectory, STANDARD_FILE).writeText(retained.joinToString(separator = "") { standardLine(it) })
-        }
+        jsonFile.bufferedWriter().use { output -> retained.forEach { output.write(it.json) } }
+        textFile.bufferedWriter().use { output -> retained.forEach { output.write(it.text) } }
         lastPrunedAtMillis = now
     }
+
+    private data class RetainedLine(val json: String, val text: String, val jsonBytes: Int, val textBytes: Int)
 
     private fun Gson.fromJsonOrNull(line: String): Record? = runCatching {
         fromJson(line, Record::class.java)

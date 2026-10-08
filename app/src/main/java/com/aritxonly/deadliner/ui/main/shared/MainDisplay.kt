@@ -135,6 +135,7 @@ import java.time.LocalDateTime
 import kotlin.math.max
 import com.deadliner.domain.task.Task
 import com.deadliner.domain.task.TaskAction
+import com.deadliner.domain.task.TaskActionOutcome
 import com.deadliner.viewmodel.habit.HabitListViewModel
 import com.deadliner.viewmodel.task.TaskListViewModel
 
@@ -230,7 +231,7 @@ fun MainDisplay(
                     LazyColumn(
                         contentPadding = PaddingValues(
                             top = 16.dp + topOverlayPadding,
-                            bottom = 96.dp,
+                            bottom = 96.dp + com.aritxonly.deadliner.ui.base.LocalNavigationOverlayContentPadding.current,
                             start = 16.dp,
                             end = 16.dp
                         ),
@@ -266,7 +267,7 @@ fun MainDisplay(
                                             item.uid,
                                             action,
                                             java.time.Instant.now().toString(),
-                                        )
+                                        ).lastActionOutcome ?: TaskActionOutcome.INVALID
                                     },
                                     celebrate = {
                                         if (GlobalUtils.fireworksOnFinish) onCelebrate?.invoke()
@@ -275,7 +276,7 @@ fun MainDisplay(
                                         taskViewModel.deleteTaskNow(
                                             item.uid,
                                             java.time.Instant.now().toString(),
-                                        )
+                                        ).lastActionOutcome ?: TaskActionOutcome.INVALID
                                     },
                                     selectionMode = selectionMode,
                                     selected = isSelected(item.uid),

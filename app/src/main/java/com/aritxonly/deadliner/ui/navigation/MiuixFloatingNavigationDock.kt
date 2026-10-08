@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.layout.navigationBarsPadding
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassFloatingActionButton
@@ -26,7 +25,11 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-private val FloatingNavigationDockMaximumWidth = 442.dp
+object MiuixFloatingNavigationDockDefaults {
+    val MaximumWidth = 442.dp
+    val HorizontalPadding = 8.dp
+}
+
 private val FloatingNavigationDockSpacing = 8.dp
 
 data class MiuixFloatingNavigationAction(
@@ -52,6 +55,7 @@ fun MiuixFloatingNavigationDock(
     detachedAction: MiuixFloatingNavigationAction? = null,
     primarySelectionVisible: Boolean = true,
     backdrop: LayerBackdrop? = null,
+    layout: MiuixFloatingTabLayout = MiuixFloatingTabLayout.Stacked,
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val themedContentColor = MiuixTheme.colorScheme.onSurfaceContainer
@@ -64,11 +68,10 @@ fun MiuixFloatingNavigationDock(
 
     Row(
         modifier = modifier
-            .widthIn(max = FloatingNavigationDockMaximumWidth)
+            .widthIn(max = if (layout == MiuixFloatingTabLayout.Horizontal) 620.dp else MiuixFloatingNavigationDockDefaults.MaximumWidth)
             .fillMaxWidth()
             .height(MiuixFloatingTabBarDefaults.Height)
-            .padding(horizontal = 8.dp)
-            .navigationBarsPadding(),
+            .padding(horizontal = MiuixFloatingNavigationDockDefaults.HorizontalPadding),
         horizontalArrangement = Arrangement.spacedBy(FloatingNavigationDockSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -77,7 +80,7 @@ fun MiuixFloatingNavigationDock(
             selectedKey = primarySelectedKey,
             onItemSelected = onItemSelected,
             modifier = Modifier.weight(1f),
-            layout = MiuixFloatingTabLayout.Stacked,
+            layout = layout,
             selectionVisible = primarySelectionVisible,
             backdrop = backdrop,
         )

@@ -35,6 +35,9 @@ import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -45,22 +48,27 @@ fun FeedbackScreen(
     navigateUp: () -> Unit
 ) {
     val context = LocalContext.current
+    val exportScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(true) }
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip"),
     ) { destination ->
         if (destination == null) return@rememberLauncherForActivityResult
-        AppLog.event("diagnostics.export.started", domain = "app")
-        context.contentResolver.openOutputStream(destination)?.use { output ->
-            ZipOutputStream(output).use { archive ->
-                AppLog.exportFiles().filter(File::isFile).forEach { file ->
-                    archive.putNextEntry(ZipEntry(file.name))
-                    file.inputStream().use { input -> input.copyTo(archive) }
-                    archive.closeEntry()
+        exportScope.launch(Dispatchers.IO) {
+            runCatching {
+                AppLog.event("diagnostics.export.started", domain = "app")
+                checkNotNull(context.contentResolver.openOutputStream(destination)).use { output ->
+                    ZipOutputStream(output).use { archive ->
+                        AppLog.exportFiles().filter(File::isFile).forEach { file ->
+                            archive.putNextEntry(ZipEntry(file.name))
+                            file.inputStream().use { input -> input.copyTo(archive) }
+                            archive.closeEntry()
+                        }
+                    }
                 }
-            }
+                AppLog.event("diagnostics.export.finished", domain = "app")
+            }.onFailure { AppLog.e("diagnostics.export", "Unable to export diagnostics", it) }
         }
-        AppLog.event("diagnostics.export.finished", domain = "app")
     }
 
     AdaptiveMaterialScaffold(

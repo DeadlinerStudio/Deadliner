@@ -1,195 +1,61 @@
 package com.aritxonly.deadliner.ui.settings
 
-import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.FragmentManager
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.notification.NotificationPolicyPreferences
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
 import com.aritxonly.deadliner.ui.SvgCard
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
-import com.aritxonly.deadliner.localutils.GlobalUtils
-import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
+import com.deadliner.platform.HabitNotificationMode
 
 @Composable
-fun NotificationSettingsScreen(
-    navigateUp: () -> Unit
-) {
+fun NotificationSettingsScreen(navigateUp: () -> Unit) {
     val context = LocalContext.current
-
-    fun formatDailyTime(hour: Int, minute: Int): String {
-        val hh = hour.toString().padStart(2, '0')
-        val mm = minute.toString().padStart(2, '0')
-        return context.getString(R.string.settings_notification_formatter_set_time, hh, mm)
-    }
-
-    val fragmentManager = remember(context) {
-        (context as? FragmentActivity)?.supportFragmentManager
-    }
-
-    var deadlineNotification by remember { mutableStateOf(GlobalUtils.deadlineNotification) }
-    var dailyNotification by remember { mutableStateOf(GlobalUtils.dailyStatsNotification) }
-
-    var dailyMinute by remember { mutableStateOf(GlobalUtils.dailyNotificationMinute) }
-    var dailyHour by remember { mutableStateOf(GlobalUtils.dailyNotificationHour) }
-    var notifyBefore by remember { mutableStateOf(GlobalUtils.deadlineNotificationBefore) }
-    val onNotifyBeforeChange: (Float) -> Unit = {
-        notifyBefore = it.toLong()
-        GlobalUtils.deadlineNotificationBefore = notifyBefore
+    var policy by remember { mutableStateOf(NotificationPolicyPreferences.read(context)) }
+    fun save(value: com.deadliner.platform.NotificationPolicy) {
+        policy = value
+        NotificationPolicyPreferences.save(context, value)
         KmpV6Runtime.refreshNotifications()
     }
-
-    var liveUpdatesInAdvance by remember { mutableStateOf(GlobalUtils.liveUpdatesInAdvance) }
-    val onLiveUpdatesChange: (Float) -> Unit = {
-        liveUpdatesInAdvance = it.toInt().coerceIn(1, 60)
-        GlobalUtils.liveUpdatesInAdvance = liveUpdatesInAdvance
-        KmpV6Runtime.refreshNotifications()
-    }
-
-    val defaultText = stringResource(R.string.settings_support_daily_notification)
-    val initialTextDailyNotification = if (!dailyNotification)
-        defaultText
-    else formatDailyTime(dailyHour, dailyMinute)
-
-    var supportingTextDailyNotification by remember { mutableStateOf(initialTextDailyNotification) }
-
-    val onDeadlineNotificationChange: (Boolean) -> Unit = {
-        GlobalUtils.deadlineNotification = it
-        deadlineNotification = it
-        KmpV6Runtime.refreshNotifications()
-    }
-    val onDailyNotificationChange: (Boolean) -> Unit = {
-        GlobalUtils.dailyStatsNotification = it
-        dailyNotification = it
-        KmpV6Runtime.refreshNotifications()
-        supportingTextDailyNotification = if (!dailyNotification)
-            defaultText
-        else formatDailyTime(dailyHour, dailyMinute)
-    }
-    val onDailyNotificationLongPress: (Boolean) -> Unit = {
-        if (!it) {
-            fragmentManager?.let { supportFragmentManager ->
-                showDailyTimePicker(
-                    context = context,
-                    supportFragmentManager = supportFragmentManager,
-                    onChange = { hour, minute ->
-                        dailyMinute = minute
-                        dailyHour = hour
-                    },
-                )
-            }
+    CollapsingTopBarScaffold(title = stringResource(R.string.settings_notification), navigationIcon = {
+        IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
+            Icon(com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
+                contentDescription = stringResource(R.string.back), tint = MaterialTheme.colorScheme.onSurface,
+                modifier = expressiveTypeModifier)
         }
-        supportingTextDailyNotification = if (!dailyNotification)
-            defaultText
-        else formatDailyTime(dailyHour, dailyMinute)
-    }
-
-    CollapsingTopBarScaffold(
-        title = stringResource(R.string.settings_notification),
-        navigationIcon = {
-            IconButton(
-                onClick = navigateUp,
-                modifier = navIconPaddingModifier
-            ) {
-                Icon(
-                    com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
-                    contentDescription = stringResource(R.string.back),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = expressiveTypeModifier
-                )
-            }
-        }
-    ) { padding ->
-        SettingsScrollColumn(
-            contentPadding = padding,
-            modifier = Modifier,
-        ) {
+    }) { padding ->
+        SettingsScrollColumn(contentPadding = padding, modifier = Modifier) {
             SvgCard(R.drawable.svg_notifications, modifier = Modifier.padding(vertical = 8.dp))
-
-            SettingsSection(topLabel = stringResource(R.string.settings_nearby_notification_push)) {
-                SettingsDetailSwitchItem(
-                    headline = R.string.settings_nearby_notification,
-                    supportingText = R.string.settings_support_nearby_notification,
-                    checked = deadlineNotification,
-                    onCheckedChange = onDeadlineNotificationChange,
-                )
-
-                if (deadlineNotification) {
-                    SettingsSectionDivider()
-
-                    SettingsSliderItemWithLabel(
-                        label = R.string.settings_nearby_notification_before,
-                        value = notifyBefore.toFloat(),
-                        valueRange = 6f..72f,
-                        onValueChange = onNotifyBeforeChange,
-                        steps = 10
-                    )
-
-                    SettingsSectionDivider()
-
-                    SettingsSliderItemWithLabel(
-                        label = R.string.settings_live_updates_in_advance,
-                        value = liveUpdatesInAdvance.toFloat(),
-                        valueRange = 1f..60f,
-                        onValueChange = onLiveUpdatesChange
-                    )
-                }
+            SettingsSection(topLabel = stringResource(R.string.notification_task_settings)) {
+                SettingsDetailSwitchItem(headline = R.string.notification_task_realtime,
+                    supportingText = R.string.notification_task_realtime_description, checked = policy.taskRealtime,
+                    onCheckedChange = { save(policy.copy(taskRealtime = it)) })
+                SettingsSectionDivider()
+                SettingsDetailSwitchItem(headline = R.string.notification_task_nearby,
+                    supportingText = R.string.notification_task_nearby_description, checked = policy.taskNearby,
+                    onCheckedChange = { save(policy.copy(taskNearby = it)) })
+                SettingsSectionDivider()
+                SettingsDetailSwitchItem(headline = R.string.notification_task_due,
+                    supportingText = R.string.notification_task_due_description, checked = policy.taskDue,
+                    onCheckedChange = { save(policy.copy(taskDue = it)) })
             }
-
-            SettingsSection(topLabel = stringResource(R.string.settings_daily_notification_push)) {
-                SettingsDetailSwitchItem(
-                    headline = R.string.settings_everyday_notification,
-                    supportingRawText = supportingTextDailyNotification,
-                    checked = dailyNotification,
-                    onCheckedChange = onDailyNotificationChange,
-                    onLongPress = onDailyNotificationLongPress
-                )
+            SettingsSection(topLabel = stringResource(R.string.notification_habit_settings)) {
+                SettingsRadioGroupItem(options = listOf(
+                    RadioOption(HabitNotificationMode.REALTIME, R.string.notification_habit_realtime),
+                    RadioOption(HabitNotificationMode.DUE, R.string.notification_habit_due)),
+                    selectedKey = policy.habitMode, onOptionSelected = { save(policy.copy(habitMode = it)) })
             }
+            IslandNotificationSettings()
+            NotificationDiagnosticSettings()
         }
     }
-}
-
-private fun showDailyTimePicker(
-    context: Context,
-    supportFragmentManager: FragmentManager,
-    onChange:(Int, Int) -> Unit,
-    onDismiss: () -> Unit = {},
-) {
-    val currentHour = GlobalUtils.dailyNotificationHour
-    val currentMinute = GlobalUtils.dailyNotificationMinute
-    val picker = MaterialTimePicker.Builder()
-        .setTimeFormat(TimeFormat.CLOCK_24H)
-        .setHour(currentHour)
-        .setMinute(currentMinute)
-        .setTitleText(R.string.choose_daily_notifictaion_time)
-        .build()
-
-    picker.addOnPositiveButtonClickListener {
-        val selectedHour = picker.hour
-        val selectedMinute = picker.minute
-        GlobalUtils.dailyNotificationHour = selectedHour
-        GlobalUtils.dailyNotificationMinute = selectedMinute
-        onChange(selectedHour, selectedMinute)
-        KmpV6Runtime.scheduleDailySummary()
-    }
-    picker.addOnDismissListener {
-        onDismiss()
-    }
-
-    picker.show(supportFragmentManager, "daily_time_picker")
 }

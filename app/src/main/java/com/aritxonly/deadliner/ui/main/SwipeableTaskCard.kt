@@ -89,11 +89,16 @@ fun DDLItemCardSwipeable(
     onLongPressSelect: (() -> Unit)? = null,
     onToggleSelect: (() -> Unit)? = null,
     categoryContent: (@Composable () -> Unit)? = null,
+    onFocusAction: (() -> Unit)? = null,
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
-    val revealWidthPx = with(density) { TaskCardSwipeDefaults.REVEAL_WIDTH_DP.dp.toPx() }
+    val leadingRevealWidthPx = with(density) {
+        (if (onFocusAction != null) TaskCardSwipeDefaults.FOCUS_REVEAL_WIDTH_DP
+        else TaskCardSwipeDefaults.REVEAL_WIDTH_DP).dp.toPx()
+    }
+    val trailingRevealWidthPx = with(density) { TaskCardSwipeDefaults.REVEAL_WIDTH_DP.dp.toPx() }
     val revealThresholdPx = with(density) {
         TaskCardSwipeDefaults.REVEAL_TRIGGER_DISTANCE_DP.dp.toPx()
     }
@@ -116,6 +121,10 @@ fun DDLItemCardSwipeable(
 
     val latestOnPrimaryAction by rememberUpdatedState(onPrimaryAction)
     val latestOnSecondaryAction by rememberUpdatedState(onSecondaryAction)
+    val latestOnFocusAction by rememberUpdatedState(onFocusAction)
+    val focusActionIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_schedule_wght400)
+    val focusActionLabel = androidx.compose.ui.res.stringResource(R.string.focus_swipe)
+    val focusActionColor = MaterialTheme.colorScheme.primary
     val latestOnEditAction by rememberUpdatedState(onEditAction)
     val latestOnDeleteAction by rememberUpdatedState(onDeleteAction)
     val latestOnActiveSwipeChange by rememberUpdatedState(onActiveSwipeChange)
@@ -181,14 +190,15 @@ fun DDLItemCardSwipeable(
                 revealThreshold = revealThresholdPx,
                 closeDistance = closeDistancePx,
                 hasTrailingActions = hasTrailingActions,
+                leadingRevealWidth = leadingRevealWidthPx,
             )
         ) {
             TaskCardSwipeSettleResult.CLOSED -> animateTo(0f)
             TaskCardSwipeSettleResult.LEADING_REVEALED -> {
-                animateTo(revealWidthPx, clearActiveWhenClosed = false)
+                animateTo(leadingRevealWidthPx, clearActiveWhenClosed = false)
             }
             TaskCardSwipeSettleResult.TRAILING_REVEALED -> {
-                animateTo(-revealWidthPx, clearActiveWhenClosed = false)
+                animateTo(-trailingRevealWidthPx, clearActiveWhenClosed = false)
             }
             TaskCardSwipeSettleResult.RUN_PRIMARY_ACTION -> runAction(latestOnPrimaryAction)
             TaskCardSwipeSettleResult.RUN_DELETE_ACTION -> {
@@ -232,6 +242,12 @@ fun DDLItemCardSwipeable(
                     onClick = { latestOnDeleteAction?.let(::runAction) },
                 ),
                 showTrailingActions = hasTrailingActions,
+                focusAction = if (onFocusAction != null) SwipeActionUi(
+                    label = focusActionLabel,
+                    icon = focusActionIcon,
+                    color = focusActionColor,
+                    onClick = { latestOnFocusAction?.let(::runAction) },
+                ) else null,
             )
         }
 
@@ -301,16 +317,21 @@ private fun SwipeActionBackground(
     editAction: SwipeActionUi,
     deleteAction: SwipeActionUi,
     showTrailingActions: Boolean,
+    focusAction: SwipeActionUi?,
 ) {
     val revealedDistancePx = abs(offsetPx)
-    val revealWidthPx = with(density) { TaskCardSwipeDefaults.REVEAL_WIDTH_DP.dp.toPx() }
+    val revealWidthPx = with(density) {
+        (if (offsetPx > 0f && focusAction != null) TaskCardSwipeDefaults.FOCUS_REVEAL_WIDTH_DP
+        else TaskCardSwipeDefaults.REVEAL_WIDTH_DP).dp.toPx()
+    }
     val baseGapPx = with(density) { ACTION_BASE_GAP_DP.dp.toPx() }
     val maxGapPx = with(density) { ACTION_MAX_GAP_DP.dp.toPx() }
     val buttonSizePx = with(density) { ACTION_BUTTON_SIZE_DP.dp.toPx() }
     val groupWidthPx = max(revealWidthPx, revealedDistancePx)
-    val gapPx = baseGapPx + (revealedDistancePx - revealWidthPx)
+    val gapCount = if (offsetPx > 0f && focusAction != null) 2 else 1
+    val gapPx = baseGapPx + ((revealedDistancePx - revealWidthPx) / gapCount)
         .coerceIn(0f, maxGapPx - baseGapPx)
-    val stretchPx = (revealedDistancePx - revealWidthPx - (maxGapPx - baseGapPx))
+    val stretchPx = (revealedDistancePx - revealWidthPx - (gapPx - baseGapPx) * gapCount)
         .coerceAtLeast(0f)
     val fullActionWidthPx = buttonSizePx + stretchPx
 
@@ -332,6 +353,7 @@ private fun SwipeActionBackground(
                     modifier = Modifier.width(fullActionWidth),
                     alignment = Alignment.CenterStart,
                 )
+                focusAction?.let { SwipeActionButton(it, Modifier.width(ACTION_BUTTON_SIZE_DP.dp)) }
                 SwipeActionButton(secondaryAction, Modifier.width(ACTION_BUTTON_SIZE_DP.dp))
             }
         } else if (showTrailingActions) {

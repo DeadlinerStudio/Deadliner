@@ -8,11 +8,15 @@ import com.deadliner.db.AndroidDatabaseDriverFactory
 import com.deadliner.db.DeadlinerDatabase
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], application = Application::class)
@@ -63,6 +67,10 @@ class V5DataMigratorTest {
             migrator.migrateIfNeeded()
 
             assertEquals("KMP task", target.tasks.find("v5-task")?.title)
+            val task = requireNotNull(target.tasks.find("v5-task"))
+            assertEquals(localInstant("2026-08-12T09:00:00"), task.startAt)
+            assertEquals(localInstant("2026-08-12T18:00:00"), task.dueAt)
+            assertNull(task.completedAt)
             assertEquals(1, target.tasks.list().size)
             assertEquals("Read", target.habits.find("v5-habit")?.name)
             assertEquals(1, target.habits.records("v5-habit").size)
@@ -76,6 +84,58 @@ class V5DataMigratorTest {
 
         target.close()
     }
+
+    @Test
+    fun migrateIfNeeded_treatsLegacyNullDateStringsAsUnset() {
+        createFrozenV5Database()
+        val missingDates = listOf("null", " NULL ", "", "   ")
+        SQLiteDatabase.openDatabase(
+            context.getDatabasePath(V5MigrationReader.DATABASE_NAME).absolutePath,
+            null,
+            SQLiteDatabase.OPEN_READWRITE,
+        ).use { database ->
+            missingDates.forEachIndexed { index, missingDate ->
+                val id = (index + 3).toLong()
+                insertDdl(database, id, "missing-date-$index", "Unset dates $index", "task")
+                database.execSQL(
+                    "UPDATE ddl_items SET start_time = ?, end_time = ?, complete_time = ? WHERE id = ?",
+                    arrayOf<Any>(missingDate, missingDate, missingDate, id),
+                )
+            }
+        }
+        val target = DeadlinerDatabase.create(AndroidDatabaseDriverFactory(context))
+        try {
+            V5MigrationReader.open(context.getDatabasePath(V5MigrationReader.DATABASE_NAME)).use { legacy ->
+                val preferences = context.getSharedPreferences(
+                    V5DataMigrator.PREFERENCES_NAME,
+                    Context.MODE_PRIVATE,
+                )
+                val migrator = V5DataMigrator(legacy, target, preferences)
+                migrator.migrateIfNeeded()
+                migrator.migrateIfNeeded()
+
+                missingDates.forEachIndexed { index, missingDate ->
+                    val task = requireNotNull(target.tasks.find("missing-date-$index"))
+                    assertEquals("Unset dates $index", task.title)
+                    assertNull(task.startAt)
+                    assertNull(task.dueAt)
+                    assertNull(task.completedAt)
+                    val source = legacy.tasks().single { it.uid == task.uid }
+                    assertEquals(missingDate, source.startTime)
+                    assertEquals(missingDate, source.endTime)
+                    assertEquals(missingDate, source.completeTime)
+                }
+                assertEquals(missingDates.size + 1, target.tasks.list().size)
+                assertEquals("Read", target.habits.find("v5-habit")?.name)
+                assertFalse(V5DataMigrator.isMigrationRequired(preferences))
+            }
+        } finally {
+            target.close()
+        }
+    }
+
+    private fun localInstant(raw: String): String =
+        LocalDateTime.parse(raw).atZone(ZoneId.systemDefault()).toInstant().toString()
 
     private fun createFrozenV5Database() {
         val file = context.getDatabasePath(V5MigrationReader.DATABASE_NAME)

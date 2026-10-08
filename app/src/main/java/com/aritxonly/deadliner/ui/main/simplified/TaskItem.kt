@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.DeadlineDetailActivity
+import com.aritxonly.deadliner.FocusTimerActivity
 import com.aritxonly.deadliner.MainActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
@@ -41,6 +42,7 @@ import kotlin.math.abs
 import kotlin.math.floor
 import com.deadliner.domain.task.Task
 import com.deadliner.domain.task.TaskAction
+import com.deadliner.domain.task.TaskActionOutcome
 import com.deadliner.domain.task.TaskState
 
 @Composable
@@ -75,9 +77,9 @@ fun TaskItem(
     activity: MainActivity,
     activeSwipeTaskId: String?,
     onActiveSwipeTaskChange: (String?) -> Unit,
-    applyTaskAction: (TaskAction) -> Unit,
+    applyTaskAction: (TaskAction) -> TaskActionOutcome,
     celebrate: () -> Unit,
-    deleteTask: () -> Unit,
+    deleteTask: () -> TaskActionOutcome,
     selectionMode: Boolean = false,
     selected: Boolean = false,
     onLongPressSelect: (() -> Unit)? = null,
@@ -85,6 +87,7 @@ fun TaskItem(
     onAbandonDialogVisibilityChange: (Boolean) -> Unit = {},
     category: CategoryPresentation? = null,
 ) {
+    val focusEntry = com.aritxonly.deadliner.ui.focus.LocalFocusTimerEntry.current
     val context = LocalContext.current
     val swipeActionColors = rememberTaskSwipeActionColors()
     var showGiveUpDialog by rememberSaveable(item.uid) { mutableStateOf(false) }
@@ -165,12 +168,17 @@ fun TaskItem(
         onPrimaryAction = {
             GlobalUtils.triggerVibration(activity, 100)
             val action = primaryAction ?: return@DDLItemCardSwipeable
-            applyTaskAction(action)
-            if (action == TaskAction.MARK_COMPLETE) {
+            val outcome = applyTaskAction(action)
+            if (outcome == TaskActionOutcome.TIMER_REQUIRES_RESOLUTION) {
+                Toast.makeText(activity, R.string.focus_resolve_before_task_change, Toast.LENGTH_LONG).show()
+                activity.startActivity(FocusTimerActivity.newIntent(activity, item.uid, item.title))
+            } else if (outcome == TaskActionOutcome.APPLIED && action == TaskAction.MARK_COMPLETE) {
                 celebrate()
                 Toast.makeText(activity, R.string.toast_finished, Toast.LENGTH_SHORT).show()
-            } else {
+            } else if (outcome == TaskActionOutcome.APPLIED) {
                 Toast.makeText(activity, R.string.toast_restored_active, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(activity, R.string.focus_task_action_failed, Toast.LENGTH_SHORT).show()
             }
         },
         onSecondaryAction = {
@@ -179,14 +187,20 @@ fun TaskItem(
             if (action == TaskAction.MARK_GIVE_UP) {
                 showGiveUpDialog = true
             } else {
-                applyTaskAction(action)
-                Toast.makeText(
-                    activity,
-                    activity.getString(R.string.toast_archived, 1),
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (applyTaskAction(action) == TaskActionOutcome.APPLIED) {
+                    Toast.makeText(
+                        activity,
+                        activity.getString(R.string.toast_archived, 1),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    Toast.makeText(activity, R.string.focus_task_action_failed, Toast.LENGTH_SHORT).show()
+                }
             }
         },
+        onFocusAction = if (item.state == TaskState.ACTIVE && !item.isDeleted) {
+            { focusEntry(item.uid, item.title) }
+        } else null,
         onEditAction = openEditor,
         onDeleteAction = {
             GlobalUtils.triggerVibration(activity, 200)
@@ -225,8 +239,19 @@ fun TaskItem(
                 TextButton(
                     onClick = {
                         showGiveUpDialog = false
-                        applyTaskAction(TaskAction.MARK_GIVE_UP)
-                        Toast.makeText(activity, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
+                        val outcome = applyTaskAction(TaskAction.MARK_GIVE_UP)
+                        if (outcome == TaskActionOutcome.TIMER_REQUIRES_RESOLUTION) {
+                            Toast.makeText(
+                                activity,
+                                R.string.focus_resolve_before_task_change,
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            activity.startActivity(FocusTimerActivity.newIntent(activity, item.uid, item.title))
+                        } else if (outcome == TaskActionOutcome.APPLIED) {
+                            Toast.makeText(activity, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(activity, R.string.focus_task_action_failed, Toast.LENGTH_SHORT).show()
+                        }
                     }
                 ) {
                     Text(stringResource(R.string.accept))
@@ -252,8 +277,19 @@ fun TaskItem(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-                        deleteTask()
-                        Toast.makeText(activity, R.string.toast_deletion, Toast.LENGTH_SHORT).show()
+                        val outcome = deleteTask()
+                        if (outcome == TaskActionOutcome.TIMER_REQUIRES_RESOLUTION) {
+                            Toast.makeText(
+                                activity,
+                                R.string.focus_resolve_before_task_change,
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            activity.startActivity(FocusTimerActivity.newIntent(activity, item.uid, item.title))
+                        } else if (outcome == TaskActionOutcome.APPLIED) {
+                            Toast.makeText(activity, R.string.toast_deletion, Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(activity, R.string.focus_task_action_failed, Toast.LENGTH_SHORT).show()
+                        }
                     }
                 ) {
                     Text(stringResource(R.string.accept))

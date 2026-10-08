@@ -4,6 +4,7 @@
     package="com.aritxonly.deadliner">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -20,6 +21,11 @@
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
+    <queries>
+        <package android:name="com.xiaomi.xmsf" />
+        <provider android:authorities="com.aritxonly.myhypermodifier.settings" />
+    </queries>
+
     <application
         android:name=".DeadlinerApp"
         android:allowBackup="true"
@@ -33,6 +39,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Deadliner"
         tools:targetApi="31">
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
         <activity
             android:name=".PlaceholderActivity"
             android:exported="false" />
@@ -60,6 +73,13 @@
             android:name=".DeadlineDetailActivity"
             android:exported="false"
             android:label="@string/title_activity_deadline_detail"
+            android:theme="@style/Theme.Deadliner"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+        <activity
+            android:name=".FocusTimerActivity"
+            android:exported="false"
+            android:label="@string/focus_timer_title"
             android:theme="@style/Theme.Deadliner"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
@@ -93,10 +113,38 @@
                 android:name="android.service.quicksettings.ACTIVE_TILE"
                 android:value="true" />
         </service>
+        <service android:name=".notification.NotificationDiagnosticService"
+            android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-initiated notification presentation diagnostic countdown" />
+        </service>
+        <activity android:name=".notification.NotificationTaskActionActivity"
+            android:exported="true" android:excludeFromRecents="true"
+            android:taskAffinity="" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity android:name=".notification.FocusNotificationActionActivity"
+            android:exported="true" android:excludeFromRecents="true" android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity android:name=".notification.NotificationMetadataActionActivity"
+            android:exported="true" android:excludeFromRecents="true" android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <receiver android:name=".notification.NotificationMetadataReceiver" android:exported="false" />
+        <service android:name=".notification.RealtimeNotificationService"
+            android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Task and habit real-time notification windows" />
+        </service>
+        <receiver android:name=".notification.NotificationDiagnosticReceiver" android:exported="false" />
         <service
             android:name=".notification.UpcomingLiveUpdateService"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
+        <service
+            android:name=".notification.FocusTimerForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Task-bound focus timer" />
+        </service>
         <service
             android:name=".widgets.glance.collection.TaskWidgetCollectionService"
             android:exported="true"
@@ -162,6 +210,9 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
         <receiver
@@ -173,7 +224,17 @@
                 <action android:name="com.deadliner.kmp.notification.DAILY" />
                 <action android:name="com.deadliner.kmp.notification.LIVE" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.deadliner.kmp.notification.TASK" />
+                <action android:name="com.deadliner.kmp.notification.HABIT" />
+                <action android:name="com.deadliner.kmp.notification.DAILY" />
+                <action android:name="com.deadliner.kmp.notification.LIVE" />
+                <data android:scheme="deadliner-notification" android:host="${applicationId}" />
+            </intent-filter>
         </receiver>
+        <receiver
+            android:name=".notification.FocusCountdownReceiver"
+            android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

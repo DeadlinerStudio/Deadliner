@@ -27,7 +27,10 @@ import com.deadliner.platform.updateWidget
 class DeadlinerApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        com.aritxonly.deadliner.logging.AppLog.initialize(this)
+        com.deadliner.platform.PlatformLogSink.configure(filesDir.absolutePath, android.os.Process.myPid().toLong())
         GlobalUtils.init(this)
+        com.aritxonly.deadliner.notification.IslandWhitelistBypass.recoverPending(this)
         ApiKeystore.createKeyIfNeeded()
         AIUtils.init(this)
         AppSingletons.init(this)

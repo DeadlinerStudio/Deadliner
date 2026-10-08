@@ -42,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import com.aritxonly.deadliner.ui.base.TextButton
+import com.aritxonly.deadliner.ui.base.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -106,6 +107,7 @@ private enum class DetailAction(
     val labelRes: Int
 ) {
     MARK_COMPLETE(R.drawable.msr_task_alt_wght400, R.string.mark_complete),
+    FOCUS(R.drawable.msr_schedule_wght400, R.string.focus_open),
     GIVE_UP(R.drawable.msr_flag_wght400, R.string.give_up_task),
     RESTORE_ACTIVE(R.drawable.msr_undo_wght400, R.string.restore_active),
     ARCHIVE(R.drawable.msr_move_to_inbox_wght400, R.string.archive),
@@ -116,7 +118,7 @@ private enum class DetailAction(
 
 private fun availableActions(state: TaskState): List<DetailAction> {
     val head = when (state) {
-        TaskState.ACTIVE -> listOf(DetailAction.MARK_COMPLETE, DetailAction.GIVE_UP)
+        TaskState.ACTIVE -> listOf(DetailAction.MARK_COMPLETE, DetailAction.FOCUS, DetailAction.GIVE_UP)
         TaskState.COMPLETED,
         TaskState.ABANDONED -> listOf(DetailAction.RESTORE_ACTIVE, DetailAction.ARCHIVE)
         TaskState.ARCHIVED,
@@ -137,6 +139,7 @@ fun DeadlineDetailScreen(
     categories: List<CategoryPresentation>,
     onSetCategory: (String?) -> Unit,
     onManageCategories: () -> Unit,
+    onOpenFocusTimer: () -> Unit,
     onApplyTaskAction: (TaskAction) -> Unit,
     onDelete: () -> Unit,
     onAddSubtask: (String) -> Unit,
@@ -144,7 +147,6 @@ fun DeadlineDetailScreen(
     onDeleteSubtask: (String) -> Unit,
     onUpdateSubtask: (String, String) -> Unit,
     onCalendarEventCreated: (Long) -> Unit,
-    finishActivity: () -> Unit
 ) {
     var isStarred by remember(deadline.uid) { mutableStateOf(deadline.isStarred) }
     var showPlanComposer by rememberSaveable(deadline.uid) { mutableStateOf(false) }
@@ -188,9 +190,9 @@ fun DeadlineDetailScreen(
         when (action) {
             DetailAction.MARK_COMPLETE -> {
                 onApplyTaskAction(TaskAction.MARK_COMPLETE)
-                Toast.makeText(activityContext, R.string.toast_finished, Toast.LENGTH_SHORT).show()
-                finishActivity()
             }
+
+            DetailAction.FOCUS -> onOpenFocusTimer()
 
             DetailAction.GIVE_UP -> {
                 showGiveUpDialog = true
@@ -198,24 +200,14 @@ fun DeadlineDetailScreen(
 
             DetailAction.RESTORE_ACTIVE -> {
                 onApplyTaskAction(TaskAction.RESTORE_ACTIVE)
-                Toast.makeText(activityContext, R.string.toast_restored_active, Toast.LENGTH_SHORT).show()
-                finishActivity()
             }
 
             DetailAction.ARCHIVE -> {
                 onApplyTaskAction(TaskAction.MARK_ARCHIVE)
-                Toast.makeText(
-                    activityContext,
-                    activityContext.getString(R.string.toast_archived, 1),
-                    Toast.LENGTH_SHORT
-                ).show()
-                finishActivity()
             }
 
             DetailAction.UNARCHIVE -> {
                 onApplyTaskAction(TaskAction.UNARCHIVE)
-                Toast.makeText(activityContext, R.string.toast_unarchived, Toast.LENGTH_SHORT).show()
-                finishActivity()
             }
 
             DetailAction.DELETE -> {
@@ -381,9 +373,6 @@ fun DeadlineDetailScreen(
                     onClick = {
                         showGiveUpDialog = false
                         onApplyTaskAction(TaskAction.MARK_GIVE_UP)
-                        Toast.makeText(activityContext, R.string.toast_give_up, Toast.LENGTH_SHORT)
-                            .show()
-                        finishActivity()
                     }
                 ) {
                     Text(stringResource(R.string.accept))
@@ -410,9 +399,6 @@ fun DeadlineDetailScreen(
                     onClick = {
                         showDeleteDialog = false
                         onDelete()
-                        Toast.makeText(activityContext, R.string.toast_deletion, Toast.LENGTH_SHORT)
-                            .show()
-                        finishActivity()
                     }
                 ) {
                     Text(stringResource(R.string.accept))

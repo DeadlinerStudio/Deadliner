@@ -113,6 +113,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
+        aidl = true
         viewBinding = true
         compose = true
         buildConfig = true
@@ -134,6 +135,9 @@ tasks.named("preBuild") {
 }
 
 dependencies {
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
+    implementation("com.github.topjohnwu.libsu:service:6.0.0")
     implementation(files(deadlinerCoreKmpAar))
     implementation("app.cash.sqldelight:android-driver:2.2.1-0.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2-0.3.0")
@@ -162,6 +166,7 @@ dependencies {
     implementation("io.github.rroohit:ImageCropView:3.1.1")
     implementation("com.materialkolor:material-kolor:4.1.1")
     implementation("top.yukonga.miuix.kmp:miuix-ui-android:0.9.4-rc01")
+    implementation("top.yukonga.miuix.kmp:miuix-icons-android:0.9.4-rc01")
     implementation("top.yukonga.miuix.kmp:miuix-blur-android:0.9.4-rc01")
     implementation("io.github.kyant0:shapes:1.2.0")
     implementation(libs.androidx.core.ktx)

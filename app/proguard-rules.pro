@@ -40,3 +40,15 @@
 -keep class androidx.work.impl.WorkDatabase_Impl { <init>(); }
 
 # Compose/Material/Lottie/Navigation 等一般无需额外 keep，除非你有反射/ServiceLoader
+
+# Instantiated by privileged app_process launchers, outside Android component lookup.
+-keep class com.aritxonly.deadliner.notification.IslandShizukuService { *; }
+-keep class com.aritxonly.deadliner.notification.IslandRootService { *; }
+
+# Persisted KMP notification metadata is read by Gson across APK upgrades and Alarm deliveries.
+-keep class com.deadliner.platform.NotificationMetadataEntry { *; }
+-keep class com.deadliner.platform.NotificationInteractionState { *; }
+-keep class com.deadliner.platform.TaskNotificationResult { *; }
+-keep enum com.deadliner.platform.NotificationKind { *; }
+-keep enum com.deadliner.platform.NotificationPhase { *; }
+-keep enum com.deadliner.platform.NotificationAction { *; }

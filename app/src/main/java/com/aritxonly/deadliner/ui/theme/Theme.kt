@@ -10,9 +10,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.BackgroundColorStrategy
 import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
+import com.aritxonly.deadliner.ui.navigation.LocalFloatingNavigationBottomLift
+import com.aritxonly.deadliner.ui.navigation.rememberMyHyperModifierNavigationLift
 import com.aritxonly.deadliner.ui.LocalMaterialSymbolStyle
 import com.aritxonly.deadliner.ui.MaterialSymbolStyle
 import com.aritxonly.deadliner.ui.MaterialSymbolAxisPolicy
@@ -58,6 +61,14 @@ fun DeadlinerTheme(
         blurRadius = appearance.advancedMaterialBlurRadius,
         fineTuning = appearance.advancedMaterialFineTuning,
     )
+    val sharedNavigationLift = rememberMyHyperModifierNavigationLift(
+        appearance.useMyHyperModifierNavigationLift,
+    )
+    val floatingNavigationLift = if (appearance.useMyHyperModifierNavigationLift) {
+        sharedNavigationLift
+    } else {
+        appearance.floatingNavigationBottomLift.coerceIn(0f, 48f).dp
+    }
 
     CompositionLocalProvider(
         LocalHomeFabColors provides homeFabColors(
@@ -71,6 +82,7 @@ fun DeadlinerTheme(
         LocalImmersiveExperienceEnabled provides (
             appearance.useImmersiveExperience
         ),
+        LocalFloatingNavigationBottomLift provides floatingNavigationLift,
         LocalMaterialSymbolStyle provides MaterialSymbolStyle(
             weight = if (
                 appearance.useImmersiveExperience

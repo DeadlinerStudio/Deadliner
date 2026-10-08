@@ -22,6 +22,7 @@ import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationDock
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingNavigationAction
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabBarDefaults
 import com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabItem
+import com.aritxonly.deadliner.ui.navigation.LocalFloatingNavigationBottomLift
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.blur.layerBackdrop
@@ -41,6 +42,7 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
     detachedItemKey: String?,
     detachedAction: MiuixFloatingNavigationAction?,
     backdrop: LayerBackdrop?,
+    horizontalItems: Boolean = false,
     modifier: Modifier,
     topBar: @Composable () -> Unit,
     legacyTopBar: @Composable () -> Unit,
@@ -48,6 +50,7 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
     floatingActionButton: @Composable () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    val navigationLift = LocalFloatingNavigationBottomLift.current
     val navigationPartition = partitionImmersiveNavigationItems(items, detachedItemKey)
     val primarySelectedKey = resolveImmersivePrimarySelectedKey(
         items = navigationPartition.primaryItems,
@@ -69,7 +72,7 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
             }
         },
         snackbarHost = {
-            Box(modifier = Modifier.padding(bottom = FloatingCompactOverlayHostPadding)) {
+            Box(modifier = Modifier.padding(bottom = FloatingCompactOverlayHostPadding + LocalNavigationOverlayContentPadding.current)) {
                 snackbarHost()
             }
         },
@@ -112,6 +115,14 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
 
+            NavigationOverlay(
+                backdrop = backdrop,
+                modifier = Modifier.align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = MiuixFloatingTabBarDefaults.Height + FloatingNavigationBottomSpacing +
+                        com.aritxonly.deadliner.ui.focus.FocusTimerDockLayout.Gap + navigationLift),
+            )
+
             val floatingFab: @Composable () -> Unit = {
                 Box(
                     modifier = Modifier
@@ -120,7 +131,7 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
                         .padding(
                             bottom = MiuixFloatingTabBarDefaults.Height +
                                 FloatingNavigationBottomSpacing +
-                                FloatingFabNavigationGap,
+                                FloatingFabNavigationGap + navigationLift + LocalNavigationOverlayContentPadding.current,
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -144,7 +155,7 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
                         start = 16.dp,
                         top = 12.dp,
                         end = 16.dp,
-                        bottom = FloatingNavigationBottomSpacing,
+                        bottom = FloatingNavigationBottomSpacing + navigationLift,
                     ),
                 contentAlignment = Alignment.Center,
             ) {
@@ -168,6 +179,8 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
                             items.firstOrNull { it.key == selectedItem.key }?.let(onItemSelected)
                         },
                         backdrop = backdrop,
+                        layout = if (horizontalItems) com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabLayout.Horizontal
+                            else com.aritxonly.deadliner.ui.navigation.MiuixFloatingTabLayout.Stacked,
                     )
                 }
             }
@@ -176,7 +189,7 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
 }
 
 @Composable
-private fun AdaptiveNavItem.toFloatingTabItem(): MiuixFloatingTabItem {
+internal fun AdaptiveNavItem.toFloatingTabItem(): MiuixFloatingTabItem {
     val immersiveResource = immersiveIconResource
     val icon = if (immersiveResource != null) {
         iconResource(immersiveResource)
@@ -204,7 +217,7 @@ private fun FloatingNavigationEdgeMask(
     val coverageHeight = MiuixFloatingTabBarDefaults.Height +
         FloatingNavigationBottomSpacing +
         FloatingNavigationEdgeMaskExtraHeight +
-        navigationBarHeight
+        navigationBarHeight + LocalFloatingNavigationBottomLift.current
 
     Box(
         modifier = modifier
