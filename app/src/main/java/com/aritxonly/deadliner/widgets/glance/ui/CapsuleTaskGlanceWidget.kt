@@ -77,6 +77,7 @@ private fun CapsuleTaskWidgetContent(
         context = context,
         visualState = currentSnapshot.visualState,
         widgetColorScheme = configuration.colorScheme,
+        themeMode = configuration.themeMode,
     )
     val background = remember(colors) {
         ImageProvider(TaskWidgetBackgroundRenderer.renderCapsule(colors))
@@ -94,7 +95,7 @@ private fun CapsuleTaskWidgetContent(
     ) {
         TaskWidgetLayeredCard(
             background = background,
-            backgroundAlpha = 1f,
+            backgroundAlpha = configuration.backgroundAlpha(),
             cornerRadiusDp = configuration.cornerRadiusDp,
             openAppAction = openAppAction,
         ) {

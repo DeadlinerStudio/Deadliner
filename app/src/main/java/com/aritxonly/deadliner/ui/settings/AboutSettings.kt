@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import androidx.compose.runtime.getValue
 import android.content.Intent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -32,7 +33,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,7 +50,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import com.aritxonly.deadliner.BuildConfig
 import com.aritxonly.deadliner.R
@@ -79,7 +78,6 @@ fun AboutSettingsScreen(
 
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_about),
-        advancedMaterialTopBarBlurOnlyWhenCollapsed = true,
         navigationIcon = {
             IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
                 Icon(

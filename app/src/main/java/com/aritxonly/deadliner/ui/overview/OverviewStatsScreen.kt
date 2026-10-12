@@ -1,7 +1,6 @@
 package com.aritxonly.deadliner.ui.overview
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -22,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
@@ -46,16 +45,18 @@ fun OverviewStatsScreen(
     modifier: Modifier,
     topContentPadding: Dp = 0.dp,
     listState: LazyListState,
+    focusState: FocusOverviewState = FocusOverviewState(),
 ) {
     val overviewItems = listOf<@Composable () -> Unit>(
-        { ActiveStatsCard(activeStats) },
+        { ActiveStatsCard(activeStats, focusState) },
         { CompletionTimeCard(completionTimeStats) },
-        { HistoryStatsCard(historyStats) }
+        { HistoryStatsCard(historyStats, focusState) }
     )
 
     LazyColumn(
         state = listState,
         modifier = modifier
+            .testTag("overview-focus-overview-list")
             .syncTopBarMaterialScroll(listState)
             .mainListContainerClip(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = topContentPadding),
@@ -65,6 +66,9 @@ fun OverviewStatsScreen(
             AnimatedItem(delayMillis = index * 100L) {
                 itemContent()
             }
+        }
+        focusState.data?.thisMonth?.let { focus ->
+            item(key = "focus-distribution") { FocusDistributionCard(focus) }
         }
 
         item {
@@ -76,6 +80,7 @@ fun OverviewStatsScreen(
 @Composable
 fun HistoryStatsCard(
     historyStats: Map<String, Int>,
+    focusState: FocusOverviewState = FocusOverviewState(),
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
     val indicatorRoles = listOf(
@@ -100,8 +105,7 @@ fun HistoryStatsCard(
         ) {
             Text(
                 text = stringResource(R.string.task_status_summary),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -112,28 +116,25 @@ fun HistoryStatsCard(
                 historyStats.entries.forEachIndexed { index, (key, value) ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(80.dp)
+                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
                     ) {
                         Text(
-                            text = key,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Visible,
-                            modifier = Modifier.basicMarquee()
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
                             text = value.toString(),
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.titleLarge,
                             color = indicatorPalette.colorFor(
                                 indicatorRoles.getOrElse(index) { OverviewIndicatorRole.Total }
                             ),
                             fontWeight = FontWeight.Bold
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(key, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3,
+                            overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            FocusHistorySummary(focusState)
             Spacer(modifier = Modifier.height(16.dp))
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -166,8 +167,7 @@ fun CompletionTimeCard(
         ) {
             Text(
                 text = stringResource(R.string.task_complete_time_summary),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -184,6 +184,7 @@ fun CompletionTimeCard(
 @Composable
 fun ActiveStatsCard(
     activeStats: Map<String, Int>,
+    focusState: FocusOverviewState = FocusOverviewState(),
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
     val indicatorRoles = listOf(
@@ -208,12 +209,13 @@ fun ActiveStatsCard(
                 .background(MaterialTheme.colorScheme.surfaceContainer)
         ) {
             Text(
-                text = stringResource(R.string.today_task_summary),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                text = stringResource(R.string.focus_stats_today_overview),
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
+            FocusTodaySummary(focusState)
+            Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -221,17 +223,8 @@ fun ActiveStatsCard(
                 activeStats.entries.forEachIndexed { index, (key, value) ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(80.dp)
+                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
                     ) {
-                        Text(
-                            text = key,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Visible,
-                            modifier = Modifier.basicMarquee()
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = value.toString(),
                             style = MaterialTheme.typography.titleLarge,
@@ -240,6 +233,10 @@ fun ActiveStatsCard(
                             ),
                             fontWeight = FontWeight.Bold
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(key, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2,
+                            overflow = TextOverflow.Ellipsis)
                     }
                 }
             }

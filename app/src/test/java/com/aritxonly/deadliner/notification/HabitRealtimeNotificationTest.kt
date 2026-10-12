@@ -58,7 +58,10 @@ class HabitRealtimeNotificationTest {
         val a = area(p)
         assertEquals(context.getString(com.aritxonly.deadliner.R.string.notification_live_habit_checked),
             a.getJSONObject("imageTextInfoLeft").getJSONObject("textInfo").getString("title"))
-        assertEquals("1/3", a.getJSONObject("imageTextInfoRight").getJSONObject("textInfo").getString("title"))
+        assertEquals(context.getString(com.aritxonly.deadliner.R.string.notification_island_encouragement),
+            a.getJSONObject("imageTextInfoRight").getJSONObject("textInfo").getString("title"))
+        val native = RealtimeNotificationRenderer.build(context, after)
+        assertTrue(native.extras.getString(android.app.Notification.EXTRA_TEXT)!!.contains("1/3"))
         assertEquals("#FFA8DFC0", p.getJSONObject("param_island").getString("highlightColor"))
         assertFalse(after.actions.contains(NotificationAction.CHECK_IN))
     }

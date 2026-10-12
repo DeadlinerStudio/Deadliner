@@ -44,6 +44,8 @@ object TaskWidgetRefreshCoordinator {
     private var preferences: SharedPreferences? = null
     private var preferenceListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
     private var refreshJob: Job? = null
+    private var pendingForceRefresh = false
+    private var refreshRequestId = 0L
 
     @Synchronized
     fun start(context: Context) {
@@ -54,18 +56,33 @@ object TaskWidgetRefreshCoordinator {
         preferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             if (key in widgetRefreshKeys) requestRefresh(context, force = true)
         }.also { preferences?.registerOnSharedPreferenceChangeListener(it) }
-        AndroidWidgetUpdateBridge.setHandler { requestRefresh(context) }
+        val appContext = context.applicationContext
+        appContext.registerComponentCallbacks(
+            TaskWidgetSystemThemeObserver(appContext.resources.configuration) {
+                requestRefresh(appContext, force = true)
+            }
+        )
+        AndroidWidgetUpdateBridge.setHandler { requestRefresh(appContext) }
     }
 
     @Synchronized
     fun requestRefresh(context: Context, force: Boolean = false) {
         val appContext = context.applicationContext
+        pendingForceRefresh = pendingForceRefresh || force
         refreshJob?.cancel()
+        val requestId = ++refreshRequestId
         refreshJob = scope.launch {
             delay(REFRESH_DEBOUNCE_MS)
-            if (publishLatestSnapshot(appContext, force)) {
+            // A data refresh arriving after a theme refresh must not discard its forced revision.
+            val forceRefresh = synchronized(this@TaskWidgetRefreshCoordinator) {
+                pendingForceRefresh
+            }
+            if (publishLatestSnapshot(appContext, forceRefresh)) {
                 updateAllWidgets(appContext)
                 notifyScrollableCollections(appContext)
+                synchronized(this@TaskWidgetRefreshCoordinator) {
+                    if (refreshRequestId == requestId) pendingForceRefresh = false
+                }
             }
         }
     }

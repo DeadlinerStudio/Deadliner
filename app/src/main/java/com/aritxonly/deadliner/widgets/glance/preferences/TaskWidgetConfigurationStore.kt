@@ -35,6 +35,13 @@ internal class TaskWidgetConfigurationStore private constructor(
             colorScheme = TaskWidgetColorScheme.fromStoredValue(
                 preferences.getString(key(appWidgetId, KEY_COLOR_SCHEME), null)
             ),
+            themeMode = TaskWidgetThemeMode.fromStoredValue(
+                preferences.getString(key(appWidgetId, KEY_THEME_MODE), null)
+            ),
+            backgroundTransparencyPercent = preferences.getInt(
+                key(appWidgetId, KEY_BACKGROUND_TRANSPARENCY),
+                defaults.backgroundTransparencyPercent,
+            ),
             isScrollable = preferences.getBoolean(
                 key(appWidgetId, KEY_SCROLLABLE),
                 defaults.isScrollable,
@@ -51,7 +58,9 @@ internal class TaskWidgetConfigurationStore private constructor(
             .putInt(key(appWidgetId, KEY_TOP_MARGIN), value.customTopMarginDp)
             .putInt(key(appWidgetId, KEY_BOTTOM_MARGIN), value.customBottomMarginDp)
             .putString(key(appWidgetId, KEY_COLOR_SCHEME), value.colorScheme.storedValue)
+            .putString(key(appWidgetId, KEY_THEME_MODE), value.themeMode.storedValue)
             .putBoolean(key(appWidgetId, KEY_SCROLLABLE), value.isScrollable)
+            .putInt(key(appWidgetId, KEY_BACKGROUND_TRANSPARENCY), value.backgroundTransparencyPercent)
             .commit()
     }
 
@@ -72,7 +81,9 @@ internal class TaskWidgetConfigurationStore private constructor(
         private const val KEY_TOP_MARGIN = "top_margin"
         private const val KEY_BOTTOM_MARGIN = "bottom_margin"
         private const val KEY_COLOR_SCHEME = "color_scheme"
+        private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_SCROLLABLE = "scrollable"
+        private const val KEY_BACKGROUND_TRANSPARENCY = "background_transparency"
         private val KEYS = listOf(
             KEY_CONFIGURED,
             KEY_CORNER,
@@ -80,7 +91,9 @@ internal class TaskWidgetConfigurationStore private constructor(
             KEY_TOP_MARGIN,
             KEY_BOTTOM_MARGIN,
             KEY_COLOR_SCHEME,
+            KEY_THEME_MODE,
             KEY_SCROLLABLE,
+            KEY_BACKGROUND_TRANSPARENCY,
         )
 
         fun from(context: Context): TaskWidgetConfigurationStore = TaskWidgetConfigurationStore(

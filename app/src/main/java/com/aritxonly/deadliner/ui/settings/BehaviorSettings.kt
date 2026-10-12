@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +43,8 @@ fun BehaviorSettingsScreen(
     handleRestart: () -> Unit,
     navigateUp: () -> Unit
 ) {
+    val appearance by GlobalUtils.appearanceFlow.collectAsState()
+    var quickAddEnabled by remember { mutableStateOf(GlobalUtils.quickAddEnabled) }
     var hideFromRecent by remember { mutableStateOf(GlobalUtils.hideFromRecent) }
     val onHideFromRecentChange: (Boolean) -> Unit = {
         hideFromRecent = it
@@ -114,6 +117,22 @@ fun BehaviorSettingsScreen(
             }
 
             SettingsSection(topLabel = stringResource(R.string.settings_general_others)) {
+                SettingsDetailSwitchItem(
+                    headline = R.string.quick_add_enabled,
+                    supportingText = R.string.quick_add_support,
+                    checked = quickAddEnabled,
+                    onCheckedChange = { quickAddEnabled = it; GlobalUtils.quickAddEnabled = it },
+                )
+                SettingsSectionDivider()
+                SettingsDetailSwitchItem(
+                    headline = R.string.settings_wheel_date_time_picker,
+                    supportingText = R.string.settings_support_wheel_date_time_picker,
+                    checked = appearance.useWheelDateTimePicker,
+                    onCheckedChange = { checked ->
+                        GlobalUtils.updateAppearance { it.copy(useWheelDateTimePicker = checked) }
+                    },
+                )
+                SettingsSectionDivider()
                 SettingsDetailSwitchItem(
                     headline = R.string.settings_hide_from_recent,
                     supportingText = R.string.settings_support_hide_from_recent,

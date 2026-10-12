@@ -8,6 +8,17 @@ plugins {
     id("kotlin-parcelize")
 }
 
+// Downloaded models need a bundled inference runtime; split APKs avoid duplicating every ABI.
+val quickAddInferenceRuntime = providers.gradleProperty("quickAddInferenceRuntime")
+    .map(String::toBooleanStrict).getOrElse(true)
+val quickAddInferenceAbis = providers.gradleProperty("quickAddInferenceAbis").orNull
+    ?.split(',')?.map(String::trim)?.filter(String::isNotEmpty)
+    ?.also { abis ->
+        require(abis.isNotEmpty() && abis.all { it in setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64") }) {
+            "quickAddInferenceAbis must contain valid Android ABIs"
+        }
+    }
+
 val deadlinerCoreKmpAar = rootProject.file(".deadliner-core/kmp/deadliner-core.aar")
 val deadlinerCoreDirectory = providers.gradleProperty("deadlinerCoreDir")
     .orElse(providers.environmentVariable("DEADLINER_CORE_DIR"))
@@ -64,6 +75,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
+        if (!quickAddInferenceRuntime) quickAddInferenceAbis?.let { ndk { abiFilters += it } }
         applicationId = "com.aritxonly.deadliner"
         minSdk = 33
         targetSdk = 36
@@ -87,6 +99,14 @@ android {
                 ?: System.getProperty("DEADLINER_APP_SECRET")      // -D 注入兜底
                 ?: ""
         buildConfigField("String", "DEADLINER_APP_SECRET", "\"$secret\"")
+    }
+    splits {
+        abi {
+            isEnable = quickAddInferenceRuntime
+            reset()
+            include(*(quickAddInferenceAbis ?: listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")).toTypedArray())
+            isUniversalApk = providers.gradleProperty("quickAddUniversalApk").map(String::toBooleanStrict).getOrElse(false)
+        }
     }
     lint {
         disable += "NullSafeMutableLiveData"
@@ -122,6 +142,10 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
     packaging {
+        jniLibs {
+            // Keep direct-download APKs within the size budget; Android extracts these on install.
+            useLegacyPackaging = true
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -139,7 +163,13 @@ dependencies {
     implementation("dev.rikka.shizuku:provider:13.1.5")
     implementation("com.github.topjohnwu.libsu:service:6.0.0")
     implementation(files(deadlinerCoreKmpAar))
+    // File-based KMP AARs do not carry transitive runtime dependencies.
+    if (quickAddInferenceRuntime) {
+        implementation("com.microsoft.onnxruntime:onnxruntime-android:1.31.0")
+    }
     implementation("app.cash.sqldelight:android-driver:2.2.1-0.3.0")
+    // Local Core AARs have no transitive POM: focus statistics uses SQLDelight query Flows.
+    implementation("app.cash.sqldelight:coroutines-extensions:2.2.1-0.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2-0.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1-0.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.1-0.3.0")

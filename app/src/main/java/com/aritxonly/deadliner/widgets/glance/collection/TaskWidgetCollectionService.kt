@@ -42,6 +42,7 @@ internal class TaskWidgetCollectionRemoteViewsFactory(
                 context = appContext,
                 visualState = snapshot.visualState,
                 widgetColorScheme = configuration.colorScheme,
+                themeMode = configuration.themeMode,
             )
         },
 ) : RemoteViewsService.RemoteViewsFactory {

@@ -65,6 +65,7 @@ private fun CompactTaskWidgetContent(
         context = context,
         visualState = currentSnapshot.visualState,
         widgetColorScheme = configuration.colorScheme,
+        themeMode = configuration.themeMode,
     )
     val background = remember(colors) {
         ImageProvider(TaskWidgetBackgroundRenderer.renderSquare(colors))
@@ -82,7 +83,7 @@ private fun CompactTaskWidgetContent(
     ) {
         TaskWidgetLayeredCard(
             background = background,
-            backgroundAlpha = TaskWidgetLayoutMetrics.CARD_BACKGROUND_ALPHA,
+            backgroundAlpha = configuration.backgroundAlpha(),
             cornerRadiusDp = configuration.cornerRadiusDp,
             openAppAction = openAppAction,
         ) {

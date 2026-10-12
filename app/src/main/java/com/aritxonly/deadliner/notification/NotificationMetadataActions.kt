@@ -62,6 +62,13 @@ class NotificationMetadataActionActivity : Activity() {
             val (entry, action) = validated
             val now = Clock.System.now().toString()
             when (action) {
+                NotificationAction.OPEN_FOCUS -> {
+                    entry.focusSessionUid?.let { startActivity(FocusTimerActivity.newResultIntent(this, it)) }
+                }
+                NotificationAction.OPEN_TASK -> {
+                    startActivity(com.aritxonly.deadliner.DeadlineDetailActivity.newIntent(this, entry.ownerUid))
+                    NotificationDiagnostics.event("metadata.action.open_task", "key" to entry.key, "task" to entry.ownerUid)
+                }
                 NotificationAction.COMPLETE, NotificationAction.GIVE_UP, NotificationAction.RESTORE_ACTIVE -> {
                     val result = KmpV6Runtime.applyTaskAction(entry.ownerUid, NotificationMetadataActions.taskAction(action))
                     if (result.outcome == TaskActionOutcome.TIMER_REQUIRES_RESOLUTION) {

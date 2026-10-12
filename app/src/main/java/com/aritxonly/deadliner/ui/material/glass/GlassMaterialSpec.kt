@@ -59,6 +59,7 @@ data class GlassMaterialRecipe(
 data class GlassMaterialInteraction(
     val refractionScale: Float = 1f,
     val highlightScale: Float = 1f,
+    val neutralTintProgress: Float = 0f,
 )
 
 /** Controls how the tint is composited over the sampled glass backdrop. */
@@ -138,6 +139,19 @@ object DeadlinerGlassRecipes {
             ),
         )
     }
+
+    val QuickAddCornerRadius = 28.dp
+
+    /** The input lens uses its physical rounded-rectangle geometry, never a height-sized capsule. */
+    fun quickAdd(fineTuning: AdvancedMaterialFineTuning): GlassMaterialRecipe =
+        floatingNavigation(fineTuning).copy(
+            blur = dialog(fineTuning).blur,
+            geometry = GlassGeometrySpec(cornerRadius = QuickAddCornerRadius),
+        )
+
+    /** A tall sidebar keeps its physical corner radius in the optical shader. */
+    fun tabletNavigation(fineTuning: AdvancedMaterialFineTuning): GlassMaterialRecipe =
+        floatingNavigation(fineTuning).copy(geometry = GlassGeometrySpec(cornerRadius = 28.dp))
 
     fun bottomSheet(
         fineTuning: AdvancedMaterialFineTuning,

@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.navigation
 
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -22,7 +23,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +35,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
-import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarButtonMaterialProgress
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassDefaults
@@ -58,12 +57,10 @@ internal fun resolveImmersiveTextTabIndex(
 ): Int = if (tabCount <= 0) 0 else selectedTabIndex.coerceIn(0, tabCount - 1)
 
 internal fun resolveImmersiveTextTabMaterialProgress(
-    immersiveEnabled: Boolean,
     explicitProgress: Float?,
     topBarProgress: Float,
     scrollProgress: Float?,
 ): Float {
-    if (!immersiveEnabled) return 0f
     return (explicitProgress ?: maxOf(topBarProgress, scrollProgress ?: 0f)).coerceIn(0f, 1f)
 }
 
@@ -91,7 +88,6 @@ fun ImmersiveTextTabRow(
     val contentColor = MiuixTheme.colorScheme.onSurfaceContainer
     val isDark = contentColor.luminance() > 0.5f
     val resolvedMaterialProgress = resolveImmersiveTextTabMaterialProgress(
-        immersiveEnabled = LocalImmersiveExperienceEnabled.current,
         explicitProgress = materialProgress,
         topBarProgress = LocalTopBarButtonMaterialProgress.current,
         scrollProgress = LocalTopBarScrollProgress.current,

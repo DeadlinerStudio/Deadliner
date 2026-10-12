@@ -17,6 +17,8 @@ import java.time.LocalDateTime
 object AIUtils {
     private var appContext: Context? = null
     private var coreBridge: DeadlinerCoreBridge? = null
+    private var quickAddUtilityKey: List<String>? = null
+    private var quickAddUtility: AiUtilityService? = null
     private val gson by lazy {
         GsonBuilder()
             .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
@@ -33,6 +35,21 @@ object AIUtils {
     fun setPreset(preset0: LlmPreset, context: Context) {
         appContext = context.applicationContext
         coreBridge = DeadlinerCoreBridge(gson)
+    }
+
+    suspend fun extractQuickAdd(text: String, kind: String): com.deadliner.domain.quickadd.QuickAddProposal = withContext(Dispatchers.IO) {
+        val config = readCoreRuntimeConfig(appContext ?: error("AIUtils not initialized"))
+        val key = listOf(config.apiKey, config.baseUrl, config.modelId, java.time.ZoneId.systemDefault().id)
+        val service = synchronized(AIUtils) {
+            val cached = quickAddUtility
+            if (cached != null && quickAddUtilityKey == key) cached
+            else createAiUtilityService(config.apiKey, config.baseUrl, config.modelId).also {
+                quickAddUtilityKey = key
+                quickAddUtility = it
+            }
+        }
+        if (kind == "HABIT") com.deadliner.domain.quickadd.QuickAddAiResult.habits(service.extractHabits(text))
+        else com.deadliner.domain.quickadd.QuickAddAiResult.tasks(service.extractTasks(text))
     }
 
     suspend fun validateDirectConfig(

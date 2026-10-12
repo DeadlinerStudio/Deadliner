@@ -21,21 +21,10 @@ class ImmersiveTextTabRowTest {
     }
 
     @Test
-    fun materialProgressRequiresImmersiveModeAndPrefersExplicitProgress() {
-        assertEquals(
-            0f,
-            resolveImmersiveTextTabMaterialProgress(
-                immersiveEnabled = false,
-                explicitProgress = 0.8f,
-                topBarProgress = 0.7f,
-                scrollProgress = 0.6f,
-            ),
-            0.0001f,
-        )
+    fun materialProgressPrefersExplicitProgress() {
         assertEquals(
             0.8f,
             resolveImmersiveTextTabMaterialProgress(
-                immersiveEnabled = true,
                 explicitProgress = 0.8f,
                 topBarProgress = 0.7f,
                 scrollProgress = 0.6f,
@@ -45,7 +34,6 @@ class ImmersiveTextTabRowTest {
         assertEquals(
             0.7f,
             resolveImmersiveTextTabMaterialProgress(
-                immersiveEnabled = true,
                 explicitProgress = null,
                 topBarProgress = 0.7f,
                 scrollProgress = 0.6f,

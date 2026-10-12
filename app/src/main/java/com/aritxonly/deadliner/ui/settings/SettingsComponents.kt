@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.settings
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
@@ -67,7 +69,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Label
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
@@ -77,38 +78,28 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import com.aritxonly.deadliner.R
@@ -117,13 +108,10 @@ import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
-import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.base.Scaffold
 import com.aritxonly.deadliner.ui.base.Switch
 import com.aritxonly.deadliner.ui.base.Slider
 import com.aritxonly.deadliner.ui.base.RadioButton
 import com.aritxonly.deadliner.ui.base.OutlinedTextField
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 // region: These codes are referenced from https://github.com/YangDai2003/OpenNote-Compose/
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -336,19 +324,14 @@ fun CollapsingTopBarScaffold(
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     collapsible: Boolean = true,
     topBarStyle: TopAppBarStyle = TopAppBarStyle.LARGE,
-    allowAdvancedMaterialTopBarBlur: Boolean = true,
-    advancedMaterialTopBarBlurOnlyWhenCollapsed: Boolean = false,
-    forceOverlayTopBar: Boolean = false,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
-    val advancedMaterial = LocalAdvancedMaterialSpec.current
     val canScrollState = remember { mutableStateOf(true) }
     val canCollapseTopBar = collapsible && canScrollState.value
-    val useLegacyTopBar = !advancedMaterial.enabled && !forceOverlayTopBar
 
     run {
             val scrollBehavior = if (collapsible && topBarStyle == TopAppBarStyle.LARGE) {
@@ -364,19 +347,6 @@ fun CollapsingTopBarScaffold(
                     mode = topBarStyle,
                     navigationIcon = navigationIcon,
                     actions = actions,
-                    useParentMaterialContainer = false,
-                    allowAdvancedMaterialBlur = allowAdvancedMaterialTopBarBlur,
-                    advancedMaterialBlurOnlyWhenCollapsed = advancedMaterialTopBarBlurOnlyWhenCollapsed,
-                    miuixScrollBehavior = scrollBehavior,
-                )
-            }
-            val legacyTopBar: @Composable () -> Unit = {
-                TopAppBar(
-                    title = title,
-                    mode = topBarStyle,
-                    navigationIcon = navigationIcon,
-                    actions = actions,
-                    allowAdvancedMaterialBlur = false,
                     miuixScrollBehavior = scrollBehavior,
                 )
             }
@@ -386,12 +356,10 @@ fun CollapsingTopBarScaffold(
                 } else {
                     modifier
                 },
-                topBar = if (useLegacyTopBar) ({}) else overlayTopBar,
-                legacyTopBar = if (useLegacyTopBar) legacyTopBar else ({}),
+                topBar = overlayTopBar,
                 bottomBar = bottomBar,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                wrapTopBarInMaterialContainer = false,
-                useCurrentTopBarHeightForContentPadding = !useLegacyTopBar,
+                useCurrentTopBarHeightForContentPadding = true,
                 snackbarHost = snackbarHost,
                 content = { paddingValues ->
                     CompositionLocalProvider(LocalSettingsTopBarCanScrollState provides canScrollState) {

@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.settings
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,16 +36,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
@@ -146,17 +145,6 @@ fun DesignColorSettingsScreen(
             }
 
             SettingsSection(topLabel = stringResource(R.string.settings_design_color_title)) {
-                SettingsDetailSwitchItem(
-                    headline = R.string.settings_immersive_experience,
-                    supportingText = R.string.settings_support_immersive_experience,
-                    checked = appearance.useImmersiveExperience,
-                    onCheckedChange = { checked ->
-                        GlobalUtils.updateAppearance { current ->
-                            current.copy(useImmersiveExperience = checked)
-                        }
-                    },
-                )
-                SettingsSectionDivider()
                 SettingsDetailSwitchItem(
                     headline = R.string.settings_follow_myhypermodifier_navigation_lift,
                     supportingText = R.string.settings_support_follow_myhypermodifier_navigation_lift,

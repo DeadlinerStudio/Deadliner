@@ -75,6 +75,71 @@ class TaskWidgetConfigurationTest {
     }
 
     @Test
+    fun `legacy and new widgets retain their original background opacity`() {
+        val preferences = ApplicationProvider.getApplicationContext<Application>()
+            .getSharedPreferences("widget-transparency-migration-test", 0)
+        val store = TaskWidgetConfigurationStore.createForTest(preferences)
+        for (kind in TaskWidgetKind.entries) {
+            val id = 100 + kind.ordinal
+            val expected = if (kind == TaskWidgetKind.SQUARE) 8 else 0
+            assertEquals(expected, store.read(id, kind).backgroundTransparencyPercent)
+            preferences.edit().putBoolean("$id:configured", true).commit()
+            assertEquals(expected, store.read(id, kind).backgroundTransparencyPercent)
+            assertEquals((100 - expected) / 100f, store.read(id, kind).backgroundAlpha(), 0.001f)
+        }
+    }
+
+    @Test
+    fun `transparency persists per instance clamps and is removed on deletion`() {
+        val preferences = ApplicationProvider.getApplicationContext<Application>()
+            .getSharedPreferences("widget-transparency-test", 0)
+        val store = TaskWidgetConfigurationStore.createForTest(preferences)
+        val square = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE)
+        val capsule = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.CAPSULE)
+        store.write(10, TaskWidgetKind.SQUARE, square.copy(backgroundTransparencyPercent = 40))
+        store.write(20, TaskWidgetKind.CAPSULE, capsule.copy(backgroundTransparencyPercent = 100))
+        val reopened = TaskWidgetConfigurationStore.createForTest(preferences)
+        assertEquals(40, reopened.read(10, TaskWidgetKind.SQUARE).backgroundTransparencyPercent)
+        assertEquals(0.6f, reopened.read(10, TaskWidgetKind.SQUARE).backgroundAlpha(), 0.001f)
+        assertEquals(0f, reopened.read(20, TaskWidgetKind.CAPSULE).backgroundAlpha(), 0.001f)
+
+        store.delete(intArrayOf(10))
+        assertEquals(false, preferences.contains("10:background_transparency"))
+        assertEquals(8, reopened.read(10, TaskWidgetKind.SQUARE).backgroundTransparencyPercent)
+        assertEquals(100, reopened.read(20, TaskWidgetKind.CAPSULE).backgroundTransparencyPercent)
+
+        store.write(10, TaskWidgetKind.SQUARE, square.copy(backgroundTransparencyPercent = -20))
+        assertEquals(0, reopened.read(10, TaskWidgetKind.SQUARE).backgroundTransparencyPercent)
+        assertEquals(1f, reopened.read(10, TaskWidgetKind.SQUARE).backgroundAlpha(), 0.001f)
+        preferences.edit().putInt("10:background_transparency", 150).commit()
+        assertEquals(100, reopened.read(10, TaskWidgetKind.SQUARE).backgroundTransparencyPercent)
+    }
+
+    @Test
+    fun `theme mode persists per widget and old or unknown values follow app`() {
+        val preferences = ApplicationProvider.getApplicationContext<Application>()
+            .getSharedPreferences("widget-theme-mode-test", 0)
+        val store = TaskWidgetConfigurationStore.createForTest(preferences)
+        val square = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE)
+        val capsule = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.CAPSULE)
+        assertEquals(TaskWidgetThemeMode.FOLLOW_APP, store.read(10, TaskWidgetKind.SQUARE).themeMode)
+        preferences.edit().putBoolean("10:configured", true).commit()
+        assertEquals(TaskWidgetThemeMode.FOLLOW_APP, store.read(10, TaskWidgetKind.SQUARE).themeMode)
+        preferences.edit().putString("10:theme_mode", "unknown").commit()
+        assertEquals(TaskWidgetThemeMode.FOLLOW_APP, store.read(10, TaskWidgetKind.SQUARE).themeMode)
+
+        store.write(10, TaskWidgetKind.SQUARE, square.copy(themeMode = TaskWidgetThemeMode.DARK))
+        store.write(20, TaskWidgetKind.CAPSULE, capsule.copy(themeMode = TaskWidgetThemeMode.LIGHT))
+        val reopened = TaskWidgetConfigurationStore.createForTest(preferences)
+        assertEquals(TaskWidgetThemeMode.DARK, reopened.read(10, TaskWidgetKind.SQUARE).themeMode)
+        assertEquals(TaskWidgetThemeMode.LIGHT, reopened.read(20, TaskWidgetKind.CAPSULE).themeMode)
+        store.delete(intArrayOf(10))
+        assertEquals(false, preferences.contains("10:theme_mode"))
+        assertEquals(TaskWidgetThemeMode.FOLLOW_APP, reopened.read(10, TaskWidgetKind.SQUARE).themeMode)
+        assertEquals(TaskWidgetThemeMode.LIGHT, reopened.read(20, TaskWidgetKind.CAPSULE).themeMode)
+    }
+
+    @Test
     fun `unconfigured square inherits the legacy desktop preset`() {
         val preferences = ApplicationProvider.getApplicationContext<Application>()
             .getSharedPreferences("widget-migration-test", 0)

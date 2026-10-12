@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.detail
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
@@ -18,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -42,15 +43,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import com.aritxonly.deadliner.ui.base.TextButton
-import com.aritxonly.deadliner.ui.base.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -64,7 +62,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.calendar.CalendarHelper
@@ -85,7 +82,6 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
-import com.aritxonly.deadliner.ui.navIconPaddingModifier
 import com.aritxonly.deadliner.ui.iconResource
 import com.aritxonly.deadliner.ui.symbolPainterResource
 import com.aritxonly.deadliner.ui.category.CategoryAssignmentField
@@ -264,7 +260,6 @@ fun DeadlineDetailScreen(
                 titleTextStyle = MaterialTheme.typography.titleLarge,
                 mode = TopAppBarStyle.SMALL,
                 forceMaterial3 = true,
-                useParentMaterialContainer = true,
                 actions = {
                     TopBarIconButton(onClick = {
                         isStarred = !isStarred

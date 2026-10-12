@@ -44,6 +44,7 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
     backdrop: LayerBackdrop?,
     horizontalItems: Boolean = false,
     modifier: Modifier,
+    background: @Composable () -> Unit,
     topBar: @Composable () -> Unit,
     legacyTopBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
@@ -90,11 +91,13 @@ internal fun ImmersiveMiuixCompactNavigationScaffold(
                             .fillMaxSize()
                             .layerBackdrop(backdrop),
                     ) {
+                        background()
                         content(PaddingValues())
                     }
                 }
             } else {
                 Box(modifier = Modifier.fillMaxSize()) {
+                    background()
                     content(PaddingValues())
                 }
             }

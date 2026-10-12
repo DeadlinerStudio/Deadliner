@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
@@ -59,11 +60,18 @@ fun Modifier.deadlinerGlassMaterial(
             ?.coerceIn(0f, 1f)
             ?: (tint.alpha * blurSpec.tintAlphaMultiplier).coerceIn(0f, 1f),
     )
-    val tintComposite = resolveGlassTintComposite(
+    val seedComposite = resolveGlassTintComposite(
         tint = resolvedTint,
         style = tintStyle,
         isDark = isDark,
     )
+    val tintComposite = if (tintStyle == GlassTintStyle.SeedChromatic && interaction.neutralTintProgress > 0f) {
+        val neutralTint = advancedMaterial.fineTuning.softGlassTintColor(isDark).copy(
+            alpha = ((if (advancedMaterial.enabled) advancedMaterial.navigationTintAlpha else 0.92f) *
+                blurSpec.tintAlphaMultiplier).coerceIn(0f, 1f))
+        blendGlassTintComposites(seedComposite,
+            resolveGlassTintComposite(neutralTint, GlassTintStyle.Neutral, isDark), interaction.neutralTintProgress)
+    } else seedComposite
     val canDrawBackdrop = resolvedMaterial.textureBlurEnabled && backdrop != null
     val canDrawOpticalStack = canDrawBackdrop &&
         recipe.refraction.enabled &&
@@ -107,6 +115,12 @@ internal data class GlassTintComposite(
     val liftTint: Color,
     val fallbackTint: Color,
 )
+
+internal fun blendGlassTintComposites(from: GlassTintComposite, to: GlassTintComposite, progress: Float): GlassTintComposite {
+    val p = progress.coerceIn(0f, 1f)
+    return GlassTintComposite(lerp(from.baseTint, to.baseTint, p), lerp(from.colorizeTint, to.colorizeTint, p),
+        lerp(from.liftTint, to.liftTint, p), lerp(from.fallbackTint, to.fallbackTint, p))
+}
 
 /**
  * Chromatic glass keeps the sampled luminance instead of covering it with one nearly opaque wash.

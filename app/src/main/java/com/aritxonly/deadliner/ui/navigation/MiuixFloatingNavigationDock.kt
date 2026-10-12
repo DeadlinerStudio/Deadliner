@@ -6,9 +6,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +30,7 @@ import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 object MiuixFloatingNavigationDockDefaults {
+    // Shared bound for the independent focus timer overlay. Navigation derives its width per tab.
     val MaximumWidth = 442.dp
     val HorizontalPadding = 8.dp
 }
@@ -39,6 +44,11 @@ data class MiuixFloatingNavigationAction(
     val contentColor: Color,
     val iconScale: Float = 1f,
     val onClick: () -> Unit,
+    val modifier: Modifier = Modifier,
+    val symbolName: String? = null,
+    val enabled: Boolean = true,
+    val neutralTint: Boolean = false,
+    val iconRotation: Float = 0f,
 )
 
 /**
@@ -66,9 +76,15 @@ fun MiuixFloatingNavigationDock(
         ?: items.firstOrNull()?.key
         ?: selectedKey
 
+    val hasDetachedControl = detachedAction != null || detachedItem != null
+    val maximumWidth = MiuixFloatingTabBarDefaults.maximumWidth(items.size, layout) +
+        (if (hasDetachedControl) MiuixFloatingTabBarDefaults.Height + FloatingNavigationDockSpacing else 0.dp) +
+        MiuixFloatingNavigationDockDefaults.HorizontalPadding * 2
+
     Row(
         modifier = modifier
-            .widthIn(max = if (layout == MiuixFloatingTabLayout.Horizontal) 620.dp else MiuixFloatingNavigationDockDefaults.MaximumWidth)
+            .wrapContentWidth()
+            .widthIn(max = maximumWidth)
             .fillMaxWidth()
             .height(MiuixFloatingTabBarDefaults.Height)
             .padding(horizontal = MiuixFloatingNavigationDockDefaults.HorizontalPadding),
@@ -86,15 +102,20 @@ fun MiuixFloatingNavigationDock(
         )
 
         if (detachedAction != null) {
+            val rotation by animateFloatAsState(detachedAction.iconRotation, spring(dampingRatio = 0.78f, stiffness = 380f), label = "detachedIconRotation")
             SoftGlassFloatingActionButton(
                 onClick = detachedAction.onClick,
+                modifier = detachedAction.modifier,
+                enabled = detachedAction.enabled,
+                neutralTint = detachedAction.neutralTint,
                 containerColor = detachedAction.containerColor,
                 contentColor = detachedAction.contentColor,
                 size = MiuixFloatingTabBarDefaults.Height,
                 backdrop = backdrop,
             ) {
                 Icon(
-                    painter = iconResource(detachedAction.iconResource),
+                    painter = detachedAction.symbolName?.let { com.aritxonly.deadliner.ui.materialSymbolPainter(it) }
+                        ?: iconResource(detachedAction.iconResource),
                     contentDescription = detachedAction.label,
                     modifier = Modifier
                         .size(MiuixFloatingTabBarDefaults.DetachedIconSize)
@@ -102,6 +123,7 @@ fun MiuixFloatingNavigationDock(
                             val scale = detachedAction.iconScale.coerceIn(0.75f, 1.25f)
                             scaleX = scale
                             scaleY = scale
+                            rotationZ = rotation
                         },
                 )
             }

@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.theme
 
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -7,13 +8,11 @@ import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.aritxonly.deadliner.ui.picker.DateTimePickerHost
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.BackgroundColorStrategy
-import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.navigation.LocalFloatingNavigationBottomLift
 import com.aritxonly.deadliner.ui.navigation.rememberMyHyperModifierNavigationLift
 import com.aritxonly.deadliner.ui.LocalMaterialSymbolStyle
@@ -79,25 +78,10 @@ fun DeadlinerTheme(
             useContrastingPresetFab = appearance.useContrastingHomeFab,
         ),
         LocalAdvancedMaterialSpec provides advancedMaterialSpec,
-        LocalImmersiveExperienceEnabled provides (
-            appearance.useImmersiveExperience
-        ),
         LocalFloatingNavigationBottomLift provides floatingNavigationLift,
         LocalMaterialSymbolStyle provides MaterialSymbolStyle(
-            weight = if (
-                appearance.useImmersiveExperience
-            ) {
-                MaterialSymbolAxisPolicy.ImmersiveModernWeight
-            } else {
-                MaterialSymbolAxisPolicy.DefaultWeight
-            },
-            grade = if (
-                appearance.useImmersiveExperience
-            ) {
-                MaterialSymbolAxisPolicy.ImmersiveModernGrade
-            } else {
-                MaterialSymbolAxisPolicy.DefaultGrade
-            },
+            weight = MaterialSymbolAxisPolicy.ImmersiveModernWeight,
+            grade = MaterialSymbolAxisPolicy.ImmersiveModernGrade,
             usesModernBackIcon = true,
         ),
     ) {
@@ -112,6 +96,7 @@ fun DeadlinerTheme(
                 ) {
                     ProvideAdvancedMaterialDialogBlurHost {
                         content()
+                        DateTimePickerHost()
                     }
                 }
             }

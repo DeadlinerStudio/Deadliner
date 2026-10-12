@@ -59,3 +59,10 @@
 - 核对项目 miuix-icons 0.9.4-rc01 缓存及上游固定提交 4a6b750b 的图标源码；八种 Medium 图标原始 PathNode 和 Y 变换完整转为框架矢量，来源/Apache 2.0 许可证随 APK 分发。
 - AppKit 预览核对各状态轮廓、方向和配色；任务/习惯 phase 和专注状态统一映射展开、收起与小岛，保留独立 APP 身份图标。
 - 25 项通知定向单测、Debug 构建、源快照与 ZIP 完整性/SHA-256 验证通过。产物 build/miuix-island-state-icons/，含图标预览。设备未连接，实际超级岛视觉待真机确认。
+
+## 2026-10-09 状态图标修订
+- [x] 新映射、短斜杠与鼓励语、预览、通知回归与 APK。
+- 最终按用户修订：任务临近/逾期用 Alarm 以颜色区分，习惯待打卡用 Tasks；完成/已打卡 TopDownloads，右侧“做得好”；放弃保留 Recent + 小斜杠。
+- Recent 为实心图形，右下角使用透明圆形留白及圆头短斜杠，保证状态着色后仍可辨认；AppKit 预览已检查。
+- 同步当前 Core 的快速添加接口构建 Release AAR，以适配当前 Android 工作区；本轮未改动 Core 源文件。
+- 25 项通知回归和 Debug 构建通过，源快照、APK ZIP 与 SHA-256 验证通过；产物 build/island-status-encouragement/。真机视觉待确认。

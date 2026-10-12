@@ -78,7 +78,7 @@ class RealtimeNotificationService : Service() {
         } catch (error: Exception) { NotificationDiagnostics.failure("realtime.refresh.failed", error); stopSelf() }
     }
     private fun signature(entries: List<NotificationMetadataEntry>) = entries.joinToString("|") {
-        "${it.key}:${it.version}:${it.title}:${it.phase}:${it.actions}:${it.endsAt}:${it.habitWindow}:${it.completedCount}:${it.targetCount}:${RealtimeNotificationRenderer.deadline(this, it)}"
+        "${it.key}:${it.version}:${it.title}:${it.phase}:${it.actions}:${it.endsAt}:${it.habitWindow}:${it.completedCount}:${it.targetCount}:${it.focusSessionUid}:${it.focusDurationSeconds}:${RealtimeNotificationRenderer.deadline(this, it)}"
     } + IslandWhitelistBypass.mode(this)
     override fun onDestroy() {
         if (running === this) running = null

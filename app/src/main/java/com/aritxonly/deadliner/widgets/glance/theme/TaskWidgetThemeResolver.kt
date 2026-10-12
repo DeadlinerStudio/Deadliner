@@ -7,15 +7,19 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.theme.DeadlinerColorTokenFactory
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetVisualState
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetColorScheme
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetThemeMode
 
 internal object TaskWidgetThemeResolver {
     fun resolve(
         context: Context,
         visualState: TaskWidgetVisualState,
         widgetColorScheme: TaskWidgetColorScheme = TaskWidgetColorScheme.FOLLOW_APP,
+        themeMode: TaskWidgetThemeMode = TaskWidgetThemeMode.FOLLOW_APP,
     ): TaskWidgetColors {
-        val isDark = context.resources.configuration.uiMode and
-            Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        val isDark = themeMode.isDark(
+            context.resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        )
         val appearance = GlobalUtils.appearancePreferences
         val systemAccent = context.getColor(
             if (isDark) android.R.color.system_accent1_200 else android.R.color.system_accent1_600

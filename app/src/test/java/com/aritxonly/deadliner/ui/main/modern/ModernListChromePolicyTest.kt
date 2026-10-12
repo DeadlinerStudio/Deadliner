@@ -41,7 +41,6 @@ class ModernListChromePolicyTest {
         assertTrue(
             shouldShowImmersiveListSearchEntry(
                 usesMiuixTheme = true,
-                useImmersiveExperience = true,
                 isCompactFloatingNavigation = true,
                 selectedSection = MainSection.LIST,
                 selectedPage = DeadlineType.TASK,
@@ -51,7 +50,6 @@ class ModernListChromePolicyTest {
         assertFalse(
             shouldShowImmersiveListSearchEntry(
                 usesMiuixTheme = false,
-                useImmersiveExperience = true,
                 isCompactFloatingNavigation = true,
                 selectedSection = MainSection.LIST,
                 selectedPage = DeadlineType.TASK,
@@ -61,7 +59,6 @@ class ModernListChromePolicyTest {
         assertFalse(
             shouldShowImmersiveListSearchEntry(
                 usesMiuixTheme = true,
-                useImmersiveExperience = true,
                 isCompactFloatingNavigation = true,
                 selectedSection = MainSection.LIST,
                 selectedPage = DeadlineType.HABIT,

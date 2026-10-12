@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="focus_stats_target_time_brief">Task %1$s · Habit %2$s</string>
+</resources>

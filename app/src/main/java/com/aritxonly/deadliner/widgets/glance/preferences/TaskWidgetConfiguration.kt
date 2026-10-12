@@ -19,6 +19,23 @@ internal enum class TaskWidgetColorScheme(val storedValue: String) {
     }
 }
 
+internal enum class TaskWidgetThemeMode(val storedValue: String) {
+    FOLLOW_APP("follow_app"),
+    LIGHT("light"),
+    DARK("dark");
+
+    fun isDark(followAppIsDark: Boolean): Boolean = when (this) {
+        FOLLOW_APP -> followAppIsDark
+        LIGHT -> false
+        DARK -> true
+    }
+
+    companion object {
+        fun fromStoredValue(value: String?): TaskWidgetThemeMode =
+            entries.firstOrNull { it.storedValue == value } ?: FOLLOW_APP
+    }
+}
+
 internal data class TaskWidgetConfiguration(
     val cornerRadiusDp: Int,
     val marginPreset: TaskWidgetPaddingPreset,
@@ -26,7 +43,11 @@ internal data class TaskWidgetConfiguration(
     val customBottomMarginDp: Int,
     val colorScheme: TaskWidgetColorScheme,
     val isScrollable: Boolean,
+    val backgroundTransparencyPercent: Int,
+    val themeMode: TaskWidgetThemeMode = TaskWidgetThemeMode.FOLLOW_APP,
 ) {
+    fun backgroundAlpha(): Float = (100 - backgroundTransparencyPercent.coerceIn(0, 100)) / 100f
+
     fun topMarginDp(): Int = when (marginPreset) {
         TaskWidgetPaddingPreset.Custom -> customTopMarginDp
         else -> marginPreset.cardTopMarginDp
@@ -54,6 +75,7 @@ internal data class TaskWidgetConfiguration(
             customTopMarginDp = top,
             customBottomMarginDp = bottom,
             isScrollable = kind == TaskWidgetKind.SQUARE && isScrollable,
+            backgroundTransparencyPercent = backgroundTransparencyPercent.coerceIn(0, 100),
         )
     }
 
@@ -70,6 +92,7 @@ internal data class TaskWidgetConfiguration(
                 customBottomMarginDp = 0,
                 colorScheme = TaskWidgetColorScheme.FOLLOW_APP,
                 isScrollable = false,
+                backgroundTransparencyPercent = 8,
             )
 
             TaskWidgetKind.CAPSULE -> TaskWidgetConfiguration(
@@ -79,6 +102,7 @@ internal data class TaskWidgetConfiguration(
                 customBottomMarginDp = 0,
                 colorScheme = TaskWidgetColorScheme.FOLLOW_APP,
                 isScrollable = false,
+                backgroundTransparencyPercent = 0,
             )
         }
     }

@@ -195,7 +195,8 @@ internal object KmpV6Runtime {
     fun notificationMetadata(now: kotlinx.datetime.Instant): com.deadliner.platform.NotificationMetadata =
         com.deadliner.service.NotificationMetadataPlanner.plan(database.tasks.list(), database.habits.list(), database.habits::recordsIncludingDeleted,
             com.aritxonly.deadliner.notification.NotificationPolicyPreferences.read(notificationContext),
-            com.aritxonly.deadliner.notification.NotificationInteractionStore.read(notificationContext), now)
+            com.aritxonly.deadliner.notification.NotificationInteractionStore.read(notificationContext), now,
+            focusResult = database.focusResultNotificationInfo(now))
 
     fun isNotificationEntryValid(entry: com.deadliner.platform.NotificationMetadataEntry): Boolean =
         notificationMetadata(kotlinx.datetime.Instant.parse(entry.triggerAt) - kotlin.time.Duration.parse("1ms"))

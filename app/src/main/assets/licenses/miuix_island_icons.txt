@@ -1,7 +1,7 @@
-Miuix state icons (Medium): Alarm, Report, Ok, Close, Tasks, Stopwatch, Timer, Pause.
+Miuix state icons (Medium): Alarm, Report, Ok, Close, Tasks, Stopwatch, Timer, Pause, Recent, TopDownloads.
 Copyright 2025 compose-miuix-ui contributors. SPDX-License-Identifier: Apache-2.0.
 Source: https://github.com/compose-miuix-ui/miuix/tree/4a6b750b578880146876e4ab77097d9b01702413/miuix-icons/src/commonMain/kotlin/top/yukonga/miuix/kmp/icon/extended
-Changes: exported Kotlin PathNode coordinates to Android VectorDrawable, retaining the source viewport and Y transform. Color provided by notification state.
+Changes: exported Kotlin PathNode coordinates to Android VectorDrawable, retaining the source viewport and Y transform. Color provided by notification state. Deadliner adds a short diagonal slash to Recent for the abandoned state.
 
 
                                  Apache License

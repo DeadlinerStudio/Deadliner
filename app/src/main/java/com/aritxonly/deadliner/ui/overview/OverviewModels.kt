@@ -30,7 +30,9 @@ data class Metric(
     val label: String,
     val value: String,
     val change: String? = null,
-    val isDown: Boolean? = null
+    val isDown: Boolean? = null,
+    val supportingText: String? = null,
+    val neutralChange: Boolean = false,
 )
 
 data class MonthlyAnalysisResult(

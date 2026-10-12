@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.base
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -9,17 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,20 +27,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.rememberBlurColors
-import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
-import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-private val AdaptiveMaterialTopBarShape = RoundedCornerShape(0.dp)
 
 @Composable
 fun AdaptiveMaterialScaffold(
@@ -55,24 +48,16 @@ fun AdaptiveMaterialScaffold(
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = contentColorFor(containerColor),
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
-    advancedMaterialTopBarTintColor: Color? = null,
-    wrapTopBarInMaterialContainer: Boolean = true,
-    topBarMaterialAlpha: Float = 1f,
     topBarMaterialScrollKey: Any? = Unit,
     useCurrentTopBarHeightForContentPadding: Boolean = false,
     applyScaffoldPaddingOutsideBackdrop: Boolean = false,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
-    val immersiveExperienceEnabled = LocalImmersiveExperienceEnabled.current
     val topBarScrollObserver = rememberTopBarMaterialScrollObserver(
         scrollKey = topBarMaterialScrollKey,
     )
-    val topBarScrollProgress = if (immersiveExperienceEnabled) {
-        topBarScrollObserver.progress
-    } else {
-        null
-    }
+    val topBarScrollProgress = topBarScrollObserver.progress
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
     val backdropCaptureColor = resolveBackdropCaptureColor(
@@ -96,12 +81,8 @@ fun AdaptiveMaterialScaffold(
             maxTopBarHeightPx.toDp()
         }
     }
-    val tintBaseColor = advancedMaterialTopBarTintColor ?: MiuixTheme.colorScheme.surface
-    val surfaceTint = tintBaseColor.copy(alpha = advancedMaterial.topBarTintAlpha)
-    val blurColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
     val hostedTopBar: @Composable () -> Unit = {
         ProgressiveTopBarMaterial(
-            enabled = immersiveExperienceEnabled,
             modifier = Modifier.fillMaxWidth(),
         ) {
             topBar()
@@ -124,14 +105,7 @@ fun AdaptiveMaterialScaffold(
         ProvideAdvancedMaterialDialogBlurHost {
             RegisterAdvancedMaterialModalBackdrop(backdrop)
             Scaffold(
-        modifier = modifier
-            .let { scaffoldModifier ->
-                if (immersiveExperienceEnabled) {
-                    scaffoldModifier.nestedScroll(topBarScrollObserver.nestedScrollConnection)
-                } else {
-                    scaffoldModifier
-                }
-            },
+        modifier = modifier.nestedScroll(topBarScrollObserver.nestedScrollConnection),
         topBar = {
             if (backdrop != null) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
@@ -213,35 +187,7 @@ fun AdaptiveMaterialScaffold(
                     }
                 }
 
-            if (
-                backdrop != null &&
-                wrapTopBarInMaterialContainer &&
-                !immersiveExperienceEnabled
-            ) {
-                CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
-                    Box(
-                        modifier = topBarModifier.then(
-                            Modifier
-                                .advancedTextureBlur(
-                                    advancedMaterial = advancedMaterial,
-                                    backdrop = backdrop,
-                                    shape = AdaptiveMaterialTopBarShape,
-                                    colors = blurColors,
-                                )
-                                .let { blurModifier ->
-                                    val resolvedAlpha = topBarMaterialAlpha.coerceIn(0f, 1f)
-                                    if (resolvedAlpha < 0.999f) {
-                                        blurModifier.alpha(resolvedAlpha)
-                                    } else {
-                                        blurModifier
-                                    }
-                                },
-                        )
-                    ) {
-                        hostedTopBar()
-                    }
-                }
-            } else if (backdrop != null) {
+            if (backdrop != null) {
                 CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
                     Box(modifier = topBarModifier) {
                         hostedTopBar()

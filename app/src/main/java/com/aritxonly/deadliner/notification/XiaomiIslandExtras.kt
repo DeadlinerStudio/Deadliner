@@ -44,6 +44,7 @@ internal object XiaomiIslandExtras {
         val deadline = RealtimeNotificationRenderer.deadline(context, entry)
         val habit = entry.kind == NotificationKind.HABIT_REALTIME
         val checked = entry.phase == NotificationPhase.HABIT_CHECKED_IN
+        val achieved = checked || entry.phase == NotificationPhase.COMPLETED || entry.phase == NotificationPhase.FOCUS_FINISHED
         val summaryStatus = if (habit && !checked) HabitIslandPresentation.period(context, entry) else status
         val stateIcon = IslandStateIcons.realtime(entry.phase)
         val extras = create(context, entry.title, content, status, stateIcon)
@@ -67,11 +68,13 @@ internal object XiaomiIslandExtras {
         val prefix = deadline.dropLast(5).trim()
         // Use matching A/B image-text components, as in Capsulyric's two-column layout.
         // A standalone textInfo selects a different OEM layout; omit unused slots entirely.
-        val right = if (habit) {
-            if (checked) HabitIslandPresentation.progress(entry) else HabitIslandPresentation.name(entry.title)
-        } else time
+        val right = when {
+            achieved -> context.getString(R.string.notification_island_encouragement)
+            habit -> HabitIslandPresentation.name(entry.title)
+            else -> time
+        }
         val timeInfo = JSONObject().put("title", right).put("narrowFont", false).put("showHighlightColor", false)
-        if (!habit && prefix.isNotEmpty()) timeInfo.put("frontTitle", prefix)
+        if (!habit && !achieved && prefix.isNotEmpty()) timeInfo.put("frontTitle", prefix)
         val bigIsland = island.getJSONObject("bigIslandArea")
         bigIsland.remove("textInfo")
         bigIsland.put("imageTextInfoRight", JSONObject().put("type", 2).put("textInfo", timeInfo))
@@ -88,6 +91,7 @@ internal object XiaomiIslandExtras {
             val resource = when (action) {
                 com.deadliner.platform.NotificationAction.IGNORE, com.deadliner.platform.NotificationAction.GIVE_UP -> R.drawable.msr_close_wght400
                 com.deadliner.platform.NotificationAction.RESTORE_ACTIVE -> R.drawable.msr_undo_wght400
+                com.deadliner.platform.NotificationAction.OPEN_FOCUS, com.deadliner.platform.NotificationAction.OPEN_TASK -> R.drawable.ic_island_miuix_tasks
                 else -> R.drawable.msr_task_alt_wght400
             }
             pictures.putParcelable(key, bitmapIcon(context, resource, 88))

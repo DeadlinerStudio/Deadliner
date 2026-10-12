@@ -34,8 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +53,9 @@ import com.aritxonly.deadliner.ui.editor.DeadlineBottomActions
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetColorScheme
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfiguration
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationLimits
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetThemeMode
+import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetVisualState
+import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetThemeResolver
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPaddingPreset
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetColorSchemePalette
@@ -100,10 +103,41 @@ internal fun TaskWidgetConfigurationScreen(
         SettingsScrollColumn(contentPadding = innerPadding) {
             TaskWidgetConfigurationPreview(kind, configuration)
 
+            SettingsSection(topLabel = stringResource(R.string.widget_configuration_theme_mode)) {
+                SettingsRadioGroupItem(
+                    options = listOf(
+                        RadioOptionText(TaskWidgetThemeMode.FOLLOW_APP, stringResource(R.string.widget_theme_follow_app)),
+                        RadioOptionText(TaskWidgetThemeMode.LIGHT, stringResource(R.string.widget_theme_light)),
+                        RadioOptionText(TaskWidgetThemeMode.DARK, stringResource(R.string.widget_theme_dark)),
+                    ),
+                    selectedKey = configuration.themeMode,
+                    onOptionSelected = { configuration = configuration.copy(themeMode = it) },
+                )
+            }
+
             SettingsSection(topLabel = stringResource(R.string.widget_configuration_color)) {
                 TaskWidgetColorSchemeSelector(
                     selected = configuration.colorScheme,
+                    themeMode = configuration.themeMode,
                     onSelected = { configuration = configuration.copy(colorScheme = it) },
+                )
+            }
+
+            SettingsSection(topLabel = stringResource(R.string.widget_configuration_background_transparency)) {
+                ConfigurationSliderRow(
+                    label = stringResource(R.string.widget_configuration_background_transparency),
+                    value = configuration.backgroundTransparencyPercent,
+                    range = 0..100,
+                    valueText = "${configuration.backgroundTransparencyPercent}%",
+                    onValueChange = {
+                        configuration = configuration.copy(backgroundTransparencyPercent = it).sanitized(kind)
+                    },
+                )
+                Text(
+                    text = stringResource(R.string.widget_configuration_background_transparency_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
                 )
             }
 
@@ -178,13 +212,14 @@ private fun ConfigurationSliderRow(
     label: String,
     value: Int,
     range: IntRange,
+    valueText: String = "${value}dp",
     onValueChange: (Int) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label, style = MaterialTheme.typography.bodyLarge)
             Text(
-                text = "${value}dp",
+                text = valueText,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium,
             )
@@ -202,18 +237,23 @@ private fun ConfigurationSliderRow(
 @Composable
 private fun TaskWidgetColorSchemeSelector(
     selected: TaskWidgetColorScheme,
+    themeMode: TaskWidgetThemeMode,
     onSelected: (TaskWidgetColorScheme) -> Unit,
 ) {
-    val dark = MaterialTheme.colorScheme.surface.red + MaterialTheme.colorScheme.surface.green +
-        MaterialTheme.colorScheme.surface.blue < 1.5f
+    val colors = TaskWidgetThemeResolver.resolve(
+        context = LocalContext.current,
+        visualState = TaskWidgetVisualState.NORMAL,
+        themeMode = themeMode,
+    )
+    val dark = colors.isDark
     Row(
         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         TaskWidgetColorScheme.entries.forEach { scheme ->
             val pair = TaskWidgetColorSchemePalette.resolve(scheme, dark)
-            val background = pair?.let { Color(it.background) } ?: MaterialTheme.colorScheme.surface
-            val accent = pair?.let { Color(it.accent) } ?: MaterialTheme.colorScheme.primary
+            val background = pair?.let { Color(it.background) } ?: Color(colors.backgroundBase)
+            val accent = pair?.let { Color(it.accent) } ?: Color(colors.brand)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable { onSelected(scheme) },
@@ -268,11 +308,14 @@ private fun TaskWidgetConfigurationPreview(
     kind: TaskWidgetKind,
     configuration: TaskWidgetConfiguration,
 ) {
-    val dark = MaterialTheme.colorScheme.surface.red + MaterialTheme.colorScheme.surface.green +
-        MaterialTheme.colorScheme.surface.blue < 1.5f
-    val pair = TaskWidgetColorSchemePalette.resolve(configuration.colorScheme, dark)
-    val background = pair?.let { Color(it.background) } ?: MaterialTheme.colorScheme.surfaceContainer
-    val accent = pair?.let { Color(it.accent) } ?: MaterialTheme.colorScheme.primary
+    val colors = TaskWidgetThemeResolver.resolve(
+        context = LocalContext.current,
+        visualState = TaskWidgetVisualState.NORMAL,
+        widgetColorScheme = configuration.colorScheme,
+        themeMode = configuration.themeMode,
+    )
+    val background = Color(colors.backgroundBase)
+    val accent = Color(colors.brand)
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
         contentAlignment = Alignment.Center,
@@ -290,7 +333,14 @@ private fun TaskWidgetConfigurationPreview(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(configuration.cornerRadiusDp.dp))
-                    .background(Brush.linearGradient(listOf(background, lerp(background, accent, 0.12f))))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                background.copy(alpha = configuration.backgroundAlpha()),
+                                Color(colors.backgroundTint).copy(alpha = configuration.backgroundAlpha()),
+                            ),
+                        ),
+                    )
                     .padding(if (kind == TaskWidgetKind.SQUARE) 12.dp else 14.dp),
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -304,13 +354,13 @@ private fun TaskWidgetConfigurationPreview(
                                 .height(22.dp)
                                 .padding(vertical = 2.dp)
                                 .clip(RoundedCornerShape(7.dp))
-                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.56f)),
+                                .background(Color(colors.normalRow.base).copy(alpha = 0.56f)),
                         )
                     }
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.glance_task_widget_summary_pending), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.glance_task_widget_summary_pending), color = Color(colors.textPrimary), fontWeight = FontWeight.Bold)
                             Text(stringResource(R.string.glance_task_widget_keep_going), color = accent, fontSize = 11.sp)
                         }
                         Spacer(Modifier.width(8.dp))

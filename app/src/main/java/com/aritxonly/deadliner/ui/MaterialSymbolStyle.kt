@@ -56,6 +56,16 @@ fun symbolPainterResource(@DrawableRes sourceId: Int): Painter {
     }
 }
 
+/** Named symbols for transient actions, rendered through the same project font and axes. */
+@Composable
+fun materialSymbolPainter(name: String): Painter {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val style = LocalMaterialSymbolStyle.current
+    return remember(name, style) {
+        MaterialSymbolFontPainter(context.applicationContext, name, false, style)
+    }
+}
+
 private class MaterialSymbolFontPainter(
     context: Context,
     private val symbolName: String,

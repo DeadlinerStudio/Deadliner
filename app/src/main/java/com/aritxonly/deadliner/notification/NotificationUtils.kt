@@ -15,6 +15,8 @@ object NotificationUtil {
     fun createNotificationChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(NotificationChannel(
+            FocusRealtimeNotificationRenderer.CHANNEL_ID, context.getString(R.string.focus_live_notification), NotificationManager.IMPORTANCE_LOW))
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,

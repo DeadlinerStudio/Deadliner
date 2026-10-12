@@ -4,9 +4,29 @@ import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.model.AdvancedMaterialFineTuning
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GlassMaterialRecipeTuningTest {
+    @Test
+    fun quickAddLensUsesThePhysicalRectangleRadius() {
+        val recipe = DeadlinerGlassRecipes.quickAdd(AdvancedMaterialFineTuning.Default)
+        assertEquals(28.dp, recipe.geometry.cornerRadius)
+        assertEquals(DeadlinerGlassRecipes.QuickAddCornerRadius, recipe.geometry.cornerRadius)
+        assertEquals(DeadlinerGlassRecipes.floatingNavigation(AdvancedMaterialFineTuning.Default).refraction,
+            recipe.refraction)
+    }
+
+    @Test
+    fun quickAddUsesModalBlurAndPreservesUserOptics() {
+        val tuning = AdvancedMaterialFineTuning.Default.copy(glassBlurRadiusMultiplier = 0.32f,
+            glassNoiseMultiplier = 0.5f, glassTintAlphaMultiplier = 0.8f)
+        val recipe = DeadlinerGlassRecipes.quickAdd(tuning)
+        assertEquals(DeadlinerGlassRecipes.dialog(tuning).blur, recipe.blur)
+        assertTrue(recipe.blur.radiusMultiplier > DeadlinerGlassRecipes.floatingNavigation(tuning).blur.radiusMultiplier)
+        assertEquals(DeadlinerGlassRecipes.floatingNavigation(tuning).edgeOptics, recipe.edgeOptics)
+    }
+
     @Test
     fun floatingNavigationUsesPinnedDefaultPreset() {
         val recipe = DeadlinerGlassRecipes.floatingNavigation(

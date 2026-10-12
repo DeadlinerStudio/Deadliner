@@ -3,7 +3,7 @@
 ## 模块拆分
 
 1. ui/navigation：侧栏材质、展开动画、选择手势；悬浮 dock 接受 Horizontal / Stacked。
-2. ui/base：按窗口宽度选择 host，统一渐进顶栏和 backdrop，删除旧导航布局。
+2. ui/base：独立 background slot 捕获整窗浮光，按窗口宽度选择 host，统一渐进顶栏和 backdrop，删除旧导航布局。
 3. model / localutils / ui/settings：删除沉浸偏好和设置项。
 4. ui/theme / ui/material/glass：统一渐进材质与模态材质，保持高级材质降级。
 
@@ -20,3 +20,5 @@ iOS / HarmonyOS：本轮没有变更，各端继续使用各自现有导航体�
 ## 风险点
 
 侧栏采样只捕获内容；浮动计时器与 FAB 保持 sibling chrome；导航使用窗口宽度，避免受横屏高度分类影响。
+
+Tab 统一上限在 MiuixFloatingTabBarDefaults 中定义；dock 按项数与 detached 控件数计算总宽度，避免 weight 约束撑破上限。

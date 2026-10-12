@@ -43,3 +43,7 @@ Android 提前时长与实时窗口由宿主自定义，任务逾期/习惯实�
 ## 超级岛 Miuix 状态图标（2026-10-08）
 
 超级岛专用状态图标采用项目固定版本 0.9.4-rc01 的 Miuix Medium 矢量：临近 Alarm、逾期 Report、完成 Ok、放弃 Close、习惯待打卡 Tasks、已打卡 Ok；专注秒表 Stopwatch、倒计时 Timer、暂停 Pause。展开/收起/小岛使用同一状态图标和颜色，应用身份图标继续独立使用 APP 图标。保留原生通知 Material 图标与计时按钮行为。以框架 VectorDrawable 转位图给系统，不依赖 SystemUI 加载 Compose 或字体。
+
+## 状态图标与鼓励语修订（2026-10-09）
+
+临近/逾期统一 Miuix Medium Alarm，以浅蓝/橙红区分；习惯待打卡 Tasks；完成/已打卡 TopDownloads，收起态右侧统一短鼓励语“做得好”，进度仍保留展开态和原生通知；放弃 Recent 叠加短斜杠，浅灰。专注图标及按钮保持现有行为。

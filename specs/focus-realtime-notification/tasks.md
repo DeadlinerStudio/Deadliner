@@ -37,3 +37,10 @@
 - 系统横向/纵向录音按钮均支持 action_pause_record、action_restart_record、action_record_end；使用预设而不是自定义透明图标，保留 actionIntentType=1 和原会话校验 URI。
 - 按用户要求超级岛仅保留暂停/继续与结束两按钮，移除辅助任务名，白色计时配运行蓝色/暂停灰色状态。原生通知动作保持现有行为。
 - [x] 20 项定向单测通过（无失败/错误/跳过），覆盖两按钮系统预设、暂停切换、计时锚点、动作校验和元数据回归；Debug APK、源快照一致性与 ZIP 完整性验证通过。产物为 build/focus-recording-layout/app-debug.apk；系统实际视觉待用户真机复测。
+
+## 专注结束鼓励通知
+- [x] KMP 结果规划、提交监听、Android 卡片和任务详情快捷操作、回归验证与 APK。
+- KMP 两批 30 项测试通过：结果规划/通知边界 15 项、计时引擎/数据库事务 15 项。Android 280 项单测通过，无失败、错误或跳过，包含 4 项专注结果测试。
+- Android Debug APK、仪器测试包与 Core Release AAR 构建成功；源快照一致性、文件规模与 APK/AAR ZIP 完整性验证通过，SHA-256 记录于 build/focus-result-notification/SHA256SUMS。
+- 当前 Robolectric 不支持 API 36，因此其设备验证放入 FocusLiveUpdatesInstrumentedTest；测试包编译通过。没有连接设备，本轮未执行仪器测试或核验系统实际 promotion/超级岛视觉。
+- 产物：build/focus-result-notification/app-debug.apk。真实按钮打开任务详情和 OEM 外观仍需设备复测。

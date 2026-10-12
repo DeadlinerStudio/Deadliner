@@ -23,11 +23,12 @@ internal object RealtimeNotificationRenderer {
         NotificationPhase.ABANDONED -> R.string.notification_live_abandoned
         NotificationPhase.HABIT_DUE -> R.string.notification_live_habit_ready
         NotificationPhase.HABIT_CHECKED_IN -> R.string.notification_live_habit_checked
+        NotificationPhase.FOCUS_FINISHED -> R.string.notification_live_focus_finished
         else -> R.string.notification_island_near
     })
     fun color(phase: NotificationPhase?): String = when (phase) {
         NotificationPhase.OVERDUE -> "#FFFF7659"
-        NotificationPhase.COMPLETED, NotificationPhase.HABIT_CHECKED_IN -> "#FFA8DFC0"
+        NotificationPhase.COMPLETED, NotificationPhase.HABIT_CHECKED_IN, NotificationPhase.FOCUS_FINISHED -> "#FFA8DFC0"
         NotificationPhase.ABANDONED -> "#FFBFC5CE"
         else -> TaskIslandPresentation.BLUE
     }
@@ -37,22 +38,32 @@ internal object RealtimeNotificationRenderer {
         NotificationAction.CHECK_IN -> R.string.notification_live_check_in
         NotificationAction.IGNORE -> R.string.notification_live_ignore
         NotificationAction.RESTORE_ACTIVE -> R.string.notification_live_undo
+        NotificationAction.OPEN_FOCUS -> R.string.focus_timer_title
+        NotificationAction.OPEN_TASK -> R.string.notification_live_open_task
     })
     fun deadline(context: Context, entry: NotificationMetadataEntry, now: Instant = Instant.now()): String =
-        TaskIslandPresentation.deadline(entry.dueAt, now, ZoneId.systemDefault()) { context.getString(R.string.notification_island_tomorrow, it) }
+        if (entry.kind == NotificationKind.FOCUS_RESULT) ""
+        else TaskIslandPresentation.deadline(entry.dueAt, now, ZoneId.systemDefault()) { context.getString(R.string.notification_island_tomorrow, it) }
 
     fun build(context: Context, entry: NotificationMetadataEntry): Notification {
         val status = status(context, entry.phase)
         val timing = deadline(context, entry)
         val habit = entry.kind == NotificationKind.HABIT_REALTIME
-        val content = if (habit) "${HabitIslandPresentation.period(context, entry)} · ${HabitIslandPresentation.progress(entry)}"
-            else context.getString(R.string.notification_island_due, timing)
-        val open = if (entry.kind == NotificationKind.HABIT_REALTIME) Intent(context, MainActivity::class.java)
+        val focus = entry.kind == NotificationKind.FOCUS_RESULT
+        val content = when {
+            focus -> context.getString(R.string.notification_focus_result_content,
+                com.aritxonly.deadliner.ui.focus.formatFocusClock(entry.focusDurationSeconds ?: 0))
+            habit -> "${HabitIslandPresentation.period(context, entry)} · ${HabitIslandPresentation.progress(entry)}"
+            else -> context.getString(R.string.notification_island_due, timing)
+        }
+        val open = if (focus && NotificationAction.OPEN_FOCUS in entry.actions && entry.focusSessionUid != null)
+            com.aritxonly.deadliner.FocusTimerActivity.newResultIntent(context, requireNotNull(entry.focusSessionUid))
+        else if (entry.kind == NotificationKind.HABIT_REALTIME) Intent(context, MainActivity::class.java)
             else DeadlineDetailActivity.newIntent(context, entry.ownerUid)
         open.data = Uri.Builder().scheme("deadliner").authority("realtime").appendPath(entry.key).build()
         val native = LiveUpdateNotificationAdapter.shouldRequestPromotion(context)
-        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(if (native) R.drawable.ic_upcoming_island else R.mipmap.ic_launcher)
+        val builder = NotificationCompat.Builder(context, if (focus) FocusRealtimeNotificationRenderer.CHANNEL_ID else CHANNEL_ID)
+            .setSmallIcon(if (focus) R.drawable.ic_island_miuix_topdownloads else if (native) R.drawable.ic_upcoming_island else R.mipmap.ic_launcher)
             .setContentTitle(entry.title).setContentText("$status · $content")
             .setStyle(NotificationCompat.BigTextStyle().bigText("$status · $content"))
             .setContentIntent(PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
@@ -63,7 +74,8 @@ internal object RealtimeNotificationRenderer {
             .setWhen(0L).setShowWhen(false).setUsesChronometer(false).setChronometerCountDown(false)
         entry.actions.forEach { action -> builder.addAction(0, label(context, action), NotificationMetadataActions.pending(context, entry, action)) }
         if (native) builder.setRequestPromotedOngoing(true).setShortCriticalText(
-            if (habit) HabitIslandPresentation.progress(entry)
+            if (focus) context.getString(R.string.notification_island_encouragement)
+            else if (habit) HabitIslandPresentation.progress(entry)
             else if (entry.phase in listOf(NotificationPhase.COMPLETED, NotificationPhase.ABANDONED)) status else timing)
         if (LiveUpdateNotificationAdapter.usesIsland(context)) builder.addExtras(XiaomiIslandExtras.createRealtime(context, entry, content))
         return builder.build()

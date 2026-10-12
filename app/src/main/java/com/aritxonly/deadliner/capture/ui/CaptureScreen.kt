@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.capture.ui
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
@@ -41,11 +43,9 @@ import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -106,7 +106,6 @@ fun CaptureTopBar(
     showNavigationIcon: Boolean = true,
     onRequestMerge: () -> Unit = {},
     forceMaterial3: Boolean = false,
-    useParentMaterialContainer: Boolean = false,
     mode: TopAppBarStyle = TopAppBarStyle.CENTER,
     scrollBehavior: ScrollBehavior? = null,
 ) {
@@ -136,7 +135,6 @@ fun CaptureTopBar(
                 }
             },
             mode = mode,
-            useParentMaterialContainer = useParentMaterialContainer,
             isMainTitle = true,
             miuixScrollBehavior = scrollBehavior,
         )
@@ -167,7 +165,6 @@ fun CaptureTopBar(
                     Text(stringResource(R.string.capture_merge_count, ui.selectedUids.size))
                 }
             },
-            useParentMaterialContainer = useParentMaterialContainer,
             mode = TopAppBarStyle.SMALL,
         )
     }
@@ -210,7 +207,6 @@ fun CaptureScreen(
     val topBarScrollBehavior = MiuixScrollBehavior()
 
     AdaptiveMaterialScaffold(
-        wrapTopBarInMaterialContainer = false,
         topBar = {
             if (!showTopBar) return@AdaptiveMaterialScaffold
             CaptureTopBar(

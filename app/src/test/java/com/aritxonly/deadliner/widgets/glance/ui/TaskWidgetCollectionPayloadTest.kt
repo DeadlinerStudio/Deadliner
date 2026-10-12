@@ -21,6 +21,8 @@ import androidx.glance.appwidget.compose
 import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfiguration
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
 import com.aritxonly.deadliner.widgets.glance.interaction.TaskWidgetActions
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetColors
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetRowColors
@@ -60,7 +62,9 @@ class TaskWidgetCollectionPayloadTest {
         val root = remoteViews.apply(context, FrameLayout(context))
         val list = root.findListView()
         assertNotNull("Scrollable task RemoteViews did not contain a ListView", list)
-        val backgroundImage = root.findImageViewWithAlpha(TaskWidgetLayoutMetrics.CARD_BACKGROUND_ALPHA)
+        val backgroundImage = root.findImageViewWithAlpha(
+            TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE).backgroundAlpha(),
+        )
         assertNotNull(
             "Background image did not retain the official Glance alpha",
             backgroundImage,
@@ -74,6 +78,32 @@ class TaskWidgetCollectionPayloadTest {
             1,
             root.countViewsWithOnClickListeners(),
         )
+    }
+
+    @Test
+    fun `custom transparency keeps content opaque and background clickable`() = runBlocking {
+        val context: Context = RuntimeEnvironment.getApplication()
+        for (kind in TaskWidgetKind.entries) {
+            for (percent in listOf(0, 50, 100)) {
+                val configuration = TaskWidgetConfiguration.defaultFor(kind)
+                    .copy(backgroundTransparencyPercent = percent)
+                val remoteViews = ScrollableListTestWidget(configuration).compose(
+                    context = context,
+                    size = DpSize(160.dp, 160.dp),
+                )
+                val root = remoteViews.apply(context, FrameLayout(context))
+                val background = root.findImageViewWithAlpha(configuration.backgroundAlpha())
+                assertNotNull("Missing background for $kind at $percent%", background)
+                assertTrue(background!!.hasClickableAncestor())
+                assertEquals(1, root.countViewsWithOnClickListeners())
+                var content: View? = root.findListView()
+                assertNotNull(content)
+                while (content != null) {
+                    assertEquals("Content ancestor must remain opaque", 1f, content.alpha, 0.001f)
+                    content = content.parent as? View
+                }
+            }
+        }
     }
 
     private fun View.findListView(): ListView? {
@@ -123,7 +153,9 @@ class TaskWidgetCollectionPayloadTest {
         return false
     }
 
-    private class ScrollableListTestWidget : GlanceAppWidget(errorUiLayout = 0) {
+    private class ScrollableListTestWidget(
+        private val configuration: TaskWidgetConfiguration = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE),
+    ) : GlanceAppWidget(errorUiLayout = 0) {
         override val sizeMode: SizeMode = SizeMode.Exact
 
         override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -135,7 +167,7 @@ class TaskWidgetCollectionPayloadTest {
                             eraseColor(Color.WHITE)
                         },
                     ),
-                    backgroundAlpha = TaskWidgetLayoutMetrics.CARD_BACKGROUND_ALPHA,
+                    backgroundAlpha = configuration.backgroundAlpha(),
                     cornerRadiusDp = 22,
                     openAppAction = openAppAction,
                 ) {

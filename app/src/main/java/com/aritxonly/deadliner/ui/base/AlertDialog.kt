@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 
 /**
  * Deadliner 基础 AlertDialog 组件
@@ -39,7 +40,8 @@ fun AlertDialog(
     // MIUIX 专属辅助参数
     // ==========================================
     miuixTitle: String? = null,
-    miuixSummary: String? = null
+    miuixSummary: String? = null,
+    miuixMaxWidth: Dp = 420.dp,
 ) {
     val showInlineTitle = title != null && miuixTitle == null
     val showInlineText = text != null && (renderTextContentInMiuix || miuixSummary == null)
@@ -51,6 +53,7 @@ fun AlertDialog(
         modifier = modifier,
         title = miuixTitle,
         summary = miuixSummary,
+        maxWidth = miuixMaxWidth,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             if (showInlineTitle) title?.invoke()

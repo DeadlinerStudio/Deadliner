@@ -81,7 +81,11 @@ class NotificationMetadataIntegrationTest {
             val params = JSONObject(extras.getString("miui.focus.param")!!).getJSONObject("param_v2")
             val island = params.getJSONObject("param_island")
             assertEquals(RealtimeNotificationRenderer.color(phase), island.getString("highlightColor"))
-            assertEquals(5, island.getJSONObject("bigIslandArea").getJSONObject("imageTextInfoRight").getJSONObject("textInfo").getString("title").length)
+            val right = island.getJSONObject("bigIslandArea").getJSONObject("imageTextInfoRight").getJSONObject("textInfo")
+            if (phase == NotificationPhase.COMPLETED) {
+                assertEquals(context.getString(com.aritxonly.deadliner.R.string.notification_island_encouragement), right.getString("title"))
+                assertFalse(right.has("frontTitle"))
+            } else assertEquals(5, right.getString("title").length)
             val bigArea = island.getJSONObject("bigIslandArea")
             assertEquals(1, bigArea.getJSONObject("imageTextInfoLeft").getInt("type"))
             assertEquals(2, bigArea.getJSONObject("imageTextInfoRight").getInt("type"))

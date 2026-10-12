@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.main.modern
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -33,33 +35,29 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.Text
 import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import com.aritxonly.deadliner.ui.quickadd.quickAddAnchor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -311,8 +309,6 @@ fun ModernHost(
             context.getString(R.string.main_section_list),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_fill_wght400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
-            selectedIconResource = R.drawable.miuix_home_fill,
-            unselectedIconResource = R.drawable.miuix_home,
             immersiveIcon = rememberVectorPainter(MiuixIcons.Home),
         ),
         AdaptiveNavItem(
@@ -320,36 +316,30 @@ fun ModernHost(
             context.getString(R.string.overview),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_fill_wght400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_pie_chart_wght400),
-            selectedIconResource = R.drawable.miuix_overview_fill,
-            unselectedIconResource = R.drawable.miuix_overview,
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_chart_pie_fill),
+            immersiveIconScale = 0.86f,
         ),
         AdaptiveNavItem(
             "capture",
             context.getString(R.string.capture_title),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture_400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture_400),
-            selectedIconResource = R.drawable.ic_capture_400,
-            unselectedIconResource = R.drawable.ic_capture_400,
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_capture),
+            immersiveIconScale = 1.02f,
         ),
         AdaptiveNavItem(
             "lifi",
             context.getString(R.string.lifi),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_lifi),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_lifi),
-            selectedIconResource = R.drawable.ic_lifi,
-            unselectedIconResource = R.drawable.ic_lifi,
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.ic_lifi),
-            immersiveIconScale = 0.9f,
+            immersiveIconScale = 0.945f,
         ),
         AdaptiveNavItem(
             "search",
             context.getString(R.string.search),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
             com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
-            selectedIconResource = R.drawable.miuix_search,
-            unselectedIconResource = R.drawable.miuix_search,
             immersiveIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_search_wght400),
             immersiveIconResource = R.drawable.msr_search_wght400,
             immersiveIconScale = 1.18f,
@@ -359,12 +349,11 @@ fun ModernHost(
     val isShortBottomNavigation = !currentWindowAdaptiveInfo().windowSizeClass
         .isWidthAtLeastBreakpoint(androidx.window.core.layout.WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
     val isImmersiveCompactNavigation = appearance.usesMiuixTheme &&
-        appearance.useImmersiveExperience && isShortBottomNavigation
+        isShortBottomNavigation
     val navigationOverlaysContent = isShortBottomNavigation &&
         (isImmersiveCompactNavigation || LocalAdvancedMaterialSpec.current.enabled)
     val showImmersiveListSearchEntry = shouldShowImmersiveListSearchEntry(
         usesMiuixTheme = appearance.usesMiuixTheme,
-        useImmersiveExperience = appearance.useImmersiveExperience,
         isCompactFloatingNavigation = isShortBottomNavigation,
         selectedSection = hostState.selectedSection,
         selectedPage = hostState.selectedPage,
@@ -385,21 +374,40 @@ fun ModernHost(
             listSearchCollapseState.snapToExpanded()
         }
     }
+    val quickAdd = com.aritxonly.deadliner.ui.quickadd.rememberQuickAddState()
+    val quickAddRoute = listOf(hostState.selectedSection, hostState.selectedPage, searchActive, hostState.selectionMode)
+    var previousQuickAddRoute by remember { mutableStateOf(quickAddRoute) }
+    LaunchedEffect(quickAddRoute) {
+        if (previousQuickAddRoute != quickAddRoute) quickAdd.dismiss()
+        previousQuickAddRoute = quickAddRoute
+    }
+    val quickAddAnchor = Modifier.quickAddAnchor(quickAdd)
     val homeFabColors = LocalHomeFabColors.current
     val onAddDeadline = {
-        val intent = Intent(context, AddDDLActivity::class.java).apply {
-            putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
+        if (quickAdd.visible) {
+            quickAdd.dismiss()
+        } else if (GlobalUtils.quickAddEnabled) {
+            quickAdd.open(if (hostState.selectedPage == DeadlineType.TASK) "TASK" else "HABIT")
+        } else {
+            val intent = Intent(context, AddDDLActivity::class.java).apply {
+                putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
+            }
+            launcher.launch(intent)
         }
-        launcher.launch(intent)
     }
     val immersiveDetachedAction = if (isImmersiveCompactNavigation) {
         MiuixFloatingNavigationAction(
             iconResource = R.drawable.msr_add_2_wght400,
-            label = context.getString(R.string.add_task),
+            label = if (quickAdd.visible) "关闭快速添加" else context.getString(R.string.add_task),
             containerColor = homeFabColors.container,
-            contentColor = homeFabColors.content,
+            contentColor = if (quickAdd.visible) MaterialTheme.colorScheme.onSurface else homeFabColors.content,
+            neutralTint = quickAdd.visible,
+            iconRotation = if (quickAdd.visible) 45f else 0f,
             iconScale = 1.05f,
             onClick = onAddDeadline,
+            modifier = quickAddAnchor,
+            symbolName = "add_2",
+            enabled = !quickAdd.visible || quickAdd.canClose,
         )
     } else {
         null
@@ -473,10 +481,11 @@ fun ModernHost(
             modifier = modifier.fillMaxSize(),
         items = navItems,
         selectedKey = selectedKey,
-        useImmersiveExperience = appearance.useImmersiveExperience,
         topBarMaterialScrollKey = topBarMaterialScrollKey,
         immersiveDetachedItemKey = "search",
         immersiveDetachedAction = immersiveDetachedAction,
+        overlayContent = { com.aritxonly.deadliner.ui.quickadd.QuickAddOverlay(quickAdd, onSaved = ::celebrate,
+            onExpand = { launcher.launch(it) }) },
         onItemSelected = {
             when (it.key) {
                 "search" -> {
@@ -491,6 +500,30 @@ fun ModernHost(
             }
             hostState.clearSelection()
             activeSelectionPane = null
+        },
+        background = {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+                val semanticMaterialProgress = semanticAtmosphereMaterialProgress(
+                    section = hostState.selectedSection,
+                    listProgress = listSemanticMaterialProgress,
+                    observedScrollProgress = LocalTopBarScrollProgress.current,
+                )
+                if (
+                    appearance.semanticGlowEnabled &&
+                    shouldShowSemanticAtmosphere(hostState.selectedSection)
+                ) {
+                    ModernSemanticAtmosphere(
+                        tasks = displayedTasks,
+                        visibleHabits = sharedHabitState.visibleHabits,
+                        categoryFilter = categoryFilter,
+                        availableCategoryUids = availableCategoryUids,
+                        selectedSection = hostState.selectedSection,
+                        selectedPage = hostState.selectedPage,
+                        materialProgress = semanticMaterialProgress,
+                        modifier = Modifier.align(Alignment.TopCenter),
+                    )
+                }
+            }
         },
         topBar = {
             Box(
@@ -540,8 +573,7 @@ fun ModernHost(
                                 avatarPainter = avatarPainter,
                                 showPageTabs = !isWideLayout,
                                 scrollBehavior = listTopBarScrollBehavior,
-                                transparentBackground = appearance.usesMiuixTheme &&
-                                    appearance.useImmersiveExperience,
+                                transparentBackground = true,
                                 searchExpandedFraction = listSearchCollapseState.expandedFraction,
                                 searchContent = if (showImmersiveListSearchEntry) {
                                     {
@@ -649,19 +681,9 @@ fun ModernHost(
                     !isImmersiveCompactNavigation
 
             if (shouldShowFab) {
-                val fabContent: @Composable () -> Unit = {
-                    Icon(
-                        com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_add_wght400),
-                        contentDescription = stringResource(R.string.add_task),
-                        modifier = Modifier.size(SoftGlassFloatingActionButtonDefaults.IconSize),
-                    )
-                }
-                FloatingActionButton(
-                    onClick = onAddDeadline,
-                    containerColor = homeFabColors.container,
-                    contentColor = homeFabColors.content,
-                    forceMaterial3 = true,
-                    content = fabContent,
+                com.aritxonly.deadliner.ui.quickadd.QuickAddToggleButton(
+                    expanded = quickAdd.visible, onClick = onAddDeadline, modifier = quickAddAnchor,
+                    enabled = !quickAdd.visible || quickAdd.canClose,
                 )
             }
         },
@@ -669,29 +691,8 @@ fun ModernHost(
     ) { innerPadding ->
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface),
+                .fillMaxSize(),
         ) {
-            val semanticMaterialProgress = semanticAtmosphereMaterialProgress(
-                section = hostState.selectedSection,
-                listProgress = listSemanticMaterialProgress,
-                observedScrollProgress = LocalTopBarScrollProgress.current,
-            )
-            if (
-                appearance.semanticGlowEnabled &&
-                shouldShowSemanticAtmosphere(hostState.selectedSection)
-            ) {
-                ModernSemanticAtmosphere(
-                    tasks = displayedTasks,
-                    visibleHabits = sharedHabitState.visibleHabits,
-                    categoryFilter = categoryFilter,
-                    availableCategoryUids = availableCategoryUids,
-                    selectedSection = hostState.selectedSection,
-                    selectedPage = hostState.selectedPage,
-                    materialProgress = semanticMaterialProgress,
-                    modifier = Modifier.align(Alignment.TopCenter),
-                )
-            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()

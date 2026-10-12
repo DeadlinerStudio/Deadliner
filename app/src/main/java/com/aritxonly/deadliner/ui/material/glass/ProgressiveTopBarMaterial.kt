@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.material.glass
 
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -32,8 +32,6 @@ import top.yukonga.miuix.kmp.blur.progressiveTextureBlur
 import kotlin.math.ceil
 import kotlin.math.max
 
-val LocalImmersiveExperienceEnabled = staticCompositionLocalOf { false }
-val LocalImmersiveTopBarEnabled = staticCompositionLocalOf { false }
 val LocalProgressiveTopBarMaterialHosted = staticCompositionLocalOf { false }
 val LocalTopBarButtonMaterialProgress = staticCompositionLocalOf { 0f }
 val LocalTopBarScrollProgress = staticCompositionLocalOf<Float?> { null }
@@ -90,15 +88,9 @@ internal fun resolveProgressiveTopBarHeightMetrics(
  */
 @Composable
 fun ProgressiveTopBarMaterial(
-    enabled: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    if (!enabled) {
-        Box(modifier = modifier, content = content)
-        return
-    }
-
     val materialTarget = resolveProgressiveTopBarMaterialProgress(LocalTopBarScrollProgress.current)
     val materialProgress by animateFloatAsState(
         targetValue = materialTarget,
@@ -119,7 +111,6 @@ fun ProgressiveTopBarMaterial(
     SubcomposeLayout(modifier = modifier) { constraints ->
         val contentPlaceables = subcompose(ProgressiveTopBarSlot.Content) {
             CompositionLocalProvider(
-                LocalImmersiveTopBarEnabled provides true,
                 LocalProgressiveTopBarMaterialHosted provides true,
             ) {
                 Box(

@@ -106,6 +106,7 @@ fun SoftGlassIconButton(
     tintStyle: GlassTintStyle = GlassTintStyle.Neutral,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
     materialAlpha: Float = 1f,
+    neutralTintProgress: Float = 0f,
     content: @Composable () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -142,7 +143,7 @@ fun SoftGlassIconButton(
         tintStyle = tintStyle,
         backdrop = backdrop,
         materialAlpha = materialAlpha,
-        interaction = softGlassPressMaterialInteraction(pressProgress),
+        interaction = softGlassPressMaterialInteraction(pressProgress).copy(neutralTintProgress = neutralTintProgress),
     ) {
         Box(
             modifier = Modifier

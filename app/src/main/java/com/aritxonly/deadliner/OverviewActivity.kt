@@ -1,12 +1,13 @@
 package com.aritxonly.deadliner
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,17 +24,13 @@ import androidx.compose.material3.Text
 import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -50,22 +47,15 @@ import com.aritxonly.deadliner.ui.base.Switch
 import com.aritxonly.deadliner.ui.base.TabRow
 import com.aritxonly.deadliner.ui.base.TopAppBar
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
-import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.base.TopAppBarStyle
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.overview.DashboardScreen
 import com.aritxonly.deadliner.ui.overview.OverviewStatsScreen
 import com.aritxonly.deadliner.ui.overview.TrendAnalysisScreen
 import com.aritxonly.deadliner.ui.overview.KmpOverviewPresenter
-import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
-import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
+import com.aritxonly.deadliner.ui.overview.rememberFocusOverviewState
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
-import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
-import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import androidx.compose.ui.platform.LocalLayoutDirection
-import top.yukonga.miuix.kmp.blur.BlendColorEntry
-import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 
@@ -132,14 +122,12 @@ fun OverviewTopBar(
     onShowSettings: () -> Unit = {},
     mode: TopAppBarStyle = TopAppBarStyle.CENTER,
     forceMaterial3: Boolean = false,
-    useParentMaterialContainer: Boolean = false,
     scrollBehavior: ScrollBehavior? = null,
 ) {
     TopAppBar(
         title = stringResource(R.string.title_activity_overview),
         mode = mode,
         forceMaterial3 = forceMaterial3,
-        useParentMaterialContainer = useParentMaterialContainer,
         navigationIcon = if (showNavigationIcon) {
             {
                 TopBarIconButton(onClick = onClose) {
@@ -235,6 +223,7 @@ fun OverviewContent(
     topContentPadding: Dp = 0.dp,
     transparentBackground: Boolean = false,
 ) {
+    val focusState by rememberFocusOverviewState()
     val snapshot = remember(overviewState) {
         KmpOverviewPresenter.present(activity, overviewState)
     }
@@ -256,6 +245,7 @@ fun OverviewContent(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             OverviewStatsScreen(
+                focusState = focusState,
                 activeStats = snapshot.activeStats,
                 historyStats = snapshot.historyStats,
                 completionTimeStats = snapshot.completionTimeStats,
@@ -267,6 +257,7 @@ fun OverviewContent(
                 listState = statsListState,
             )
             TrendAnalysisScreen(
+                focusState = focusState,
                 snapshot = snapshot,
                 modifier = Modifier
                     .weight(1f)
@@ -276,6 +267,7 @@ fun OverviewContent(
                 listState = trendListState,
             )
             DashboardScreen(
+                focusState = focusState,
                 snapshot = snapshot,
                 activity = activity,
                 modifier = Modifier
@@ -316,6 +308,7 @@ fun OverviewContent(
 
         when (currentTab) {
             0 -> OverviewStatsScreen(
+                focusState = focusState,
                 activeStats = snapshot.activeStats,
                 historyStats = snapshot.historyStats,
                 completionTimeStats = snapshot.completionTimeStats,
@@ -325,6 +318,7 @@ fun OverviewContent(
             )
 
             1 -> TrendAnalysisScreen(
+                focusState = focusState,
                 snapshot = snapshot,
                 modifier = pageBackground,
                 topContentPadding = topContentPadding,
@@ -332,6 +326,7 @@ fun OverviewContent(
             )
 
             else -> DashboardScreen(
+                focusState = focusState,
                 snapshot = snapshot,
                 activity = activity,
                 modifier = pageBackground,
@@ -343,7 +338,6 @@ fun OverviewContent(
     }
 }
 
-private val OverviewHeaderShape = RoundedCornerShape(0.dp)
 
 @Composable
 fun OverviewTopBarWithTabs(
@@ -361,74 +355,26 @@ fun OverviewTopBarWithTabs(
         stringResource(R.string.tab_trend),
         stringResource(R.string.tab_summary)
     )
-    val advancedMaterial = LocalAdvancedMaterialSpec.current
-    val backdrop = LocalAdvancedMaterialBackdrop.current
-    val immersiveTopBar = LocalImmersiveExperienceEnabled.current
-    val advancedMaterialBlurred = advancedMaterial.enabled && backdrop != null && !immersiveTopBar
-    val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.topBarTintAlpha)
-
-    OverviewHeaderContainer(
-        advancedMaterial = advancedMaterial,
-        advancedMaterialBlurred = advancedMaterialBlurred,
-        backdrop = backdrop,
-        surfaceTint = surfaceTint,
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Transparent),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    when {
-                        immersiveTopBar -> Color.Transparent
-                        advancedMaterialBlurred -> Color.Transparent
-                        advancedMaterial.enabled -> surfaceTint
-                        else -> MaterialTheme.colorScheme.surface
-                    },
-                ),
-        ) {
-            OverviewTopBar(
-                showNavigationIcon = showNavigationIcon,
-                onClose = onClose,
-                onShowSettings = onShowSettings,
-                mode = mode,
-                forceMaterial3 = forceMaterial3,
-                useParentMaterialContainer = true,
-                scrollBehavior = scrollBehavior,
-            )
-            TabRow(
-                tabs = tabs,
-                selectedTabIndex = selectedTab,
-                onTabSelected = onTabSelected,
-                divider = { HorizontalDivider(color = Color.Transparent) },
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun OverviewHeaderContainer(
-    advancedMaterial: AdvancedMaterialSpec,
-    advancedMaterialBlurred: Boolean,
-    backdrop: LayerBackdrop? = null,
-    surfaceTint: Color,
-    content: @Composable () -> Unit,
-) {
-    if (advancedMaterialBlurred && backdrop != null) {
-        val blurColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .advancedTextureBlur(
-                    advancedMaterial = advancedMaterial,
-                    backdrop = backdrop,
-                    shape = OverviewHeaderShape,
-                    colors = blurColors,
-                ),
-        ) {
-            content()
-        }
-    } else {
-        content()
+        OverviewTopBar(
+            showNavigationIcon = showNavigationIcon,
+            onClose = onClose,
+            onShowSettings = onShowSettings,
+            mode = mode,
+            forceMaterial3 = forceMaterial3,
+            scrollBehavior = scrollBehavior,
+        )
+        TabRow(
+            tabs = tabs,
+            selectedTabIndex = selectedTab,
+            onTabSelected = onTabSelected,
+            divider = { HorizontalDivider(color = Color.Transparent) },
+            modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)
+        )
     }
 }
 
@@ -450,7 +396,6 @@ fun OverviewScreen(
         containerColor = Color.Transparent,
         contentColor = contentColorFor(Color.Transparent),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        wrapTopBarInMaterialContainer = false,
         topBarMaterialScrollKey = selectedTab,
         topBar = {
             if (!showTopBar) return@AdaptiveMaterialScaffold

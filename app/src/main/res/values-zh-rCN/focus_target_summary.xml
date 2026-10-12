@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="focus_stats_target_time_brief">任务 %1$s · 习惯 %2$s</string>
+</resources>

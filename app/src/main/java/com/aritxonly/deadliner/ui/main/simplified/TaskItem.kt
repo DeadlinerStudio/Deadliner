@@ -159,7 +159,7 @@ fun TaskItem(
         isStarred = item.isStarred,
         status = status,
         useDisabledCompletedStyle = semanticStatus == DeadlineSemanticStatus.ABANDONED,
-        swipeKey = item.uid,
+        swipeKey = "task:${item.uid}",
         activeSwipeKey = activeSwipeTaskId,
         onActiveSwipeChange = onActiveSwipeTaskChange,
         primaryActionLabel = primaryLabel,

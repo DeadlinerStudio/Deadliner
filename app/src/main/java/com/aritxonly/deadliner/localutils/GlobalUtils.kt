@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.localutils
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
@@ -10,14 +12,12 @@ import android.os.Vibrator
 import android.provider.Settings
 import com.aritxonly.deadliner.logging.AppLog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.fragment.app.FragmentManager
 import com.aritxonly.deadliner.BuildConfig
+import com.aritxonly.deadliner.ui.picker.DateTimePickers
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.AppIconMode
 import com.aritxonly.deadliner.model.AdvancedMaterialLevel
@@ -28,29 +28,19 @@ import com.aritxonly.deadliner.model.BackgroundColorStrategy
 import com.aritxonly.deadliner.model.ColorfulIndicatorStyle
 import com.aritxonly.deadliner.model.DynamicPaletteStyle
 import com.aritxonly.deadliner.model.DisplayScalePreset
-import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.ModernColorPalette
 import com.aritxonly.deadliner.model.UiStyle
-import com.google.android.material.datepicker.CalendarConstraints
-import com.google.android.material.datepicker.DateValidatorPointBackward
-import com.google.android.material.datepicker.DateValidatorPointForward
-import com.google.android.material.datepicker.MaterialDatePicker
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
-import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.time.temporal.ChronoUnit
 import java.util.Locale
 import java.util.UUID
 
@@ -307,7 +297,6 @@ object GlobalUtils {
             .coerceIn(0.85f, 1.25f)
         val miuixNeutralSurfaces = sharedPreferences.getBoolean("miuix_neutral_surfaces", true)
         val useMaterialTopAppBarInMiuix = sharedPreferences.getBoolean("miuix_material_top_bar", true)
-        val useImmersiveExperience = ImmersiveExperiencePreferences.read(sharedPreferences)
         val floatingNavigationBottomLift = sharedPreferences
             .getFloat("floating_navigation_bottom_lift", 0f)
             .coerceIn(0f, 48f)
@@ -354,7 +343,6 @@ object GlobalUtils {
             usePureMiuixAccent = false,
             useMiuixNeutralSurfaces = miuixNeutralSurfaces,
             useMaterialTopAppBarInMiuix = useMaterialTopAppBarInMiuix,
-            useImmersiveExperience = useImmersiveExperience,
             floatingNavigationBottomLift = floatingNavigationBottomLift,
             useMyHyperModifierNavigationLift = useMyHyperModifierNavigationLift,
             useContrastingHomeFab = useContrastingHomeFab,
@@ -366,6 +354,7 @@ object GlobalUtils {
             useSettingsHomepageColoredIcons = settingsHomepageColoredIcons,
             semanticGlowEnabled = semanticGlowEnabled,
             appIconMode = appIconMode,
+            useWheelDateTimePicker = sharedPreferences.getBoolean("wheel_date_time_picker", false),
         )
     }
 
@@ -383,7 +372,6 @@ object GlobalUtils {
             putBoolean("miuix_color", false)
             putBoolean("miuix_neutral_surfaces", appearance.useMiuixNeutralSurfaces)
             putBoolean("miuix_material_top_bar", appearance.useMaterialTopAppBarInMiuix)
-            ImmersiveExperiencePreferences.write(this, appearance.useImmersiveExperience)
             putFloat(
                 "floating_navigation_bottom_lift",
                 appearance.floatingNavigationBottomLift.coerceIn(0f, 48f),
@@ -405,6 +393,7 @@ object GlobalUtils {
             putBoolean("hide_divider", appearance.activeHideDivider)
             putBoolean("settings_homepage_colored_icons", appearance.useSettingsHomepageColoredIcons)
             putBoolean("semantic_glow_enabled", appearance.semanticGlowEnabled)
+            putBoolean("wheel_date_time_picker", appearance.useWheelDateTimePicker)
             putString("seed_color", appearance.seedColorHex)
             putString("appearance_color_source", appearance.colorSource.key)
             putString("dynamic_palette_style", appearance.dynamicPaletteStyle.key)
@@ -498,6 +487,10 @@ object GlobalUtils {
         set(value) {
             sharedPreferences.edit { putString("preset_indicator_style", value.key) }
         }
+
+    var quickAddEnabled: Boolean
+        get() = sharedPreferences.getBoolean("quick_add_enabled", false)
+        set(value) { sharedPreferences.edit { putBoolean("quick_add_enabled", value) } }
 
     var hideFromRecent: Boolean
         get() = sharedPreferences.getBoolean("hide_from_recent", false)
@@ -906,153 +899,23 @@ object GlobalUtils {
         }
     }
 
-    /**
-     * 显示日期和时间选择器
-     * @param afterDateTime 若不为 null，则限制只能选择该时间之后（含当天）的日期和时间
-     */
+    /** Uses the selected calendar/clock or wheel interaction without changing callers. */
     fun showDateTimePicker(
         fragmentManager: FragmentManager,
         afterDateTime: LocalDateTime? = null,
         makeToast: (String) -> Unit = {},
         onDialogVisibilityChanged: (Boolean) -> Unit = {},
         onDateTimeSelected: (LocalDateTime) -> Unit,
-    ) {
-        val zone = ZoneId.systemDefault()
-
-        // 是否需要限制
-        val minDayStartMillisUtc: Long? = afterDateTime?.toLocalDate()
-            ?.atStartOfDay(zone)
-            ?.toInstant()
-            ?.toEpochMilli()
-
-        val todayUtcMillis = MaterialDatePicker.todayInUtcMilliseconds()
-        val defaultSelection = if (minDayStartMillisUtc != null) {
-            maxOf(todayUtcMillis, minDayStartMillisUtc)
-        } else {
-            todayUtcMillis
-        }
-
-        val builder = MaterialDatePicker.Builder.datePicker()
-            .setSelection(defaultSelection)
-
-        if (minDayStartMillisUtc != null) {
-            val constraints = CalendarConstraints.Builder()
-                .setStart(minDayStartMillisUtc)
-                .setValidator(DateValidatorPointForward.from(minDayStartMillisUtc))
-                .build()
-            builder.setCalendarConstraints(constraints)
-        }
-
-        val datePicker = builder.build()
-        var timePickerOpened = false
-
-        datePicker.addOnPositiveButtonClickListener { selectedDateUtcMillis ->
-            timePickerOpened = true
-            val selectedLocalDate = Instant.ofEpochMilli(selectedDateUtcMillis)
-                .atZone(zone)
-                .toLocalDate()
-
-            val baseDateTime = selectedLocalDate.atStartOfDay()
-            val minAllowedTime: LocalTime? =
-                if (afterDateTime != null && selectedLocalDate == afterDateTime.toLocalDate()) {
-                    afterDateTime.toLocalTime()
-                } else null
-
-            showTimePickerWithGuard(
-                fragmentManager = fragmentManager,
-                datePart = baseDateTime,
-                minAllowedTime = minAllowedTime,
-                makeToast = makeToast,
-                onDialogVisibilityChanged = onDialogVisibilityChanged,
-                onDateTimeSelected = onDateTimeSelected
-            )
-        }
-
-        datePicker.addOnDismissListener {
-            if (!timePickerOpened) {
-                onDialogVisibilityChanged(false)
-            }
-        }
-
-        onDialogVisibilityChanged(true)
-        datePicker.show(fragmentManager, "datePicker_after_${minDayStartMillisUtc ?: "none"}")
-    }
-
-    /**
-     * 时间选择器，带可选的最小时间限制
-     */
-    private fun showTimePickerWithGuard(
-        fragmentManager: FragmentManager,
-        datePart: LocalDateTime,
-        minAllowedTime: LocalTime?,
-        makeToast: (String) -> Unit = {},
-        onDialogVisibilityChanged: (Boolean) -> Unit = {},
-        onDateTimeSelected: (LocalDateTime) -> Unit,
-    ) {
-        val now = LocalTime.now()
-        val initialTime = when (minAllowedTime) {
-            null -> now
-            else -> if (now.isBefore(minAllowedTime)) minAllowedTime else now
-        }
-
-        fun buildAndShow(hour: Int, minute: Int) {
-            onDialogVisibilityChanged(true)
-            val timePicker = MaterialTimePicker.Builder()
-                .setTimeFormat(TimeFormat.CLOCK_24H)
-                .setHour(hour)
-                .setMinute(minute)
-                .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
-                .build()
-            var relaunching = false
-
-            timePicker.addOnPositiveButtonClickListener {
-                val picked = LocalTime.of(timePicker.hour, timePicker.minute)
-
-                if (minAllowedTime != null && picked.isBefore(minAllowedTime)) {
-                    relaunching = true
-                    makeToast("${minAllowedTime.hour.toString().padStart(2, '0')}:${minAllowedTime.minute.toString().padStart(2, '0')}")
-                    buildAndShow(minAllowedTime.hour, minAllowedTime.minute)
-                    return@addOnPositiveButtonClickListener
-                }
-
-                onDateTimeSelected(datePart.withHour(picked.hour).withMinute(picked.minute))
-            }
-
-            timePicker.addOnDismissListener {
-                if (!relaunching) {
-                    onDialogVisibilityChanged(false)
-                }
-            }
-
-            timePicker.show(fragmentManager, "timePicker_${datePart.toLocalDate()}_$hour:$minute")
-        }
-
-        buildAndShow(initialTime.hour, initialTime.minute)
-    }
+    ) = DateTimePickers.showDateTimePicker(
+        fragmentManager, afterDateTime, makeToast, onDialogVisibilityChanged, onDateTimeSelected,
+    )
 
     fun showTimePicker(
         fragmentManager: FragmentManager,
         initialTime: LocalTime = LocalTime.now(),
         onDialogVisibilityChanged: (Boolean) -> Unit = {},
         onTimeSelected: (LocalTime) -> Unit,
-    ) {
-        onDialogVisibilityChanged(true)
-        val timePicker = MaterialTimePicker.Builder()
-            .setTimeFormat(TimeFormat.CLOCK_24H)
-            .setHour(initialTime.hour)
-            .setMinute(initialTime.minute)
-            .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
-            .build()
-
-        timePicker.addOnPositiveButtonClickListener {
-            onTimeSelected(LocalTime.of(timePicker.hour, timePicker.minute))
-        }
-        timePicker.addOnDismissListener {
-            onDialogVisibilityChanged(false)
-        }
-
-        timePicker.show(fragmentManager, "timePicker_only_${initialTime.hour}:${initialTime.minute}")
-    }
+    ) = DateTimePickers.showTimePicker(fragmentManager, initialTime, onDialogVisibilityChanged, onTimeSelected)
 
     fun decideHideFromRecent(context: Context, activity: Activity) {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
@@ -1078,23 +941,8 @@ object GlobalUtils {
         return baseWikiUrl
     }
 
-    fun showRetroactiveDatePicker(fragmentManager: FragmentManager, onDatePicked: (Long) -> Unit) {
-        // 限制不选未来日期
-        val constraints = CalendarConstraints.Builder()
-            .setValidator(DateValidatorPointBackward.now())
-            .build()
-
-        val picker = MaterialDatePicker.Builder.datePicker()
-            .setTitleText(R.string.choose_retro_date_title)
-            .setCalendarConstraints(constraints)
-            .build()
-
-        picker.addOnPositiveButtonClickListener { selection ->
-            onDatePicked(selection)
-        }
-
-        picker.show(fragmentManager, "retro_date_picker")
-    }
+    fun showRetroactiveDatePicker(fragmentManager: FragmentManager, onDatePicked: (Long) -> Unit) =
+        DateTimePickers.showRetroactiveDatePicker(fragmentManager, onDatePicked)
 
     fun triggerVibration(context: Context, duration: Long = 100) {
         if (!vibration) {

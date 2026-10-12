@@ -1,5 +1,9 @@
 package com.aritxonly.deadliner.ui.material.glass
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.runtime.getValue
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -25,21 +29,26 @@ fun SoftGlassFloatingActionButton(
     containerColor: Color = LocalHomeFabColors.current.container,
     contentColor: Color = LocalHomeFabColors.current.content,
     size: Dp = SoftGlassFloatingActionButtonDefaults.Size,
+    neutralTint: Boolean = false,
     backdrop: LayerBackdrop? = LocalAdvancedMaterialBackdrop.current,
     content: @Composable () -> Unit,
 ) {
-    val glassTint = containerColor.copy(alpha = 1f)
+    val tintProgress by animateFloatAsState(if (neutralTint) 1f else 0f,
+        spring(dampingRatio = 0.78f, stiffness = 380f), label = "fabNeutralTint")
+    val animatedContentColor by animateColorAsState(contentColor,
+        spring(dampingRatio = 0.78f, stiffness = 380f), label = "fabContentTint")
 
     SoftGlassIconButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         size = size,
-        tint = glassTint,
+        tint = containerColor.copy(alpha = 1f),
         tintStyle = GlassTintStyle.SeedChromatic,
+        neutralTintProgress = tintProgress,
         backdrop = backdrop,
     ) {
-        CompositionLocalProvider(LocalContentColor provides contentColor) {
+        CompositionLocalProvider(LocalContentColor provides animatedContentColor) {
             content()
         }
     }

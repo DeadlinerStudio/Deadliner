@@ -43,6 +43,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import com.aritxonly.deadliner.ui.quickadd.quickAddAnchor
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
+import top.yukonga.miuix.kmp.blur.layerBackdrop
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
@@ -298,7 +304,17 @@ fun SimplifiedHost(
         }
     }
 
+    val quickAdd = com.aritxonly.deadliner.ui.quickadd.rememberQuickAddState()
+    val quickAddRoute = listOf(hostState.selectedPage, searchActive, hostState.selectionMode)
+    var previousQuickAddRoute by remember { mutableStateOf(quickAddRoute) }
+    LaunchedEffect(quickAddRoute) {
+        if (previousQuickAddRoute != quickAddRoute) quickAdd.dismiss()
+        previousQuickAddRoute = quickAddRoute
+    }
+    val quickAddBackdrop = if (LocalAdvancedMaterialSpec.current.enabled) rememberLayerBackdrop() else null
     ProvideAdvancedMaterialDialogBlurHost {
+        CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides quickAddBackdrop) {
+        Box(Modifier.fillMaxSize()) {
         Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0),
@@ -393,7 +409,9 @@ fun SimplifiedHost(
                     selectedPage = hostState.selectedPage,
                     activity = activity,
                     modifier = Modifier
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .then(if (quickAddBackdrop != null) Modifier.layerBackdrop(quickAddBackdrop) else Modifier)
+                        .background(MaterialTheme.colorScheme.surface),
                     taskViewModel = taskVm,
                     listState = listState,
                     onRequestBackdropBlur = { enable -> uiState.childRequestsBlur = enable },
@@ -491,24 +509,32 @@ fun SimplifiedHost(
                                     }
                                 }
                             ) {
-                                FilledIconButton(
+                                com.aritxonly.deadliner.ui.quickadd.QuickAddToggleButton(
+                                    expanded = quickAdd.visible,
+                                    size = 56.dp,
                                     onClick = {
-                                        val intent = Intent(context, AddDDLActivity::class.java).apply {
-                                            putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
+                                        if (quickAdd.visible) {
+                                            quickAdd.dismiss()
+                                        } else if (GlobalUtils.quickAddEnabled) {
+                                            quickAdd.open(if (hostState.selectedPage == DeadlineType.TASK) "TASK" else "HABIT")
+                                        } else {
+                                            val intent = Intent(context, AddDDLActivity::class.java).apply {
+                                                putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
+                                            }
+                                            launcher.launch(intent)
                                         }
-                                        launcher.launch(intent)
                                     },
+                                    enabled = !quickAdd.visible || quickAdd.canClose,
                                     modifier = Modifier
                                         .width(56.dp)
+                                        .quickAddAnchor(quickAdd)
                                         .detectSwipeUp {
                                             AppLog.d("SwipeUp", "Triggered")
                                             if (GlobalUtils.deadlinerAIEnable) {
                                                 uiState.showOverlay = true
                                             }
                                         }
-                                ) {
-                                    Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_add_wght400), "")
-                                }
+                                )
                             }
                         } else {
                             MainSelectionFloatingToolbar(
@@ -530,6 +556,10 @@ fun SimplifiedHost(
             }
         }
     }
+        com.aritxonly.deadliner.ui.quickadd.QuickAddOverlay(quickAdd, onSaved = ::celebrate,
+            onExpand = { launcher.launch(it) })
+        }
+        }
     }
 
     if (showCategoryFilter) {

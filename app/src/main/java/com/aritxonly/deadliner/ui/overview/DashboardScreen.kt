@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,6 +57,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -91,6 +94,7 @@ fun DashboardScreen(
     topContentPadding: Dp = 0.dp,
     listState: LazyListState,
     transparentBackground: Boolean = false,
+    focusState: FocusOverviewState = FocusOverviewState(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -142,6 +146,7 @@ fun DashboardScreen(
     LazyColumn(
         state = listState,
         modifier = modifier
+            .testTag("overview-focus-month-list")
             .fillMaxSize()
             .then(pageBackground)
             .syncTopBarMaterialScroll(listState)
@@ -159,14 +164,23 @@ fun DashboardScreen(
             }
         }
         item {
-            DashboardMetricsSection(metrics = snapshot.metrics)
+            val focusMetrics = focusState.data?.lastMonth?.let { focusMonthlyMetrics(context, it) }.orEmpty()
+            // Keep the two focus metrics together after the four primary Task outcomes.
+            DashboardMetricsSection(metrics = snapshot.metrics.take(4) + focusMetrics + snapshot.metrics.drop(4))
+            FocusInlineStatus(focusState)
         }
         if (snapshot.lastMonthDailyStats.isNotEmpty()) {
             item {
                 LastMonthActivityMapCard(
                     monthName = snapshot.lastMonthName,
                     dailyStats = snapshot.lastMonthDailyStats,
+                    focusState = focusState,
                 )
+            }
+        }
+        focusState.data?.lastMonth?.current?.let { focus ->
+            item(key = "focus-last-month-distribution") {
+                FocusDistributionCard(focus, horizontalPadding = 0.dp, title = stringResource(R.string.focus_stats_last_month_distribution))
             }
         }
         item {
@@ -177,6 +191,8 @@ fun DashboardScreen(
                     }
                 }
             )
+            Text(stringResource(R.string.focus_stats_share_scope), Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item {
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.overview_bottom_safe_area)))
@@ -256,13 +272,13 @@ private fun DashboardMetricsSection(
         metrics.chunked(2).forEachIndexed { rowIndex, rowMetrics ->
             AnimatedItem(delayMillis = rowIndex * 100L) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     rowMetrics.forEach { metric ->
                         SummaryCard(
                             metric = metric,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
                         )
                     }
                     if (rowMetrics.size == 1) {
@@ -389,11 +405,16 @@ private fun SummaryCard(
                     }
                     Text(
                         text = change,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = if (metric.neutralChange) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
                         color = metric.isDown?.let { summaryTrendColor(metric.label, it) }
-                            ?: colorResource(R.color.chart_blue)
+                            ?: if (metric.neutralChange) MaterialTheme.colorScheme.onSurfaceVariant
+                            else colorResource(R.color.chart_blue)
                     )
                 }
+            }
+            metric.supportingText?.let {
+                Spacer(Modifier.height(6.dp))
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -517,6 +538,7 @@ private fun InsightCard(
 private fun LastMonthActivityMapCard(
     monthName: String,
     dailyStats: List<DailyStat>,
+    focusState: FocusOverviewState,
 ) {
     Card(
         shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)),
@@ -554,6 +576,8 @@ private fun LastMonthActivityMapCard(
                 highLabel = stringResource(R.string.heatmap_high_frequency),
                 levels = List(5) { level -> colorForLastMonthActivity(level * 2) },
             )
+            FocusTrendSection(focusState, focusState.data?.lastMonth?.current?.daily.orEmpty(),
+                FocusChartKind.MONTH_DAILY, "focus-last-month-daily", focusState.data?.lastMonth?.current?.summary)
         }
     }
 }

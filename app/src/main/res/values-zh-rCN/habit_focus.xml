@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="habit_focus_target">习惯</string>
+    <string name="habit_focus_end_before_change">先结束并保存当前专注，再继续操作？</string>
+    <string name="habit_focus_change_confirm">确认执行此操作？</string>
+    <string name="habit_focus_finish_record">结束并打卡</string>
+    <string name="habit_focus_record">打卡</string>
+    <string name="habit_focus_amount">本次完成数量</string>
+    <string name="habit_focus_amount_hint">输入实际完成数量，专注时间不会换算为进度。</string>
+    <string name="habit_focus_record_failed">打卡未成功，请刷新习惯后重试。</string>
+    <string name="habit_focus_record_date">打卡日期：%1$s</string>
+    <string name="habit_focus_amount_invalid">请输入大于 0 的整数</string>
+</resources>

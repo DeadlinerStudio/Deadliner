@@ -14,14 +14,10 @@ import com.aritxonly.deadliner.model.miuixModalMaterial
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
 import com.aritxonly.deadliner.ui.material.glass.GlassMaterialRecipe
 import com.aritxonly.deadliner.ui.material.glass.GlassTintStyle
-import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.material.glass.deadlinerGlassMaterial
 import com.aritxonly.deadliner.ui.material.glass.softGlassTintColor
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import top.yukonga.miuix.kmp.blur.BlendColorEntry
-import top.yukonga.miuix.kmp.blur.BlurDefaults
-import top.yukonga.miuix.kmp.blur.textureBlur
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -34,8 +30,7 @@ data class MiuixModalSurface(
 /**
  * Resolves one material policy for every Miuix modal surface.
  *
- * Advanced material off intentionally uses an opaque container. When it is on, immersive mode
- * receives Deadliner's soft-glass optics; otherwise we retain the standard Miuix texture blur.
+ * Advanced material off uses an opaque container; enabled material uses shared soft-glass optics.
  */
 @Composable
 fun rememberMiuixModalSurface(
@@ -46,7 +41,6 @@ fun rememberMiuixModalSurface(
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
         ?: LocalAdvancedMaterialDialogBlurHostState.current?.modalBackdrop
-    val immersive = LocalImmersiveExperienceEnabled.current
     val container = MiuixTheme.colorScheme.surfaceContainer
     val isDark = MiuixTheme.colorScheme.background.luminance() < 0.5f
     val modalMaterial = advancedMaterial.fineTuning.miuixModalMaterial(kind)
@@ -55,51 +49,18 @@ fun rememberMiuixModalSurface(
         return MiuixModalSurface(Modifier, container)
     }
 
-    if (immersive) {
-        if (backdrop == null) {
-            return MiuixModalSurface(Modifier, container)
-        }
-        val usesAdvancedDialogBase = kind == MiuixModalKind.Dialog
-        val tint = if (usesAdvancedDialogBase) {
-            container
-        } else {
-            advancedMaterial.fineTuning.softGlassTintColor(isDark)
-        }
-        return MiuixModalSurface(
-            modifier = Modifier.deadlinerGlassMaterial(
-                advancedMaterial = advancedMaterial,
-                backdrop = backdrop,
-                shape = shape,
-                tint = tint,
-                tintStyle = GlassTintStyle.Neutral,
-                isDark = isDark,
-                recipe = recipe,
-                blurRadiusOverride = modalMaterial.blurRadiusDp,
-                tintAlphaOverride = modalMaterial.backgroundAlpha,
-            ),
-            backgroundColor = Color.Transparent,
-        )
-    }
-
-    if (backdrop != null) {
-        val colors = BlurDefaults.blurColors(
-            blendColors = listOf(
-                BlendColorEntry(container.copy(alpha = modalMaterial.backgroundAlpha)),
-            ),
-        )
-        return MiuixModalSurface(
-            modifier = Modifier.textureBlur(
-                backdrop = backdrop,
-                shape = shape,
-                blurRadius = modalMaterial.blurRadiusDp,
-                noiseCoefficient = advancedMaterial.noiseCoefficient,
-                colors = colors,
-            ),
-            backgroundColor = Color.Transparent,
-        )
-    }
-
-    return MiuixModalSurface(Modifier, container)
+    if (backdrop == null) return MiuixModalSurface(Modifier, container)
+    val tint = if (kind == MiuixModalKind.Dialog) container
+        else advancedMaterial.fineTuning.softGlassTintColor(isDark)
+    return MiuixModalSurface(
+        modifier = Modifier.deadlinerGlassMaterial(
+            advancedMaterial = advancedMaterial, backdrop = backdrop, shape = shape,
+            tint = tint, tintStyle = GlassTintStyle.Neutral, isDark = isDark, recipe = recipe,
+            blurRadiusOverride = modalMaterial.blurRadiusDp,
+            tintAlphaOverride = modalMaterial.backgroundAlpha,
+        ),
+        backgroundColor = Color.Transparent,
+    )
 }
 
 /** Page-scoped Miuix dialog with Deadliner's shared modal material policy. */

@@ -176,9 +176,7 @@ fun MainDisplay(
     val pullToRefreshState = rememberPullToRefreshState()
     val effectiveIsRefreshing = isRefreshing || pullRefreshInProgress
 
-    LaunchedEffect(selectionMode) {
-        if (selectionMode) activeSwipeTaskId = null
-    }
+    LaunchedEffect(selectionMode, selectedPage) { activeSwipeTaskId = null }
 
     val needsBlur by remember {
         derivedStateOf { abandonDialogVisible }
@@ -295,6 +293,8 @@ fun MainDisplay(
                         habitViewModel = habitViewModel,
                         modifier = Modifier.padding(top = topOverlayPadding),
                         habits = filteredHabits,
+                        activeSwipeKey = activeSwipeTaskId,
+                        onActiveSwipeChange = { activeSwipeTaskId = it },
                         categoriesByUid = categoryByUid,
                         selectionMode = selectionMode,
                         isSelected = isSelected,

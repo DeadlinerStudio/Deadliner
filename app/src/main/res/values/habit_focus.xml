@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="habit_focus_target">Habit</string>
+    <string name="habit_focus_end_before_change">End and save this focus session before continuing?</string>
+    <string name="habit_focus_change_confirm">Confirm this change?</string>
+    <string name="habit_focus_finish_record">End &amp; check in</string>
+    <string name="habit_focus_record">Check in</string>
+    <string name="habit_focus_amount">Completed amount</string>
+    <string name="habit_focus_amount_hint">Enter the actual amount completed. Focus time will not be converted into progress.</string>
+    <string name="habit_focus_record_failed">Check-in failed. Refresh the habit and try again.</string>
+    <string name="habit_focus_record_date">Check-in date: %1$s</string>
+    <string name="habit_focus_amount_invalid">Enter a positive whole number</string>
+</resources>

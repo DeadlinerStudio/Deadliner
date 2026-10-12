@@ -26,8 +26,12 @@ import kotlinx.coroutines.isActive
 
 class FocusTimerActivity : DeadlinerAppCompatActivity() {
     companion object {
+        private const val EXTRA_SESSION_UID = "focus_session_uid"
         private const val EXTRA_TASK_UID = "task_uid"
         private const val EXTRA_TASK_TITLE = "task_title"
+
+        fun newResultIntent(context: Context, sessionUid: String): Intent =
+            Intent(context, FocusTimerActivity::class.java).putExtra(EXTRA_SESSION_UID, sessionUid)
 
         fun newIntent(context: Context, taskUid: String, taskTitle: String): Intent =
             Intent(context, FocusTimerActivity::class.java)
@@ -48,7 +52,8 @@ class FocusTimerActivity : DeadlinerAppCompatActivity() {
                 val timer = state.timer
 
                 LaunchedEffect(requestedTaskUid) {
-                    viewModel.initialize()
+                    viewModel.loadNow()
+                    intent.getStringExtra(EXTRA_SESSION_UID)?.let(viewModel::selectSession)
                     if (requestedTaskUid.isNotBlank()) viewModel.selectTask(requestedTaskUid)
                 }
                 LaunchedEffect(timer?.sessionUid, timer?.state) {
@@ -62,7 +67,11 @@ class FocusTimerActivity : DeadlinerAppCompatActivity() {
                         viewModel.tick()
                     }
                 }
-                LaunchedEffect(state.lastCompletedSession?.uid) {
+                LaunchedEffect(state.lastCompletedSession?.uid, state.lastCompletedSession?.habitRecordedAmount) {
+                    if (state.lastCompletedSession?.habitRecordedAmount != null) {
+                        KmpV6Runtime.habitListViewModel.loadNow()
+                        KmpV6Runtime.refreshNotifications()
+                    }
                     if (finishAndCompleteRequested &&
                         state.lastCompletedSession?.completionKind == FocusCompletionKind.FOCUS_AND_TASK_COMPLETED
                     ) {
@@ -84,6 +93,7 @@ class FocusTimerActivity : DeadlinerAppCompatActivity() {
                                 finishAndCompleteRequested = true
                                 viewModel.finishAndCompleteTask()
                             },
+                            onFinishAndRecordHabit = viewModel::finishAndRecordHabit,
                             onDiscard = viewModel::discard,
                             onAdjustSession = viewModel::adjustSessionDuration,
                             onDeleteSession = viewModel::deleteSession,

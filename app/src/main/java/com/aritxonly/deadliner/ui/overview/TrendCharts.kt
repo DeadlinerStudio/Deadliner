@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -37,7 +35,7 @@ import java.time.LocalDate
 
 internal val DefaultLabelProperties
     @Composable get() = LabelProperties(enabled = true,
-        textStyle = TextStyle.Default.copy(color = MaterialTheme.colorScheme.onSurface)
+        textStyle = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
     )
 
 private val DefaultIndicatorProperties
@@ -47,7 +45,7 @@ private val DefaultIndicatorProperties
 
 internal val DefaultLabelHelperProperties
     @Composable get() = LabelHelperProperties(enabled = true,
-        textStyle = TextStyle.Default.copy(color = MaterialTheme.colorScheme.onSurface)
+        textStyle = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
     )
 
 internal val DefaultPopupProperties
@@ -81,7 +79,8 @@ fun DailyBarChart(
     val completedText = stringResource(R.string.completed)
     val overdueDoneText = stringResource(R.string.overdue_done)
 
-    val chartData = remember(data) {
+    val chartData = remember(data, barColor, overdueColor, completedText, overdueDoneText,
+        GlobalUtils.OverviewSettings.showOverdueInDaily) {
         data.map { stat ->
             Bars(
                 label = stat.date.dayOfMonth.toString(),
@@ -101,12 +100,13 @@ fun DailyBarChart(
         }
     }
 
-    Column(modifier = modifier.padding(16.dp)) {
+    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         ColumnChart(
             data = chartData,
+            maxValue = chartData.maxOf { bar -> bar.values.maxOf { it.value } }.coerceAtLeast(1.0),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp),
+                .weight(1f),
             barProperties = BarProperties(
                 cornerRadius = Bars.Data.Radius.Rectangle(topRight = 4.dp, topLeft = 4.dp),
                 spacing = 1.dp,
@@ -134,10 +134,11 @@ fun MonthlyTrendChart(
     modifier: Modifier = Modifier,
     totalColor: Color = MaterialTheme.colorScheme.primary,
     completedColor: Color = MaterialTheme.colorScheme.secondary,
-    overdueColor: Color = MaterialTheme.colorScheme.tertiary
+    overdueColor: Color = MaterialTheme.colorScheme.tertiary,
+    dateLabels: List<String>? = null,
 ) {
     // 获取三维度统计
-    val stats by remember { mutableStateOf(data) }
+    val stats = data
     if (stats.isEmpty()) {
         Text(stringResource(R.string.no_data_yet), modifier = modifier.padding(16.dp))
         return
@@ -148,7 +149,7 @@ fun MonthlyTrendChart(
     val overdueDoneText = stringResource(R.string.overdue_done)
 
     // 构造 3 条折线数据
-    val series = remember(stats) {
+    val series = remember(stats, totalColor, completedColor, overdueColor, totalTasksText, completedText, overdueDoneText) {
         listOf(
             Line(
                 label = totalTasksText,
@@ -204,12 +205,13 @@ fun MonthlyTrendChart(
         )
     }
 
-    Column(modifier = modifier.padding(16.dp)) {
+    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         LineChart(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(240.dp),
+                .weight(1f),
             data = series,
+            maxValue = series.maxOf { it.values.maxOrNull() ?: 0.0 }.coerceAtLeast(1.0),
             animationMode = AnimationMode.Together(delayBuilder = { it * 300L }),
             gridProperties = GridProperties(enabled = false),
             popupProperties = DefaultPopupProperties.copy(
@@ -217,8 +219,8 @@ fun MonthlyTrendChart(
                     "${data[valueIndex].month}: ${value.format(0)}"
                 }
             ),
-            indicatorProperties = DefaultIndicatorProperties,
-            labelProperties = DefaultLabelProperties,
+            indicatorProperties = HorizontalIndicatorProperties(enabled = false),
+            labelProperties = DefaultLabelProperties.copy(labels = dateLabels ?: stats.map { it.month }),
             labelHelperProperties = DefaultLabelHelperProperties,
         )
     }
@@ -238,7 +240,7 @@ fun WeeklyBarChart(
     // 转换为 ComposeCharts 的 Bars 格式
     val completedText = stringResource(R.string.completed)
 
-    val chartData = remember(data) {
+    val chartData = remember(data, barColor, completedText) {
         data.map { stat ->
             Bars(
                 label = stat.weekLabel,
@@ -255,12 +257,13 @@ fun WeeklyBarChart(
         }
     }
 
-    Column(modifier = modifier.padding(16.dp)) {
+    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         ColumnChart(
             data = chartData,
+            maxValue = chartData.maxOf { bar -> bar.values.maxOf { it.value } }.coerceAtLeast(1.0),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp),
+                .weight(1f),
             barProperties = BarProperties(
                 cornerRadius = Bars.Data.Radius.Rectangle(topRight = 4.dp, topLeft = 4.dp),
                 spacing = 4.dp,

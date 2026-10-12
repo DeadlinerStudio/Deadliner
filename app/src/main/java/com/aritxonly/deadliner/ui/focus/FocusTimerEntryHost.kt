@@ -19,6 +19,8 @@ import com.deadliner.domain.focus.FocusTimerMode
 import com.deadliner.domain.task.TaskState
 import kotlinx.coroutines.launch
 
+val LocalHabitFocusTimerEntry = staticCompositionLocalOf<(String, String) -> Unit> { { _, _ -> } }
+
 val LocalFocusTimerEntry = staticCompositionLocalOf<(String, String) -> Unit> { { _, _ -> } }
 
 /** Owns the secondary setup sheet; the running Activity owns no setup state. */
@@ -26,6 +28,8 @@ val LocalFocusTimerEntry = staticCompositionLocalOf<(String, String) -> Unit> { 
 fun FocusTimerEntryHost(onOpenTimer: () -> Unit, content: @Composable () -> Unit) {
     val viewModel = KmpV6Runtime.focusTimerViewModel
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val habitState by KmpV6Runtime.habitListViewModel.uiState.collectAsStateWithLifecycle()
+    var habitTarget by rememberSaveable { mutableStateOf(false) }
     val taskState by KmpV6Runtime.taskListViewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -37,10 +41,11 @@ fun FocusTimerEntryHost(onOpenTimer: () -> Unit, content: @Composable () -> Unit
     var failed by rememberSaveable { mutableStateOf(false) }
     var openAfterDismiss by rememberSaveable { mutableStateOf(false) }
 
-    val openEntry: (String, String) -> Unit = { uid, title ->
+    val openEntry: (Boolean, String, String) -> Unit = { isHabit, uid, title ->
         if (state.timer != null) {
             onOpenTimer()
         } else {
+            habitTarget = isHabit
             selectedUid = uid
             selectedTitle = title
             failed = false
@@ -51,6 +56,7 @@ fun FocusTimerEntryHost(onOpenTimer: () -> Unit, content: @Composable () -> Unit
         if (show) {
             preparing = true
             KmpV6Runtime.taskListViewModel.initialize()
+            KmpV6Runtime.habitListViewModel.initialize()
             val loaded = viewModel.loadNow()
             preparing = false
             if (loaded.timer != null) {
@@ -59,7 +65,8 @@ fun FocusTimerEntryHost(onOpenTimer: () -> Unit, content: @Composable () -> Unit
             }
         }
     }
-    CompositionLocalProvider(LocalFocusTimerEntry provides openEntry) { content() }
+    CompositionLocalProvider(LocalFocusTimerEntry provides { uid, title -> openEntry(false, uid, title) },
+        LocalHabitFocusTimerEntry provides { uid, title -> openEntry(true, uid, title) }) { content() }
     FocusTimerSetupSheet(
         show = show,
         selectedTaskUid = selectedUid,
@@ -68,17 +75,19 @@ fun FocusTimerEntryHost(onOpenTimer: () -> Unit, content: @Composable () -> Unit
         busy = preparing || starting || state.isBusy || state.isLoading,
         error = state.error,
         startFailed = failed,
-        onSelectTask = { task -> selectedUid = task.uid; selectedTitle = task.title },
+        onSelectTask = { task -> habitTarget = false; selectedUid = task.uid; selectedTitle = task.title },
+        selectedIsHabit = habitTarget,
+        habits = habitState.habits.filter { !it.isDeleted && it.status == com.deadliner.domain.habit.HabitStatus.ACTIVE },
+        onSelectHabit = { habit -> habitTarget = true; selectedUid = habit.uid; selectedTitle = habit.name },
         onStart = { mode, minutes ->
             if (!starting && !preparing && !state.isBusy && selectedUid.isNotBlank()) {
                 starting = true
                 failed = false
                 scope.launch {
-                    val result = viewModel.executeNow(FocusTimerCommand.Start(
-                        taskUid = selectedUid,
-                        mode = mode,
-                        plannedDurationSeconds = if (mode == FocusTimerMode.COUNTDOWN) minutes * 60L else null,
-                    ))
+                    val planned = if (mode == FocusTimerMode.COUNTDOWN) minutes * 60L else null
+                    val command = if (habitTarget) FocusTimerCommand.StartHabit(selectedUid, mode, planned)
+                        else FocusTimerCommand.Start(selectedUid, mode, planned)
+                    val result = viewModel.executeNow(command)
                     starting = false
                     if (result.timer != null) {
                         FocusTimerForegroundService.start(context)

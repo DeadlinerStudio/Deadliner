@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -99,6 +100,15 @@ object MiuixFloatingTabBarDefaults {
     val VerticalContentPadding = 3.dp
     val IndicatorHorizontalOverflow = 3.dp
     val MaximumWidth = 380.dp
+    // Matches the component used by MyHyperModifier (80dp per stacked tab, 380dp panel cap).
+    val MaximumStackedItemWidth = 80.dp
+    // 26dp icon + 5dp gap + ~49dp label + 24dp breathing room.
+    val MaximumHorizontalItemWidth = 104.dp
+
+    fun maximumWidth(itemCount: Int, layout: MiuixFloatingTabLayout) = when (layout) {
+        MiuixFloatingTabLayout.Stacked -> minOf(MaximumWidth, MaximumStackedItemWidth * itemCount)
+        MiuixFloatingTabLayout.Horizontal -> MaximumHorizontalItemWidth * itemCount + HorizontalContentPadding * 2
+    }
     val TabIconSize = 26.dp
     val DetachedIconSize = 28.dp
 
@@ -161,7 +171,8 @@ fun MiuixFloatingTabBar(
 
     BoxWithConstraints(
         modifier = modifier
-            .widthIn(max = MiuixFloatingTabBarDefaults.MaximumWidth)
+            .wrapContentWidth()
+            .widthIn(max = MiuixFloatingTabBarDefaults.maximumWidth(items.size, layout))
             .fillMaxWidth()
             .height(MiuixFloatingTabBarDefaults.Height),
     ) {

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Converted from the user-provided chart.pie.fill.svg; original path and opacity. -->
+<!-- Converted from the user-provided chart.pie.fill.svg; original path, normalized opaque fill for navigation tint. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp"
     android:viewportWidth="24.2578" android:viewportHeight="23.8945">
-    <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.85"
+    <path android:fillColor="#FFFFFFFF" android:fillAlpha="1"
         android:pathData="M11.9531 23.8945C14.7656 23.8945 17.4844 22.8867 19.6523 21.0469L11.2148 12.7734C10.9805 12.5625 10.9336 12.3633 10.9336 12.0469L10.9336 0.0351562C4.85156 0.5625 0 5.75391 0 11.9414C0 18.4805 5.42578 23.8945 11.9531 23.8945ZM23.9062 11.9414C23.9062 10.1836 23.4727 8.34375 22.7344 6.84375L13.1602 12.3516L20.8125 19.9102C22.7344 17.8125 23.9062 14.9297 23.9062 11.9414ZM12.5039 10.9102L21.9609 5.47266C19.9219 2.27344 16.2305 0.152344 12.5039 0Z" />
 </vector>

@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
@@ -40,17 +41,19 @@ fun TrendAnalysisScreen(
     modifier: Modifier = Modifier,
     topContentPadding: Dp = 0.dp,
     listState: LazyListState,
+    focusState: FocusOverviewState = FocusOverviewState(),
 ) {
     val trendItems = listOf<@Composable () -> Unit>(
         { ContributionHeatmapCard(snapshot.contributionStats) },
-        { DailyCompletedCard(snapshot.dailyStats) },
-        { MonthlyTrendCard(snapshot.monthlyStats) },
-        { PrevWeeksCard(snapshot.weeklyStats) },
+        { DailyCompletedCard(snapshot.dailyStats, focusState) },
+        { MonthlyTrendCard(snapshot.monthlyStats, focusState) },
+        { PrevWeeksCard(snapshot.weeklyStats, focusState) },
     )
 
     LazyColumn(
         state = listState,
         modifier = modifier
+            .testTag("overview-focus-trend-list")
             .syncTopBarMaterialScroll(listState)
             .mainListContainerClip(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = topContentPadding),
@@ -80,7 +83,7 @@ private fun ContributionHeatmapCard(
             ) {
                 Text(
                     text = stringResource(R.string.contribution_heatmap),
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(modifier = Modifier.weight(1f))
@@ -151,29 +154,26 @@ private fun ResponsiveContributionHeatmapGrid(
 @Composable
 private fun DailyCompletedCard(
     dailyStats: List<DailyStat>,
+    focusState: FocusOverviewState,
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
+    val points = focusState.data?.daily.orEmpty()
     OverviewSurfaceCard {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceContainer)
         ) {
-            Text(
-                text = stringResource(R.string.weekly_completed),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(Modifier.height(8.dp))
+            TrendCardHeader(stringResource(R.string.focus_stats_recent_days), dailyStats.sumOf { it.completedCount }, "daily")
             DailyBarChart(
                 data = dailyStats,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp),
+                    .height(160.dp).testTag("task-trend-daily"),
                 barColor = indicatorPalette.completed,
                 overdueColor = indicatorPalette.overdue,
             )
+            FocusTrendSection(focusState, points, FocusChartKind.DAILY, "focus-trend-daily", focusState.data?.recentDaysSummary)
         }
     }
 }
@@ -181,30 +181,28 @@ private fun DailyCompletedCard(
 @Composable
 private fun MonthlyTrendCard(
     monthlyStats: List<MonthlyStat>,
+    focusState: FocusOverviewState,
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
+    val points = focusState.data?.monthly.orEmpty()
     OverviewSurfaceCard {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceContainer)
         ) {
-            Text(
-                text = stringResource(R.string.monthly_trend),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(Modifier.height(8.dp))
+            TrendCardHeader(stringResource(R.string.monthly_trend), monthlyStats.sumOf { it.completedCount }, "monthly")
             MonthlyTrendChart(
                 data = monthlyStats,
+                dateLabels = points.takeIf { it.size == monthlyStats.size }?.map { it.startDate.substring(5, 7).toInt().toString() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(260.dp),
+                    .height(180.dp).testTag("task-trend-monthly"),
                 totalColor = indicatorPalette.total,
                 completedColor = indicatorPalette.completed,
                 overdueColor = indicatorPalette.pending,
             )
+            FocusTrendSection(focusState, points, FocusChartKind.MONTHLY, "focus-trend-monthly", focusState.data?.recentMonthsSummary)
         }
     }
 }
@@ -212,30 +210,39 @@ private fun MonthlyTrendCard(
 @Composable
 private fun PrevWeeksCard(
     weeklyStats: List<WeeklyStat>,
+    focusState: FocusOverviewState,
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
+    val points = focusState.data?.rollingWeekly.orEmpty()
     OverviewSurfaceCard {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceContainer)
         ) {
-            Text(
-                text = stringResource(R.string.prev4weeks),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(Modifier.height(8.dp))
+            TrendCardHeader(stringResource(R.string.prev4weeks), weeklyStats.sumOf { it.completedCount }, "weekly")
             WeeklyBarChart(
                 data = weeklyStats,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp),
+                    .height(160.dp).testTag("task-trend-weekly"),
                 barColor = indicatorPalette.pending,
             )
+            FocusTrendSection(focusState, points, FocusChartKind.WEEKLY, "focus-trend-weekly", focusState.data?.recentWeeksSummary)
         }
     }
+}
+
+@Composable
+private fun TrendCardHeader(title: String, completed: Int, period: String) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface)
+        Text(stringResource(R.string.focus_stats_task_count, completed), Modifier.testTag("task-total-$period"),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    Spacer(Modifier.height(8.dp))
 }
 
 @Composable

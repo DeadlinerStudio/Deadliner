@@ -9,9 +9,8 @@ import com.deadliner.service.focus.FocusTimerResult
 /** Miuix Medium glyphs exported as framework vectors for SystemUI, separate from app identity. */
 internal object IslandStateIcons {
     @DrawableRes fun realtime(phase: NotificationPhase?): Int = when (phase) {
-        NotificationPhase.OVERDUE -> R.drawable.ic_island_miuix_report
-        NotificationPhase.COMPLETED, NotificationPhase.HABIT_CHECKED_IN -> R.drawable.ic_island_miuix_ok
-        NotificationPhase.ABANDONED -> R.drawable.ic_island_miuix_close
+        NotificationPhase.COMPLETED, NotificationPhase.HABIT_CHECKED_IN, NotificationPhase.FOCUS_FINISHED -> R.drawable.ic_island_miuix_topdownloads
+        NotificationPhase.ABANDONED -> R.drawable.ic_island_miuix_recent_abandoned
         NotificationPhase.HABIT_DUE -> R.drawable.ic_island_miuix_tasks
         else -> R.drawable.ic_island_miuix_alarm
     }

@@ -64,6 +64,14 @@ class FocusLiveUpdatesInstrumentedTest {
             scenario.onActivity { resumed.actions[1].actionIntent.send() }
             waitFor { KmpV6Runtime.focusTimerViewModel.uiState.value.timer == null && card() == null }
             assertEquals(1, KmpV6Runtime.database.focusSessions.recentForTask(uid, 10).size)
+            fun reward() = manager.activeNotifications.firstOrNull { it.id == RealtimeNotificationService.FOREGROUND_ID }?.notification
+            waitFor { reward()?.actions?.size == 1 }
+            val finished = requireNotNull(reward())
+            assertTrue(finished.hasPromotableCharacteristics())
+            assertEquals(0L, finished.`when`)
+            assertFalse(finished.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+            assertEquals(context.getString(com.aritxonly.deadliner.R.string.notification_island_encouragement), finished.shortCriticalText)
+            assertEquals(context.getString(com.aritxonly.deadliner.R.string.notification_live_open_task), finished.actions.single().title)
         } finally {
             instrumentation.runOnMainSync {
                 runBlocking { KmpV6Runtime.focusTimerViewModel.executeNow(FocusTimerCommand.Discard) }

@@ -52,3 +52,7 @@
 -keep enum com.deadliner.platform.NotificationKind { *; }
 -keep enum com.deadliner.platform.NotificationPhase { *; }
 -keep enum com.deadliner.platform.NotificationAction { *; }
+
+# ONNX JNI uses Java constructors/members by name; required for minified Release.
+# https://onnxruntime.ai/docs/build/android.html
+-keep class ai.onnxruntime.** { *; }

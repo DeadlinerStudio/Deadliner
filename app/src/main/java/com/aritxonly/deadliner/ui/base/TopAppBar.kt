@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.base
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -10,27 +12,18 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,14 +31,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
-import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
-import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
-import com.aritxonly.deadliner.ui.theme.rememberBlurColors
-import com.aritxonly.deadliner.ui.material.glass.LocalImmersiveExperienceEnabled
 import com.aritxonly.deadliner.ui.material.glass.LocalProgressiveTopBarMaterialHosted
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarButtonMaterialProgress
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
@@ -58,16 +44,12 @@ import com.aritxonly.deadliner.ui.material.glass.softGlassPressMaterialInteracti
 import com.aritxonly.deadliner.ui.material.glass.softGlassPressScale
 import top.yukonga.miuix.kmp.basic.ScrollBehavior as MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
-import top.yukonga.miuix.kmp.blur.BlendColorEntry
-import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
-import androidx.compose.material3.TopAppBar as MaterialTopAppBar
 
 enum class TopAppBarStyle {
     CENTER, LARGE, SMALL
 }
 
-private val TopAppBarMaterialShape = RoundedCornerShape(0.dp)
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -80,51 +62,12 @@ fun TopAppBar(
     isMainTitle: Boolean = false,
     titleTextStyle: TextStyle? = null,
     forceMaterial3: Boolean = false,
-    useParentMaterialContainer: Boolean = false,
-    allowAdvancedMaterialBlur: Boolean = true,
-    advancedMaterialBlurOnlyWhenCollapsed: Boolean = false,
     buttonMaterialRevealProgress: Float? = null,
     material3ScrollBehavior: TopAppBarScrollBehavior? = null,
     miuixScrollBehavior: MiuixScrollBehavior? = null,
 ) {
-    val advancedMaterial = LocalAdvancedMaterialSpec.current
-    val backdrop = LocalAdvancedMaterialBackdrop.current
-    val immersiveTopBar = LocalImmersiveExperienceEnabled.current
     val progressiveMaterialHosted = LocalProgressiveTopBarMaterialHosted.current
     val collapsedFraction = miuixScrollBehavior?.state?.collapsedFraction
-    val isFullyCollapsed = collapsedFraction?.let { it >= 0.999f } ?: false
-    val advancedMaterialBlurEligible =
-        allowAdvancedMaterialBlur &&
-            !immersiveTopBar &&
-            advancedMaterial.enabled &&
-            backdrop != null &&
-            !useParentMaterialContainer
-    val advancedMaterialBlurred =
-        advancedMaterialBlurEligible &&
-            (!advancedMaterialBlurOnlyWhenCollapsed || isFullyCollapsed)
-    val transparentBeforeAdvancedMaterialBlur =
-        advancedMaterialBlurEligible &&
-            advancedMaterialBlurOnlyWhenCollapsed &&
-            !isFullyCollapsed
-    val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.topBarTintAlpha)
-    val topBarColors = TopAppBarDefaults.topAppBarColors(
-        containerColor = when {
-            immersiveTopBar -> Color.Transparent
-            useParentMaterialContainer -> Color.Transparent
-            transparentBeforeAdvancedMaterialBlur -> Color.Transparent
-            advancedMaterialBlurred -> Color.Transparent
-            advancedMaterial.enabled -> surfaceTint
-            else -> MaterialTheme.colorScheme.surface
-        },
-        scrolledContainerColor = when {
-            immersiveTopBar -> Color.Transparent
-            useParentMaterialContainer -> Color.Transparent
-            transparentBeforeAdvancedMaterialBlur -> Color.Transparent
-            advancedMaterialBlurred -> Color.Transparent
-            advancedMaterial.enabled -> surfaceTint
-            else -> MaterialTheme.colorScheme.surface
-        },
-    )
     val buttonMaterialTarget = resolveTopBarButtonMaterialProgress(
         collapsedFraction = collapsedFraction,
         scrollProgress = LocalTopBarScrollProgress.current,
@@ -137,7 +80,7 @@ fun TopAppBar(
     )
     val resolvedNavigationIcon: @Composable () -> Unit = {
         navigationIcon?.let { icon ->
-            if (immersiveTopBar && !isMainTitle) {
+            if (!isMainTitle) {
                 ImmersiveNavigationIcon(
                     materialAlpha = buttonMaterialProgress,
                     content = icon,
@@ -149,51 +92,27 @@ fun TopAppBar(
     }
 
     val platformTopBar = @Composable {
-        AdvancedMaterialTopBarContainer(
-                advancedMaterial = advancedMaterial,
-                advancedMaterialBlurred = advancedMaterialBlurred,
-                backdrop = backdrop,
-                surfaceTint = surfaceTint,
-        ) {
-                val miuixContainerColor = when {
-                    immersiveTopBar -> Color.Transparent
-                    useParentMaterialContainer -> Color.Transparent
-                    transparentBeforeAdvancedMaterialBlur -> Color.Transparent
-                    advancedMaterialBlurred -> Color.Transparent
-                    advancedMaterial.enabled -> surfaceTint
-                    else -> MaterialTheme.colorScheme.surface
-                }
-                when (mode) {
-                    TopAppBarStyle.LARGE ->
-                        MiuixTopAppBar(
-                            title = title,
-                            largeTitle = title,
-                            color = miuixContainerColor,
-                            navigationIcon = resolvedNavigationIcon,
-                            actions = actions,
-                            titleColor = MaterialTheme.colorScheme.onSurface,
-                            largeTitleColor = MaterialTheme.colorScheme.onSurface,
-                            scrollBehavior = miuixScrollBehavior,
-                        )
-
-                    else ->
-                        SmallTopAppBar(
-                            title = title,
-                            color = miuixContainerColor,
-                            navigationIcon = resolvedNavigationIcon,
-                            actions = actions,
-                            titleColor = MaterialTheme.colorScheme.onSurface,
-                        )
-                }
+        when (mode) {
+            TopAppBarStyle.LARGE -> MiuixTopAppBar(
+                title = title, largeTitle = title, color = Color.Transparent,
+                navigationIcon = resolvedNavigationIcon, actions = actions,
+                titleColor = MaterialTheme.colorScheme.onSurface,
+                largeTitleColor = MaterialTheme.colorScheme.onSurface,
+                scrollBehavior = miuixScrollBehavior,
+            )
+            else -> SmallTopAppBar(
+                title = title, color = Color.Transparent,
+                navigationIcon = resolvedNavigationIcon, actions = actions,
+                titleColor = MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 
     CompositionLocalProvider(
         LocalTopBarButtonMaterialProgress provides buttonMaterialProgress,
     ) {
-        if (immersiveTopBar && !progressiveMaterialHosted) {
+        if (!progressiveMaterialHosted) {
             ProgressiveTopBarMaterial(
-                enabled = true,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 platformTopBar()
@@ -274,32 +193,5 @@ private fun ImmersiveNavigationIcon(
                 content()
             }
         }
-    }
-}
-
-@Composable
-private fun AdvancedMaterialTopBarContainer(
-    advancedMaterial: AdvancedMaterialSpec,
-    advancedMaterialBlurred: Boolean,
-    backdrop: LayerBackdrop? = null,
-    surfaceTint: Color,
-    content: @Composable () -> Unit,
-) {
-    if (advancedMaterialBlurred && backdrop != null) {
-        val blurColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .advancedTextureBlur(
-                    advancedMaterial = advancedMaterial,
-                    backdrop = backdrop,
-                    shape = TopAppBarMaterialShape,
-                    colors = blurColors,
-                ),
-        ) {
-            content()
-        }
-    } else {
-        content()
     }
 }

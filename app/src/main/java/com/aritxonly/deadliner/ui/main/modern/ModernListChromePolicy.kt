@@ -15,13 +15,11 @@ internal fun canCollapseModernListTopBar(
 
 internal fun shouldShowImmersiveListSearchEntry(
     usesMiuixTheme: Boolean,
-    useImmersiveExperience: Boolean,
     isCompactFloatingNavigation: Boolean,
     selectedSection: MainSection,
     selectedPage: DeadlineType,
     selectionMode: Boolean,
 ): Boolean = usesMiuixTheme &&
-    useImmersiveExperience &&
     isCompactFloatingNavigation &&
     selectedSection == MainSection.LIST &&
     selectedPage == DeadlineType.TASK &&

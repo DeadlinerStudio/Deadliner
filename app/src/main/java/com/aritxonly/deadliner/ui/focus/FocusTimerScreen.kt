@@ -60,13 +60,27 @@ fun FocusTimerScreen(
     onDiscard: () -> Unit,
     onAdjustSession: (String, Long) -> Unit,
     onDeleteSession: (String) -> Unit,
+    onFinishAndRecordHabit: (String, Int?, String?) -> Unit = { _, _, _ -> },
 ) {
     var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
     var editingSession by remember { mutableStateOf<FocusSession?>(null) }
     var deletingSession by remember { mutableStateOf<FocusSession?>(null) }
     var adjustedSeconds by rememberSaveable { mutableStateOf("") }
+    var recordSessionUid by rememberSaveable { mutableStateOf<String?>(null) }
+    var recordExpectedVersion by rememberSaveable { mutableStateOf<String?>(null) }
+    val recordContext = state.habitRecordContext
+    fun recordHabit(uid: String) {
+        val context = recordContext ?: return
+        if (context.trackingMode == com.deadliner.domain.habit.HabitTrackingMode.QUANTITY) {
+            recordExpectedVersion = context.habitUpdatedAt
+            recordSessionUid = uid
+        } else onFinishAndRecordHabit(uid, null, context.habitUpdatedAt)
+    }
     val timer = state.timer
     val listState = rememberLazyListState()
+
+    HabitFocusRecordDialog(state = state, sessionUid = recordSessionUid, expectedVersion = recordExpectedVersion,
+        onDismiss = { recordSessionUid = null }, onConfirm = onFinishAndRecordHabit)
 
     AdaptiveMaterialScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -109,6 +123,11 @@ fun FocusTimerScreen(
             state.error?.let { message ->
                 item { InlineMessage(message, isError = true) }
             }
+            if (state.selectedTarget?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT && state.lastOutcome in listOf(com.deadliner.domain.focus.FocusTimerOutcome.HABIT_NOT_FOUND,
+                com.deadliner.domain.focus.FocusTimerOutcome.HABIT_NOT_ACTIVE, com.deadliner.domain.focus.FocusTimerOutcome.HABIT_NOT_DUE,
+                com.deadliner.domain.focus.FocusTimerOutcome.HABIT_INVALID_AMOUNT, com.deadliner.domain.focus.FocusTimerOutcome.INVALID_STATE)) {
+                item { InlineMessage(stringResource(R.string.habit_focus_record_failed), isError = true) }
+            }
             state.warning?.let {
                 item {
                     InlineMessage(
@@ -126,7 +145,10 @@ fun FocusTimerScreen(
                         onPause = onPause,
                         onResume = onResume,
                         onFinish = onFinish,
-                        onFinishAndComplete = onFinishAndComplete,
+                        onFinishAndComplete = {
+                            if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) recordHabit(timer.sessionUid)
+                            else onFinishAndComplete()
+                        },
                     )
                 } else {
                     Column(Modifier.fillMaxWidth().padding(vertical = 48.dp),
@@ -138,13 +160,19 @@ fun FocusTimerScreen(
                             Text(formatDuration(it.durationSeconds),
                                 style = MiuixTheme.textStyles.title1.copy(fontWeight = FontWeight.SemiBold))
                         }
+                        val saved = state.lastCompletedSession
+                        if (saved?.boundTarget?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT &&
+                            saved.habitRecordedAmount == null && recordSessionUid == null && recordContext?.canRecord == true) {
+                            TextButton(text = stringResource(R.string.habit_focus_record), enabled = !state.isBusy,
+                                onClick = { recordHabit(saved.uid) })
+                        }
                         FocusRoundAction(icon = R.drawable.msr_close_wght400,
                             label = stringResource(R.string.close), enabled = true, onClick = onClose)
                     }
                 }
             }
 
-            if (state.selectedTaskUid != null) {
+            if (state.selectedTarget != null || state.selectedTaskUid != null) {
                 item {
                     FocusSummaryCard(
                         taskTitle = state.selectedTaskTitle.orEmpty(),
@@ -292,6 +320,8 @@ private fun ActiveTimerContent(
     ) {
         Text(timer.taskTitle, style = MiuixTheme.textStyles.title3.copy(fontWeight = FontWeight.Medium),
             textAlign = TextAlign.Center)
+        timer.habitOccurredOn?.let { Text(stringResource(R.string.habit_focus_record_date, it),
+            style = MiuixTheme.textStyles.footnote1, color = MiuixTheme.colorScheme.onSurfaceVariantSummary) }
         FocusTimerDial(timer)
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -308,9 +338,9 @@ private fun ActiveTimerContent(
                 onClick = if (running) onPause else onResume,
                 primary = true, size = 80.dp, modifier = Modifier.weight(1f))
             FocusRoundAction(icon = R.drawable.msr_check_wght400,
-                label = stringResource(R.string.focus_complete_task_short),
-                contentDescription = stringResource(R.string.focus_finish_and_complete),
-                enabled = !busy && timer.canFinishAndComplete, onClick = onFinishAndComplete,
+                label = stringResource(if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) R.string.habit_focus_record else R.string.focus_complete_task_short),
+                contentDescription = stringResource(if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) R.string.habit_focus_finish_record else R.string.focus_finish_and_complete),
+                enabled = !busy && (timer.canFinishAndComplete || timer.canFinishAndRecord), onClick = onFinishAndComplete,
                 modifier = Modifier.weight(1f))
         }
     }

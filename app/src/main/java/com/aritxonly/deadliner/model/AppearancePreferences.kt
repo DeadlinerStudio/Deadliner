@@ -26,7 +26,6 @@ data class AppearancePreferences(
     val usePureMiuixAccent: Boolean = false,
     val useMiuixNeutralSurfaces: Boolean = true,
     val useMaterialTopAppBarInMiuix: Boolean = false,
-    val useImmersiveExperience: Boolean = false,
     val floatingNavigationBottomLift: Float = 0f,
     val useMyHyperModifierNavigationLift: Boolean = false,
     val useContrastingHomeFab: Boolean = true,
@@ -37,6 +36,7 @@ data class AppearancePreferences(
     val modernHideDivider: Boolean = true,
     val useSettingsHomepageColoredIcons: Boolean = true,
     val semanticGlowEnabled: Boolean = true,
+    val useWheelDateTimePicker: Boolean = false,
     val appIconMode: AppIconMode = AppIconMode.Default,
 ) {
     val usesMiuixTheme: Boolean

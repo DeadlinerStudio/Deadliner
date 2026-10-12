@@ -47,6 +47,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
+import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassSurface
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.icon.MiuixIcons
@@ -112,6 +114,7 @@ internal fun TabletNavSideBar(
                 .padding(start = TabletNavSideInset, top = 2.dp, bottom = 12.dp)
                 .tabletNavPanelWidth(expandedWidth, expandProgress).fillMaxHeight(),
             shape = RoundedCornerShape(28.dp),
+            recipe = DeadlinerGlassRecipes.tabletNavigation(LocalAdvancedMaterialSpec.current.fineTuning),
             backdrop = backdrop,
             contentAlignment = Alignment.TopStart,
         ) {
@@ -149,7 +152,7 @@ internal fun TabletNavSideBar(
                             icon = if (item.key == selectedKey) item.selectedIcon else item.unselectedIcon,
                             label = item.label,
                             selected = item.key == (draggedKey ?: selectedKey),
-                            enabled = item.enabled, progress = expandProgress,
+                            enabled = item.enabled, progress = expandProgress, iconScale = item.iconScale,
                             onClick = { currentOnItemSelected(item) },
                         )
                     }
@@ -162,7 +165,7 @@ internal fun TabletNavSideBar(
 @Composable
 private fun TabletNavSideItem(
     icon: Painter, label: String, selected: Boolean, enabled: Boolean,
-    progress: State<Float>, showLabel: Boolean = true, onClick: () -> Unit,
+    progress: State<Float>, showLabel: Boolean = true, iconScale: Float = 1f, onClick: () -> Unit,
 ) {
     val textColor = MiuixTheme.colorScheme.onSurfaceContainer.copy(alpha = if (enabled) 0.8f else 0.3f)
     val shape = RoundedCornerShape(26.dp)
@@ -173,7 +176,10 @@ private fun TabletNavSideItem(
         .then(interactionModifier).semantics { contentDescription = label }) {
         Row(Modifier.fillMaxSize().padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Icon(icon, contentDescription = null, tint = textColor, modifier = Modifier.size(28.dp))
+            Icon(icon, contentDescription = null, tint = textColor, modifier = Modifier.size(28.dp).graphicsLayer {
+                scaleX = iconScale.coerceIn(0.75f, 1.25f)
+                scaleY = scaleX
+            })
             if (showLabel) Text(label, color = textColor, fontWeight = FontWeight.Medium,
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.graphicsLayer { alpha = progress.value }.padding(end = 8.dp))

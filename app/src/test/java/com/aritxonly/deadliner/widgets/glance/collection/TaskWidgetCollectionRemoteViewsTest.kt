@@ -11,6 +11,11 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetItem
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetSnapshot
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetStatus
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfiguration
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationStore
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
+import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetThemeMode
+import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetThemeResolver
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetColors
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetRowColors
 import org.junit.Assert.assertEquals
@@ -84,6 +89,26 @@ class TaskWidgetCollectionRemoteViewsTest {
         assertNotNull(row.findViewById<ImageView>(R.id.widget_task_collection_row_background).drawable)
 
         factory.onDestroy()
+    }
+
+    @Test
+    fun `service rows apply stored instance theme mode`() {
+        val snapshot = TaskWidgetSnapshot(
+            totalCount = 1, nearCount = 0, overdueCount = 0, summary = "1 task",
+            items = listOf(TaskWidgetItem(11L, "First", "1h", TaskWidgetStatus.NORMAL)),
+        )
+        val store = TaskWidgetConfigurationStore.from(context)
+        for (mode in listOf(TaskWidgetThemeMode.LIGHT, TaskWidgetThemeMode.DARK)) {
+            store.write(42, TaskWidgetKind.SQUARE, TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE).copy(themeMode = mode))
+            val factory = TaskWidgetCollectionRemoteViewsFactory(context, 42, snapshotLoader = { snapshot })
+            factory.onDataSetChanged()
+            val row = factory.getViewAt(0)!!.apply(context, FrameLayout(context))
+            val expected = TaskWidgetThemeResolver.resolve(context, snapshot.visualState, themeMode = mode)
+            assertEquals(expected.textPrimary, row.findViewById<TextView>(R.id.widget_task_collection_row_title).currentTextColor)
+            assertEquals(expected.normalRow.timeText, row.findViewById<TextView>(R.id.widget_task_collection_row_time).currentTextColor)
+            factory.onDestroy()
+        }
+        store.delete(intArrayOf(42))
     }
 
     private companion object {

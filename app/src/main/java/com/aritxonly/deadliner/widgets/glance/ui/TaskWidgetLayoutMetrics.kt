@@ -6,7 +6,6 @@ internal object TaskWidgetLayoutMetrics {
     const val HEADER_GAP_DP = 5
     const val ROW_GAP_DP = 4
     const val STATIC_TASK_LIMIT = 3
-    const val CARD_BACKGROUND_ALPHA = 0.92f
 
     fun staticVisibleTaskCount(totalCount: Int): Int = totalCount.coerceIn(0, STATIC_TASK_LIMIT)
 }

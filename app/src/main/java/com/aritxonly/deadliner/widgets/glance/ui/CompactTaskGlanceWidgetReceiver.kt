@@ -30,7 +30,6 @@ class CompactTaskGlanceWidgetReceiver : GlanceAppWidgetReceiver() {
 
     private companion object {
         val refreshActions = setOf(
-            Intent.ACTION_CONFIGURATION_CHANGED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
             Intent.ACTION_BOOT_COMPLETED,
         )

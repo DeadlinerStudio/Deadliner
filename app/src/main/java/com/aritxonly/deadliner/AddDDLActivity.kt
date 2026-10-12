@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -36,17 +38,13 @@ import androidx.compose.material3.Text
 import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -92,15 +90,15 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.util.Locale
 import com.aritxonly.deadliner.ai.AIUtils
 
 @SuppressLint("SimpleDateFormat")
 class AddDDLActivity : DeadlinerAppCompatActivity() {
 
+    private var showQuickAdd by mutableStateOf(false)
     private var selectedPage by mutableIntStateOf(0)
     private var editingTaskUid: String? = null
+    private var editingHabitUid: String? = null
 
     private var taskDraft by mutableStateOf(TaskEditorDraft())
     private var habitDraft by mutableStateOf(HabitEditorDraft())
@@ -171,9 +169,13 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     companion object {
         const val EXTRA_PREFILL_TEXT = "EXTRA_PREFILL_TEXT"
         const val EXTRA_AUTO_RUN_AI = "EXTRA_AUTO_RUN_AI"
+        private const val EXTRA_EDIT_HABIT_UID = "EXTRA_EDIT_HABIT_UID"
         private const val EXTRA_EDIT_TASK_UID = "EXTRA_EDIT_TASK_UID"
         private val REMINDER_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
         private val AI_DUE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+        fun newEditHabitIntent(context: android.content.Context, habitUid: String): Intent =
+            Intent(context, AddDDLActivity::class.java).putExtra(EXTRA_EDIT_HABIT_UID, habitUid)
 
         fun newEditIntent(context: android.content.Context, taskUid: String): Intent =
             Intent(context, AddDDLActivity::class.java).putExtra(EXTRA_EDIT_TASK_UID, taskUid)
@@ -189,19 +191,29 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         DynamicColorsExtension.apply(this, GlobalUtils.seedColor)
         GlobalUtils.decideHideFromRecent(this, this)
 
+        editingHabitUid = intent.getStringExtra(EXTRA_EDIT_HABIT_UID)
         editingTaskUid = intent.getStringExtra(EXTRA_EDIT_TASK_UID)
-        selectedPage = if (editingTaskUid == null) {
+        selectedPage = if (editingTaskUid == null && editingHabitUid == null) {
             intent.getIntExtra("EXTRA_CURRENT_TYPE", 0).coerceIn(0, 1)
         } else {
             0
         }
 
+        if (editingHabitUid != null) selectedPage = 1
+
         val generatedDDL = intent.getParcelableExtra<GeneratedDDL>("EXTRA_GENERATE_DDL")
         val prefillText = intent.getStringExtra(EXTRA_PREFILL_TEXT)
         val autoRunAi = intent.getBooleanExtra(EXTRA_AUTO_RUN_AI, false)
 
+        showQuickAdd = savedInstanceState?.getBoolean("quick_add_show") ?: (GlobalUtils.quickAddEnabled &&
+            editingTaskUid == null && editingHabitUid == null && generatedDDL == null && prefillText.isNullOrBlank())
         applyInitialData(generatedDDL, prefillText, autoRunAi)
         editingTaskUid?.let(::loadTaskForEditing)
+        editingHabitUid?.let { uid ->
+            val habit = KmpV6Runtime.database.habits.find(uid)
+            if (habit == null) { finish(); return }
+            habitDraft = com.aritxonly.deadliner.ui.editor.habitDraftForEditing(habit)
+        }
         promptDeadlinerDonateIfNeeded()
 
         setContent {
@@ -211,26 +223,18 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         }
     }
 
-    private fun applyInitialData(
-        generatedDDL: GeneratedDDL?,
-        prefillText: String?,
-        autoRunAi: Boolean
-    ) {
-        generatedDDL?.let {
-            updateSharedName(it.name)
-            taskDraft = taskDraft.copy(
-                endTime = it.dueTime,
-                note = it.note
-            )
-        }
+    override fun onSaveInstanceState(outState: android.os.Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean("quick_add_show", showQuickAdd)
+    }
 
-        val safePrefill = prefillText?.trim().orEmpty()
-        if (safePrefill.isNotEmpty()) {
-            aiInputText = safePrefill
-        }
-        if (autoRunAi && safePrefill.isNotEmpty()) {
-            autoRunAiOnAppear = true
-        }
+    private fun applyInitialData(generatedDDL: GeneratedDDL?, prefillText: String?, autoRunAi: Boolean) {
+        val initial = com.aritxonly.deadliner.ui.quickadd.AddEntryInitialData.create(generatedDDL, prefillText, autoRunAi, intent)
+        calendarEventId = initial.calendarEventId
+        taskDraft = initial.task
+        habitDraft = initial.habit
+        aiInputText = initial.aiText
+        autoRunAiOnAppear = initial.autoRunAI
     }
 
     private fun updateSharedName(name: String) {
@@ -289,12 +293,8 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         )
     }
 
-    private fun calendarEventDisplayText(event: CalendarEvent): String {
-        val time = GlobalUtils.parseDateTime(event.startMillis.toDateTimeString())
-        val formattedTime = time?.let(::formatLocalDateTime) ?: getString(R.string.parse_failed)
-        val title = event.title?.takeIf { it.isNotBlank() } ?: getString(R.string.untitled)
-        return "$title - $formattedTime"
-    }
+    private fun calendarEventDisplayText(event: CalendarEvent): String =
+        com.aritxonly.deadliner.calendar.formatCalendarImportEvent(this, event)
 
     private fun applySelectedCalendarEvent() {
         val eventId = selectedCalendarEventId ?: return
@@ -324,19 +324,25 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun AddDDLScreen() {
+        if (showQuickAdd) {
+            return com.aritxonly.deadliner.ui.quickadd.QuickAddSheet(
+                if (selectedPage == 0) "TASK" else "HABIT", { finishAfterTransition() },
+                onExpand = { proposal, raw ->
+                    selectedPage = if (proposal.kind == "HABIT") 1 else 0
+                    val expanded = com.aritxonly.deadliner.ui.quickadd.QuickAddEditorEntry.initialData(intent)
+                    taskDraft = expanded?.task ?: com.aritxonly.deadliner.ui.quickadd.QuickAddPersistence.taskDraft(proposal, raw)
+                    habitDraft = expanded?.habit ?: com.aritxonly.deadliner.ui.quickadd.QuickAddPersistence.habitDraft(proposal, raw)
+                    calendarEventId = expanded?.calendarEventId
+                    aiInputText = raw
+                    showQuickAdd = false
+                },
+                onSaved = { setResult(RESULT_OK); finishAfterTransition() })
+        }
         val tabs = listOf(stringResource(R.string.task), stringResource(R.string.habit))
         val pageSurfaceColor = MaterialTheme.colorScheme.surface
         val advancedMaterial = LocalAdvancedMaterialSpec.current
         val layoutDirection = LocalLayoutDirection.current
         val categories = rememberActiveCategories()
-        val filteredCalendarEvents = calendarImportEvents.filter { event ->
-            val query = calendarImportSearchQuery.trim()
-            if (query.isBlank()) {
-                true
-            } else {
-                calendarEventDisplayText(event).contains(query, ignoreCase = true)
-            }
-        }
         LaunchedEffect(autoRunAiOnAppear, aiInputText, aiAutoTriggered) {
             if (autoRunAiOnAppear && !aiAutoTriggered && aiInputText.isNotBlank()) {
                 aiAutoTriggered = true
@@ -359,7 +365,6 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                     containerColor = Color.Transparent,
                     contentColor = contentColorFor(Color.Transparent),
                     contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                    advancedMaterialTopBarTintColor = MaterialTheme.colorScheme.surface,
                     topBarMaterialScrollKey = selectedPage,
                     topBar = {
                         Column(
@@ -368,10 +373,9 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                                 .background(if (advancedMaterial.enabled) Color.Transparent else pageSurfaceColor)
                         ) {
                             TopAppBar(
-                                title = stringResource(if (editingTaskUid == null) R.string.add_task else R.string.edit),
+                                title = stringResource(if (editingTaskUid == null && editingHabitUid == null) R.string.add_task else R.string.edit),
                                 mode = TopAppBarStyle.CENTER,
                                 titleTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
-                                useParentMaterialContainer = advancedMaterial.enabled,
                                 navigationIcon = {
                                     IconButton(onClick = { finishAfterTransition() }) {
                                         Icon(
@@ -605,155 +609,22 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
                 }
 
                 if (showCalendarImportDialog) {
-                    AlertDialog(
-                        show = true,
-                        onDismissRequest = { showCalendarImportDialog = false },
-                        renderTextContentInMiuix = true,
-                        title = { Text(stringResource(R.string.select_calendar_to_import)) },
-                        text = {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                TextButton(
-                                    onClick = { showCalendarFilterDialog() },
-                                    modifier = Modifier.align(Alignment.End)
-                                ) {
-                                    Text(stringResource(R.string.filter_calendar_account))
-                                }
-                                OutlinedTextField(
-                                    value = calendarImportSearchQuery,
-                                    onValueChange = { calendarImportSearchQuery = it },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    placeholder = { Text(stringResource(R.string.search)) },
-                                    miuixLabel = getString(R.string.search),
-                                    singleLine = true
-                                )
-                                if (filteredCalendarEvents.isEmpty()) {
-                                    Text(
-                                        text = stringResource(R.string.no_task_add_calendar),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                } else {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .heightIn(max = 320.dp)
-                                            .verticalScroll(rememberScrollState()),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        filteredCalendarEvents.forEach { event ->
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable { selectedCalendarEventId = event.id }
-                                                    .padding(vertical = 6.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                RadioButton(
-                                                    selected = selectedCalendarEventId == event.id,
-                                                    onClick = { selectedCalendarEventId = event.id }
-                                                )
-                                                Text(
-                                                    text = calendarEventDisplayText(event),
-                                                    modifier = Modifier
-                                                        .weight(1f)
-                                                        .padding(start = 8.dp),
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        miuixTitle = getString(R.string.select_calendar_to_import),
-                        miuixSummary = getString(R.string.settings_import),
-                        confirmButton = {
-                            TextButton(onClick = {
-                                if (selectedCalendarEventId == null) {
-                                    Toast.makeText(
-                                        this@AddDDLActivity,
-                                        getString(R.string.no_event_select),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    applySelectedCalendarEvent()
-                                }
-                            }) {
-                                Text(stringResource(R.string.settings_import))
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showCalendarImportDialog = false }) {
-                                Text(stringResource(R.string.cancel))
-                            }
-                        }
+                    com.aritxonly.deadliner.calendar.CalendarImportDialog(
+                        events = calendarImportEvents, query = calendarImportSearchQuery,
+                        selectedId = selectedCalendarEventId, eventLabel = ::calendarEventDisplayText,
+                        onQueryChange = { calendarImportSearchQuery = it },
+                        onSelect = { selectedCalendarEventId = it }, onFilter = ::showCalendarFilterDialog,
+                        onConfirm = ::applySelectedCalendarEvent,
+                        onDismiss = { showCalendarImportDialog = false },
                     )
                 }
 
                 if (showCalendarAccountFilterDialog) {
-                    AlertDialog(
-                        show = true,
-                        onDismissRequest = { showCalendarAccountFilterDialog = false },
-                        renderTextContentInMiuix = true,
-                        title = { Text(stringResource(R.string.select_calendar_account_to_hide)) },
-                        text = {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = 320.dp)
-                                    .verticalScroll(rememberScrollState()),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                calendarAccountOptions.forEach { account ->
-                                    val checked = selectedCalendarAccounts.contains(account)
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                selectedCalendarAccounts = if (checked) {
-                                                    selectedCalendarAccounts - account
-                                                } else {
-                                                    selectedCalendarAccounts + account
-                                                }
-                                            }
-                                            .padding(vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Checkbox(
-                                            checked = checked,
-                                            onCheckedChange = { isChecked ->
-                                                selectedCalendarAccounts = if (isChecked) {
-                                                    selectedCalendarAccounts + account
-                                                } else {
-                                                    selectedCalendarAccounts - account
-                                                }
-                                            }
-                                        )
-                                        Text(
-                                            text = account,
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .padding(start = 8.dp),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                        )
-                                    }
-                                }
-                            }
-                        },
-                        miuixTitle = getString(R.string.select_calendar_account_to_hide),
-                        miuixSummary = getString(R.string.filter_calendar_account),
-                        confirmButton = {
-                            TextButton(onClick = { saveCalendarAccountFilterSelection() }) {
-                                Text(stringResource(R.string.accept))
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showCalendarAccountFilterDialog = false }) {
-                                Text(stringResource(R.string.cancel))
-                            }
-                        }
+                    com.aritxonly.deadliner.calendar.CalendarAccountFilterDialog(
+                        accounts = calendarAccountOptions, selected = selectedCalendarAccounts,
+                        onSelectionChange = { selectedCalendarAccounts = it },
+                        onConfirm = ::saveCalendarAccountFilterSelection,
+                        onDismiss = { showCalendarAccountFilterDialog = false },
                     )
                 }
             }
@@ -920,10 +791,11 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         } else {
             null
         }
-        val editor = KmpV6Runtime.createHabitEditorViewModel()
+        val editor = KmpV6Runtime.createHabitEditorViewModel(editingHabitUid)
         editor.updateName(name)
-        editor.updatePeriod(habitDraft.period)
-        if (!isEbbinghaus) {
+        val existing = editingHabitUid?.let(KmpV6Runtime.database.habits::find)
+        if (existing == null || existing.period != habitDraft.period) editor.updatePeriod(habitDraft.period)
+        if (!isEbbinghaus && (existing == null || existing.schedule.weekdaysMask != habitDraft.weekdaysMask)) {
             editor.updateWeekdaysMask(habitDraft.weekdaysMask)
         }
         editor.updateTimesPerPeriod(if (goalType == HabitGoalType.TOTAL) 1 else frequency)
@@ -1048,12 +920,8 @@ class AddDDLActivity : DeadlinerAppCompatActivity() {
         showCalendarAccountFilterDialog = true
     }
 
-    private fun formatLocalDateTime(dateTime: LocalDateTime): String {
-        val formatter = DateTimeFormatter
-            .ofLocalizedDateTime(FormatStyle.MEDIUM)
-            .withLocale(Locale.getDefault())
-        return dateTime.format(formatter)
-    }
+    private fun formatLocalDateTime(dateTime: LocalDateTime): String =
+        com.aritxonly.deadliner.ui.editor.formatEditorDateTime(dateTime)
 
     private fun launchPicker(showPicker: () -> Unit) = showPicker()
 

@@ -52,6 +52,9 @@ fun FocusTimerSetupSheet(
     onStart: (FocusTimerMode, Int) -> Unit,
     onDismissRequest: () -> Unit,
     onDismissFinished: () -> Unit,
+    selectedIsHabit: Boolean = false,
+    habits: List<com.deadliner.domain.habit.Habit> = emptyList(),
+    onSelectHabit: (com.deadliner.domain.habit.Habit) -> Unit = {},
 ) {
     var countdown by rememberSaveable { mutableStateOf(false) }
     var minutes by rememberSaveable { mutableIntStateOf(25) }
@@ -115,13 +118,20 @@ fun FocusTimerSetupSheet(
                 }
             }
             if (selectingTask || selectedTaskUid.isBlank()) {
-                if (tasks.isEmpty()) {
+                if (tasks.isEmpty() && habits.isEmpty()) {
                     item { Text(stringResource(R.string.focus_no_active_tasks), modifier = Modifier.padding(16.dp)) }
                 }
-                items(tasks, key = Task::uid) { task ->
+                items(tasks, key = { "task:${it.uid}" }) { task ->
                     FocusTaskChoice(title = task.title, enabled = !busy,
-                        selected = selectedTaskUid == task.uid,
+                        selected = !selectedIsHabit && selectedTaskUid == task.uid,
                         onClick = { onSelectTask(task); selectingTask = false })
+                }
+            }
+            if (selectingTask || selectedTaskUid.isBlank()) {
+                items(habits, key = { "habit:${it.uid}" }) { habit ->
+                    FocusTaskChoice(title = "${habit.name} · " + stringResource(R.string.habit_focus_target), enabled = !busy,
+                        selected = selectedIsHabit && selectedTaskUid == habit.uid,
+                        onClick = { onSelectHabit(habit); selectingTask = false })
                 }
             }
             if (error != null || startFailed) {
