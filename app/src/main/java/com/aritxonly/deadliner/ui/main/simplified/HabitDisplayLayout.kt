@@ -100,16 +100,28 @@ fun HabitDisplayLayout(
     val updateSwipeKey: (String?) -> Unit = { if (onActiveSwipeChange != null) onActiveSwipeChange(it) else localSwipeKey = it }
     LaunchedEffect(selectedDate, selectionMode, isClassic) { updateSwipeKey(null) }
     var pendingChange by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    var pendingSessionUid by remember { mutableStateOf<String?>(null) }
+    fun requestChange(uid: String, deleting: Boolean) {
+        pendingSessionUid = KmpV6Runtime.focusTimerViewModel.uiState.value.timer
+            ?.takeIf { it.target == FocusTargetRef(FocusTargetKind.HABIT, uid) }?.sessionUid
+        pendingChange = uid to deleting
+    }
     val pending = pendingChange
-    val hasFocus = pending?.let { KmpV6Runtime.focusTimerViewModel.uiState.value.timer?.target == FocusTargetRef(FocusTargetKind.HABIT, it.first) } == true
+    val hasFocus = pendingSessionUid != null
     AlertDialog(show = pending != null, onDismissRequest = { pendingChange = null },
         miuixTitle = stringResource(if (pending?.second == true) R.string.delete else R.string.archive),
         miuixSummary = if (hasFocus) stringResource(R.string.habit_focus_end_before_change) else stringResource(R.string.habit_focus_change_confirm),
         confirmButton = { Button(onClick = {
             val change = pending ?: return@Button
+            val expectedSession = pendingSessionUid
             pendingChange = null
             scope.launch {
-                if (hasFocus) KmpV6Runtime.database.createFocusTimerService().resolveHabitChange(change.first, change.second)
+                if (expectedSession != null) {
+                    val next = KmpV6Runtime.focusTimerViewModel.resolveHabitChangeNow(change.first, change.second, expectedSession)
+                    if (next.lastOutcome !in setOf(com.deadliner.domain.focus.FocusTimerOutcome.APPLIED, com.deadliner.domain.focus.FocusTimerOutcome.NO_OP)) {
+                        android.widget.Toast.makeText(context, R.string.focus_confirmation_expired, android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
                 else if (change.second) habitViewModel.deleteHabitNow(change.first, java.time.Instant.now().toString())
                 else habitViewModel.applyHabitStatusNow(change.first, HabitStatusAction.ARCHIVE, java.time.Instant.now().toString())
                 KmpV6Runtime.focusTimerViewModel.loadNow()
@@ -191,10 +203,10 @@ fun HabitDisplayLayout(
                     primaryActionColor = swipeColors.archive,
                     secondaryActionColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                     secondaryActionIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_schedule_wght400),
-                    onPrimaryAction = { pendingChange = uid to false },
+                    onPrimaryAction = { requestChange(uid, false) },
                     onSecondaryAction = { focusEntry(uid, item.habit.habit.name) },
                     onEditAction = { context.startActivity(AddDDLActivity.newEditHabitIntent(context, uid)) },
-                    onDeleteAction = { pendingChange = uid to true }, selectionMode = selectionMode, accessibilityLabel = item.habit.habit.name,
+                    onDeleteAction = { requestChange(uid, true) }, selectionMode = selectionMode, accessibilityLabel = item.habit.habit.name,
                 ) { closeOrRun ->
                 if (!isClassic) {
                     HabitRow(

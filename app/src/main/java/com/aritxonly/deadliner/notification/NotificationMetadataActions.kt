@@ -73,7 +73,7 @@ class NotificationMetadataActionActivity : Activity() {
                     val result = KmpV6Runtime.applyTaskAction(entry.ownerUid, NotificationMetadataActions.taskAction(action))
                     if (result.outcome == TaskActionOutcome.TIMER_REQUIRES_RESOLUTION) {
                         Toast.makeText(this, R.string.focus_resolve_before_task_change, Toast.LENGTH_LONG).show()
-                        result.task?.let { startActivity(FocusTimerActivity.newIntent(this, it.uid, it.title)) }
+                        result.task?.let { startActivity(FocusTimerActivity.newResolutionIntent(this, it.uid, it.title, NotificationMetadataActions.taskAction(action))) }
                     }
                     NotificationDiagnostics.event("metadata.action.task", "key" to entry.key, "action" to action, "outcome" to result.outcome)
                 }

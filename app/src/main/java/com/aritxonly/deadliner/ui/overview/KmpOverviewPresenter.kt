@@ -14,11 +14,11 @@ import kotlin.math.abs
 
 /** Presentation-only localization for the shared Overview aggregation. */
 internal object KmpOverviewPresenter {
-    fun present(context: Context, state: OverviewUiState): OverviewSnapshot {
+    fun present(context: Context, state: OverviewUiState, selectedMonth: Boolean = false): OverviewSnapshot {
         val locale = context.resources.configuration.locales[0] ?: Locale.getDefault()
         val monthStart = state.lastMonth.monthStart?.let(LocalDate::parse)
         val lastMonthName = monthStart?.month?.getDisplayName(TextStyle.FULL, locale).orEmpty()
-        val metrics = presentMetrics(context, state.lastMonth.metrics)
+        val metrics = presentMetrics(context, state.lastMonth.metrics, selectedMonth)
 
         return OverviewSnapshot(
             activeStats = linkedMapOf(
@@ -76,11 +76,11 @@ internal object KmpOverviewPresenter {
         )
     }
 
-    private fun presentMetrics(context: Context, metrics: OverviewMonthlyMetrics): List<Metric> = buildList {
-        add(metric(context, R.string.metric_last_month_total, metrics.totalTasks.toDouble(), metrics.previousTotalTasks.toDouble(), metrics.totalTasks.toString()))
-        add(metric(context, R.string.metric_last_month_completed, metrics.completedTasks.toDouble(), metrics.previousCompletedTasks.toDouble(), metrics.completedTasks.toString()))
-        add(metric(context, R.string.metric_last_month_completion_rate, metrics.completionRate, metrics.previousCompletionRate, String.format(Locale.US, "%.1f%%", metrics.completionRate)))
-        add(metric(context, R.string.metric_last_month_overdue, metrics.overdueTasks.toDouble(), metrics.previousOverdueTasks.toDouble(), metrics.overdueTasks.toString()))
+    private fun presentMetrics(context: Context, metrics: OverviewMonthlyMetrics, selectedMonth: Boolean): List<Metric> = buildList {
+        add(metric(context, if (selectedMonth) R.string.dashboard_metric_total else R.string.metric_last_month_total, metrics.totalTasks.toDouble(), metrics.previousTotalTasks.toDouble(), metrics.totalTasks.toString()))
+        add(metric(context, if (selectedMonth) R.string.dashboard_metric_completed else R.string.metric_last_month_completed, metrics.completedTasks.toDouble(), metrics.previousCompletedTasks.toDouble(), metrics.completedTasks.toString()))
+        add(metric(context, if (selectedMonth) R.string.dashboard_metric_rate else R.string.metric_last_month_completion_rate, metrics.completionRate, metrics.previousCompletionRate, String.format(Locale.US, "%.1f%%", metrics.completionRate)))
+        add(metric(context, if (selectedMonth) R.string.dashboard_metric_overdue else R.string.metric_last_month_overdue, metrics.overdueTasks.toDouble(), metrics.previousOverdueTasks.toDouble(), metrics.overdueTasks.toString()))
         metrics.mostActivePeriod?.let { period ->
             add(Metric(
                 label = context.getString(R.string.metric_most_active_period),

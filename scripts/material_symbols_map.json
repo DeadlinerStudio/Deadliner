@@ -65,6 +65,7 @@
     "ic_check_circle": { "symbol": "check_circle" },
     "ic_check_circle_fill": { "symbol": "check_circle", "fill": true },
     "ic_checkcircle": { "symbol": "check_circle" },
+    "ic_chevron_left": { "symbol": "chevron_left" },
     "ic_chevron_right": { "symbol": "chevron_right" },
     "ic_close": { "symbol": "close" },
     "ic_cloud": { "symbol": "cloud" },

@@ -65,7 +65,9 @@ fun DailyBarChart(
     data: List<DailyStat>,
     modifier: Modifier = Modifier,
     barColor: Color = MaterialTheme.colorScheme.primary,
-    overdueColor: Color = MaterialTheme.colorScheme.error
+    overdueColor: Color = MaterialTheme.colorScheme.error,
+    showOverdue: Boolean = GlobalUtils.OverviewSettings.showOverdueInDaily,
+    compact: Boolean = false,
 ) {
     if (data.isEmpty()) {
         Text(
@@ -80,11 +82,11 @@ fun DailyBarChart(
     val overdueDoneText = stringResource(R.string.overdue_done)
 
     val chartData = remember(data, barColor, overdueColor, completedText, overdueDoneText,
-        GlobalUtils.OverviewSettings.showOverdueInDaily) {
+        showOverdue) {
         data.map { stat ->
             Bars(
                 label = stat.date.dayOfMonth.toString(),
-                values = if (GlobalUtils.OverviewSettings.showOverdueInDaily) listOf(
+                values = if (showOverdue) listOf(
                     Bars.Data(value = stat.completedCount.toDouble(), color = Brush.verticalGradient(
                         listOf<Color>(barColor, barColor.copy(alpha = 0.5f))
                     ), label = completedText),
@@ -110,7 +112,7 @@ fun DailyBarChart(
             barProperties = BarProperties(
                 cornerRadius = Bars.Data.Radius.Rectangle(topRight = 4.dp, topLeft = 4.dp),
                 spacing = 1.dp,
-                thickness = if (GlobalUtils.OverviewSettings.showOverdueInDaily) 15.dp else 28.dp
+                thickness = if (compact) 5.dp else if (showOverdue) 15.dp else 28.dp
             ),
             animationMode = AnimationMode.Together(delayBuilder = { it * 100L }),
             popupProperties = DefaultPopupProperties.copy(
@@ -119,7 +121,7 @@ fun DailyBarChart(
                 }
             ),
             indicatorProperties = HorizontalIndicatorProperties(enabled = false),
-            labelProperties = DefaultLabelProperties,
+            labelProperties = if (compact) DefaultLabelProperties.copy(enabled = false) else DefaultLabelProperties,
             gridProperties = GridProperties(
                 enabled = false,
             ),

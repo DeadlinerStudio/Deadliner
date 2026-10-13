@@ -25,7 +25,10 @@ class NotificationTaskActionActivity : Activity() {
                 }
                 TaskActionOutcome.TIMER_REQUIRES_RESOLUTION -> {
                     Toast.makeText(this, R.string.focus_resolve_before_task_change, Toast.LENGTH_LONG).show()
-                    result.task?.let { startActivity(FocusTimerActivity.newIntent(this, it.uid, it.title)) }
+                    result.task?.let { task ->
+                        val action = com.deadliner.domain.task.TaskAction.entries.firstOrNull { it.name == intent.getStringExtra("task_action") }
+                        if (action != null) startActivity(FocusTimerActivity.newResolutionIntent(this, task.uid, task.title, action))
+                    }
                 }
                 else -> Unit
             }

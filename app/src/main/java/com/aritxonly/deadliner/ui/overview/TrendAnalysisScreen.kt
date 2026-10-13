@@ -42,12 +42,14 @@ fun TrendAnalysisScreen(
     topContentPadding: Dp = 0.dp,
     listState: LazyListState,
     focusState: FocusOverviewState = FocusOverviewState(),
+    includeFocus: Boolean = true,
+    bottomContentPadding: Dp = 0.dp,
 ) {
     val trendItems = listOf<@Composable () -> Unit>(
         { ContributionHeatmapCard(snapshot.contributionStats) },
-        { DailyCompletedCard(snapshot.dailyStats, focusState) },
-        { MonthlyTrendCard(snapshot.monthlyStats, focusState) },
-        { PrevWeeksCard(snapshot.weeklyStats, focusState) },
+        { DailyCompletedCard(snapshot.dailyStats, focusState, includeFocus) },
+        { MonthlyTrendCard(snapshot.monthlyStats, focusState, includeFocus) },
+        { PrevWeeksCard(snapshot.weeklyStats, focusState, includeFocus) },
     )
 
     LazyColumn(
@@ -56,7 +58,7 @@ fun TrendAnalysisScreen(
             .testTag("overview-focus-trend-list")
             .syncTopBarMaterialScroll(listState)
             .mainListContainerClip(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = topContentPadding),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = topContentPadding, bottom = bottomContentPadding),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         itemsIndexed(trendItems) { index, itemComposable ->
@@ -155,6 +157,7 @@ private fun ResponsiveContributionHeatmapGrid(
 private fun DailyCompletedCard(
     dailyStats: List<DailyStat>,
     focusState: FocusOverviewState,
+    includeFocus: Boolean,
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
     val points = focusState.data?.daily.orEmpty()
@@ -173,7 +176,7 @@ private fun DailyCompletedCard(
                 barColor = indicatorPalette.completed,
                 overdueColor = indicatorPalette.overdue,
             )
-            FocusTrendSection(focusState, points, FocusChartKind.DAILY, "focus-trend-daily", focusState.data?.recentDaysSummary)
+            if (includeFocus) FocusTrendSection(focusState, points, FocusChartKind.DAILY, "focus-trend-daily", focusState.data?.recentDaysSummary)
         }
     }
 }
@@ -182,6 +185,7 @@ private fun DailyCompletedCard(
 private fun MonthlyTrendCard(
     monthlyStats: List<MonthlyStat>,
     focusState: FocusOverviewState,
+    includeFocus: Boolean,
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
     val points = focusState.data?.monthly.orEmpty()
@@ -202,7 +206,7 @@ private fun MonthlyTrendCard(
                 completedColor = indicatorPalette.completed,
                 overdueColor = indicatorPalette.pending,
             )
-            FocusTrendSection(focusState, points, FocusChartKind.MONTHLY, "focus-trend-monthly", focusState.data?.recentMonthsSummary)
+            if (includeFocus) FocusTrendSection(focusState, points, FocusChartKind.MONTHLY, "focus-trend-monthly", focusState.data?.recentMonthsSummary)
         }
     }
 }
@@ -211,6 +215,7 @@ private fun MonthlyTrendCard(
 private fun PrevWeeksCard(
     weeklyStats: List<WeeklyStat>,
     focusState: FocusOverviewState,
+    includeFocus: Boolean,
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
     val points = focusState.data?.rollingWeekly.orEmpty()
@@ -228,7 +233,7 @@ private fun PrevWeeksCard(
                     .height(160.dp).testTag("task-trend-weekly"),
                 barColor = indicatorPalette.pending,
             )
-            FocusTrendSection(focusState, points, FocusChartKind.WEEKLY, "focus-trend-weekly", focusState.data?.recentWeeksSummary)
+            if (includeFocus) FocusTrendSection(focusState, points, FocusChartKind.WEEKLY, "focus-trend-weekly", focusState.data?.recentWeeksSummary)
         }
     }
 }

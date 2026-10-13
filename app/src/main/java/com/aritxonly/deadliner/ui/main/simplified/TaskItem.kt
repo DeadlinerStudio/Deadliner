@@ -171,7 +171,7 @@ fun TaskItem(
             val outcome = applyTaskAction(action)
             if (outcome == TaskActionOutcome.TIMER_REQUIRES_RESOLUTION) {
                 Toast.makeText(activity, R.string.focus_resolve_before_task_change, Toast.LENGTH_LONG).show()
-                activity.startActivity(FocusTimerActivity.newIntent(activity, item.uid, item.title))
+                activity.startActivity(FocusTimerActivity.newResolutionIntent(activity, item.uid, item.title, action))
             } else if (outcome == TaskActionOutcome.APPLIED && action == TaskAction.MARK_COMPLETE) {
                 celebrate()
                 Toast.makeText(activity, R.string.toast_finished, Toast.LENGTH_SHORT).show()
@@ -246,7 +246,7 @@ fun TaskItem(
                                 R.string.focus_resolve_before_task_change,
                                 Toast.LENGTH_LONG,
                             ).show()
-                            activity.startActivity(FocusTimerActivity.newIntent(activity, item.uid, item.title))
+                            activity.startActivity(FocusTimerActivity.newResolutionIntent(activity, item.uid, item.title, TaskAction.MARK_GIVE_UP))
                         } else if (outcome == TaskActionOutcome.APPLIED) {
                             Toast.makeText(activity, R.string.toast_give_up, Toast.LENGTH_SHORT).show()
                         } else {
@@ -284,7 +284,7 @@ fun TaskItem(
                                 R.string.focus_resolve_before_task_change,
                                 Toast.LENGTH_LONG,
                             ).show()
-                            activity.startActivity(FocusTimerActivity.newIntent(activity, item.uid, item.title))
+                            activity.startActivity(FocusTimerActivity.newResolutionIntent(activity, item.uid, item.title, delete = true))
                         } else if (outcome == TaskActionOutcome.APPLIED) {
                             Toast.makeText(activity, R.string.toast_deletion, Toast.LENGTH_SHORT).show()
                         } else {

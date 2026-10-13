@@ -24,9 +24,9 @@ data class FocusOverviewState(
 
 /** One subscription for all three tabs, stopped with the page lifecycle. */
 @Composable
-internal fun rememberFocusOverviewState(): State<FocusOverviewState> {
+internal fun rememberFocusOverviewState(retry: Int = 0): State<FocusOverviewState> {
     val owner = LocalLifecycleOwner.current
-    return produceState(FocusOverviewState(), owner) {
+    return produceState(FocusOverviewState(), owner, retry) {
         owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             var date = LocalDate.now()
             var zone = ZoneId.systemDefault()

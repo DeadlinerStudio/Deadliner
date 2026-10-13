@@ -65,10 +65,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.ArchiveActivity
 import com.aritxonly.deadliner.MainActivity
-import com.aritxonly.deadliner.OverviewContent
-import com.aritxonly.deadliner.OverviewSettingsDialog
-import com.aritxonly.deadliner.OverviewTopBar
-import com.aritxonly.deadliner.OverviewTopBarWithTabs
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.capture.CaptureViewModel
 import com.aritxonly.deadliner.capture.ui.CaptureContent
@@ -131,7 +127,6 @@ private enum class ModernTopBarState {
 }
 
 private const val WideLayoutMinWidthDp = 840
-private const val FlattenedOverviewMinWidthDp = 1100
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -149,17 +144,14 @@ fun ModernHost(
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
     val configuration = LocalConfiguration.current
     val isWideLayout = configuration.screenWidthDp >= WideLayoutMinWidthDp
-    val useFlattenedOverview = configuration.screenWidthDp >= FlattenedOverviewMinWidthDp
     val taskVm = KmpV6Runtime.taskListViewModel
     val sharedHabitVm = KmpV6Runtime.habitListViewModel
     val captureVm: CaptureViewModel = viewModel()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val hostState = rememberMainHostState(DeadlineType.TASK)
+    val overviewMonth = com.aritxonly.deadliner.ui.overview.rememberOverviewMonth()
     val uiState = rememberMainHostUiState()
-    var overviewState by remember { mutableStateOf(KmpV6Runtime.overviewViewModel.loadNow()) }
-    var showOverviewSettings by rememberSaveable { mutableStateOf(false) }
-    var overviewSelectedTab by rememberSaveable { mutableIntStateOf(0) }
     var showCaptureMergeSheet by rememberSaveable { mutableStateOf(false) }
     var searchScope by rememberSaveable { mutableStateOf(MainSearchScope.ALL) }
     var activeSelectionPane by rememberSaveable { mutableStateOf<DeadlineType?>(null) }
@@ -254,18 +246,9 @@ fun ModernHost(
         onResumed = {
             taskVm.loadNow()
             sharedHabitVm.loadNow()
-            overviewState = KmpV6Runtime.overviewViewModel.loadNow()
         },
-        onInitialExtra = {
-            overviewState = KmpV6Runtime.overviewViewModel.loadNow()
-        },
+        onInitialExtra = {},
     )
-
-    LaunchedEffect(hostState.selectedSection) {
-        if (hostState.selectedSection == MainSection.OVERVIEW) {
-            overviewState = KmpV6Runtime.overviewViewModel.loadNow()
-        }
-    }
 
     DeadlinerUrlIntake(
         activity = activity,
@@ -427,13 +410,13 @@ fun ModernHost(
     }
     val topBarMaterialScrollKey = when (hostState.selectedSection) {
         MainSection.LIST -> hostState.selectedPage
-        MainSection.OVERVIEW -> overviewSelectedTab
+        MainSection.OVERVIEW -> MainSection.OVERVIEW
         MainSection.CAPTURE,
         MainSection.LIFI -> Unit
     }
     val useOverlayTopBar = when (hostState.selectedSection) {
         MainSection.LIST -> !searchActive
-        MainSection.OVERVIEW -> !useFlattenedOverview
+        MainSection.OVERVIEW -> true
         MainSection.CAPTURE -> true
         MainSection.LIFI -> false
     }
@@ -638,25 +621,12 @@ fun ModernHost(
                             )
                         }
                         ModernTopBarState.OVERVIEW -> {
-                            if (useFlattenedOverview) {
-                                OverviewTopBar(
-                                    showNavigationIcon = false,
-                                    onShowSettings = { showOverviewSettings = true },
-                                    mode = TopAppBarStyle.LARGE,
-                                    scrollBehavior = overviewTopBarScrollBehavior,
-                                    forceMaterial3 = forceMaterialTopBarsInMiuix,
-                                )
-                            } else {
-                                OverviewTopBarWithTabs(
-                                    selectedTab = overviewSelectedTab,
-                                    onTabSelected = { overviewSelectedTab = it },
-                                    showNavigationIcon = false,
-                                    onShowSettings = { showOverviewSettings = true },
-                                    mode = TopAppBarStyle.LARGE,
-                                    scrollBehavior = overviewTopBarScrollBehavior,
-                                    forceMaterial3 = forceMaterialTopBarsInMiuix,
-                                )
-                            }
+                            com.aritxonly.deadliner.ui.overview.OverviewDashboardTopBar(
+                                month = java.time.YearMonth.parse(overviewMonth.value),
+                                onMonthChange = { overviewMonth.value = it.toString() },
+                                scrollBehavior = overviewTopBarScrollBehavior,
+                                forceMaterial3 = forceMaterialTopBarsInMiuix,
+                            )
                         }
                         ModernTopBarState.CAPTURE -> {
                             CaptureTopBar(
@@ -882,15 +852,10 @@ fun ModernHost(
                 }
                 MainSection.OVERVIEW -> {
                     Box(modifier = Modifier.nestedScroll(overviewTopBarScrollBehavior.nestedScrollConnection)) {
-                        OverviewContent(
-                            overviewState = overviewState,
+                        com.aritxonly.deadliner.ui.overview.OverviewDashboardContent(
+                            month = java.time.YearMonth.parse(overviewMonth.value),
                             activity = activity,
-                            flattenedLayout = useFlattenedOverview,
-                            selectedTab = overviewSelectedTab,
-                            onSelectedTabChange = { overviewSelectedTab = it },
-                            showTabsInContent = useFlattenedOverview,
-                            topContentPadding = if (!useFlattenedOverview) overlayTopBarPadding else 0.dp,
-                            transparentBackground = true,
+                            topContentPadding = overlayTopBarPadding,
                         )
                     }
                 }
@@ -932,10 +897,6 @@ fun ModernHost(
         }
     }
 
-    OverviewSettingsDialog(
-        visible = hostState.selectedSection == MainSection.OVERVIEW && showOverviewSettings,
-        onDismiss = { showOverviewSettings = false },
-    )
     if (showCategoryFilter) {
         CategoryFilterSheet(
             categories = categories,

@@ -44,7 +44,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import com.aritxonly.deadliner.ui.base.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,8 +65,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.ai.AIUtils
-import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.AnimatedItem
 import com.aritxonly.deadliner.ui.TintedGradientImage
 import com.aritxonly.deadliner.ui.base.AlertDialog
@@ -79,12 +76,10 @@ import com.aritxonly.deadliner.ui.poster.renderPosterToCacheUri
 import com.aritxonly.deadliner.ui.poster.saveImageToGallery
 import com.aritxonly.deadliner.ui.poster.shareImage
 import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
-import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-private val overviewAnalysisGson = Gson()
 
 @Composable
 fun DashboardScreen(
@@ -95,6 +90,8 @@ fun DashboardScreen(
     listState: LazyListState,
     transparentBackground: Boolean = false,
     focusState: FocusOverviewState = FocusOverviewState(),
+    includeFocus: Boolean = true,
+    bottomContentPadding: Dp = 0.dp,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -104,39 +101,9 @@ fun DashboardScreen(
         Modifier.background(MaterialTheme.colorScheme.surface)
     }
 
-    var analysis by remember(snapshot.lastMonthKey) {
-        mutableStateOf(loadCachedMonthlyAnalysis(snapshot.lastMonthKey))
-    }
-    var isAnalyzing by remember(snapshot.lastMonthKey) {
-        mutableStateOf(analysis == null)
-    }
-
-    LaunchedEffect(snapshot.lastMonthKey, snapshot.metricsSummary, snapshot.completedTaskNames) {
-        val cached = loadCachedMonthlyAnalysis(snapshot.lastMonthKey)
-        if (cached != null) {
-            analysis = cached
-            isAnalyzing = false
-            return@LaunchedEffect
-        }
-
-        isAnalyzing = true
-        val generated = runCatching {
-            AIUtils.generateMonthlyAnalysis(
-                monthKey = snapshot.lastMonthKey,
-                monthName = snapshot.lastMonthName,
-                metricsSummary = snapshot.metricsSummary,
-                completedTaskNames = snapshot.completedTaskNames,
-            )
-        }.getOrNull()
-
-        if (generated != null && generated.summary.isNotBlank()) {
-            analysis = generated
-            GlobalUtils.OverviewSettings.monthlyAnalysisJson =
-                overviewAnalysisGson.toJson(generated)
-            GlobalUtils.OverviewSettings.lastAnalyzedMonth = snapshot.lastMonthKey
-        }
-        isAnalyzing = false
-    }
+    val insight by rememberMonthlyInsight(snapshot)
+    val analysis = insight.analysis
+    val isAnalyzing = insight.loading
 
     var exporting by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
@@ -151,10 +118,13 @@ fun DashboardScreen(
             .then(pageBackground)
             .syncTopBarMaterialScroll(listState)
             .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = topContentPadding)
+        contentPadding = PaddingValues(top = topContentPadding, bottom = bottomContentPadding)
     ) {
         item {
             DashboardHeaderSection(monthName = snapshot.lastMonthName)
+            if (!includeFocus) Text(stringResource(R.string.dashboard_due_month_scope),
+                Modifier.padding(horizontal = 4.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item {
             when {
@@ -164,10 +134,10 @@ fun DashboardScreen(
             }
         }
         item {
-            val focusMetrics = focusState.data?.lastMonth?.let { focusMonthlyMetrics(context, it) }.orEmpty()
+            val focusMetrics = if (includeFocus) focusState.data?.lastMonth?.let { focusMonthlyMetrics(context, it) }.orEmpty() else emptyList()
             // Keep the two focus metrics together after the four primary Task outcomes.
             DashboardMetricsSection(metrics = snapshot.metrics.take(4) + focusMetrics + snapshot.metrics.drop(4))
-            FocusInlineStatus(focusState)
+            if (includeFocus) FocusInlineStatus(focusState)
         }
         if (snapshot.lastMonthDailyStats.isNotEmpty()) {
             item {
@@ -175,6 +145,7 @@ fun DashboardScreen(
                     monthName = snapshot.lastMonthName,
                     dailyStats = snapshot.lastMonthDailyStats,
                     focusState = focusState,
+                    includeFocus = includeFocus,
                 )
             }
         }
@@ -191,7 +162,7 @@ fun DashboardScreen(
                     }
                 }
             )
-            Text(stringResource(R.string.focus_stats_share_scope), Modifier.padding(top = 4.dp),
+            if (includeFocus) Text(stringResource(R.string.focus_stats_share_scope), Modifier.padding(top = 4.dp),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item {
@@ -233,15 +204,6 @@ fun DashboardScreen(
             }
         }
     )
-}
-
-private fun loadCachedMonthlyAnalysis(monthKey: String): MonthlyAnalysisResult? {
-    val json = GlobalUtils.OverviewSettings.monthlyAnalysisJson ?: return null
-    val analyzedMonth = GlobalUtils.OverviewSettings.lastAnalyzedMonth
-    val cached = runCatching {
-        overviewAnalysisGson.fromJson(json, MonthlyAnalysisResult::class.java)
-    }.getOrNull() ?: return null
-    return cached.takeIf { it.month == monthKey || analyzedMonth == monthKey }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -440,7 +402,7 @@ private fun LoadingInsightCard() {
         ) {
             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
             Text(
-                text = stringResource(R.string.monthly_ai_analyzing),
+                text = stringResource(R.string.dashboard_ai_analyzing),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -539,6 +501,7 @@ private fun LastMonthActivityMapCard(
     monthName: String,
     dailyStats: List<DailyStat>,
     focusState: FocusOverviewState,
+    includeFocus: Boolean,
 ) {
     Card(
         shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)),
@@ -576,7 +539,7 @@ private fun LastMonthActivityMapCard(
                 highLabel = stringResource(R.string.heatmap_high_frequency),
                 levels = List(5) { level -> colorForLastMonthActivity(level * 2) },
             )
-            FocusTrendSection(focusState, focusState.data?.lastMonth?.current?.daily.orEmpty(),
+            if (includeFocus) FocusTrendSection(focusState, focusState.data?.lastMonth?.current?.daily.orEmpty(),
                 FocusChartKind.MONTH_DAILY, "focus-last-month-daily", focusState.data?.lastMonth?.current?.summary)
         }
     }

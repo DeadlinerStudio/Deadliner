@@ -62,7 +62,7 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
 
                 TaskActionOutcome.TIMER_REQUIRES_RESOLUTION -> {
                     Toast.makeText(this, R.string.focus_resolve_before_task_change, Toast.LENGTH_LONG).show()
-                    focusLauncher.launch(FocusTimerActivity.newIntent(this, taskUid, result.task?.title.orEmpty()))
+                    focusLauncher.launch(FocusTimerActivity.newResolutionIntent(this, taskUid, result.task?.title.orEmpty(), action))
                 }
 
                 else -> Toast.makeText(this, R.string.focus_task_action_failed, Toast.LENGTH_SHORT).show()
@@ -79,7 +79,7 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
 
                 TaskActionOutcome.TIMER_REQUIRES_RESOLUTION -> {
                     Toast.makeText(this, R.string.focus_resolve_before_task_change, Toast.LENGTH_LONG).show()
-                    focusLauncher.launch(FocusTimerActivity.newIntent(this, taskUid, result.task?.title.orEmpty()))
+                    focusLauncher.launch(FocusTimerActivity.newResolutionIntent(this, taskUid, result.task?.title.orEmpty(), delete = true))
                 }
 
                 else -> Toast.makeText(this, R.string.focus_task_action_failed, Toast.LENGTH_SHORT).show()

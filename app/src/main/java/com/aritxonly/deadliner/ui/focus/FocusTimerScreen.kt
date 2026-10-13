@@ -61,6 +61,12 @@ fun FocusTimerScreen(
     onAdjustSession: (String, Long) -> Unit,
     onDeleteSession: (String) -> Unit,
     onFinishAndRecordHabit: (String, Int?, String?) -> Unit = { _, _, _ -> },
+    onCompleteSavedTask: (String) -> Unit = {},
+    resolutionVisible: Boolean = false,
+    resolutionAction: com.deadliner.domain.task.TaskAction? = null,
+    resolutionDelete: Boolean = false,
+    onCancelResolution: () -> Unit = {},
+    onConfirmResolution: () -> Unit = {},
 ) {
     var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
     var editingSession by remember { mutableStateOf<FocusSession?>(null) }
@@ -128,10 +134,10 @@ fun FocusTimerScreen(
                 com.deadliner.domain.focus.FocusTimerOutcome.HABIT_INVALID_AMOUNT, com.deadliner.domain.focus.FocusTimerOutcome.INVALID_STATE)) {
                 item { InlineMessage(stringResource(R.string.habit_focus_record_failed), isError = true) }
             }
-            state.warning?.let {
+            state.warning?.let { warning ->
                 item {
                     InlineMessage(
-                        stringResource(R.string.focus_alarm_fallback_warning),
+                        stringResource(focusWarningResource(warning)),
                         isError = false,
                     )
                 }
@@ -161,6 +167,13 @@ fun FocusTimerScreen(
                                 style = MiuixTheme.textStyles.title1.copy(fontWeight = FontWeight.SemiBold))
                         }
                         val saved = state.lastCompletedSession
+                        if (saved != null && state.canCompleteLastTask) {
+                            TextButton(text = stringResource(R.string.focus_complete_saved_task), enabled = !state.isBusy,
+                                onClick = { onCompleteSavedTask(saved.uid) })
+                        } else if (state.lastCompletedTaskState == com.deadliner.domain.task.TaskState.COMPLETED ||
+                            state.lastCompletedTaskState == com.deadliner.domain.task.TaskState.ARCHIVED) {
+                            Text(stringResource(R.string.focus_saved_task_completed), color = MiuixTheme.colorScheme.onSurfaceVariantSummary)
+                        }
                         if (saved?.boundTarget?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT &&
                             saved.habitRecordedAmount == null && recordSessionUid == null && recordContext?.canRecord == true) {
                             TextButton(text = stringResource(R.string.habit_focus_record), enabled = !state.isBusy,
@@ -204,6 +217,17 @@ fun FocusTimerScreen(
             }
         }
     }
+
+    val resolutionLabel = stringResource(when {
+        resolutionDelete -> R.string.focus_resolve_delete
+        resolutionAction == com.deadliner.domain.task.TaskAction.MARK_ARCHIVE -> R.string.focus_resolve_archive
+        resolutionAction == com.deadliner.domain.task.TaskAction.MARK_GIVE_UP -> R.string.focus_resolve_abandon
+        else -> R.string.focus_resolve_complete
+    })
+    AlertDialog(show = resolutionVisible, onDismissRequest = onCancelResolution,
+        miuixTitle = resolutionLabel, miuixSummary = stringResource(R.string.focus_resolve_joint_message),
+        confirmButton = { Button(onClick = onConfirmResolution, enabled = !state.isBusy) { Text(resolutionLabel) } },
+        dismissButton = { TextButton(text = stringResource(R.string.cancel), enabled = !state.isBusy, onClick = onCancelResolution) })
 
     AlertDialog(
         show = showDiscardDialog,

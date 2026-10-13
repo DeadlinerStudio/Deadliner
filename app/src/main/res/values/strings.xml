@@ -278,7 +278,7 @@
     <string name="add_edit_deadline">添加/编辑Deadline</string>
 
     <string name="filter_dialog_title">排序方式</string>
-    <string name="title_activity_overview">概览</string>
+    <string name="title_activity_overview">总览</string>
 
     <string name="snackbar_already_checkin">今天已经打卡过了哦～明天再来吧！☺️</string>
 
@@ -561,7 +561,7 @@
     <string name="preset_delete_title">删除预设</string>
     <string name="preset_delete_msg">确定要删除“%1$s”吗？</string>
     <string name="settings_support_clipboard">开启选项后，Deadliner将在剪切板变化时提示你使用Lifi AI添加任务。</string>
-    <string name="overview">概览</string>
+    <string name="overview">总览</string>
     <string name="edit_profile">编辑资料</string>
 
     <!-- 早晨 -->
@@ -676,8 +676,8 @@
 
     <string name="shortcut_add_task_short">添加任务</string>
     <string name="shortcut_add_task_long">快速添加任务</string>
-    <string name="shortcut_overview_short">概览统计</string>
-    <string name="shortcut_overview_long">查看概览统计</string>
+    <string name="shortcut_overview_short">总览</string>
+    <string name="shortcut_overview_long">查看总览</string>
     <string name="shortcut_disabled_message">此快捷方式当前不可用</string>
 
     <string name="detect_share_link">检测到分享链接</string>

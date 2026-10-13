@@ -46,11 +46,14 @@ fun OverviewStatsScreen(
     topContentPadding: Dp = 0.dp,
     listState: LazyListState,
     focusState: FocusOverviewState = FocusOverviewState(),
+    includeFocus: Boolean = true,
+    monthData: com.deadliner.viewmodel.overview.OverviewMonthUiState? = null,
+    bottomContentPadding: Dp = 0.dp,
 ) {
     val overviewItems = listOf<@Composable () -> Unit>(
-        { ActiveStatsCard(activeStats, focusState) },
+        { ActiveStatsCard(activeStats, focusState, includeFocus) },
         { CompletionTimeCard(completionTimeStats) },
-        { HistoryStatsCard(historyStats, focusState) }
+        { HistoryStatsCard(historyStats, focusState, includeFocus) }
     )
 
     LazyColumn(
@@ -59,15 +62,31 @@ fun OverviewStatsScreen(
             .testTag("overview-focus-overview-list")
             .syncTopBarMaterialScroll(listState)
             .mainListContainerClip(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = topContentPadding),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = topContentPadding, bottom = bottomContentPadding),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
+        monthData?.let { month ->
+            item("selected-month-tasks") {
+                Card(modifier = Modifier.padding(16.dp, 8.dp).fillMaxWidth(),
+                    shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+                    Column(Modifier.padding(20.dp)) {
+                        Text(stringResource(R.string.dashboard_selected_task_month) + " · " + month.monthStart.take(7), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.dashboard_count, month.completedCount), style = MaterialTheme.typography.headlineMedium)
+                        Text(stringResource(R.string.dashboard_completion_date_scope), style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        DailyBarChart(month.daily.map { DailyStat(java.time.LocalDate.parse(it.date), it.date, it.completedCount, it.overdueCount) },
+                            Modifier.fillMaxWidth().height(140.dp), showOverdue = false, compact = true)
+                    }
+                }
+            }
+        }
         itemsIndexed(overviewItems) { index, itemContent ->
             AnimatedItem(delayMillis = index * 100L) {
                 itemContent()
             }
         }
-        focusState.data?.thisMonth?.let { focus ->
+        if (includeFocus) focusState.data?.thisMonth?.let { focus ->
             item(key = "focus-distribution") { FocusDistributionCard(focus) }
         }
 
@@ -81,6 +100,7 @@ fun OverviewStatsScreen(
 fun HistoryStatsCard(
     historyStats: Map<String, Int>,
     focusState: FocusOverviewState = FocusOverviewState(),
+    includeFocus: Boolean = true,
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
     val indicatorRoles = listOf(
@@ -134,7 +154,7 @@ fun HistoryStatsCard(
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            FocusHistorySummary(focusState)
+            if (includeFocus) FocusHistorySummary(focusState)
             Spacer(modifier = Modifier.height(16.dp))
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -185,6 +205,7 @@ fun CompletionTimeCard(
 fun ActiveStatsCard(
     activeStats: Map<String, Int>,
     focusState: FocusOverviewState = FocusOverviewState(),
+    includeFocus: Boolean = true,
 ) {
     val indicatorPalette = rememberOverviewIndicatorPalette()
     val indicatorRoles = listOf(
@@ -214,7 +235,7 @@ fun ActiveStatsCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
-            FocusTodaySummary(focusState)
+            if (includeFocus) FocusTodaySummary(focusState)
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),

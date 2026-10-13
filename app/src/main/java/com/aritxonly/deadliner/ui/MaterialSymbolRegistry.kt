@@ -37,6 +37,7 @@ internal object MaterialSymbolRegistry {
         R.drawable.msr_check_wght400 to MaterialSymbolDefinition("check"),
         R.drawable.msr_check_circle_wght400 to MaterialSymbolDefinition("check_circle"),
         R.drawable.msr_check_circle_fill_wght400 to MaterialSymbolDefinition("check_circle", filled = true),
+        R.drawable.msr_chevron_left_wght400 to MaterialSymbolDefinition("chevron_left"),
         R.drawable.msr_chevron_right_wght400 to MaterialSymbolDefinition("chevron_right"),
         R.drawable.msr_close_wght400 to MaterialSymbolDefinition("close"),
         R.drawable.msr_cloud_wght400 to MaterialSymbolDefinition("cloud"),

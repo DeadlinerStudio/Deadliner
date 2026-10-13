@@ -62,8 +62,14 @@ import top.yukonga.miuix.kmp.basic.ScrollBehavior
 class OverviewActivity : DeadlinerComponentActivity() {
 
     companion object {
+        fun domainIntent(context: Context, domain: String, month: java.time.YearMonth): Intent =
+            statisticsIntent(context).putExtra("domain", domain).putExtra("month", month.toString())
+
+        fun statisticsIntent(context: Context): Intent =
+            Intent(context, OverviewActivity::class.java).putExtra("full_statistics", true)
+
         fun newIntent(context: Context): Intent {
-            return Intent(context, OverviewActivity::class.java)
+            return Intent(context, OverviewActivity::class.java).putExtra("full_statistics", false)
         }
     }
 
@@ -74,14 +80,22 @@ class OverviewActivity : DeadlinerComponentActivity() {
 
         setContent {
             DeadlinerTheme {
-                val overviewState = remember { KmpV6Runtime.overviewViewModel.loadNow() }
-                OverviewScreen(
-                    overviewState = overviewState,
-                    activity = this,
-                    onClose = { finish() }
-                )
+                if (intent.getBooleanExtra("full_statistics", true)) {
+                    val month = runCatching { java.time.YearMonth.parse(intent.getStringExtra("month")) }
+                        .getOrDefault(java.time.YearMonth.now())
+                        .coerceAtMost(java.time.YearMonth.now())
+                    com.aritxonly.deadliner.ui.overview.OverviewDomainScreen(
+                        this, intent.getStringExtra("domain") ?: "tasks", month, onClose = { finish() })
+                } else {
+                    com.aritxonly.deadliner.ui.overview.OverviewDashboardScreen(this, onClose = { finish() })
+                }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        enableEdgeToEdgeForAllDevices()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -125,7 +139,7 @@ fun OverviewTopBar(
     scrollBehavior: ScrollBehavior? = null,
 ) {
     TopAppBar(
-        title = stringResource(R.string.title_activity_overview),
+        title = stringResource(R.string.dashboard_statistics_title),
         mode = mode,
         forceMaterial3 = forceMaterial3,
         navigationIcon = if (showNavigationIcon) {
@@ -222,10 +236,12 @@ fun OverviewContent(
     showTabsInContent: Boolean = true,
     topContentPadding: Dp = 0.dp,
     transparentBackground: Boolean = false,
+    includeFocus: Boolean = true,
+    monthData: com.deadliner.viewmodel.overview.OverviewMonthUiState? = null,
 ) {
-    val focusState by rememberFocusOverviewState()
-    val snapshot = remember(overviewState) {
-        KmpOverviewPresenter.present(activity, overviewState)
+    val focusState = if (includeFocus) rememberFocusOverviewState().value else com.aritxonly.deadliner.ui.overview.FocusOverviewState()
+    val snapshot = remember(overviewState, monthData) {
+        KmpOverviewPresenter.present(activity, overviewState.copy(lastMonth = monthData?.review ?: overviewState.lastMonth), monthData != null)
     }
     val statsListState = rememberLazyListState()
     val trendListState = rememberLazyListState()
@@ -246,6 +262,8 @@ fun OverviewContent(
         ) {
             OverviewStatsScreen(
                 focusState = focusState,
+                includeFocus = includeFocus,
+                monthData = monthData,
                 activeStats = snapshot.activeStats,
                 historyStats = snapshot.historyStats,
                 completionTimeStats = snapshot.completionTimeStats,
@@ -258,6 +276,7 @@ fun OverviewContent(
             )
             TrendAnalysisScreen(
                 focusState = focusState,
+                includeFocus = includeFocus,
                 snapshot = snapshot,
                 modifier = Modifier
                     .weight(1f)
@@ -268,6 +287,7 @@ fun OverviewContent(
             )
             DashboardScreen(
                 focusState = focusState,
+                includeFocus = includeFocus,
                 snapshot = snapshot,
                 activity = activity,
                 modifier = Modifier
@@ -309,6 +329,8 @@ fun OverviewContent(
         when (currentTab) {
             0 -> OverviewStatsScreen(
                 focusState = focusState,
+                includeFocus = includeFocus,
+                monthData = monthData,
                 activeStats = snapshot.activeStats,
                 historyStats = snapshot.historyStats,
                 completionTimeStats = snapshot.completionTimeStats,
@@ -319,6 +341,7 @@ fun OverviewContent(
 
             1 -> TrendAnalysisScreen(
                 focusState = focusState,
+                includeFocus = includeFocus,
                 snapshot = snapshot,
                 modifier = pageBackground,
                 topContentPadding = topContentPadding,
@@ -327,6 +350,7 @@ fun OverviewContent(
 
             else -> DashboardScreen(
                 focusState = focusState,
+                includeFocus = includeFocus,
                 snapshot = snapshot,
                 activity = activity,
                 modifier = pageBackground,

@@ -78,7 +78,7 @@ class MainSelectionActionController(
             onCelebrate()
             toast(R.string.toast_finished)
         }
-        openFocusTimerIfBlocked(blockedTaskUid, blockedTaskTitle)
+        openFocusTimerIfBlocked(blockedTaskUid, blockedTaskTitle, TaskAction.MARK_COMPLETE)
     }
 
     fun onArchiveClick() {
@@ -132,7 +132,7 @@ class MainSelectionActionController(
                     }
                 }
                 if (appliedCount > 0) toast(R.string.toast_deletion)
-                openFocusTimerIfBlocked(blockedTaskUid, blockedTaskTitle)
+                openFocusTimerIfBlocked(blockedTaskUid, blockedTaskTitle, delete = true)
             }
             DeadlineType.HABIT -> {
                 hostState.selectedIds.forEach { habitViewModel.deleteHabitNow(it, now) }
@@ -143,14 +143,14 @@ class MainSelectionActionController(
         showDeleteDialog = false
     }
 
-    private fun openFocusTimerIfBlocked(taskUid: String?, taskTitle: String?) {
+    private fun openFocusTimerIfBlocked(taskUid: String?, taskTitle: String?, action: TaskAction? = null, delete: Boolean = false) {
         if (taskUid == null) return
         Toast.makeText(
             activity,
             activity.getString(R.string.focus_resolve_before_task_change),
             Toast.LENGTH_LONG,
         ).show()
-        activity.startActivity(FocusTimerActivity.newIntent(activity, taskUid, taskTitle.orEmpty()))
+        activity.startActivity(FocusTimerActivity.newResolutionIntent(activity, taskUid, taskTitle.orEmpty(), action, delete))
     }
 
     private fun toast(messageRes: Int) {

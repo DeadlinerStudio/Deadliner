@@ -87,7 +87,7 @@ internal fun FocusTrendSection(
 }
 
 @Composable
-internal fun FocusDistributionCard(snapshot: FocusStatisticsSnapshot, horizontalPadding: Dp = 16.dp, title: String? = null) {
+internal fun FocusDistributionCard(snapshot: FocusStatisticsSnapshot, horizontalPadding: Dp = 16.dp, title: String? = null, limit: Int = 3) {
     // This is a ranked list, not a hand-drawn chart. Keep both primary distributions discoverable.
     if (snapshot.summary.sessionCount == 0) return
     Card(
@@ -97,7 +97,7 @@ internal fun FocusDistributionCard(snapshot: FocusStatisticsSnapshot, horizontal
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(title ?: stringResource(R.string.focus_stats_time_allocation), style = MaterialTheme.typography.titleMedium)
-            snapshot.targets.take(3).forEach {
+            snapshot.targets.take(limit).forEach {
                 val title = if (it.target.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT)
                     it.title + " · " + stringResource(R.string.habit_focus_target) else it.title
                 FocusDistributionRow(title, it.durationSeconds)
@@ -105,7 +105,7 @@ internal fun FocusDistributionCard(snapshot: FocusStatisticsSnapshot, horizontal
             if (snapshot.categories.any { it.categoryUid != null }) {
                 Text(stringResource(R.string.focus_stats_categories_minimal), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-                snapshot.categories.take(3).forEach {
+                snapshot.categories.take(limit).forEach {
                     FocusDistributionRow(it.categoryTitle ?: stringResource(R.string.focus_stats_uncategorized), it.durationSeconds)
                 }
             }

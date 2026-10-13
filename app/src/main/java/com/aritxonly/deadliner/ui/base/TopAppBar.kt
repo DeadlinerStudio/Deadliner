@@ -98,9 +98,11 @@ fun TopAppBar(
                 navigationIcon = resolvedNavigationIcon, actions = actions,
                 titleColor = MaterialTheme.colorScheme.onSurface,
                 largeTitleColor = MaterialTheme.colorScheme.onSurface,
+                subtitle = subtitle.orEmpty(), subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 scrollBehavior = miuixScrollBehavior,
             )
             else -> SmallTopAppBar(
+                subtitle = subtitle.orEmpty(), subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 title = title, color = Color.Transparent,
                 navigationIcon = resolvedNavigationIcon, actions = actions,
                 titleColor = MaterialTheme.colorScheme.onSurface,

@@ -110,7 +110,7 @@ fun MorePanelCard(
                 }
             }
             MoreRow(R.drawable.msr_pie_chart_wght400, stringResource(R.string.overview)) {
-                activity.startActivity(Intent(context, OverviewActivity::class.java))
+                activity.startActivity(OverviewActivity.newIntent(context))
             }
         }
     }

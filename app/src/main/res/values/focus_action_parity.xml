@@ -1,0 +1,13 @@
+<resources>
+    <string name="focus_clock_warning">System time changed. Check the timer; invalid time will not be saved automatically.</string>
+    <string name="focus_long_running_warning">This session exceeded 12 hours. Did you forget to stop the timer?</string>
+    <string name="focus_excessive_warning">This session spans a long time. Check its duration and correct it downward if needed.</string>
+    <string name="focus_complete_saved_task">Complete task</string>
+    <string name="focus_saved_task_completed">Task completed</string>
+    <string name="focus_resolve_complete">End timer and complete task</string>
+    <string name="focus_resolve_abandon">End timer and abandon task</string>
+    <string name="focus_resolve_archive">End timer and archive</string>
+    <string name="focus_resolve_delete">End timer and delete</string>
+    <string name="focus_resolve_joint_message">Save the effective focus time and apply this action. Sessions shorter than one second create no record. This does not check in a habit.</string>
+    <string name="focus_confirmation_expired">The target or session changed. Confirm the operation again.</string>
+</resources>

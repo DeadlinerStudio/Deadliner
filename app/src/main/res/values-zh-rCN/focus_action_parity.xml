@@ -1,0 +1,13 @@
+<resources>
+    <string name="focus_clock_warning">系统时间发生变化，请检查计时；异常时间不会自动保存。</string>
+    <string name="focus_long_running_warning">本轮已超过 12 小时，请确认是否忘记结束计时。</string>
+    <string name="focus_excessive_warning">本轮跨度过长，请核对有效时长，必要时向下更正。</string>
+    <string name="focus_complete_saved_task">完成任务</string>
+    <string name="focus_saved_task_completed">任务已完成</string>
+    <string name="focus_resolve_complete">结束计时并完成任务</string>
+    <string name="focus_resolve_abandon">结束计时并放弃任务</string>
+    <string name="focus_resolve_archive">结束计时并归档</string>
+    <string name="focus_resolve_delete">结束计时并删除</string>
+    <string name="focus_resolve_joint_message">保存本轮有效专注时间，再执行原操作。不足一秒不生成记录，不会自动为习惯打卡。</string>
+    <string name="focus_confirmation_expired">目标或会话已变化，请重新确认操作。</string>
+</resources>
