@@ -12,6 +12,17 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class MiuixPresetColorSchemesTest {
+    @Test fun sliderKeyPointsContrastWithBothPartsOfTheTrack() {
+        for (dark in listOf(false, true)) {
+            val scheme = MiuixPresetColorSchemes.create(dark)
+            val colors = DeadlinerMiuixColorSchemeFactory.create(
+                DeadlinerColorTokenFactory.createFromMaterialScheme(scheme), dark)
+            assertNotEquals(colors.primary, colors.sliderKeyPointForeground)
+            assertEquals(colors.onPrimary.copy(alpha = 0.85f), colors.sliderKeyPointForeground)
+            assertNotEquals(colors.sliderBackground, colors.sliderKeyPoint)
+        }
+    }
+
     @Test
     fun presetUsesOfficialMiuixPrimaryColors() {
         val light = MiuixPresetColorSchemes.create(darkTheme = false)

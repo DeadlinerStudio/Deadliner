@@ -1,0 +1,12 @@
+<!-- Generated from pinned Phosphor Icons MIT source; see third_party/interface-icons/NOTICE.md. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="256" android:viewportHeight="256" android:autoMirrored="false">
+    <group android:translateX="-7.680000" android:translateY="-7.680000" android:scaleX="1.06" android:scaleY="1.06">
+        <group>
+            <clip-path android:pathData="M0 0H256V256H0Z M66 116a62 62 0 1 0 124 0a62 62 0 1 0 -124 0Z" android:fillType="evenOdd" />
+            <path android:pathData="M232,128A104,104,0,0,1,79.12,219.82L45.07,231.17a16,16,0,0,1-20.24-20.24l11.35-34.05A104,104,0,1,1,232,128Z" android:fillColor="#FF000000" android:fillType="nonZero" />
+        </group>
+        <group android:translateX="76.8" android:translateY="64.8" android:scaleX="0.40" android:scaleY="0.40">
+            <path android:pathData="M184,136H136v48a8,8,0,0,1-16,0V136H72a8,8,0,0,1,0-16h48V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z" android:fillColor="#FF000000" android:fillType="nonZero" />
+        </group>
+    </group>
+</vector>

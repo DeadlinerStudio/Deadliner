@@ -21,18 +21,15 @@ internal object MaterialDateTimePickers {
         afterDateTime: LocalDateTime? = null,
         makeToast: (String) -> Unit = {},
         onDialogVisibilityChanged: (Boolean) -> Unit = {},
+        initialDateTime: LocalDateTime? = null,
         onDateTimeSelected: (LocalDateTime) -> Unit,
     ) {
         // 是否需要限制
         val minimum = afterDateTime?.let(::ceilToPickerMinute)
         val minDayStartMillisUtc = minimum?.toLocalDate()?.let(::dateToUtcMillis)
 
-        val todayUtcMillis = MaterialDatePicker.todayInUtcMilliseconds()
-        val defaultSelection = if (minDayStartMillisUtc != null) {
-            maxOf(todayUtcMillis, minDayStartMillisUtc)
-        } else {
-            todayUtcMillis
-        }
+        val initial = pickerInitialDateTime(initialDateTime, minimum)
+        val defaultSelection = dateToUtcMillis(initial.toLocalDate())
 
         val builder = MaterialDatePicker.Builder.datePicker()
             .setSelection(defaultSelection)
@@ -62,6 +59,7 @@ internal object MaterialDateTimePickers {
                 fragmentManager = fragmentManager,
                 datePart = baseDateTime,
                 minAllowedTime = minAllowedTime,
+                preferredTime = initial.toLocalTime(),
                 makeToast = makeToast,
                 onDialogVisibilityChanged = onDialogVisibilityChanged,
                 onDateTimeSelected = onDateTimeSelected
@@ -85,15 +83,13 @@ internal object MaterialDateTimePickers {
         fragmentManager: FragmentManager,
         datePart: LocalDateTime,
         minAllowedTime: LocalTime?,
+        preferredTime: LocalTime,
         makeToast: (String) -> Unit = {},
         onDialogVisibilityChanged: (Boolean) -> Unit = {},
         onDateTimeSelected: (LocalDateTime) -> Unit,
     ) {
-        val now = LocalTime.now()
-        val initialTime = when (minAllowedTime) {
-            null -> now
-            else -> if (now.isBefore(minAllowedTime)) minAllowedTime else now
-        }
+        val initialTime = if (minAllowedTime != null && preferredTime.isBefore(minAllowedTime))
+            minAllowedTime else preferredTime
 
         fun buildAndShow(hour: Int, minute: Int) {
             onDialogVisibilityChanged(true)

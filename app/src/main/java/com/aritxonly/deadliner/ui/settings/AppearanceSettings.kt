@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.localutils.GlobalUtils
@@ -38,7 +38,7 @@ import com.aritxonly.deadliner.ui.navIconPaddingModifier
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppearanceSettingsScreen(
-    nav: NavHostController,
+    nav: SettingsNavigator,
     navigateUp: () -> Unit,
 ) {
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
@@ -68,12 +68,10 @@ fun AppearanceSettingsScreen(
                     ).forEachIndexed { index, route ->
                         SettingItem(
                             modifier = Modifier
-                                .padding(horizontal = 8.dp)
                                 .fillMaxWidth()
                                 .clickable { nav.navigate(route.route) },
                             headlineText = stringResource(route.titleRes),
                             supportingText = stringResource(route.supportRes!!),
-                            trailingContent = null,
                         )
                         if (index == 0) {
                             SettingsSectionDivider()
@@ -84,12 +82,10 @@ fun AppearanceSettingsScreen(
                 SettingsSection {
                     SettingItem(
                         modifier = Modifier
-                            .padding(horizontal = 8.dp)
                             .fillMaxWidth()
                             .clickable { nav.navigate(SettingsRoute.AppIcon.route) },
                         headlineText = stringResource(SettingsRoute.AppIcon.titleRes),
                         supportingText = stringResource(SettingsRoute.AppIcon.supportRes!!),
-                        trailingContent = null,
                     )
                 }
 
@@ -100,12 +96,10 @@ fun AppearanceSettingsScreen(
                     ).forEachIndexed { index, route ->
                         SettingItem(
                             modifier = Modifier
-                                .padding(horizontal = 8.dp)
                                 .fillMaxWidth()
                                 .clickable { nav.navigate(route.route) },
                             headlineText = stringResource(route.titleRes),
                             supportingText = stringResource(route.supportRes!!),
-                            trailingContent = null,
                         )
                         if (index == 0) {
                             SettingsSectionDivider()
@@ -187,7 +181,7 @@ private fun DefaultBackButton(
 ) {
     IconButton(
         onClick = navigateUp,
-        modifier = navIconPaddingModifier
+        modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
     ) {
         Icon(
             painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),

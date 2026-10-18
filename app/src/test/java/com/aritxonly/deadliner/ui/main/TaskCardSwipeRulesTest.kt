@@ -81,6 +81,17 @@ class TaskCardSwipeRulesTest {
             settle(offset = -165f, cardWidth = 260f, leadingRevealWidth = 168f))
     }
 
+    @Test fun singleDeleteAnchorRemainsOpenOnSmallReverseDragAndClosesDeliberately() {
+        fun single(offset: Float, start: Float = 0f) = resolveTaskCardSwipeSettle(
+            offset, start, offset - start, width, revealThreshold, closeDistance,
+            hasTrailingActions = true, trailingRevealWidth = 56f,
+        )
+        assertEquals(TaskCardSwipeSettleResult.TRAILING_REVEALED, single(-60f))
+        assertEquals(TaskCardSwipeSettleResult.TRAILING_REVEALED, single(-46f, -56f))
+        assertEquals(TaskCardSwipeSettleResult.CLOSED, single(-20f, -56f))
+        assertEquals(TaskCardSwipeSettleResult.RUN_DELETE_ACTION, single(-260f))
+    }
+
     private fun settle(
         offset: Float,
         dragStartOffset: Float = 0f,

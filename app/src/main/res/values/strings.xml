@@ -956,7 +956,7 @@
     <string name="capture_input_desc">这里适合放灵感、计划草稿、稍后可能要做的事。先别急着把它变得太正式，先保留它的原始样子。</string>
     <string name="capture_input_placeholder">比如：也许可以做一个每周复盘仪式…</string>
     <string name="capture_save">保存灵感</string>
-    <string name="capture_card_tip">点开后可以继续编辑，或整理成任务与习惯</string>
+    <string name="capture_card_tip">点开编辑，左滑删除，右滑用 AI 整理</string>
     <string name="capture_card_tip_selected">已选中后可批量删除或合并整理。</string>
     <string name="capture_detail_title">灵感详情</string>
     <string name="capture_detail_placeholder">保留它的原始样子，等它成熟一点再整理。</string>
@@ -988,7 +988,13 @@
     <string name="detail_note_empty">暂无备注</string>
     <string name="detail_plan_title">详细计划</string>
     <string name="detail_plan_progress">%1$d/%2$d 已完成</string>
-    <string name="detail_plan_empty">还没有子任务，点击右下角开始拆解。</string>
+    <string name="detail_plan_empty">还没有子任务，添加一个小目标开始拆解。</string>
+    <string name="detail_plan_completed_count">已完成 %1$d 项</string>
+    <string name="detail_plan_expanded">已展开</string>
+    <string name="detail_plan_collapsed">已折叠</string>
+    <string name="detail_plan_edit">编辑子任务</string>
+    <string name="detail_plan_content">子任务内容</string>
+    <string name="detail_plan_edit_item">编辑子任务：%1$s</string>
     <string name="detail_plan_add">新增子任务</string>
     <string name="detail_plan_add_hint">输入子任务，回车可连续添加</string>
     <string name="state_active">进行中</string>
@@ -1217,4 +1223,14 @@
     <string name="widget_theme_follow_app">跟随应用</string>
     <string name="widget_theme_light">强制浅色</string>
     <string name="widget_theme_dark">强制深色</string>
+    <string name="capture_swipe_ai_task">AI 任务</string>
+    <string name="capture_swipe_ai_habit">AI 习惯</string>
+    <string name="settings_material_pipeline">渲染管线</string>
+    <string name="settings_material_pipeline_deadliner">自研渲染管线</string>
+    <string name="settings_material_pipeline_miuix">MIUIX Glass</string>
+    <string name="settings_material_miuix_preset_hint">使用 MIUIX 官方材质预设</string>
+    <string name="settings_material_deadliner_preview_hint">实时预览当前柔光与高光效果</string>
+    <string name="detail_more_actions">更多操作</string>
+    <string name="detail_focus">专注</string>
+    <string name="detail_plan_compose_hint">接下来要做什么？</string>
 </resources>

@@ -24,6 +24,9 @@ import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import com.aritxonly.deadliner.ui.editor.DeadlineEditorIntents
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.aritxonly.deadliner.localutils.DynamicColorsExtension
@@ -31,7 +34,6 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
 import com.aritxonly.deadliner.model.UiStyle
 import com.aritxonly.deadliner.ui.main.modern.ModernHost
-import com.aritxonly.deadliner.ui.main.simplified.SimplifiedHost
 import com.aritxonly.deadliner.ui.focus.FocusGlobalBar
 import com.aritxonly.deadliner.ui.focus.FocusTimerEntryHost
 import com.aritxonly.deadliner.ui.focus.FocusTimerDockLayout
@@ -46,6 +48,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
 class MainActivity : DeadlinerAppCompatActivity() {
+    private var editorLaunchRequest by mutableStateOf<Intent?>(null)
     private val _showSearch = MutableStateFlow(false)
     val showSearch: StateFlow<Boolean> = _showSearch
 
@@ -59,11 +62,11 @@ class MainActivity : DeadlinerAppCompatActivity() {
 
         DynamicColorsExtension.apply(this, GlobalUtils.seedColor)
 
+        if (savedInstanceState == null) editorLaunchRequest = DeadlineEditorIntents.consume(intent)
         _showSearch.value = intent.getBooleanExtra("EXTRA_SHOW_SEARCH", false)
 
         setContent {
             val searchActive by showSearch.collectAsState()
-            val style by GlobalUtils.styleFlow.collectAsState()
             val focusState by KmpV6Runtime.focusTimerViewModel.uiState.collectAsState()
 
             LaunchedEffect(Unit) {
@@ -74,7 +77,8 @@ class MainActivity : DeadlinerAppCompatActivity() {
                 }
             }
 
-            DeadlinerTheme {
+            DeadlinerTheme(editorLaunchRequest = editorLaunchRequest,
+                onEditorLaunchRequestConsumed = { editorLaunchRequest = null }) {
                 val focusOverlay: @androidx.compose.runtime.Composable (Modifier) -> Unit = { overlayModifier ->
                     AnimatedVisibility(
                         visible = focusState.timer != null,
@@ -99,29 +103,11 @@ class MainActivity : DeadlinerAppCompatActivity() {
                         LocalNavigationOverlayContentPadding provides if (focusState.timer != null) FocusTimerDockLayout.ContentClearance else 0.dp,
                     ) {
                         Box(Modifier.fillMaxSize()) {
-                            when (style) {
-                                UiStyle.Simplified  -> {
-                                    val backdrop = rememberLayerBackdrop()
-                                    Box(Modifier.fillMaxSize().layerBackdrop(backdrop)) {
-                                        SimplifiedHost(
-                                            searchActive = searchActive,
-                                            onSearchActiveChange = { _showSearch.value = it },
-                                            activity = this@MainActivity,
-                                        )
-                                    }
-                                    CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides backdrop) {
-                                        focusOverlay(Modifier.align(Alignment.BottomCenter).navigationBarsPadding()
-                                            .padding(bottom = 92.dp))
-                                    }
-                                }
-                                UiStyle.Miuix -> {
-                                    ModernHost(
-                                        searchActive = searchActive,
-                                        onSearchActiveChange = { _showSearch.value = it },
-                                        activity = this@MainActivity
-                                    )
-                                }
-                            }
+                            ModernHost(
+                                searchActive = searchActive,
+                                onSearchActiveChange = { _showSearch.value = it },
+                                activity = this@MainActivity
+                            )
 
                         }
                     }
@@ -134,6 +120,7 @@ class MainActivity : DeadlinerAppCompatActivity() {
         super.onNewIntent(intent)
 
         setIntent(intent)
+        editorLaunchRequest = DeadlineEditorIntents.consume(intent)
 
         _showSearch.value = intent.getBooleanExtra("EXTRA_SHOW_SEARCH", false)
 

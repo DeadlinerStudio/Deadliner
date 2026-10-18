@@ -13,6 +13,102 @@ import org.junit.Test
 import java.time.LocalDateTime
 
 class QuickAddStateTest {
+    @Test fun manualTaskDoesNotRequireSuccessfulRecognitionAndSurvivesRestoration() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val state = QuickAddState(scope)
+            state.open("TASK")
+            val due = LocalDateTime.now().plusDays(2)
+            state.selectDueAt(due)
+            assertNotNull(state.explicitStartAt)
+            assertEquals(due.toString(), state.explicitDueAt)
+            assertFalse(state.canSubmit) // A time alone cannot create an unnamed task.
+            state.edit("123")
+            assertTrue(state.canSubmit)
+            assertFalse(state.needsAI)
+            assertEquals("123", state.effectiveProposal.title)
+            assertEquals("MANUAL", state.effectiveProposal.source)
+            assertTrue(state.effectiveProposal.ready)
+            state.edit("下班以后整理报告") // Conservative recognition rejects this expression.
+            assertTrue(state.proposal.needsAI)
+            assertTrue(state.canSubmit)
+            assertEquals("下班以后整理报告", state.effectiveProposal.title)
+            state.dismiss()
+            state.open("TASK")
+            assertEquals(due.toString(), state.explicitDueAt)
+            val saver = QuickAddState.saver(scope)
+            val saved = with(saver) {
+                with(object : SaverScope { override fun canBeSaved(value: Any) = true }) { save(state) }
+            }
+            val restored = saver.restore(saved!!)!!
+            assertEquals(state.effectiveProposal, restored.effectiveProposal)
+            assertEquals(state.effectiveStartAt, restored.effectiveStartAt)
+            assertTrue(restored.canSubmit)
+            restored.selectStartAt(due.plusHours(1))
+            assertFalse(restored.canSubmit)
+            restored.edit(" ")
+            assertFalse(restored.canSubmit)
+        } finally { scope.cancel() }
+    }
+
+    @Test fun manualEndTimeCancelsPendingRecognitionWithoutRequiringAi() = kotlinx.coroutines.runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val state = QuickAddState(scope)
+            state.open("TASK")
+            state.modelAvailable = { true }
+            state.modelRecognizer = { _, _ ->
+                kotlinx.coroutines.delay(1000)
+                QuickAddProposal(title = "模型结果", ready = true, source = "MODEL")
+            }
+            state.edit("123")
+            assertFalse(state.canSubmit)
+            state.selectDueAt(LocalDateTime.now().plusDays(1))
+            state.refreshWithModel()
+            assertTrue(state.canSubmit)
+            assertEquals("123", state.effectiveProposal.title)
+            kotlinx.coroutines.delay(150)
+            assertEquals("123", state.effectiveProposal.title)
+        } finally { scope.cancel() }
+    }
+
+    @Test
+    fun transferredManualProposalIsNotReparsedWhenTheModelBecomesReady() = kotlinx.coroutines.runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            var requests = 0
+            val state = QuickAddState(scope)
+            val original = QuickAddProposal(title = "手工修正", note = "保留", ready = true)
+            state.restoreDraft(original, "明天交报告", null, "work", null)
+            state.modelAvailable = { true }
+            state.modelRecognizer = { _, _ -> requests++; QuickAddProposal(title = "模型替换", ready = true) }
+            state.open("TASK")
+            state.refreshWithModel()
+            kotlinx.coroutines.delay(150)
+            assertEquals(0, requests)
+            assertEquals(original, state.proposal)
+            state.edit("后天提交报告")
+            kotlinx.coroutines.delay(150)
+            assertEquals(1, requests)
+            assertEquals("模型替换", state.proposal.title)
+        } finally { scope.cancel() }
+    }
+
+    @Test
+    fun adoptingTheRecognizedHabitTabKeepsTheAiSchedule() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val state = QuickAddState(scope) { _, _ -> QuickAddProposal(kind = "HABIT", title = "读书",
+                ready = true, source = "AI", period = "WEEKLY", targetCount = 3) }
+            state.open("TASK")
+            state.edit("每周读书三次")
+            state.recognizeWithAI()
+            val recognized = state.proposal
+            state.open("HABIT")
+            assertEquals(recognized, state.proposal)
+        } finally { scope.cancel() }
+    }
+
     @Test
     fun readyModelBlocksRuleSubmissionWhileRecognizingAndAfterRejection() = kotlinx.coroutines.runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
@@ -192,19 +288,19 @@ class QuickAddStateTest {
     }
 
     @Test
-    fun blankInputHasDefaultTimesAndOnlyRecognizedTasksCanEditThem() {
+    fun taskTimesAreEditableBeforeTypingOrRecognition() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {
             val state = QuickAddState(scope)
             state.open("TASK")
             val start = state.effectiveStartAt
             assertEquals(start.plusHours(1).toString(), state.effectiveProposal.dueAt)
-            assertFalse(state.canEditTaskTimes)
+            assertTrue(state.canEditTaskTimes)
             state.edit("123")
             assertTrue(state.needsAI)
             assertFalse(state.canSubmit)
             assertTrue(state.canRecognize)
-            assertFalse(state.canEditTaskTimes)
+            assertTrue(state.canEditTaskTimes)
             state.edit("交报告")
             assertTrue(state.canEditTaskTimes)
             assertEquals(start.plusHours(1).toString(), state.effectiveProposal.dueAt)

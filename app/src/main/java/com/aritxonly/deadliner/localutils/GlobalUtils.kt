@@ -57,6 +57,7 @@ object GlobalUtils {
 
     fun init(context: Context) {
         sharedPreferences = context.getSharedPreferences(PREF_NAME, AppCompatActivity.MODE_PRIVATE)
+        com.aritxonly.deadliner.ui.InterfaceIconPreferences.initialize(sharedPreferences)
         loadSettings(context)  // 初始化时加载设置
     }
 
@@ -263,7 +264,7 @@ object GlobalUtils {
             )
         }
 
-        val style = UiStyle.fromKey(sharedPreferences.getString("style", UiStyle.Simplified.key))
+        val style = UiStyle.fromKey(sharedPreferences.getString("style", UiStyle.Miuix.key))
         val legacyUsedMaterialTheme =
             sharedPreferences.getString("theme_style", null) == "material3" ||
                 sharedPreferences.getString("appearance_design_mode", null) == "vivid" ||
@@ -347,6 +348,7 @@ object GlobalUtils {
             useMyHyperModifierNavigationLift = useMyHyperModifierNavigationLift,
             useContrastingHomeFab = useContrastingHomeFab,
             useAdvancedMaterial = advancedMaterial,
+            useOfficialMiuixGlass = sharedPreferences.getBoolean("advanced_material_official_glass", false),
             advancedMaterialLevel = advancedMaterialLevel,
             advancedMaterialBlurRadius = advancedMaterialBlurRadius,
             advancedMaterialFineTuning = advancedMaterialFineTuning,
@@ -382,6 +384,8 @@ object GlobalUtils {
             )
             putBoolean("contrasting_home_fab", appearance.useContrastingHomeFab)
             putBoolean("advanced_material", appearance.useAdvancedMaterial)
+            remove("official_miuix_glass_experiment")
+            putBoolean("advanced_material_official_glass", appearance.useOfficialMiuixGlass)
             putString("advanced_material_level", appearance.advancedMaterialLevel.key)
             putFloat(
                 "advanced_material_blur_radius",
@@ -907,7 +911,8 @@ object GlobalUtils {
         onDialogVisibilityChanged: (Boolean) -> Unit = {},
         onDateTimeSelected: (LocalDateTime) -> Unit,
     ) = DateTimePickers.showDateTimePicker(
-        fragmentManager, afterDateTime, makeToast, onDialogVisibilityChanged, onDateTimeSelected,
+        fragmentManager, afterDateTime, makeToast, onDialogVisibilityChanged,
+        onDateTimeSelected = onDateTimeSelected,
     )
 
     fun showTimePicker(

@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,7 +28,7 @@ fun NotificationSettingsScreen(navigateUp: () -> Unit) {
         KmpV6Runtime.refreshNotifications()
     }
     CollapsingTopBarScaffold(title = stringResource(R.string.settings_notification), navigationIcon = {
-        IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
+        IconButton(onClick = navigateUp, modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)) {
             Icon(com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                 contentDescription = stringResource(R.string.back), tint = MaterialTheme.colorScheme.onSurface,
                 modifier = expressiveTypeModifier)

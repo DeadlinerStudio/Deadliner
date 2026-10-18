@@ -57,9 +57,10 @@ internal fun FocusRoundAction(
             containerColor = container.copy(alpha = if (enabled) 1f else 0.4f),
             contentColor = foreground, backdrop = backdrop,
         ) {
-            Icon(iconResource(icon), contentDescription = contentDescription,
-                tint = foreground.copy(alpha = if (enabled) 1f else 0.4f),
-                modifier = Modifier.size(if (primary) 34.dp else 26.dp))
+            androidx.compose.animation.Crossfade(icon, animationSpec = FocusVisuals.motion(), label = "focus-action-symbol") { resource ->
+                Icon(iconResource(resource), contentDescription = contentDescription,
+                    tint = foreground.copy(alpha = if (enabled) 1f else 0.4f), modifier = Modifier.size(if (primary) 30.dp else 24.dp))
+            }
         }
         Text(label, style = MiuixTheme.textStyles.footnote2.copy(
             fontWeight = if (primary) FontWeight.Medium else FontWeight.Normal), textAlign = TextAlign.Center,
@@ -82,7 +83,7 @@ internal fun FocusChoiceRow(
             val selected = selectedIndex == index
             val background by animateColorAsState(
                 if (selected) colors.primary.copy(alpha = 0.14f) else Color.Transparent,
-                label = "focus-choice-$index")
+                animationSpec = FocusVisuals.motion(), label = "focus-choice-$index")
             Box(Modifier.weight(1f).clip(CircleShape).background(background)
                 .selectable(selected = selected, enabled = enabled, role = Role.RadioButton,
                     onClick = { onSelect(index) })

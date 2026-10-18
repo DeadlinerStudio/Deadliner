@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.content.Context
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
@@ -80,7 +81,7 @@ fun QuotaPanelSimple(
                 Spacer(Modifier.width(8.dp))
 
                 val isSuccess = result?.isSuccess == true
-                AssistChip(
+                AssistChip(modifier = Modifier.miuixPressFeedback(enabled = true, shape = shape),
                     onClick = onClickPlan,
                     label = {
                         Text(
@@ -106,7 +107,7 @@ fun QuotaPanelSimple(
 
                 Spacer(Modifier.weight(1f))
 
-                FilledTonalButton(
+                FilledTonalButton(modifier = Modifier.miuixPressFeedback(enabled = !refreshing, shape = shape),
                     onClick = { refresh() },
                     enabled = !refreshing,
                     shape = shape
@@ -191,7 +192,7 @@ private fun ErrorBlock(
             overflow = TextOverflow.Ellipsis
         )
         Spacer(Modifier.height(12.dp))
-        OutlinedButton(onClick = onRetry, shape = shape) {
+        OutlinedButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = shape), onClick = onRetry, shape = shape) {
             Text(stringResource(R.string.quota_action_retry))
         }
     }

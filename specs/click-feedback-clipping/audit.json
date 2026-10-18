@@ -1,0 +1,1297 @@
+{
+  "foundation": [
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/SettingsActivity.kt",
+      "line": 622,
+      "api": "clickable",
+      "result": "已核查：矩形选择列表、文字操作或透明遮罩；无独立圆角底色"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/calendar/CalendarImportDialogs.kt",
+      "line": 72,
+      "api": "clickable",
+      "result": "已核查：矩形选择列表、文字操作或透明遮罩；无独立圆角底色"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/calendar/CalendarImportDialogs.kt",
+      "line": 142,
+      "api": "clickable",
+      "result": "已核查：矩形选择列表、文字操作或透明遮罩；无独立圆角底色"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/capture/ui/InspirationLightCard.kt",
+      "line": 63,
+      "api": "clickable",
+      "result": "修复：灵感卡自身 24dp 裁切（父 SwipeableItemCard 也有裁切）"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/agent/AIOverlay.kt",
+      "line": 592,
+      "api": "clickable",
+      "result": "无默认按压层：遮罩/自有选择高亮/玻璃宿主反馈，保持原逻辑"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/agent/AIOverlayPresentation.kt",
+      "line": 454,
+      "api": "clickable",
+      "result": "修复：快捷建议 18dp 裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/archive/ArchiveComponents.kt",
+      "line": 302,
+      "api": "clickable",
+      "result": "修复：圆形快捷按钮裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/base/SoftGlassDropdownOptions.kt",
+      "line": 51,
+      "api": "selectable",
+      "result": "无默认按压层：遮罩/自有选择高亮/玻璃宿主反馈，保持原逻辑"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryComponents.kt",
+      "line": 109,
+      "api": "clickable",
+      "result": "修复：分类字段共享表单 squircle 裁切；分类列表行父级设置容器裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryComponents.kt",
+      "line": 275,
+      "api": "clickable",
+      "result": "修复：分类字段共享表单 squircle 裁切；分类列表行父级设置容器裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryComponents.kt",
+      "line": 304,
+      "api": "clickable",
+      "result": "修复：分类字段共享表单 squircle 裁切；分类列表行父级设置容器裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryEditorScreen.kt",
+      "line": 172,
+      "api": "selectable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryEditorScreen.kt",
+      "line": 219,
+      "api": "selectable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryManagementScreen.kt",
+      "line": 70,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryManagementScreen.kt",
+      "line": 108,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/detail/DeadlineDetailScreen.kt",
+      "line": 867,
+      "api": "combinedClickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/editor/DeadlineEditorComponents.kt",
+      "line": 473,
+      "api": "clickable",
+      "result": "修复：表单共享 squircleSurface 透明裁切；提醒行位于父级卡片内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/editor/DeadlineEditorComponents.kt",
+      "line": 506,
+      "api": "clickable",
+      "result": "修复：表单共享 squircleSurface 透明裁切；提醒行位于父级卡片内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/focus/FocusGlobalBar.kt",
+      "line": 86,
+      "api": "clickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/focus/FocusManagementTargetPicker.kt",
+      "line": 95,
+      "api": "clickable",
+      "result": "修复：任务目标复用 MIUIX squircle 掩膜；纯文本标签保持矩形点击区"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/focus/FocusManagementTargetPicker.kt",
+      "line": 121,
+      "api": "selectable",
+      "result": "修复：任务目标复用 MIUIX squircle 掩膜；纯文本标签保持矩形点击区"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/focus/FocusRecentSessions.kt",
+      "line": 38,
+      "api": "clickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/focus/FocusTimerControls.kt",
+      "line": 88,
+      "api": "selectable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/focus/FocusTimerSetupSheet.kt",
+      "line": 125,
+      "api": "clickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/focus/FocusTimerSetupSheet.kt",
+      "line": 187,
+      "api": "clickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/ClassicWizard.kt",
+      "line": 608,
+      "api": "combinedClickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/lifi/LifiAIPage.kt",
+      "line": 151,
+      "api": "clickable",
+      "result": "修复：记忆按钮使用独立已裁切组件；侧栏历史列表为矩形"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/lifi/LifiComposer.kt",
+      "line": 67,
+      "api": "clickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/lifi/LifiConversation.kt",
+      "line": 39,
+      "api": "clickable",
+      "result": "修复：过程卡片 20dp 裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/lifi/LifiHistorySheet.kt",
+      "line": 45,
+      "api": "clickable",
+      "result": "修复：历史卡片父级 22dp 裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/lifi/LifiWelcome.kt",
+      "line": 65,
+      "api": "clickable",
+      "result": "修复：22dp 轮播/16dp 记忆按钮/圆形页码点击前裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/lifi/LifiWelcome.kt",
+      "line": 78,
+      "api": "clickable",
+      "result": "修复：22dp 轮播/16dp 记忆按钮/圆形页码点击前裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/lifi/LifiWelcome.kt",
+      "line": 95,
+      "api": "clickable",
+      "result": "修复：22dp 轮播/16dp 记忆按钮/圆形页码点击前裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/Components.kt",
+      "line": 214,
+      "api": "clickable",
+      "result": "修复：任务卡片外层点击 clip；其余卡片原有同形状 clip"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/Components.kt",
+      "line": 329,
+      "api": "clickable",
+      "result": "修复：任务卡片外层点击 clip；其余卡片原有同形状 clip"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/Components.kt",
+      "line": 460,
+      "api": "combinedClickable",
+      "result": "修复：任务卡片外层点击 clip；其余卡片原有同形状 clip"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/SwipeableTaskCard.kt",
+      "line": 105,
+      "api": "combinedClickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/modern/ModernHost.kt",
+      "line": 719,
+      "api": "clickable",
+      "result": "无默认按压层：遮罩/自有选择高亮/玻璃宿主反馈，保持原逻辑"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/modern/ModernHost.kt",
+      "line": 769,
+      "api": "clickable",
+      "result": "无默认按压层：遮罩/自有选择高亮/玻璃宿主反馈，保持原逻辑"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/shared/MainDisplay.kt",
+      "line": 414,
+      "api": "clickable",
+      "result": "无默认按压层：遮罩/自有选择高亮/玻璃宿主反馈，保持原逻辑"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/shared/MainSearchResultsContent.kt",
+      "line": 354,
+      "api": "clickable",
+      "result": "修复：新建习惯/习惯结果卡片均使用 24dp 外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/shared/MainSearchResultsContent.kt",
+      "line": 444,
+      "api": "clickable",
+      "result": "修复：新建习惯/习惯结果卡片均使用 24dp 外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/HabitComponents.kt",
+      "line": 138,
+      "api": "clickable",
+      "result": "修复：日期点击先 clip 再 clickable；习惯卡片原有同形状 clip"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/HabitComponents.kt",
+      "line": 224,
+      "api": "combinedClickable",
+      "result": "修复：日期点击先 clip 再 clickable；习惯卡片原有同形状 clip"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/HabitComponents.kt",
+      "line": 371,
+      "api": "combinedClickable",
+      "result": "修复：日期点击先 clip 再 clickable；习惯卡片原有同形状 clip"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/MorePanelCard.kt",
+      "line": 129,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/ProfileEditor.kt",
+      "line": 134,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/material/glass/SoftGlassSurface.kt",
+      "line": 132,
+      "api": "clickable",
+      "result": "无默认按压层：遮罩/自有选择高亮/玻璃宿主反馈，保持原逻辑"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/navigation/ImmersiveTextTabRow.kt",
+      "line": 184,
+      "api": "selectable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/navigation/MiuixFloatingTabBar.kt",
+      "line": 368,
+      "api": "selectable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/navigation/TabletNavSideBar.kt",
+      "line": 105,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/navigation/TabletNavSideBar.kt",
+      "line": 169,
+      "api": "selectable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/navigation/TabletNavSideBar.kt",
+      "line": 170,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/FocusManagementCards.kt",
+      "line": 83,
+      "api": "clickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/FocusManagementCards.kt",
+      "line": 149,
+      "api": "clickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/FocusManagementCards.kt",
+      "line": 186,
+      "api": "clickable",
+      "result": "父级 MIUIX Card/Material Surface/SwipeableItemCard/SoftGlassSurface 已裁切内容"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/FocusManagementScreen.kt",
+      "line": 140,
+      "api": "clickable",
+      "result": "修复：悬浮玻璃快捷卡外层 clip 与玻璃 shape 相同"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/OverviewMonthCalendar.kt",
+      "line": 71,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddModelDownloadStatus.kt",
+      "line": 33,
+      "api": "clickable",
+      "result": "已核查：矩形选择列表、文字操作或透明遮罩；无独立圆角底色"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddOverlay.kt",
+      "line": 81,
+      "api": "clickable",
+      "result": "无默认按压层：遮罩/自有选择高亮/玻璃宿主反馈，保持原逻辑"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddOverlay.kt",
+      "line": 130,
+      "api": "clickable",
+      "result": "修复：属性按钮 16dp；图标 CircleShape；空白关闭遮罩无反馈"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddOverlay.kt",
+      "line": 132,
+      "api": "clickable",
+      "result": "修复：属性按钮 16dp；图标 CircleShape；空白关闭遮罩无反馈"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddOverlay.kt",
+      "line": 180,
+      "api": "clickable",
+      "result": "修复：属性按钮 16dp；图标 CircleShape；空白关闭遮罩无反馈"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddProperties.kt",
+      "line": 129,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddProperties.kt",
+      "line": 144,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddProperties.kt",
+      "line": 160,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddProperties.kt",
+      "line": 169,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/quickadd/QuickAddProperties.kt",
+      "line": 181,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AboutSettings.kt",
+      "line": 120,
+      "api": "clickable",
+      "result": "版本小标签胶囊裁切；普通设置行使用父级 SettingsSection 裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AboutSettings.kt",
+      "line": 131,
+      "api": "clickable",
+      "result": "版本小标签胶囊裁切；普通设置行使用父级 SettingsSection 裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AboutSettings.kt",
+      "line": 320,
+      "api": "clickable",
+      "result": "版本小标签胶囊裁切；普通设置行使用父级 SettingsSection 裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AppIconSettings.kt",
+      "line": 119,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AppearanceSettings.kt",
+      "line": 72,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AppearanceSettings.kt",
+      "line": 86,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AppearanceSettings.kt",
+      "line": 100,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/BehaviorSettings.kt",
+      "line": 106,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/CloudSyncSettings.kt",
+      "line": 80,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/CloudSyncSettings.kt",
+      "line": 83,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/DesignColorSettings.kt",
+      "line": 362,
+      "api": "clickable",
+      "result": "修复：16dp/20dp 风格和配色预览卡片外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/DesignColorSettings.kt",
+      "line": 848,
+      "api": "clickable",
+      "result": "修复：16dp/20dp 风格和配色预览卡片外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/DesignColorSettings.kt",
+      "line": 945,
+      "api": "clickable",
+      "result": "修复：16dp/20dp 风格和配色预览卡片外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/MainSettings.kt",
+      "line": 116,
+      "api": "clickable",
+      "result": "修复：推荐卡片 28dp；普通设置行由 SettingsSection 统一裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/MainSettings.kt",
+      "line": 154,
+      "api": "clickable",
+      "result": "修复：推荐卡片 28dp；普通设置行由 SettingsSection 统一裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/MainSettings.kt",
+      "line": 459,
+      "api": "clickable",
+      "result": "修复：推荐卡片 28dp；普通设置行由 SettingsSection 统一裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsComponents.kt",
+      "line": 349,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsComponents.kt",
+      "line": 407,
+      "api": "combinedClickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsComponents.kt",
+      "line": 473,
+      "api": "combinedClickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsComponents.kt",
+      "line": 637,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsComponents.kt",
+      "line": 758,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsComponents.kt",
+      "line": 819,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsComponents.kt",
+      "line": 996,
+      "api": "selectable",
+      "result": "无默认按压层：遮罩/自有选择高亮/玻璃宿主反馈，保持原逻辑"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsRows.kt",
+      "line": 97,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsRows.kt",
+      "line": 148,
+      "api": "clickable",
+      "result": "矩形列表行，外轮廓由父 Card/SettingsSection 裁切；内部行不额外圆角"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/ThemeColorPicker.kt",
+      "line": 133,
+      "api": "clickable",
+      "result": "已有相同 shape 的 clip 或外层形状容器，反馈位于裁切内部"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/widgets/glance/configuration/TaskWidgetConfigurationScreen.kt",
+      "line": 266,
+      "api": "clickable",
+      "result": "无默认按压层：遮罩/自有选择高亮/玻璃宿主反馈，保持原逻辑"
+    }
+  ],
+  "material": [
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/agent/AIOverlay.kt",
+      "line": 636,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/agent/AIOverlay.kt",
+      "line": 809,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/agent/AIOverlayPresentation.kt",
+      "line": 208,
+      "api": "OutlinedButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/agent/AIUiComponents.kt",
+      "line": 31,
+      "api": "Button",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/agent/AIUiComponents.kt",
+      "line": 32,
+      "api": "OutlinedButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/agent/AIUiComponents.kt",
+      "line": 54,
+      "api": "Button",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/agent/AIUiComponents.kt",
+      "line": 78,
+      "api": "OutlinedButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/archive/ArchiveScreen.kt",
+      "line": 162,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/base/TopBarIconButton.kt",
+      "line": 31,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryEditorScreen.kt",
+      "line": 76,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryManagementScreen.kt",
+      "line": 48,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryManagementScreen.kt",
+      "line": 115,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/category/CategoryManagementScreen.kt",
+      "line": 123,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/detail/DeadlineDetailScreen.kt",
+      "line": 255,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/detail/DeadlineDetailScreen.kt",
+      "line": 463,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/detail/DeadlineDetailScreen.kt",
+      "line": 814,
+      "api": "FilledIconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/detail/DeadlineDetailScreen.kt",
+      "line": 827,
+      "api": "FilledIconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/detail/DeadlineDetailScreen.kt",
+      "line": 903,
+      "api": "FilledIconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/detail/DeadlineDetailScreen.kt",
+      "line": 916,
+      "api": "FilledIconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/detail/DeadlineDetailScreen.kt",
+      "line": 936,
+      "api": "FilledIconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/detail/DetailPlanFloatingActionButton.kt",
+      "line": 27,
+      "api": "ExtendedFloatingActionButton",
+      "shape": "RoundedCornerShape(20.dp)",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/editor/DeadlineEditorComponents.kt",
+      "line": 330,
+      "api": "ToggleButton",
+      "shape": "connectedButtonShapes(index, presets.lastIndex)",
+      "result": "原生动态 shape + 局部 Material 反馈；无外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/editor/DeadlineEditorComponents.kt",
+      "line": 354,
+      "api": "ToggleButton",
+      "shape": "connectedButtonShapes(index, weekdays.lastIndex)",
+      "result": "原生动态 shape + 局部 Material 反馈；无外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/editor/DeadlineEditorComponents.kt",
+      "line": 524,
+      "api": "TextButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/editor/DeadlineEditorComponents.kt",
+      "line": 558,
+      "api": "ToggleButton",
+      "shape": "connectedButtonShapes(index, options.lastIndex)",
+      "result": "原生动态 shape + 局部 Material 反馈；无外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/editor/DeadlineEditorComponents.kt",
+      "line": 597,
+      "api": "ToggleButton",
+      "shape": "connectedButtonShapes(index, options.lastIndex)",
+      "result": "原生动态 shape + 局部 Material 反馈；无外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/focus/FocusGlobalBar.kt",
+      "line": 101,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/focus/FocusGlobalBar.kt",
+      "line": 112,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/ClassicWizard.kt",
+      "line": 313,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/ClassicWizard.kt",
+      "line": 321,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/ClassicWizard.kt",
+      "line": 399,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/ClassicWizard.kt",
+      "line": 413,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/ClassicWizard.kt",
+      "line": 430,
+      "api": "FloatingActionButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/IntroFlowScreen.kt",
+      "line": 177,
+      "api": "FilledTonalButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/IntroFlowScreen.kt",
+      "line": 373,
+      "api": "Button",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/PermissionsScreen.kt",
+      "line": 208,
+      "api": "Card",
+      "shape": "shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/Wizard.kt",
+      "line": 178,
+      "api": "Button",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/Wizard.kt",
+      "line": 219,
+      "api": "TextButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/intro/Wizard.kt",
+      "line": 223,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/Components.kt",
+      "line": 150,
+      "api": "Button",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/Components.kt",
+      "line": 707,
+      "api": "FilledIconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/SwipeableItemCard.kt",
+      "line": 399,
+      "api": "Surface",
+      "shape": "CircleShape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/modern/components/ModernSearchBar.kt",
+      "line": 57,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/modern/components/ModernSearchBar.kt",
+      "line": 72,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/shared/MainSearchResultsContent.kt",
+      "line": 243,
+      "api": "ToggleButton",
+      "shape": "searchScopeButtonShapes(index, MainSearchScope.entries.lastIndex)",
+      "result": "原生动态 shape + 局部 Material 反馈；无外层裁切"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/shared/MainSearchResultsContent.kt",
+      "line": 374,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/shared/MainSelectionFloatingToolbar.kt",
+      "line": 36,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/shared/MainSelectionFloatingToolbar.kt",
+      "line": 43,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/shared/MainSelectionFloatingToolbar.kt",
+      "line": 50,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/MainSearchBar.kt",
+      "line": 147,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/MainSearchBar.kt",
+      "line": 151,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/MainSearchBar.kt",
+      "line": 160,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/MainSearchBar.kt",
+      "line": 164,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/MainSearchBar.kt",
+      "line": 171,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/MainSearchBar.kt",
+      "line": 176,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/MorePanelCard.kt",
+      "line": 88,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/ProfileEditor.kt",
+      "line": 156,
+      "api": "FilledIconButton",
+      "shape": "CircleShape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/main/simplified/ProfileEditor.kt",
+      "line": 311,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/DashboardScreen.kt",
+      "line": 677,
+      "api": "FilterChip",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/DashboardScreen.kt",
+      "line": 682,
+      "api": "FilterChip",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/DashboardScreen.kt",
+      "line": 695,
+      "api": "OutlinedButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/OverviewDashboardCards.kt",
+      "line": 28,
+      "api": "Card",
+      "shape": "RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/OverviewDashboardScreen.kt",
+      "line": 59,
+      "api": "androidx.compose.material3.IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/overview/OverviewDashboardScreen.kt",
+      "line": 65,
+      "api": "androidx.compose.material3.IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AISettings.kt",
+      "line": 66,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AboutSettings.kt",
+      "line": 82,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AdvancedMaterialFineTuningPanel.kt",
+      "line": 237,
+      "api": "TextButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AdvancedMaterialFineTuningPanel.kt",
+      "line": 240,
+      "api": "TextButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AdvancedMaterialSettings.kt",
+      "line": 66,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AppIconSettings.kt",
+      "line": 55,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/AppearanceSettings.kt",
+      "line": 182,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/ArchiveSettings.kt",
+      "line": 45,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/BackupSettings.kt",
+      "line": 40,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/BadgeSettings.kt",
+      "line": 55,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/BehaviorSettings.kt",
+      "line": 82,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/ByosSettings.kt",
+      "line": 67,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/CloudSyncSettings.kt",
+      "line": 47,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/DesignColorSettings.kt",
+      "line": 81,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/DisplayScaleSettings.kt",
+      "line": 51,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/DisplayScaleSettings.kt",
+      "line": 98,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/DonateSettings.kt",
+      "line": 46,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/DonateSettings.kt",
+      "line": 81,
+      "api": "Button",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/FeedbackSettings.kt",
+      "line": 81,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/FeedbackSettings.kt",
+      "line": 94,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/LabSettings.kt",
+      "line": 33,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/LicenseSettings.kt",
+      "line": 45,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/MainSettings.kt",
+      "line": 83,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/ModelSettingsScreen.kt",
+      "line": 79,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/NotificationSettings.kt",
+      "line": 31,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/PolicySettings.kt",
+      "line": 50,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/ProfileSettings.kt",
+      "line": 30,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/PromptSettings.kt",
+      "line": 50,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/QuotaPanel.kt",
+      "line": 84,
+      "api": "AssistChip",
+      "shape": "shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/QuotaPanel.kt",
+      "line": 110,
+      "api": "FilledTonalButton",
+      "shape": "shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/QuotaPanel.kt",
+      "line": 195,
+      "api": "OutlinedButton",
+      "shape": "shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/SettingsComponents.kt",
+      "line": 720,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/UpdateSettings.kt",
+      "line": 83,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/UpdateSettings.kt",
+      "line": 103,
+      "api": "FilledTonalButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/VibrationSettings.kt",
+      "line": 70,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/WebSettings.kt",
+      "line": 140,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/WidgetSettings.kt",
+      "line": 70,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/ui/settings/WikiSettings.kt",
+      "line": 49,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    },
+    {
+      "file": "app/src/main/java/com/aritxonly/deadliner/widgets/glance/configuration/TaskWidgetConfigurationScreen.kt",
+      "line": 92,
+      "api": "IconButton",
+      "shape": "component Defaults.shape",
+      "result": "显式传入组件自身 shape 或对应 Defaults.shape；Sink 与按压层在相同 clip 内"
+    }
+  ]
+}

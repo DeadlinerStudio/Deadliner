@@ -1,5 +1,8 @@
 package com.aritxonly.deadliner.ui.main.shared
 
+import com.aritxonly.deadliner.ui.base.feedback.MaterialShapeFeedback
+import androidx.compose.ui.draw.clip
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.content.Intent
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -236,47 +239,49 @@ private fun SearchScopePicker(
                 tween(220),
                 label = "search-scope-text-shift",
             )
-            ToggleButton(
-                checked = selected,
-                onCheckedChange = { onScopeChange(scope) },
-                modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
-                shapes = searchScopeButtonShapes(index, MainSearchScope.entries.lastIndex),
-                colors = ToggleButtonDefaults.toggleButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    checkedContainerColor = MaterialTheme.colorScheme.primary,
-                    checkedContentColor = MaterialTheme.colorScheme.onPrimary,
-                ),
-                contentPadding = PaddingValues(horizontal = 10.dp),
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+            MaterialShapeFeedback {
+                ToggleButton(
+                    checked = selected,
+                    onCheckedChange = { onScopeChange(scope) },
+                    modifier = (Modifier.weight(1f).semantics { role = Role.RadioButton }),
+                    shapes = searchScopeButtonShapes(index, MainSearchScope.entries.lastIndex),
+                    colors = ToggleButtonDefaults.toggleButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        checkedContainerColor = MaterialTheme.colorScheme.primary,
+                        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                    contentPadding = PaddingValues(horizontal = 10.dp),
                 ) {
-                    Box(
-                        modifier = Modifier.size(width = iconSlotWidth, height = 20.dp),
-                        contentAlignment = Alignment.CenterStart,
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_check_wght400),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp).alpha(iconAlpha).graphicsLayer {
-                                scaleX = iconScale
-                                scaleY = iconScale
+                        Box(
+                            modifier = Modifier.size(width = iconSlotWidth, height = 20.dp),
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+                            Icon(
+                                painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_check_wght400),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp).alpha(iconAlpha).graphicsLayer {
+                                    scaleX = iconScale
+                                    scaleY = iconScale
+                                },
+                            )
+                        }
+                        Text(
+                            text = stringResource(scope.labelRes),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.layout { measurable, constraints ->
+                                val placeable = measurable.measure(constraints)
+                                layout(placeable.width, placeable.height) {
+                                    placeable.placeRelative(textShift.roundToPx(), 0)
+                                }
                             },
                         )
                     }
-                    Text(
-                        text = stringResource(scope.labelRes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.layout { measurable, constraints ->
-                            val placeable = measurable.measure(constraints)
-                            layout(placeable.width, placeable.height) {
-                                placeable.placeRelative(textShift.roundToPx(), 0)
-                            }
-                        },
-                    )
                 }
             }
         }
@@ -335,9 +340,10 @@ private fun SearchSectionHeader(title: String, iconRes: Int) {
 
 @Composable
 private fun SearchInspirationCard(item: CaptureItem, activity: MainActivity, onDelete: () -> Unit) {
+    val editorEntry = com.aritxonly.deadliner.ui.editor.LocalDeadlineEditorEntry.current
     var menuExpanded by remember { mutableStateOf(false) }
     fun openEditor(typeIndex: Int, autoRunAi: Boolean) {
-        activity.startActivity(Intent(activity, AddDDLActivity::class.java).apply {
+        editorEntry.open(Intent(activity, AddDDLActivity::class.java).apply {
             putExtra("EXTRA_CURRENT_TYPE", typeIndex)
             putExtra(AddDDLActivity.EXTRA_PREFILL_TEXT, item.text)
             putExtra(AddDDLActivity.EXTRA_AUTO_RUN_AI, autoRunAi)
@@ -345,7 +351,7 @@ private fun SearchInspirationCard(item: CaptureItem, activity: MainActivity, onD
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { openEditor(0, true) },
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).clickable { openEditor(0, true) },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -365,7 +371,7 @@ private fun SearchInspirationCard(item: CaptureItem, activity: MainActivity, onD
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                     Text(item.text, style = MaterialTheme.typography.bodyLarge, maxLines = 5, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     Box {
-                        IconButton(onClick = { menuExpanded = true }) {
+                        IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = { menuExpanded = true }) {
                             Icon(com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_more_vert_wght400), contentDescription = stringResource(R.string.settings_more))
                         }
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -399,6 +405,7 @@ private fun SearchCaptureMenuItem(labelRes: Int, onClick: () -> Unit) {
 
 @Composable
 private fun SearchTaskCard(task: Task, activity: MainActivity) {
+    val detailAnchor = com.aritxonly.deadliner.ui.detail.rememberTaskDetailAnchor()
     val start = task.startAt?.let { runCatching { GlobalUtils.parseDateTime(it) }.getOrNull() }
     val end = task.dueAt?.let { runCatching { GlobalUtils.parseDateTime(it) }.getOrNull() }
     val now = LocalDateTime.now()
@@ -410,6 +417,8 @@ private fun SearchTaskCard(task: Task, activity: MainActivity) {
         else -> GlobalUtils.buildRemainingTime(activity, start, end, true, now)
     }
     DDLItemCardSimplified(
+        modifier = detailAnchor.modifier,
+        detailAnchor = detailAnchor,
         title = task.title,
         remainingTimeAlt = remaining,
         note = task.note,
@@ -417,7 +426,7 @@ private fun SearchTaskCard(task: Task, activity: MainActivity) {
         isStarred = task.isStarred,
         status = status,
         useDisabledCompletedStyle = semanticStatus == DeadlineSemanticStatus.ABANDONED,
-        onClick = { activity.startActivity(DeadlineDetailActivity.newIntent(activity, task.uid)) },
+        onClick = { detailAnchor.open(activity, task.uid) },
     )
 }
 
@@ -432,7 +441,7 @@ private fun SearchHabitCard(status: HabitDayStatus, onClick: () -> Unit) {
     }
     val actionEnabled = status.canApplyPrimaryAction
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(enabled = actionEnabled, onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).clickable(enabled = actionEnabled, onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         shape = RoundedCornerShape(24.dp),
     ) {

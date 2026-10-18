@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.intro
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -59,8 +60,6 @@ fun IntroWizardRoot(
 ) {
     val state by vm.state.collectAsState()
     val step = state.currentStep
-    val uiStyle by GlobalUtils.styleFlow.collectAsState()
-    val isSimplified = uiStyle == UiStyle.Simplified
 
     LaunchedEffect(step) {
         if (step is WizardStep.Done) {
@@ -90,11 +89,7 @@ fun IntroWizardRoot(
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                if (isSimplified) {
-                    SimplifiedWizardWithTransition(vm = vm)
-                } else {
-                    ClassicWizardWithTransition(vm = vm)
-                }
+                ClassicWizardWithTransition(vm = vm)
             }
         }
     }
@@ -180,7 +175,7 @@ internal fun InfoStepScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
-            Button(
+            Button(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.shape),
                 onClick = onPrimaryClick,
             ) {
                 Text(primaryButtonText)
@@ -221,11 +216,11 @@ internal fun WizardHeader(
             modifier = Modifier.weight(1f)
         )
 
-        TextButton(onClick = onSkip) {
+        TextButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.textShape), onClick = onSkip) {
             Text(text = stringResource(com.aritxonly.deadliner.R.string.wizard_header_skip))
         }
 
-        IconButton(onClick = onNext) {
+        IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onNext) {
             Icon(
                 painter = iconResource(com.aritxonly.deadliner.R.drawable.msr_chevron_right_wght400),
                 contentDescription = null

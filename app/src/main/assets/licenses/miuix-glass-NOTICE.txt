@@ -1,0 +1,6 @@
+MIUIX glass material
+Copyright 2026, compose-miuix-ui contributors
+Apache License 2.0
+https://github.com/compose-miuix-ui/miuix/pull/423
+Commit ec4c96963abf206ab2f2b0253a5efca71ba28043
+The material core is vendored; the stock token table is mechanically split into smaller Kotlin source files without changing its values.

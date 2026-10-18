@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
+import com.aritxonly.deadliner.ui.base.formContainerBackground
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,7 +45,7 @@ fun DonateScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
@@ -66,11 +68,13 @@ fun DonateScreen(
 
                     OutlinedTextField(
                         value = orderId,
+                        colors = com.aritxonly.deadliner.ui.base.standardMaterialTextFieldColors(),
                         onValueChange = { orderId = it },
                         label = { Text(stringResource(R.string.deadliner_donate_order_id)) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp),
+                            .padding(top = 16.dp)
+                            .formContainerBackground(4.dp),
                         enabled = !submitted
                     )
 
@@ -85,7 +89,7 @@ fun DonateScreen(
                             Toast.makeText(context, context.getString(R.string.deadliner_donate_order_saved), Toast.LENGTH_SHORT).show()
                         },
                         enabled = !submitted,
-                        modifier = Modifier.padding(top = 12.dp)
+                        modifier = (Modifier.padding(top = 12.dp)).miuixPressFeedback(enabled = !submitted, shape = androidx.compose.material3.ButtonDefaults.shape)
                     ) {
                         Text(stringResource(R.string.deadliner_donate_submit_order))
                     }

@@ -8,6 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.luminance
+import com.aritxonly.deadliner.ui.material.glass.GlassSurfaceRole
+import com.aritxonly.deadliner.ui.material.glass.officialMiuixGlassMaterial
 import com.aritxonly.deadliner.model.AdvancedMaterialFineTuning
 import com.aritxonly.deadliner.model.AdvancedMaterialTuning
 import top.yukonga.miuix.kmp.blur.Backdrop
@@ -22,6 +25,7 @@ import top.yukonga.miuix.kmp.blur.textureBlur
 @Immutable
 data class AdvancedMaterialSpec(
     val enabled: Boolean = false,
+    val useOfficialMiuixGlass: Boolean = false,
     val blurEnabled: Boolean = true,
     val blurRadius: Float = AdvancedMaterialTuning.DefaultBlurRadius,
     val blurRadiusX: Float? = null,
@@ -58,10 +62,12 @@ fun createAdvancedMaterialSpec(
     enabled: Boolean,
     blurRadius: Float,
     fineTuning: AdvancedMaterialFineTuning,
+    useOfficialMiuixGlass: Boolean = false,
 ): AdvancedMaterialSpec {
     val tuning = fineTuning.normalized()
     return AdvancedMaterialSpec(
         enabled = enabled,
+        useOfficialMiuixGlass = useOfficialMiuixGlass,
         blurRadius = AdvancedMaterialTuning.normalizeBlurRadius(blurRadius),
         noiseCoefficient = tuning.noiseCoefficient,
         blurBrightness = tuning.brightness,
@@ -84,12 +90,21 @@ fun AdvancedMaterialSpec.rememberBlurColors(
     saturation = blurSaturation,
 )
 
+@Composable
 fun Modifier.advancedTextureBlur(
     advancedMaterial: AdvancedMaterialSpec,
     backdrop: Backdrop,
     shape: Shape,
     colors: BlurColors,
-): Modifier = if (advancedMaterial.usesIndependentBlurRadii) {
+): Modifier = if (advancedMaterial.useOfficialMiuixGlass && advancedMaterial.textureBlurEnabled &&
+    top.yukonga.miuix.kmp.blur.isRuntimeShaderSupported()) {
+    officialMiuixGlassMaterial(
+        backdrop = backdrop,
+        shape = shape,
+        isDark = MaterialTheme.colorScheme.onSurface.luminance() > 0.5f,
+        role = GlassSurfaceRole.TopBar,
+    )
+} else if (advancedMaterial.usesIndependentBlurRadii) {
     textureBlur(
         backdrop = backdrop,
         shape = shape,

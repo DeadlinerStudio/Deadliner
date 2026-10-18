@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.main.simplified
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -143,11 +144,11 @@ fun MainSearchBar(
                         },
                         leadingIcon = {
                             if (expanded) {
-                                M3IconButton(onClick = handleClose) {
+                                M3IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = handleClose) {
                                     M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_arrow_back_wght400), stringResource(R.string.back))
                                 }
                             } else {
-                                M3IconButton(onClick = onCategoryFilterClick) {
+                                M3IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onCategoryFilterClick) {
                                     M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_sort_wght400), stringResource(R.string.filter_dialog_title))
                                 }
                             }
@@ -156,23 +157,23 @@ fun MainSearchBar(
                             if (!expanded) {
                                 val iconModifier = Modifier.clip(CircleShape).onGloballyPositioned { onMoreAnchorChange(it.boundsInWindow()) }
                                 if (useAvatar && avatarPainter != null) {
-                                    M3IconButton(onClick = onMoreClick, modifier = iconModifier.size(32.dp)) {
+                                    M3IconButton(onClick = onMoreClick, modifier = (iconModifier.size(32.dp)).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)) {
                                         Image(painter = avatarPainter, contentDescription = stringResource(R.string.user), contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                                     }
                                 } else {
-                                    M3IconButton(onClick = onMoreClick, modifier = iconModifier) {
+                                    M3IconButton(onClick = onMoreClick, modifier = (iconModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)) {
                                         M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_more_vert_wght400), stringResource(R.string.settings_more))
                                     }
                                 }
                             } else {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     if (textFieldState.text.isNotEmpty()) {
-                                        M3IconButton(onClick = { textFieldState.edit { replace(0, length, "") } }) {
+                                        M3IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = { textFieldState.edit { replace(0, length, "") } }) {
                                             M3Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_close_wght400), stringResource(R.string.close))
                                         }
                                     }
                                     if (onArchiveClick != null) {
-                                        M3IconButton(onClick = onArchiveClick) {
+                                        M3IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onArchiveClick) {
                                             M3Icon(
                                                 com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_inbox_wght400),
                                                 stringResource(R.string.archive),
@@ -228,7 +229,7 @@ fun MainSearchBar(
             },
             outsideEndAction = onArchiveClick?.let { openArchive ->
                 {
-                    MiuixIconButton(onClick = openArchive) {
+                    MiuixIconButton(modifier = Modifier.miuixPressFeedback(overlay = false), onClick = openArchive) {
                         MiuixIcon(
                             painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_inbox_wght400),
                             contentDescription = stringResource(R.string.archive),

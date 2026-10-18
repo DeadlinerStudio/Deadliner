@@ -1,0 +1,6 @@
+<!-- Copyright 2026 compose-miuix-ui contributors; Generated from pinned MIUIX Apache-2.0 source; see third_party/interface-icons/NOTICE.md. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="1142.9" android:viewportHeight="1142.9" android:autoMirrored="false">
+    <group android:translateX="0.0" android:translateY="1142.9" android:scaleX="1" android:scaleY="-1.0">
+        <path android:pathData="M 896.9  128.9 L 896.9  1013.9 Q 896.9  1027.9  888.9  1035.9 Q 880.9  1043.9  866.9  1043.9 L 836.9  1043.9 Q 822.9  1043.9  814.9  1035.9 Q 806.9  1027.9  806.9  1013.9 L 806.9  128.9 Q 806.9  114.9  814.9  106.9 Q 822.9  98.9  836.9  98.9 L 866.9  98.9 Q 875.9  98.9  882.9  102.4 Q 889.9  105.9  893.4  112.9 Q 896.9  119.9  896.9  128.9 Z  M 335.9  128.9 L 335.9  1013.9 Q 335.9  1022.9  332.4  1029.9 Q 328.9  1036.9  321.9  1040.4 Q 314.9  1043.9  305.9  1043.9 L 275.9  1043.9 Q 261.9  1043.9  253.9  1035.9 Q 245.9  1027.9  245.9  1013.9 L 245.9  128.9 Q 245.9  119.9  249.4  112.9 Q 252.9  105.9  259.9  102.4 Q 266.9  98.9  275.9  98.9 L 305.9  98.9 Q 314.9  98.9  321.9  102.4 Q 328.9  105.9  332.4  112.9 Q 335.9  119.9  335.9  128.9 Z " android:fillColor="#FF000000" android:fillType="nonZero" android:fillAlpha="1" />
+    </group>
+</vector>

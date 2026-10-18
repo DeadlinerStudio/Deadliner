@@ -1,5 +1,10 @@
 package com.aritxonly.deadliner
 
+import top.yukonga.miuix.kmp.nav.core.NavDisplay
+import top.yukonga.miuix.kmp.nav.transition.NavTransitions
+import com.aritxonly.deadliner.ui.settings.SettingsPage
+import com.aritxonly.deadliner.ui.settings.rememberSettingsNavigator
+
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -17,14 +22,6 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,19 +42,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavBackStackEntry
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.core.view.drawToBitmap
 import com.aritxonly.deadliner.ui.settings.AboutSettingsScreen
 import com.aritxonly.deadliner.ui.settings.AdvancedMaterialSettingsScreen
@@ -91,11 +82,11 @@ import com.aritxonly.deadliner.ui.settings.WikiScreen
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.localutils.DisplayScaleManager
 import com.aritxonly.deadliner.localutils.enableEdgeToEdgeForAllDevices
-import com.aritxonly.deadliner.ui.settings.UiSettingsScreen
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.Checkbox
 import com.aritxonly.deadliner.ui.base.OutlinedTextField
 import com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost
+import com.aritxonly.deadliner.ui.base.WindowGlassBackdropHost
 import com.aritxonly.deadliner.ui.theme.DeadlinerTheme
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import java.text.SimpleDateFormat
@@ -174,7 +165,7 @@ sealed class SettingsRoute(
         )
 
         val appearanceThirdRoutes = listOf(
-            AppearanceDesign, AppearanceMaterial, AppIcon, UI, DisplayScale
+            AppearanceDesign, AppearanceMaterial, AppIcon, DisplayScale
         )
 
         val aboutThirdRoutes = listOf(
@@ -217,253 +208,221 @@ class SettingsActivity : DeadlinerAppCompatActivity() {
         intent.putExtra(EXTRA_INITIAL_ROUTE, initialRoute)
 
         setContent {
-            val navController = rememberNavController()
-            var restoredRoute by rememberSaveable {
-                mutableStateOf(initialRoute)
-            }
-            val currentBackStackEntry by navController.currentBackStackEntryAsState()
-
-            val defaultEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = tween(300)
-                ) + fadeIn(tween(300))
-            }
-            val defaultExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-                fadeOut(tween(300))
-            }
-            val defaultPopEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-                fadeIn(tween(300))
-            }
-            val defaultPopExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(300)
-                ) + fadeOut(tween(300))
-            }
-
-            LaunchedEffect(restoredRoute) {
-                val route = restoredRoute
-                if (route != SettingsRoute.Main.route && navController.currentDestination?.route != route) {
-                    navController.navigate(route) {
-                        popUpTo(SettingsRoute.Main.route) { inclusive = false }
-                        launchSingleTop = true
-                    }
-                }
-            }
-            LaunchedEffect(currentBackStackEntry?.destination?.route) {
-                currentBackStackEntry?.destination?.route?.let {
-                    restoredRoute = it
-                    latestRoute = it
-                    intent.putExtra(EXTRA_INITIAL_ROUTE, it)
-                }
+            val navController = rememberSettingsNavigator(initialRoute)
+            LaunchedEffect(navController.currentRoute) {
+                latestRoute = navController.currentRoute
+                intent.putExtra(EXTRA_INITIAL_ROUTE, latestRoute)
             }
 
             DeadlinerTheme {
-                val colorScheme = MaterialTheme.colorScheme
-                ProvideAdvancedMaterialDialogBlurHost {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Surface(
-                            modifier = Modifier.fillMaxSize(),
-                            color = colorScheme.surface
-                        ) {
-                            NavHost(
-                                navController,
-                                startDestination = SettingsRoute.Main.route,
-                                enterTransition = defaultEnter,
-                                exitTransition = defaultExit,
-                                popEnterTransition = defaultPopEnter,
-                                popExitTransition = defaultPopExit
+                WindowGlassBackdropHost {
+                    val colorScheme = MaterialTheme.colorScheme
+                    ProvideAdvancedMaterialDialogBlurHost {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Surface(
+                                modifier = Modifier.fillMaxSize(),
+                                color = colorScheme.surface
                             ) {
-                        composable(SettingsRoute.Main.route) {
-                            MainSettingsScreen(navController, onClose = { finishAfterTransition() })
-                        }
+                                NavDisplay(
+                                    backStack = navController.backStack,
+                                    transition = NavTransitions.MiuixDefault,
+                                    onBack = { if (!navController.navigateUp()) finish() },
+                                ) {
+                                    entry<SettingsPage> { page ->
+                                        when (page.route) {
+                                            SettingsRoute.Main.route -> {
+                                                MainSettingsScreen(navController, onClose = { finishAfterTransition() })
+                                            }
 
-                        composable(SettingsRoute.Appearance.route) {
-                            AppearanceSettingsScreen(
-                                navController
-                            ) { navController.navigateUp() }
-                        }
-                        composable(SettingsRoute.Behavior.route) {
-                            BehaviorSettingsScreen(
-                                navController, handleRestart = { showRestartAppDialog = true }
-                            ) { navController.navigateUp() }
-                        }
-                        composable(SettingsRoute.Profile.route) {
-                            ProfileSettingsScreen { navController.navigateUp() }
-                        }
-                        composable(SettingsRoute.Notification.route) { NotificationSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.Backup.route) {
-                            BackupSettingsScreen(
-                                handleExport = { createBackup() },
-                                handleImport = {
-                                    openBackup()
-                                },
-                                handleWebSettings = { navController.navigate(SettingsRoute.CloudSync.route) }
-                            ) { navController.navigateUp() }
-                        }
+                                            SettingsRoute.Appearance.route -> {
+                                                AppearanceSettingsScreen(
+                                                    navController
+                                                ) { navController.navigateUp() }
+                                            }
+                                            SettingsRoute.Behavior.route -> {
+                                                BehaviorSettingsScreen(
+                                                    navController, handleRestart = { showRestartAppDialog = true }
+                                                ) { navController.navigateUp() }
+                                            }
+                                            SettingsRoute.Profile.route -> {
+                                                ProfileSettingsScreen { navController.navigateUp() }
+                                            }
+                                            SettingsRoute.Notification.route -> { NotificationSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.Backup.route -> {
+                                                BackupSettingsScreen(
+                                                    handleExport = { createBackup() },
+                                                    handleImport = {
+                                                        openBackup()
+                                                    },
+                                                    handleWebSettings = { navController.navigate(SettingsRoute.CloudSync.route) }
+                                                ) { navController.navigateUp() }
+                                            }
 
-                        composable(SettingsRoute.Widget.route) { WidgetSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.AI.route) { AISettingsScreen(navController) { navController.navigateUp() } }
-                        composable(SettingsRoute.CloudSync.route) {
-                            CloudSyncSettingsScreen(
-                                navigateToByos = { navController.navigate(SettingsRoute.Byos.route) },
-                                navigateToWebDav = { navController.navigate(SettingsRoute.WebDAV.route) },
-                                navigateUp = { navController.navigateUp() },
-                            )
-                        }
-                        composable(SettingsRoute.WebDAV.route) { WebSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.Byos.route) { ByosSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.Widget.route -> { WidgetSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.AI.route -> { AISettingsScreen(navController) { navController.navigateUp() } }
+                                            SettingsRoute.CloudSync.route -> {
+                                                CloudSyncSettingsScreen(
+                                                    navigateToByos = { navController.navigate(SettingsRoute.Byos.route) },
+                                                    navigateToWebDav = { navController.navigate(SettingsRoute.WebDAV.route) },
+                                                    navigateUp = { navController.navigateUp() },
+                                                )
+                                            }
+                                            SettingsRoute.WebDAV.route -> { WebSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.Byos.route -> { ByosSettingsScreen { navController.navigateUp() } }
 
-                        composable(SettingsRoute.Lab.route) {
-                            LabSettingsScreen(
-                                onClickCustomDisplayScale = {
-                                    navController.navigate(SettingsRoute.DisplayScaleCustom.route)
-                                },
-                                onClickCustomFilter = {
-                                    openCustomCalendarFilterDialog()
-                                },
-                                onClickCancelAll = {
-                                    KmpV6Runtime.cancelNotifications()
-                                    GlobalUtils.NotificationStatusManager.clearAllNotified()
-                                    Toast.makeText(
-                                        this@SettingsActivity,
-                                        getString(R.string.destroy_alarms),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                },
-                                onClickShowIntro = {
-                                    GlobalUtils.showIntroPage = true
-                                    Toast.makeText(
-                                        this@SettingsActivity,
-                                        getString(R.string.show_intro_next_time),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                },
-                            ) { navController.navigateUp() }
-                        }
+                                            SettingsRoute.Lab.route -> {
+                                                LabSettingsScreen(
+                                                    onClickCustomDisplayScale = {
+                                                        navController.navigate(SettingsRoute.DisplayScaleCustom.route)
+                                                    },
+                                                    onClickCustomFilter = {
+                                                        openCustomCalendarFilterDialog()
+                                                    },
+                                                    onClickCancelAll = {
+                                                        KmpV6Runtime.cancelNotifications()
+                                                        GlobalUtils.NotificationStatusManager.clearAllNotified()
+                                                        Toast.makeText(
+                                                            this@SettingsActivity,
+                                                            getString(R.string.destroy_alarms),
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    },
+                                                    onClickShowIntro = {
+                                                        GlobalUtils.showIntroPage = true
+                                                        Toast.makeText(
+                                                            this@SettingsActivity,
+                                                            getString(R.string.show_intro_next_time),
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    },
+                                                ) { navController.navigateUp() }
+                                            }
 
-                        composable(SettingsRoute.Wiki.route) { WikiScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.Feedback.route) { FeedbackScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.About.route) { AboutSettingsScreen(navController) { navController.navigateUp() } }
+                                            SettingsRoute.Wiki.route -> { WikiScreen { navController.navigateUp() } }
+                                            SettingsRoute.Feedback.route -> { FeedbackScreen { navController.navigateUp() } }
+                                            SettingsRoute.About.route -> { AboutSettingsScreen(navController) { navController.navigateUp() } }
 
-                        composable(SettingsRoute.Vibration.route) { VibrationSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.Archive.route) { ArchiveSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.Badge.route) { BadgeSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.AppearanceDesign.route) {
-                            DesignColorSettingsScreen(
-                                navigateUp = { navController.navigateUp() },
-                            )
-                        }
-                        composable(SettingsRoute.AppearanceMaterial.route) { AdvancedMaterialSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.DisplayScale.route) { DisplayScaleSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.DisplayScaleCustom.route) { CustomDisplayScaleSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.AppIcon.route) { AppIconSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.UI.route) { UiSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.Model.route) { ModelSettingsScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.Prompt.route) { PromptSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.Vibration.route -> { VibrationSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.Archive.route -> { ArchiveSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.Badge.route -> { BadgeSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.AppearanceDesign.route -> {
+                                                DesignColorSettingsScreen(
+                                                    navigateUp = { navController.navigateUp() },
+                                                )
+                                            }
+                                            SettingsRoute.AppearanceMaterial.route -> { AdvancedMaterialSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.DisplayScale.route -> { DisplayScaleSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.DisplayScaleCustom.route -> { CustomDisplayScaleSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.AppIcon.route -> { AppIconSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.UI.route -> { AppearanceSettingsScreen(navController) { navController.navigateUp() } }
+                                            SettingsRoute.Model.route -> { ModelSettingsScreen { navController.navigateUp() } }
+                                            SettingsRoute.Prompt.route -> { PromptSettingsScreen { navController.navigateUp() } }
 
-                        composable(SettingsRoute.Update.route) { UpdateScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.License.route) { LicenseScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.Policy.route) { PolicyScreen { navController.navigateUp() } }
-                        composable(SettingsRoute.Donate.route) { DonateScreen { navController.navigateUp() } }
+                                            SettingsRoute.Update.route -> { UpdateScreen { navController.navigateUp() } }
+                                            SettingsRoute.License.route -> { LicenseScreen { navController.navigateUp() } }
+                                            SettingsRoute.Policy.route -> { PolicyScreen { navController.navigateUp() } }
+                                            SettingsRoute.Donate.route -> { DonateScreen { navController.navigateUp() } }
+                                            else -> MainSettingsScreen(navController, onClose = { finish() })
+                                        }
+                                    }
+                                }
                             }
-                        }
 
-                        if (customCalendarFilterDialogState != null && !showCustomCalendarNewItemDialog) {
-                            CustomCalendarFilterDialog(
-                                state = customCalendarFilterDialogState!!,
-                                onDismiss = { customCalendarFilterDialogState = null },
-                                onAddFilter = {
-                                    customCalendarNewItemDraft = ""
-                                    showCustomCalendarNewItemDialog = true
-                                },
-                                onToggleItem = ::toggleCustomCalendarFilterItem,
-                                onConfirm = ::saveCustomCalendarFilterSelection
-                            )
-                        }
+                            if (customCalendarFilterDialogState != null && !showCustomCalendarNewItemDialog) {
+                                CustomCalendarFilterDialog(
+                                    state = customCalendarFilterDialogState!!,
+                                    onDismiss = { customCalendarFilterDialogState = null },
+                                    onAddFilter = {
+                                        customCalendarNewItemDraft = ""
+                                        showCustomCalendarNewItemDialog = true
+                                    },
+                                    onToggleItem = ::toggleCustomCalendarFilterItem,
+                                    onConfirm = ::saveCustomCalendarFilterSelection
+                                )
+                            }
 
-                        if (showCustomCalendarNewItemDialog) {
-                            NewCustomCalendarFilterDialog(
-                                draft = customCalendarNewItemDraft,
-                                onDraftChange = { customCalendarNewItemDraft = it },
-                                onDismiss = { showCustomCalendarNewItemDialog = false },
-                                onConfirm = ::addCustomCalendarFilterItem
-                            )
-                        }
+                            if (showCustomCalendarNewItemDialog) {
+                                NewCustomCalendarFilterDialog(
+                                    draft = customCalendarNewItemDraft,
+                                    onDraftChange = { customCalendarNewItemDraft = it },
+                                    onDismiss = { showCustomCalendarNewItemDialog = false },
+                                    onConfirm = ::addCustomCalendarFilterItem
+                                )
+                            }
 
-                        importConfirmUri?.let { pendingUri ->
-                            AlertDialog(
-                                show = true,
-                                onDismissRequest = { importConfirmUri = null },
-                                title = { Text(stringResource(R.string.confirm_import)) },
-                                text = { Text(stringResource(R.string.confirm_import_message)) },
-                                miuixTitle = getString(R.string.confirm_import),
-                                miuixSummary = getString(R.string.confirm_import_message),
-                                confirmButton = {
-                                    TextButton(
-                                        onClick = {
-                                            importConfirmUri = null
-                                            performImport(pendingUri)
+                            importConfirmUri?.let { pendingUri ->
+                                AlertDialog(
+                                    show = true,
+                                    onDismissRequest = { importConfirmUri = null },
+                                    title = { Text(stringResource(R.string.confirm_import)) },
+                                    text = { Text(stringResource(R.string.confirm_import_message)) },
+                                    miuixTitle = getString(R.string.confirm_import),
+                                    miuixSummary = getString(R.string.confirm_import_message),
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                importConfirmUri = null
+                                                performImport(pendingUri)
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.accept))
                                         }
-                                    ) {
-                                        Text(stringResource(R.string.accept))
-                                    }
-                                },
-                                dismissButton = {
-                                    TextButton(onClick = { importConfirmUri = null }) {
-                                        Text(stringResource(R.string.cancel))
-                                    }
-                                }
-                            )
-                        }
-
-                        if (showImportSuccessDialog) {
-                            AlertDialog(
-                                show = true,
-                                onDismissRequest = { showImportSuccessDialog = false },
-                                text = { Text(stringResource(R.string.import_success)) },
-                                miuixSummary = getString(R.string.import_success),
-                                confirmButton = {
-                                    TextButton(
-                                        onClick = {
-                                            showImportSuccessDialog = false
-                                            restartApp()
+                                    },
+                                    dismissButton = {
+                                        TextButton(onClick = { importConfirmUri = null }) {
+                                            Text(stringResource(R.string.cancel))
                                         }
-                                    ) {
-                                        Text(stringResource(R.string.restart_now))
                                     }
-                                },
-                                dismissButton = {
-                                    TextButton(onClick = { showImportSuccessDialog = false }) {
-                                        Text(stringResource(R.string.later))
-                                    }
-                                }
-                            )
-                        }
+                                )
+                            }
 
-                        if (showRestartAppDialog) {
-                            AlertDialog(
-                                show = true,
-                                onDismissRequest = { showRestartAppDialog = false },
-                                text = { Text(stringResource(R.string.embedded_activities_success)) },
-                                miuixSummary = getString(R.string.embedded_activities_success),
-                                confirmButton = {
-                                    TextButton(
-                                        onClick = {
-                                            showRestartAppDialog = false
-                                            restartApp()
+                            if (showImportSuccessDialog) {
+                                AlertDialog(
+                                    show = true,
+                                    onDismissRequest = { showImportSuccessDialog = false },
+                                    text = { Text(stringResource(R.string.import_success)) },
+                                    miuixSummary = getString(R.string.import_success),
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                showImportSuccessDialog = false
+                                                restartApp()
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.restart_now))
                                         }
-                                    ) {
-                                        Text(stringResource(R.string.restart_now))
+                                    },
+                                    dismissButton = {
+                                        TextButton(onClick = { showImportSuccessDialog = false }) {
+                                            Text(stringResource(R.string.later))
+                                        }
                                     }
-                                },
-                                dismissButton = {
-                                    TextButton(onClick = { showRestartAppDialog = false }) {
-                                        Text(stringResource(R.string.later))
+                                )
+                            }
+
+                            if (showRestartAppDialog) {
+                                AlertDialog(
+                                    show = true,
+                                    onDismissRequest = { showRestartAppDialog = false },
+                                    text = { Text(stringResource(R.string.embedded_activities_success)) },
+                                    miuixSummary = getString(R.string.embedded_activities_success),
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                showRestartAppDialog = false
+                                                restartApp()
+                                            }
+                                        ) {
+                                            Text(stringResource(R.string.restart_now))
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(onClick = { showRestartAppDialog = false }) {
+                                            Text(stringResource(R.string.later))
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }

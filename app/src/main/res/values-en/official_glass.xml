@@ -1,0 +1,5 @@
+<resources>
+    <string name="settings_official_glass_experiment">Official MIUIX glass (experimental)</string>
+    <string name="settings_official_glass_experiment_summary">With advanced material enabled, use the official material from MIUIX PR #423. Uses official presets instead of the existing blur and optics tuning. Turn off to restore the current material.</string>
+    <string name="settings_official_glass_preset">Official MIUIX preset</string>
+</resources>

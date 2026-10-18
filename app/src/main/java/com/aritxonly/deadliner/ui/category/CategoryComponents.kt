@@ -4,10 +4,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,6 +30,7 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.ui.base.formContainerBackground
 import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
 import com.aritxonly.deadliner.ui.iconResource
 import top.yukonga.miuix.kmp.basic.Checkbox as MiuixCheckbox
@@ -98,19 +99,15 @@ fun CategoryAssignmentField(
 ) {
     val category = categories.firstOrNull { it.uid == categoryUid }
     val isMiuix = true
-    val containerColor = if (isMiuix) {
-        MiuixTheme.colorScheme.surfaceContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer
-    }
     val contentColor = if (isMiuix) {
         MiuixTheme.colorScheme.onSurfaceContainer
     } else {
         MaterialTheme.colorScheme.onSurface
     }
     Surface(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
-        color = containerColor,
+        modifier = modifier.fillMaxWidth().formContainerBackground(dimensionResource(R.dimen.item_corner_radius))
+            .clickable(onClick = onClick),
+        color = androidx.compose.ui.graphics.Color.Transparent,
         contentColor = contentColor,
         shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)),
     ) {
@@ -140,8 +137,9 @@ fun CategoryPickerSheet(
             onDismiss()
             if (manageAfterDismiss) onManageCategories()
         },
-    ) {
+    ) { sheetPadding ->
         CategoryChoiceContent(
+            contentPadding = sheetPadding,
             categories = categories,
             selectedUid = selectedUid,
             onSelected = {
@@ -179,8 +177,8 @@ fun CategoryFilterSheet(
             onDismiss()
             if (manageAfterDismiss) onManageCategories()
         },
-    ) {
-        Column(Modifier.fillMaxWidth().padding(bottom = 20.dp)) {
+    ) { sheetPadding ->
+        Column(Modifier.fillMaxWidth().padding(sheetPadding).padding(bottom = 20.dp)) {
             CategorySheetRow(
                 title = stringResource(R.string.category_uncategorized),
                 leading = {
@@ -203,7 +201,7 @@ fun CategoryFilterSheet(
                     )
                 },
             )
-            LazyColumn(Modifier.heightIn(max = 420.dp)) {
+            LazyColumn(Modifier.weight(1f)) {
                 items(categories, key = CategoryPresentation::uid) { category ->
                     val checked = category.uid in selected
                     val toggle = { update(if (checked) selected - category.uid else selected + category.uid) }
@@ -233,12 +231,13 @@ fun CategoryFilterSheet(
 
 @Composable
 private fun CategoryChoiceContent(
+    contentPadding: PaddingValues,
     categories: List<CategoryPresentation>,
     selectedUid: String?,
     onSelected: (String?) -> Unit,
     onManageCategories: () -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth().padding(bottom = 20.dp)) {
+    Column(Modifier.fillMaxWidth().padding(contentPadding).padding(bottom = 20.dp)) {
         CategorySheetRow(
             title = stringResource(R.string.category_uncategorized),
             selected = selectedUid == null,
@@ -250,7 +249,7 @@ private fun CategoryChoiceContent(
                 )
             },
         )
-        LazyColumn(Modifier.heightIn(max = 420.dp)) {
+        LazyColumn(Modifier.weight(1f)) {
             items(categories, key = CategoryPresentation::uid) { category ->
                 CategorySheetRow(
                     title = null,

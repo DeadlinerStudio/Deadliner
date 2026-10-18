@@ -1,12 +1,10 @@
 package com.aritxonly.deadliner.ui.material.glass
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlurEffect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -15,7 +13,7 @@ import com.aritxonly.deadliner.ui.theme.AdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.theme.advancedTextureBlur
 import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
-import top.yukonga.miuix.kmp.blur.LayerBackdrop
+import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.colorControls
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.effect
@@ -25,7 +23,7 @@ import top.yukonga.miuix.kmp.blur.runtimeShaderEffect
 @Composable
 fun Modifier.deadlinerGlassMaterial(
     advancedMaterial: AdvancedMaterialSpec,
-    backdrop: LayerBackdrop?,
+    backdrop: Backdrop?,
     shape: Shape,
     tint: Color,
     tintStyle: GlassTintStyle = GlassTintStyle.Neutral,
@@ -35,6 +33,20 @@ fun Modifier.deadlinerGlassMaterial(
     blurRadiusOverride: Float? = null,
     tintAlphaOverride: Float? = null,
 ): Modifier {
+    if (advancedMaterial.useOfficialMiuixGlass && advancedMaterial.textureBlurEnabled &&
+        backdrop != null && isRuntimeShaderSupported()) {
+        // Keep the seeded emphasis action's colour in the official shaded control path.
+        val isChromatic = tintStyle != GlassTintStyle.Neutral
+        return officialMiuixGlassMaterial(
+            backdrop = backdrop,
+            shape = shape,
+            isDark = isDark,
+            role = if (isChromatic) GlassSurfaceRole.Control else recipe.surfaceRole,
+            tint = if (isChromatic) tint.copy(
+                alpha = 0.22f * (1f - interaction.neutralTintProgress.coerceIn(0f, 1f)),
+            ) else Color.Unspecified,
+        )
+    }
     val blurSpec = recipe.blur
     val resolvedBlurRadius = blurRadiusOverride
         ?.takeIf { it.isFinite() }
@@ -85,7 +97,7 @@ fun Modifier.deadlinerGlassMaterial(
             recipe = recipe,
             interaction = interaction,
             isDark = isDark,
-        ).opticalGlassEdge(shape, recipe.edgeOptics, isDark)
+        )
 
         canDrawBackdrop -> {
             val blurColors = resolvedMaterial.rememberBlurColors(
@@ -98,15 +110,15 @@ fun Modifier.deadlinerGlassMaterial(
                     shape = shape,
                     colors = blurColors,
                 )
-                .fallbackGlassEdge(shape, recipe.edgeOptics, isDark)
         }
 
         else -> Modifier
             .background(color = tintComposite.fallbackTint, shape = shape)
-            .fallbackGlassEdge(shape, recipe.edgeOptics, isDark)
     }
 
-    return this.then(material)
+    // The highlight draws after the sampled material, without an extra darkening layer.
+    return glassBoundary(shape, recipe.edgeOptics, isDark, optical = canDrawOpticalStack)
+        .then(material)
 }
 
 internal data class GlassTintComposite(
@@ -197,7 +209,7 @@ internal fun resolveGlassTintComposite(
  * color treatment -> full material blur -> rounded-rectangle lens -> gentle softening.
  */
 private fun Modifier.glassOpticalBackdrop(
-    backdrop: LayerBackdrop,
+    backdrop: Backdrop,
     shape: Shape,
     material: AdvancedMaterialSpec,
     tintComposite: GlassTintComposite,
@@ -219,7 +231,13 @@ private fun Modifier.glassOpticalBackdrop(
         } else {
             0f
         }
-        val effectPaddingPx = postBlurRadiusPx * 2f
+        // Native BlurEffect does not reserve sampling padding (unlike MIUIX blur()).
+        // Keep its full kernel and the refracted samples inside the recorded backdrop.
+        val effectPaddingPx = glassEffectPadding(
+            blurRadiusX, blurRadiusY, postBlurRadiusPx,
+            refraction.amount.toPx() * interaction.refractionScale.coerceAtLeast(0f),
+            refraction.chromaticAberration.toPx(),
+        )
         padding = effectPaddingPx
 
         colorControls(
@@ -241,8 +259,7 @@ private fun Modifier.glassOpticalBackdrop(
             shaderString = GlassRefractionShader,
             uniformShaderName = "source",
         ) {
-            val highlight = recipe.edgeOptics.highlightAlpha * EDGE_HIGHLIGHT_SCALE *
-                if (isDark) recipe.edgeOptics.darkHighlightMultiplier else 1f
+            val highlight = recipe.edgeOptics.highlightAlpha(isDark)
             setFloatUniform("content_origin", effectPaddingPx, effectPaddingPx)
             setFloatUniform("content_size", size.width, size.height)
             setFloatUniform(
@@ -250,6 +267,7 @@ private fun Modifier.glassOpticalBackdrop(
                 recipe.geometry.cornerRadius?.toPx() ?: (size.height / 2f),
             )
             setFloatUniform("refraction_height", refraction.height.toPx())
+            setFloatUniform("highlight_width", recipe.edgeOptics.rimWidth.toPx())
             setFloatUniform(
                 "refraction_amount",
                 refraction.amount.toPx() * interaction.refractionScale.coerceAtLeast(0f),
@@ -293,56 +311,3 @@ private fun Modifier.glassOpticalBackdrop(
     },
     contentBlendMode = material.blurContentBlendMode,
 )
-
-private fun Modifier.fallbackGlassEdge(
-    shape: Shape,
-    spec: GlassEdgeOpticsSpec,
-    isDark: Boolean,
-): Modifier {
-    val baseAlpha = (if (isDark) spec.fallbackDarkAlpha else spec.fallbackLightAlpha) *
-        FALLBACK_EDGE_ALPHA_SCALE
-    val edgeColor = grayscaleColor(spec.highlightGray)
-    val edgeBrush = Brush.verticalGradient(
-        colors = listOf(
-            edgeColor.copy(alpha = baseAlpha),
-            edgeColor.copy(alpha = baseAlpha * 0.66f),
-            edgeColor.copy(alpha = baseAlpha * 0.42f),
-        ),
-    )
-    return border(
-        width = spec.fallbackWidth * EDGE_WIDTH_SCALE,
-        brush = edgeBrush,
-        shape = shape,
-    )
-}
-
-private fun Modifier.opticalGlassEdge(
-    shape: Shape,
-    spec: GlassEdgeOpticsSpec,
-    isDark: Boolean,
-): Modifier {
-    val darkMultiplier = if (isDark) spec.darkHighlightMultiplier else 1f
-    val alpha = (spec.highlightAlpha * EDGE_HIGHLIGHT_SCALE * darkMultiplier).coerceIn(0f, 1f)
-    val edgeColor = grayscaleColor(spec.highlightGray)
-    val edgeBrush = Brush.verticalGradient(
-        colors = listOf(
-            edgeColor.copy(alpha = alpha),
-            edgeColor.copy(alpha = alpha * 0.62f),
-            edgeColor.copy(alpha = alpha * 0.30f),
-        ),
-    )
-    return border(
-        width = spec.fallbackWidth * EDGE_WIDTH_SCALE,
-        brush = edgeBrush,
-        shape = shape,
-    )
-}
-
-private fun grayscaleColor(value: Float): Color {
-    val gray = value.coerceIn(0f, 1f)
-    return Color(red = gray, green = gray, blue = gray, alpha = 1f)
-}
-
-private const val EDGE_HIGHLIGHT_SCALE = 0.85f
-private const val EDGE_WIDTH_SCALE = 1f
-private const val FALLBACK_EDGE_ALPHA_SCALE = 0.45f

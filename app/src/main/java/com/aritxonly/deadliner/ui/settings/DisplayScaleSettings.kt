@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.app.Activity
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -49,7 +50,7 @@ fun DisplayScaleSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
@@ -65,11 +66,12 @@ fun DisplayScaleSettingsScreen(
             modifier = Modifier,
         ) {
             SettingsSection(topLabel = stringResource(R.string.settings_display_size_title)) {
-                SettingsRadioGroupItem(
+                SettingsDropdownItem(
+                    title = stringResource(R.string.settings_display_size_title),
                     options = displayScaleOptions,
                     selectedKey = displayScalePreset,
                     onOptionSelected = { preset ->
-                        if (displayScalePreset == preset) return@SettingsRadioGroupItem
+                        if (displayScalePreset == preset) return@SettingsDropdownItem
                         GlobalUtils.displayScalePreset = preset
                         displayScalePreset = preset
                         (context as? Activity)?.let(DisplayScaleManager::restartApp)
@@ -95,7 +97,7 @@ fun CustomDisplayScaleSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),

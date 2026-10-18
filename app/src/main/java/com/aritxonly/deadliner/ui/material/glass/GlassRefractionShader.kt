@@ -2,7 +2,7 @@ package com.aritxonly.deadliner.ui.material.glass
 
 // The circular lens profile and rounded-rectangle SDF approach are informed by
 // Kyant0/AndroidLiquidGlass (Apache-2.0): https://github.com/Kyant0/AndroidLiquidGlass
-internal const val GlassRefractionShaderKey = "deadliner_glass_capsule_lens_v3"
+internal const val GlassRefractionShaderKey = "deadliner_glass_capsule_lens_v4"
 
 internal const val GlassRefractionShader = """
     uniform shader source;
@@ -14,6 +14,7 @@ internal const val GlassRefractionShader = """
     uniform float depth_effect;
     uniform float chromatic_aberration;
     uniform float noise_coefficient;
+    uniform float highlight_width;
     uniform float highlight_alpha;
     uniform float highlight_gray;
 
@@ -73,7 +74,7 @@ internal const val GlassRefractionShader = """
             color.b = blueSample.b;
         }
 
-        float edgeWidth = max(1.0, refraction_height * 0.12);
+        float edgeWidth = max(0.5, highlight_width);
         float rim = 1.0 - smoothstep(0.0, edgeWidth, innerDepth);
         float2 lightDirection = normalize(float2(-0.58, -0.82));
         float directional = pow(abs(dot(normal, lightDirection)), 4.0);

@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -53,7 +54,7 @@ fun AppIconSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),

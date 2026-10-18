@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.overview
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
@@ -673,12 +674,12 @@ fun ExportOptionsDialog(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.text_tone))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FilterChip(
+                    FilterChip(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.FilterChipDefaults.shape),
                         selected = tone == TextTone.Light,
                         onClick = { tone = TextTone.Light },
                         label = { Text(stringResource(R.string.light_text)) }
                     )
-                    FilterChip(
+                    FilterChip(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.FilterChipDefaults.shape),
                         selected = tone == TextTone.Dark,
                         onClick = { tone = TextTone.Dark },
                         label = { Text(stringResource(R.string.dark_text)) }
@@ -691,7 +692,7 @@ fun ExportOptionsDialog(
                     Button(onClick = { pickImage.launch("image/*") }) {
                         Text(stringResource(R.string.pick_from_gallery))
                     }
-                    OutlinedButton(
+                    OutlinedButton(modifier = Modifier.miuixPressFeedback(enabled = bgBitmap != null, shape = androidx.compose.material3.ButtonDefaults.outlinedShape),
                         onClick = { bgBitmap = null },
                         enabled = bgBitmap != null
                     ) { Text(stringResource(R.string.clear)) }

@@ -1,0 +1,16 @@
+{
+  "Glass.kt": "0c00985f28db85d1c5376a3968f6e0bcb553335b7044b2d68cb6e86a51376e20",
+  "GlassDefaults.kt": "0269ae292c83926f6118ce541c0607c32fc31bf3e318f3f7890868f49462b78b",
+  "GlassMaterial.kt": "42bda4b6b720d1d21a7fd214d8f22aa45bbb1f3f69bc4b35807f4d53ee74ebd7",
+  "GlassMaterials.kt": "e8062038afd2d9e642c20fe94330568f53ed5d585282f27c1df9719c98d15efe",
+  "GlassShape.kt": "f0eed33f55567ebc2389fd326d7a7aa440bc10aee640cfa993a98d119dd2a1f1",
+  "GlassShadow.kt": "29cfb8dcda0df936fcd96152df15b3855b80ed0c50dbbfba1260eefdde5d04cb",
+  "GlassStroke.kt": "3f548fbd296fcfd42983b81fe25ad67b0044c3aeb14b42ee2cb0698323180526",
+  "GlassStyle.kt": "2e7d11b4e89d90856059e78f47bbb5c8755d4152a6c60638627d147ecc869e1e",
+  "GlassPanel.kt": "747ad3008ceb7d9afbe735eee9fe71b50c16c673c848e66242140cc796acb3ab",
+  "internal/GlassGeometry.kt": "552be1d32785bb40024a900380d17988198edb8e70dcc67d030b8f79833d35a2",
+  "internal/GlassOverlays.kt": "f921d13716f72344dd8411d51926a83d41c48cc67f8a1813784a944cb260741d",
+  "internal/GlassShader.kt": "c6aa44baeef6369bfd25d03fd187909a840726c2327d5de49f42c05b31abd9f9",
+  "internal/GlassUniforms.kt": "0e79598b162b858556d2dd7c8935dbe9684372a37d11bfc0424848cb0e91dae1",
+  "GlassStyles.kt": "c9fc3b8087ea74cd388bb947df5bb33fcec3231c40c3a8b414fc4ecae9502290"
+}

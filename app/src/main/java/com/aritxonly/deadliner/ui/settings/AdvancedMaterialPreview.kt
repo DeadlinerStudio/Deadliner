@@ -35,7 +35,6 @@ import com.aritxonly.deadliner.ui.theme.rememberBlurColors
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
-import kotlin.math.roundToInt
 
 @Composable
 fun AdvancedMaterialPreviewCard(
@@ -43,12 +42,14 @@ fun AdvancedMaterialPreviewCard(
     fineTuning: AdvancedMaterialFineTuning,
     enabled: Boolean,
     modifier: Modifier = Modifier,
+    useOfficialMiuixGlass: Boolean = com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec.current.useOfficialMiuixGlass,
 ) {
     val backdrop = rememberLayerBackdrop()
     val material = createAdvancedMaterialSpec(
         enabled = enabled,
         blurRadius = blurRadius,
         fineTuning = fineTuning,
+        useOfficialMiuixGlass = useOfficialMiuixGlass,
     )
     val glassRecipe = DeadlinerGlassRecipes.floatingNavigation(material.fineTuning)
     val topTint = MaterialTheme.colorScheme.surface.copy(
@@ -102,10 +103,8 @@ fun AdvancedMaterialPreviewCard(
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = stringResource(
-                        R.string.settings_advanced_material_radius_value,
-                        blurRadius.roundToInt(),
-                    ),
+                    text = stringResource(if (useOfficialMiuixGlass) R.string.settings_material_pipeline_miuix
+                        else R.string.settings_material_pipeline_deadliner),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -135,11 +134,8 @@ fun AdvancedMaterialPreviewCard(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = stringResource(
-                        R.string.settings_advanced_material_glass_value,
-                        (blurRadius * glassRecipe.blur.radiusMultiplier).roundToInt(),
-                        material.blurSaturation,
-                    ),
+                    text = stringResource(if (useOfficialMiuixGlass) R.string.settings_material_miuix_preset_hint
+                        else R.string.settings_material_deadliner_preview_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

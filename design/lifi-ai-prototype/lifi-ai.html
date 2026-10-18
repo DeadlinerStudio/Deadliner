@@ -1,0 +1,1869 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>Lifi AI · 页面设计原型</title><style>
+@charset "UTF-8";
+:root{
+--studio:#eeeef1;
+--bg:#f7f7fb;
+--surface:#fff;
+--text:#242430;
+--muted:#82828f;
+--line:#e9e8f0;
+--accent:#7960bc;
+--accent-strong:#6c50b1;
+--tint:#eeE9f7;
+--glass:rgba(255,255,255,.76);
+--good:#497f70;
+--warn:#b46e32;
+--shadow:0 8px 30px rgba(38,28,65,.06);
+color-scheme:light
+}
+*{
+box-sizing:border-box
+}
+body{
+margin:0;
+background:var(--studio);
+color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;
+font-size:14px
+}
+button,a,input,textarea{
+font:inherit
+}
+button{
+cursor:pointer;
+color:inherit;
+border:0;
+background:none
+}
+button:disabled{
+cursor:default;
+opacity:.45
+}
+button,a,input,textarea{
+-webkit-tap-highlight-color:transparent
+}
+button:focus-visible,a:focus-visible{
+outline:3px solid var(--accent);
+outline-offset:3px
+}
+button:active:not(:disabled){
+transform:scale(.97)
+}
+svg{
+width:22px;
+height:22px;
+fill:none;
+stroke:currentColor;
+stroke-width:1.65;
+stroke-linecap:round;
+stroke-linejoin:round;
+flex-shrink:0
+}
+.svg-defs{
+position:absolute;
+width:0;
+height:0;
+overflow:hidden
+}
+[hidden]{
+display:none!important
+}
+.lifi-logo{
+display:inline-block;
+width:24px;
+height:24px;
+background:currentColor;
+mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201024%201024%22%3E%3Cpath%20fill%3D%22currentColor%22%20fill-rule%3D%22evenodd%22%20d%3D%22M3.2%2C641.1C3.2%2C641.1%20-53.1%2C283.9%20303.6%2C149.6C502.4%2C74.7%20713.1%2C176.2%20713.1%2C176.2C713%2C176.2%20788.2%2C218.7%20836.7%2C220.3C856.8%2C221%20900.4%2C213.7%20918%2C212.4C967.1%2C208.7%201013.2%2C213.6%201023.2%2C292.9C1030.4%2C350%20986.7%2C364.5%20986.7%2C364.5C986.7%2C364.5%20956.8%2C369.4%20942.1%2C370.7C918.1%2C372.8%20894.2%2C384.7%20896.7%2C414.4C900.7%2C462.4%20934.3%2C513.3%20945.1%2C562.6C955.9%2C611.9%20962.6%2C778.1%20786.6%2C856.4C613.8%2C933.3%20210.1%2C926%2036.4%2C731.6C36.4%2C731.6%206.9%2C688.7%203.2%2C641.1ZM51.1%2C616.7C51.1%2C616.7%2037.7%2C661.8%2091.2%2C716.3C144.7%2C770.7%20355%2C900.8%20714.4%2C813.8C846.8%2C781.7%20895%2C716.4%20906.8%2C651.3C919.9%2C579.2%20888.8%2C539.5%20888.8%2C539.5C888.8%2C539.5%20876.7%2C505.1%20828.6%2C505.8C795.5%2C506.4%20761.4%2C535.4%20771.8%2C581.6C793.1%2C675.5%20794.5%2C722.7%20751.6%2C729C720.4%2C733.7%20698.2%2C725%20690.5%2C695C684.3%2C670.6%20681.4%2C646.1%20680.6%2C591.8C680.6%2C591.8%20676.7%2C535%20632%2C538.6C602.3%2C541%20571.2%2C604.1%20571.2%2C604.1C571.2%2C604.1%20529.2%2C691.4%20472.1%2C682.8C414.9%2C674.3%20409.6%2C607.7%20328.8%2C619.2C248%2C630.8%20161.3%2C691.5%20100.1%2C668.1C49.3%2C648.6%2051.1%2C616.7%2051.1%2C616.7ZM156.3%2C367.3C156.3%2C367.3%20186.6%2C321.6%20210.6%2C342.6C228.8%2C358.5%20191.2%2C403.2%20191.2%2C403.2C191.2%2C403.2%20162.1%2C439.8%20144.7%2C418.9C131.2%2C402.6%20156.3%2C367.3%20156.3%2C367.3H156.3ZM261%2C273C261%2C273%20293.5%2C251.9%20303.6%2C268.5C313.8%2C285.2%20295.1%2C305.5%20278.4%2C317.9C261.8%2C330.3%20243.1%2C328.6%20237.7%2C315.7C234.6%2C307.9%20241.7%2C294%20249.4%2C284.2C252.8%2C280%20256.7%2C276.3%20261%2C273H261ZM472.2%2C374L580.8%2C416.7C580.8%2C416.7%20596.8%2C421%20596.3%2C436.9C595.8%2C452.7%20584.7%2C454.8%20584.7%2C454.8L487.7%2C513.2C487.7%2C513.2%20476.5%2C516.8%20470.3%2C504.2C465.3%2C494.1%20472.3%2C484%20472.3%2C484L542%2C439.1L450.9%2C403.2C450.9%2C403.2%20442.3%2C396.1%20447%2C383C451.8%2C369.9%20464.5%2C371%20472.2%2C374H472.2ZM751.3%2C412.2L811.4%2C353.8C813.9%2C350.1%20815.1%2C345.6%20814.8%2C341.1C814.4%2C336.6%20812.5%2C332.4%20809.5%2C329.1C800.2%2C318.8%20786.2%2C331.4%20786.2%2C331.4L704.8%2C412.2C704.8%2C412.2%20697.5%2C414.8%20699.2%2C429.8C699.9%2C436.1%20703.2%2C444.4%20712.5%2C445.8L819.1%2C450.3C819.1%2C450.3%20832%2C448.7%20832.7%2C432.4C833.4%2C416%20817.2%2C414.4%20817.2%2C414.4L751.3%2C412.2Z%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;
+-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201024%201024%22%3E%3Cpath%20fill%3D%22currentColor%22%20fill-rule%3D%22evenodd%22%20d%3D%22M3.2%2C641.1C3.2%2C641.1%20-53.1%2C283.9%20303.6%2C149.6C502.4%2C74.7%20713.1%2C176.2%20713.1%2C176.2C713%2C176.2%20788.2%2C218.7%20836.7%2C220.3C856.8%2C221%20900.4%2C213.7%20918%2C212.4C967.1%2C208.7%201013.2%2C213.6%201023.2%2C292.9C1030.4%2C350%20986.7%2C364.5%20986.7%2C364.5C986.7%2C364.5%20956.8%2C369.4%20942.1%2C370.7C918.1%2C372.8%20894.2%2C384.7%20896.7%2C414.4C900.7%2C462.4%20934.3%2C513.3%20945.1%2C562.6C955.9%2C611.9%20962.6%2C778.1%20786.6%2C856.4C613.8%2C933.3%20210.1%2C926%2036.4%2C731.6C36.4%2C731.6%206.9%2C688.7%203.2%2C641.1ZM51.1%2C616.7C51.1%2C616.7%2037.7%2C661.8%2091.2%2C716.3C144.7%2C770.7%20355%2C900.8%20714.4%2C813.8C846.8%2C781.7%20895%2C716.4%20906.8%2C651.3C919.9%2C579.2%20888.8%2C539.5%20888.8%2C539.5C888.8%2C539.5%20876.7%2C505.1%20828.6%2C505.8C795.5%2C506.4%20761.4%2C535.4%20771.8%2C581.6C793.1%2C675.5%20794.5%2C722.7%20751.6%2C729C720.4%2C733.7%20698.2%2C725%20690.5%2C695C684.3%2C670.6%20681.4%2C646.1%20680.6%2C591.8C680.6%2C591.8%20676.7%2C535%20632%2C538.6C602.3%2C541%20571.2%2C604.1%20571.2%2C604.1C571.2%2C604.1%20529.2%2C691.4%20472.1%2C682.8C414.9%2C674.3%20409.6%2C607.7%20328.8%2C619.2C248%2C630.8%20161.3%2C691.5%20100.1%2C668.1C49.3%2C648.6%2051.1%2C616.7%2051.1%2C616.7ZM156.3%2C367.3C156.3%2C367.3%20186.6%2C321.6%20210.6%2C342.6C228.8%2C358.5%20191.2%2C403.2%20191.2%2C403.2C191.2%2C403.2%20162.1%2C439.8%20144.7%2C418.9C131.2%2C402.6%20156.3%2C367.3%20156.3%2C367.3H156.3ZM261%2C273C261%2C273%20293.5%2C251.9%20303.6%2C268.5C313.8%2C285.2%20295.1%2C305.5%20278.4%2C317.9C261.8%2C330.3%20243.1%2C328.6%20237.7%2C315.7C234.6%2C307.9%20241.7%2C294%20249.4%2C284.2C252.8%2C280%20256.7%2C276.3%20261%2C273H261ZM472.2%2C374L580.8%2C416.7C580.8%2C416.7%20596.8%2C421%20596.3%2C436.9C595.8%2C452.7%20584.7%2C454.8%20584.7%2C454.8L487.7%2C513.2C487.7%2C513.2%20476.5%2C516.8%20470.3%2C504.2C465.3%2C494.1%20472.3%2C484%20472.3%2C484L542%2C439.1L450.9%2C403.2C450.9%2C403.2%20442.3%2C396.1%20447%2C383C451.8%2C369.9%20464.5%2C371%20472.2%2C374H472.2ZM751.3%2C412.2L811.4%2C353.8C813.9%2C350.1%20815.1%2C345.6%20814.8%2C341.1C814.4%2C336.6%20812.5%2C332.4%20809.5%2C329.1C800.2%2C318.8%20786.2%2C331.4%20786.2%2C331.4L704.8%2C412.2C704.8%2C412.2%20697.5%2C414.8%20699.2%2C429.8C699.9%2C436.1%20703.2%2C444.4%20712.5%2C445.8L819.1%2C450.3C819.1%2C450.3%20832%2C448.7%20832.7%2C432.4C833.4%2C416%20817.2%2C414.4%20817.2%2C414.4L751.3%2C412.2Z%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;
+flex-shrink:0;
+color:var(--accent)
+}
+.lab-bar{
+height:74px;
+display:flex;
+align-items:center;
+padding:0 44px;
+gap:18px;
+border-bottom:1px solid rgba(70,60,95,.07)
+}
+.lab-brand{
+color:var(--text);
+text-decoration:none;
+font-size:12px;
+font-weight:750;
+letter-spacing:2px
+}
+.lab-brand span{
+font-weight:450;
+letter-spacing:0;
+margin-left:10px
+}
+.lab-tag{
+font-size:10px;
+padding:5px 8px;
+border:1px solid #d7d5df;
+border-radius:6px;
+color:var(--muted)
+}
+.lab-actions{
+margin-left:auto;
+display:flex;
+gap:6px
+}
+.lab-button{
+display:flex;
+align-items:center;
+gap:7px;
+padding:9px 12px;
+font-size:12px;
+border-radius:10px
+}
+.lab-button:hover{
+background:var(--surface)
+}
+.lab-button svg{
+width:17px;
+height:17px
+}
+.studio{
+max-width:1320px;
+margin:auto;
+min-height:calc(100dvh - 74px);
+display:grid;
+grid-template-columns:minmax(210px,1fr) 390px minmax(210px,1fr);
+gap:64px;
+align-items:center;
+padding:34px 42px
+}
+.eyebrow{
+color:var(--muted);
+font-size:9px;
+font-weight:650;
+letter-spacing:2px
+}
+.design-note h1{
+font-size:36px;
+line-height:1.45;
+letter-spacing:-1.3px;
+font-weight:600;
+margin:20px 0 14px
+}
+.intro{
+font-size:14px;
+line-height:1.9;
+color:var(--muted)
+}
+.rule{
+height:1px;
+background:#dcdbe3;
+margin:30px 0
+}
+.note-item{
+display:flex;
+gap:15px;
+margin:25px 0
+}
+.note-item>span{
+font-size:10px;
+color:var(--accent);
+padding-top:3px
+}
+.note-item h3{
+font-size:13px;
+margin:0 0 7px;
+font-weight:600
+}
+.note-item p{
+font-size:12px;
+color:var(--muted);
+line-height:1.8;
+margin:0;
+max-width:205px
+}
+.proposal{
+font-size:10px;
+line-height:2;
+color:var(--muted);
+margin-top:38px
+}
+.proposal small{
+padding-left:13px;
+font-size:10px
+}
+.tiny-dot{
+display:inline-block;
+background:var(--accent);
+width:5px;
+height:5px;
+border-radius:50%;
+vertical-align:middle;
+margin-right:5px
+}
+.device{
+width:390px;
+height:844px;
+background:var(--bg);
+border:6px solid var(--surface);
+box-shadow:0 25px 85px #33304415,0 0 0 1px #d0cdd9;
+border-radius:45px;
+position:relative;
+overflow:hidden;
+display:flex;
+flex-direction:column
+}
+.status-bar{
+height:44px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:0 25px;
+font-size:13px;
+font-weight:650;
+flex-shrink:0
+}
+.status-icons{
+font-size:12px;
+letter-spacing:2px
+}
+.status-icons b{
+font-size:10px;
+letter-spacing:0;
+font-weight:650
+}
+.app-layout{
+display:flex;
+flex:1;
+min-height:0
+}
+.workspace{
+display:flex;
+flex-direction:column;
+position:relative;
+flex:1;
+min-width:0
+}
+.app-header{
+height:65px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:0 21px;
+flex-shrink:0;
+z-index:2;
+background:var(--bg)
+}
+.header-title{
+display:flex;
+align-items:center;
+gap:8px
+}
+.header-title strong{
+font-size:16px;
+font-weight:650;
+letter-spacing:-.3px
+}
+.header-subtitle{
+display:none
+}
+.header-actions{
+display:flex;
+gap:6px
+}
+.icon-button{
+height:40px;
+width:40px;
+display:grid;
+place-items:center;
+background:var(--glass);
+border-radius:50%;
+box-shadow:0 2px 8px #34214705;
+border:1px solid #ffffff30
+}
+.icon-button svg{
+width:19px;
+height:19px
+}
+.content{
+flex:1;
+overflow-y:auto;
+overscroll-behavior:contain;
+scrollbar-width:none;
+padding:18px 22px 24px;
+min-height:0
+}
+.content::-webkit-scrollbar{
+display:none
+}
+.welcome{
+padding-top:27px;
+animation:appear .4s ease
+}
+.hero-symbol{
+height:65px;
+display:flex;
+align-items:center;
+position:relative;
+margin-bottom:20px
+}
+.hero-symbol:before{
+content:"";
+width:96px;
+height:96px;
+position:absolute;
+left:-17px;
+top:-14px;
+background:radial-gradient(circle,#d4c8ef65,transparent 70%)
+}
+.hero-symbol .lifi-logo{
+width:59px;
+height:59px;
+z-index:1;
+color:var(--accent)
+}
+.welcome .overline{
+font-size:12px;
+color:var(--muted);
+margin:0 0 10px
+}
+.welcome h2{
+font-size:29px;
+line-height:1.45;
+font-weight:600;
+letter-spacing:-1px;
+margin:0
+}
+.welcome .description{
+font-size:13px;
+line-height:1.9;
+color:var(--muted);
+margin:13px 0 29px
+}
+.quick-label{
+font-size:11px;
+color:var(--muted);
+margin-bottom:12px
+}
+.quick-list{
+display:flex;
+flex-direction:column;
+gap:8px
+}
+.quick-row{
+display:flex;
+align-items:center;
+gap:12px;
+text-align:left;
+padding:13px 12px;
+border-radius:18px;
+width:100%;
+background:var(--surface);
+border:0;
+box-shadow:0 3px 16px rgba(38,28,65,.025);
+transition:background .2s ease,box-shadow .2s ease
+}
+.quick-row:hover{
+background:color-mix(in srgb,var(--surface) 92%,var(--tint));
+box-shadow:0 5px 22px rgba(38,28,65,.045)
+}
+.quick-icon{
+display:grid;
+place-items:center;
+background:var(--tint);
+color:var(--accent);
+width:35px;
+height:35px;
+border-radius:11px;
+flex-shrink:0
+}
+.quick-icon svg{
+width:18px;
+height:18px
+}
+.quick-text{
+flex:1;
+min-width:0
+}
+.quick-text strong{
+display:block;
+font-size:13px;
+font-weight:550
+}
+.quick-text small{
+display:block;
+color:var(--muted);
+font-size:10px;
+margin-top:5px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis
+}
+.quick-row>svg{
+color:var(--muted);
+width:14px;
+height:14px
+}
+.bottom-stack{
+padding:0 16px 10px;
+flex-shrink:0;
+background:linear-gradient(transparent,var(--bg) 18%);
+position:relative
+}
+.context-bar{
+height:33px;
+display:flex;
+justify-content:center;
+align-items:center;
+color:var(--muted);
+font-size:10px
+}
+.memory-link{
+display:flex;
+gap:5px;
+align-items:center;
+font-size:10px;
+color:var(--muted)
+}
+.memory-link svg{
+width:13px;
+height:13px
+}
+.composer{
+background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(255,255,255,.46));
+border:0;
+backdrop-filter:blur(28px) saturate(1.12);
+-webkit-backdrop-filter:blur(28px) saturate(1.12);
+box-shadow:inset 0 1px 0 rgba(255,255,255,.78),inset 0 -1px 0 rgba(255,255,255,.24),0 8px 32px rgba(70,48,111,.07);
+transition:box-shadow .25s ease,background .25s ease;
+border-radius:24px;
+padding:16px 15px 10px;
+position:relative
+}
+.composer:focus-within{
+box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 34px rgba(112,82,171,.13),0 0 26px rgba(170,145,218,.09)
+}
+.composer textarea{
+display:block;
+background:none;
+width:100%;
+color:var(--text);
+border:none;
+resize:none;
+outline:none;
+font-size:14px;
+line-height:1.65;
+min-height:26px;
+max-height:90px;
+padding:0
+}
+.composer textarea::placeholder{
+color:#93939e
+}
+.composer-footer{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:8px;
+margin-top:6px;
+min-height:35px
+}
+.composer-footer>span{
+font-size:9px;
+color:var(--muted)
+}
+.send-button{
+background:var(--accent-strong);
+color:#fff;
+border-radius:50%;
+width:34px;
+height:34px;
+display:grid;
+place-items:center;
+flex-shrink:0
+}
+.send-button:disabled{
+background:var(--tint);
+color:var(--accent);
+opacity:.8
+}
+.send-button svg{
+width:18px;
+height:18px
+}
+.stop-square{
+width:11px;
+height:11px;
+border-radius:2px;
+background:currentColor
+}
+.bottom-navigation{
+display:flex;
+gap:10px;
+align-items:center;
+padding-top:19px
+}
+.nav-capsule{
+display:flex;
+flex:1;
+background:var(--glass);
+backdrop-filter:blur(20px);
+border:1px solid #ffffff70;
+box-shadow:0 4px 16px #35204c0c;
+border-radius:26px;
+padding:5px
+}
+.nav-capsule button{
+display:flex;
+flex:1;
+gap:3px;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+height:45px;
+border-radius:21px;
+font-size:9px;
+color:var(--muted)
+}
+.nav-capsule button svg,.nav-capsule .lifi-logo{
+width:19px;
+height:19px;
+color:inherit
+}
+.nav-capsule button.selected{
+background:var(--tint);
+color:var(--accent-strong);
+font-weight:600
+}
+.detached-action{
+width:52px;
+height:52px;
+display:grid;
+place-items:center;
+border-radius:50%;
+background:var(--glass);
+backdrop-filter:blur(20px);
+border:1px solid #ffffff60;
+color:var(--accent);
+box-shadow:0 4px 16px #35204c0d
+}
+.home-indicator{
+height:16px;
+flex-shrink:0;
+display:grid;
+place-items:center
+}
+.home-indicator:after{
+content:"";
+width:112px;
+height:4px;
+background:var(--text);
+border-radius:5px;
+opacity:.8
+}
+.scenario-panel h2{
+font-size:18px;
+font-weight:550;
+margin:16px 0 10px
+}
+.scenario-panel>p{
+font-size:11px;
+color:var(--muted);
+line-height:1.8
+}
+.scenarios{
+display:flex;
+flex-direction:column;
+gap:5px;
+margin-top:27px
+}
+.scenarios button{
+display:flex;
+align-items:center;
+gap:13px;
+padding:14px 12px;
+border-radius:13px;
+text-align:left;
+width:100%
+}
+.scenarios button.active{
+background:var(--surface);
+box-shadow:0 3px 12px #31264804
+}
+.scenarios button:hover{
+background:var(--glass)
+}
+.scenarios button>span{
+font-size:10px;
+color:var(--muted);
+align-self:flex-start;
+padding-top:2px
+}
+.scenarios button.active>span{
+color:var(--accent)
+}
+.scenarios button div{
+font-size:12px;
+flex:1
+}
+.scenarios small{
+display:block;
+font-size:10px;
+color:var(--muted);
+margin-top:6px
+}
+.scenarios svg{
+width:14px;
+height:14px;
+color:var(--muted)
+}
+.interaction-tip{
+display:flex;
+gap:9px;
+color:var(--accent);
+margin-top:35px
+}
+.interaction-tip svg{
+width:16px;
+height:16px;
+margin-top:2px
+}
+.interaction-tip p{
+font-size:10px;
+line-height:1.9;
+color:var(--muted);
+margin:0
+}
+.reference-note{
+font-size:9px;
+color:var(--muted);
+line-height:1.9;
+margin-top:32px;
+border-top:1px solid #dcdbe3;
+padding-top:18px
+}
+</style><style>
+/* Conversation: quiet prose, strong action cards. */.chat-date{
+text-align:center;
+font-size:10px;
+color:var(--muted);
+margin:2px 0 22px
+}
+.user-message{
+margin:0 0 24px auto;
+max-width:88%;
+padding:12px 16px;
+background:var(--tint);
+border-radius:19px 19px 5px 19px;
+font-size:13px;
+line-height:1.8;
+white-space:pre-wrap;
+overflow-wrap:anywhere
+}
+.assistant-label{
+display:flex;
+gap:7px;
+align-items:center;
+font-size:11px;
+font-weight:600;
+color:var(--accent);
+margin-bottom:10px
+}
+.assistant-label .lifi-logo{
+width:18px;
+height:18px
+}
+.ai-text{
+font-size:13px;
+line-height:1.9;
+margin:0 0 16px;
+white-space:pre-wrap;
+overflow-wrap:anywhere
+}
+.process{
+border:0;
+background:color-mix(in srgb,var(--surface) 60%,transparent);
+border-radius:13px;
+margin:0 0 15px;
+color:var(--muted);
+font-size:10px;
+padding:0 11px
+}
+.process summary{
+cursor:pointer;
+padding:11px 0;
+display:flex;
+align-items:center;
+gap:7px;
+list-style:none
+}
+.process summary::-webkit-details-marker{
+display:none
+}
+.process summary svg{
+width:12px;
+height:12px;
+margin-left:auto;
+transform:rotate(90deg)
+}
+.process[open] summary svg{
+transform:rotate(-90deg)
+}
+.process ol{
+padding-left:17px;
+line-height:2.1;
+margin:0 0 12px
+}
+.process .completed-dot{
+width:5px;
+height:5px;
+background:var(--good);
+border-radius:50%
+}
+.action-card{
+background:var(--surface);
+border:0;
+box-shadow:0 4px 22px rgba(38,28,65,.035);
+border-radius:20px;
+padding:16px;
+margin:0 0 13px;
+animation:appear .35s ease
+}
+.card-eyebrow{
+display:flex;
+gap:7px;
+align-items:center;
+color:var(--accent);
+font-size:10px;
+font-weight:600;
+margin-bottom:11px
+}
+.card-eyebrow svg{
+width:14px;
+height:14px
+}
+.card-eyebrow .badge{
+margin-left:auto;
+font-size:9px;
+background:var(--tint);
+padding:4px 7px;
+border-radius:6px;
+font-weight:400
+}
+.action-card h3{
+font-size:16px;
+font-weight:600;
+margin:0 0 9px;
+line-height:1.5
+}
+.action-card p{
+font-size:11px;
+color:var(--muted);
+line-height:1.8;
+margin:0 0 13px
+}
+.scope-box{
+background:var(--bg);
+padding:12px;
+border-radius:12px;
+display:grid;
+gap:8px;
+font-size:11px;
+margin-bottom:14px
+}
+.scope-box>div{
+display:flex;
+justify-content:space-between;
+gap:14px
+}
+.scope-box span{
+color:var(--muted);
+flex-shrink:0
+}
+.scope-box strong{
+font-weight:500;
+text-align:right;
+line-height:1.5
+}
+.card-buttons{
+display:flex;
+gap:8px
+}
+.primary,.secondary{
+min-height:40px;
+border-radius:12px;
+font-size:12px;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:6px;
+padding:9px 13px;
+flex:1
+}
+.primary{
+background:var(--accent-strong);
+color:#fff
+}
+.secondary{
+background:var(--bg);
+border:0
+}
+.primary svg,.secondary svg{
+width:16px;
+height:16px
+}
+.tool-footnote{
+font-size:9px;
+color:var(--muted);
+margin:10px 0 0!important;
+line-height:1.6!important
+}
+.result-status{
+font-size:11px;
+color:var(--good);
+display:flex;
+align-items:center;
+gap:6px
+}
+.result-status svg{
+width:14px;
+height:14px
+}
+.task-detail{
+display:flex;
+gap:8px;
+align-items:center;
+font-size:11px;
+color:var(--muted);
+margin:12px 0
+}
+.task-detail svg{
+width:15px;
+height:15px
+}
+.plan-row{
+display:flex;
+gap:12px;
+border-bottom:0;
+padding:12px 0;
+font-size:12px
+}
+.plan-row:last-child{
+border:0
+}
+.plan-time{
+font-size:10px;
+color:var(--accent);
+width:38px;
+flex-shrink:0;
+line-height:1.8
+}
+.plan-row strong{
+font-size:12px;
+font-weight:550
+}
+.plan-row small{
+display:block;
+font-size:10px;
+color:var(--muted);
+margin-top:5px
+}
+.follow-ups{
+display:flex;
+gap:7px;
+flex-wrap:wrap;
+margin-top:16px
+}
+.follow-ups button{
+font-size:10px;
+padding:9px 11px;
+border:0;
+background:var(--surface);
+border-radius:20px
+}
+.run-banner{
+margin:0 20px 6px;
+padding:10px 12px;
+background:var(--tint);
+border-radius:12px;
+display:flex;
+align-items:center;
+gap:8px;
+color:var(--accent);
+font-size:10px;
+flex-shrink:0
+}
+.run-banner button{
+margin-left:auto;
+font-size:10px;
+text-decoration:underline
+}
+.pulsing-dot{
+width:6px;
+height:6px;
+border-radius:50%;
+background:var(--accent);
+animation:pulse 1.5s infinite;
+flex-shrink:0
+}
+.loading-message{
+color:var(--muted);
+font-size:12px;
+display:flex;
+align-items:center;
+gap:9px;
+padding:14px 0
+}
+.error-card{
+background:color-mix(in srgb,var(--surface) 95%,#ddb493)
+}
+.error-card .card-eyebrow{
+color:var(--warn)
+}
+.away-view{
+padding-top:55px
+}
+.away-view h2{
+font-size:25px;
+font-weight:600
+}
+.away-view>p{
+font-size:12px;
+color:var(--muted);
+line-height:1.9
+}
+.away-card{
+background:var(--surface);
+padding:18px;
+border-radius:18px;
+margin-top:24px
+}
+.away-card strong{
+display:block;
+font-size:14px;
+margin-bottom:8px
+}
+.away-card p{
+font-size:11px;
+color:var(--muted);
+line-height:1.8
+}
+.read-only{
+font-size:10px;
+color:var(--muted);
+text-align:center;
+padding:10px
+}
+.conversation-rail{
+display:none
+}
+/* Sheets remain within the prototype;
+keyboard and focus can dismiss them. */.overlay{
+position:absolute;
+inset:0;
+z-index:10;
+background:#17131f35;
+backdrop-filter:blur(3px);
+display:flex;
+align-items:flex-end
+}
+.sheet{
+width:100%;
+max-height:82%;
+overflow:auto;
+background:var(--bg);
+border-radius:28px 28px 0 0;
+padding:10px 23px 28px;
+box-shadow:0 -15px 60px #20193410;
+animation:sheet-in .25s ease
+}
+.sheet-handle{
+width:32px;
+height:4px;
+background:var(--muted);
+opacity:.3;
+border-radius:3px;
+margin:0 auto 20px
+}
+.sheet-title{
+display:flex;
+align-items:center;
+justify-content:space-between;
+margin-bottom:8px
+}
+.sheet-title h2{
+font-size:21px;
+margin:0;
+font-weight:600
+}
+.sheet-intro{
+font-size:11px;
+color:var(--muted);
+line-height:1.8;
+margin:0 0 22px
+}
+.sheet-section{
+font-size:10px;
+color:var(--muted);
+margin:20px 0 10px
+}
+.history-item,.memory-item{
+display:flex;
+align-items:center;
+gap:10px;
+border-bottom:0;
+padding:12px 0
+}
+.history-open{
+display:block;
+text-align:left;
+flex:1;
+min-width:0;
+padding:5px 0
+}
+.history-open strong{
+display:block;
+font-size:13px;
+font-weight:550;
+overflow:hidden;
+text-overflow:ellipsis;
+white-space:nowrap
+}
+.history-open small{
+display:block;
+font-size:10px;
+color:var(--muted);
+margin-top:6px
+}
+.delete-button{
+font-size:10px;
+color:var(--muted);
+min-height:40px;
+min-width:40px
+}
+.memory-item>div{
+flex:1;
+font-size:12px;
+line-height:1.8
+}
+.memory-item small{
+display:block;
+font-size:9px;
+color:var(--muted)
+}
+.memory-note{
+padding:12px 14px;
+background:var(--tint);
+border-radius:14px;
+color:var(--accent);
+font-size:11px;
+line-height:1.9
+}
+.empty-note{
+font-size:12px;
+color:var(--muted);
+padding:30px 0;
+text-align:center
+}
+.edit-form label{
+display:block;
+font-size:11px;
+color:var(--muted);
+margin:17px 0 7px
+}
+.edit-form input{
+width:100%;
+background:var(--surface);
+border:0;
+border-radius:12px;
+min-height:43px;
+padding:10px 12px;
+color:var(--text);
+outline:none
+}
+.edit-form input:focus{
+box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)
+}
+.edit-form .primary{
+width:100%;
+margin-top:24px
+}
+.toast{
+position:absolute;
+z-index:20;
+bottom:202px;
+left:50%;
+transform:translateX(-50%);
+background:var(--text);
+color:var(--bg);
+border-radius:12px;
+padding:12px 16px;
+max-width:90%;
+width:max-content;
+font-size:11px;
+box-shadow:var(--shadow)
+}
+</style><style>
+body.dark{
+--studio:#1c1c22;
+--bg:#202026;
+--surface:#2b2b33;
+--text:#ededf4;
+--muted:#a1a0ae;
+--line:#383640;
+--accent:#b8a3e7;
+--accent-strong:#9f85d2;
+--tint:#373043;
+--glass:rgba(48,47,57,.82);
+--good:#9bc4b3;
+--warn:#deb089;
+--shadow:0 8px 30px #00000020;
+color-scheme:dark
+}
+body.dark .device{
+box-shadow:0 25px 80px #00000035,0 0 0 1px #4b4757
+}
+body.dark .rule,body.dark .reference-note{
+border-color:#38353f;
+background:none
+}
+body.dark .hero-symbol:before{
+background:radial-gradient(circle,#765ba630,transparent 70%)
+}
+body.dark .nav-capsule,body.dark .icon-button,body.dark .detached-action{
+border-color:#ffffff09
+}
+body.dark .lab-tag{
+border-color:#494452
+}
+body.dark .primary,body.dark .send-button{
+color:#21192d
+}
+body.wide .studio{
+display:block;
+max-width:1440px;
+padding:35px 45px
+}
+body.wide .design-note{
+display:none
+}
+body.wide .device{
+width:100%;
+height:760px;
+border-radius:28px
+}
+body.wide .status-bar,body.wide .home-indicator{
+display:none
+}
+body.wide .conversation-rail{
+display:flex;
+flex-direction:column;
+width:255px;
+padding:29px 20px;
+background:var(--surface);
+border-right:0;
+flex-shrink:0
+}
+body.wide .rail-brand{
+display:flex;
+gap:9px;
+align-items:center;
+margin:0 9px 26px;
+font-size:18px
+}
+body.wide .rail-new{
+flex:none
+}
+body.wide .rail-label{
+font-size:10px;
+color:var(--muted);
+margin:27px 10px 11px
+}
+body.wide .rail-current{
+background:var(--tint);
+border-radius:12px;
+padding:13px 12px;
+text-align:left
+}
+body.wide .rail-current span{
+display:block;
+font-size:12px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis
+}
+body.wide .rail-current small{
+display:block;
+font-size:10px;
+color:var(--muted);
+margin-top:7px
+}
+body.wide #rail-history{
+overflow:auto;
+flex:1
+}
+body.wide .rail-history-item{
+width:100%;
+text-align:left;
+padding:12px;
+border-radius:10px;
+font-size:12px
+}
+body.wide .rail-history-item:hover{
+background:var(--bg)
+}
+body.wide .rail-history-item small{
+display:block;
+font-size:9px;
+color:var(--muted);
+margin-top:6px
+}
+body.wide .rail-memory{
+display:flex;
+gap:8px;
+align-items:center;
+color:var(--muted);
+font-size:11px;
+padding:15px 10px
+}
+body.wide .rail-memory svg{
+width:16px;
+height:16px
+}
+body.wide .app-header{
+height:82px;
+padding:0 32px
+}
+body.wide .header-subtitle{
+display:block;
+color:var(--muted);
+font-size:11px;
+margin-left:9px
+}
+body.wide .content{
+padding:22px max(36px,calc((100% - 640px)/2)) 28px
+}
+body.wide .welcome{
+max-width:620px;
+margin:auto;
+padding-top:28px
+}
+body.wide .welcome h2{
+font-size:38px
+}
+body.wide .welcome .description{
+margin-bottom:30px;
+font-size:14px
+}
+body.wide .quick-list{
+flex-direction:row;
+gap:12px
+}
+body.wide .quick-row{
+flex-direction:column;
+align-items:flex-start;
+padding:19px 16px;
+position:relative;
+gap:15px;
+min-width:0
+}
+body.wide .quick-row>svg{
+position:absolute;
+right:14px;
+top:23px
+}
+body.wide .quick-text{
+width:100%
+}
+body.wide .quick-text small{
+white-space:normal;
+line-height:1.7;
+min-height:32px
+}
+body.wide .bottom-stack{
+width:min(680px,100%);
+align-self:center;
+padding:0 22px 22px
+}
+body.wide .composer{
+padding:17px 19px 10px
+}
+body.wide .bottom-navigation{
+max-width:390px;
+margin:auto;
+padding-top:17px
+}
+body.wide .context-bar{
+height:37px
+}
+body.wide .run-banner{
+margin-left:32px;
+margin-right:32px
+}
+body.wide .scenario-panel{
+display:flex;
+align-items:center;
+gap:20px;
+margin-top:23px
+}
+body.wide .scenario-panel>.eyebrow{
+flex-shrink:0
+}
+body.wide .scenario-panel>h2,body.wide .scenario-panel>p,body.wide .interaction-tip,body.wide .reference-note{
+display:none
+}
+body.wide .scenarios{
+display:flex;
+flex-direction:row;
+margin:0;
+gap:8px;
+flex:1
+}
+body.wide .scenarios button{
+padding:12px 10px;
+gap:7px
+}
+body.wide .scenarios small{
+display:none
+}
+body.wide .scenarios svg{
+display:none
+}
+body.wide .sheet{
+max-width:440px;
+margin:0 auto;
+max-height:90%
+}
+body.wide .overlay{
+align-items:center
+}
+body.wide .sheet{
+border-radius:24px;
+padding:20px 26px 28px
+}
+body.wide .sheet-handle{
+display:none
+}
+body.wide .toast{
+bottom:225px
+}
+@keyframes appear{
+from{
+opacity:0;
+transform:translateY(7px)
+}
+to{
+opacity:1;
+transform:translateY(0)
+}
+}
+@keyframes pulse{
+50%{
+opacity:.35
+}
+}
+@keyframes sheet-in{
+from{
+transform:translateY(25px);
+opacity:0
+}
+to{
+transform:translateY(0);
+opacity:1
+}
+}
+@media(max-width:1150px){
+.studio{
+gap:32px;
+padding:30px 25px;
+grid-template-columns:minmax(160px,1fr) 390px minmax(175px,1fr)
+}
+.design-note h1{
+font-size:28px
+}
+.note-item p{
+font-size:11px
+}
+.scenario-panel h2{
+font-size:16px
+}
+}
+@media(max-width:940px){
+.studio{
+grid-template-columns:390px minmax(180px,260px);
+justify-content:center;
+gap:42px
+}
+.design-note{
+display:none
+}
+.lab-bar{
+padding:0 25px
+}
+.wide .scenarios button>span{
+display:none
+}
+.wide .scenario-panel>.eyebrow{
+display:none
+}
+}
+@media(max-width:680px){
+.lab-bar{
+height:54px;
+padding:0 14px;
+gap:8px
+}
+.lab-brand{
+font-size:10px;
+letter-spacing:1px
+}
+.lab-tag{
+display:none
+}
+.lab-brand span{
+font-size:10px;
+margin-left:4px
+}
+.lab-button{
+padding:7px;
+font-size:10px;
+gap:4px
+}
+.lab-button svg{
+width:15px;
+height:15px
+}
+.studio{
+display:block!important;
+padding:0!important;
+min-height:0
+}
+.device,body.wide .device{
+width:100%;
+height:calc(100dvh - 54px);
+border:0;
+border-radius:0;
+box-shadow:none
+}
+.status-bar,.home-indicator{
+display:none
+}
+.scenario-panel,body.wide .scenario-panel{
+display:none
+}
+.app-header{
+height:68px
+}
+.content{
+padding:12px 24px 25px
+}
+.welcome{
+padding-top:24px
+}
+.bottom-stack{
+padding-bottom:max(12px,env(safe-area-inset-bottom))
+}
+.bottom-navigation{
+padding-top:15px
+}
+.conversation-rail,body.wide .conversation-rail{
+display:none
+}
+body.wide .content{
+padding:12px 24px 25px
+}
+body.wide .quick-list{
+flex-direction:column
+}
+body.wide .quick-row{
+flex-direction:row;
+align-items:center;
+padding:13px 12px;
+gap:12px
+}
+body.wide .quick-row>svg{
+position:static
+}
+body.wide .quick-text small{
+min-height:0;
+white-space:nowrap
+}
+body.wide .welcome h2{
+font-size:29px
+}
+body.wide .header-subtitle{
+display:none
+}
+body.wide .bottom-stack{
+padding:0 16px 12px
+}
+body.wide .sheet{
+width:100%;
+border-radius:28px 28px 0 0;
+max-width:none
+}
+body.wide .overlay{
+align-items:flex-end
+}
+.lab-actions{
+gap:0
+}
+#width-toggle{
+display:none
+}
+}
+@media(max-height:790px) and (max-width:680px){
+.welcome{
+padding-top:9px
+}
+.hero-symbol{
+height:45px;
+margin-bottom:14px
+}
+.hero-symbol .lifi-logo{
+width:43px;
+height:43px
+}
+.welcome h2{
+font-size:25px
+}
+.welcome .description{
+margin:10px 0 18px
+}
+.quick-row{
+padding:10px 12px
+}
+.quick-list{
+gap:6px
+}
+.welcome .overline{
+margin-bottom:7px
+}
+}
+@media(prefers-reduced-motion:reduce){
+*,*:before,*:after{
+animation:none!important;
+scroll-behavior:auto!important
+}
+}
+.edit-inline{
+display:flex;
+align-items:center;
+justify-content:center;
+gap:5px;
+width:100%;
+font-size:10px;
+color:var(--accent);
+min-height:35px;
+margin-top:6px
+}
+.edit-inline svg{
+width:13px;
+height:13px
+}
+.memory-receipt{
+display:flex;
+gap:8px;
+font-size:10px;
+line-height:1.8;
+color:var(--muted);
+padding:12px;
+border:0;
+background:color-mix(in srgb,var(--surface) 60%,transparent);
+border-radius:12px;
+margin-bottom:17px
+}
+.memory-receipt svg{
+width:15px;
+height:15px;
+flex-shrink:0;
+margin-top:2px
+}
+.memory-receipt span{
+flex:1
+}
+.memory-receipt button{
+color:var(--accent);
+font-size:10px;
+align-self:flex-start
+}
+/* Keep all three intent examples visible at normal phone heights. */.welcome{
+padding-top:18px
+}
+.hero-symbol{
+height:54px;
+margin-bottom:16px
+}
+.welcome h2{
+font-size:27px
+}
+.welcome .description{
+margin:10px 0 22px
+}
+.quick-label{
+margin-bottom:10px
+}
+.quick-row{
+padding:12px
+}
+@media(max-width:680px){
+.welcome{
+padding-top:8px
+}
+body.wide .welcome h2{
+font-size:27px
+}
+}
+/* One diffused light field behind the composer, shared by the bottom chrome. */
+.bottom-stack{
+isolation:isolate;
+}
+.bottom-stack::before{
+content:"";
+position:absolute;
+z-index:-1;
+pointer-events:none;
+inset:auto -24px 75px;
+height:138px;
+background:radial-gradient(ellipse at 18% 65%,rgba(173,146,215,.18),transparent 64%),radial-gradient(ellipse at 86% 30%,rgba(168,189,223,.15),transparent 64%);
+filter:blur(24px);
+}
+body.dark .composer{
+background:linear-gradient(135deg,rgba(65,61,78,.64),rgba(46,43,57,.46));
+box-shadow:inset 0 1px 0 rgba(223,212,245,.12),inset 0 -1px 0 rgba(223,212,245,.035),0 10px 34px rgba(0,0,0,.18);
+}
+body.dark .composer:focus-within{
+box-shadow:inset 0 1px 0 rgba(223,212,245,.18),0 10px 36px rgba(0,0,0,.2),0 0 28px rgba(178,143,232,.1);
+}
+body.dark .bottom-stack::before{
+background:radial-gradient(ellipse at 18% 65%,rgba(131,98,188,.22),transparent 64%),radial-gradient(ellipse at 86% 30%,rgba(103,125,167,.16),transparent 64%);
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+.composer{background:rgba(247,245,252,.97)}
+body.dark .composer{background:rgba(47,44,58,.97)}
+}
+</style></head>
+<body>
+<svg class="svg-defs" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 5v14"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2 7M3 5v6h6M12 7v5l3 2"/></symbol>
+<symbol id="i-task" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"/><path d="m8 12 3 3 5-6"/></symbol>
+<symbol id="i-habit" viewBox="0 0 24 24"><path d="M20 9a8 8 0 0 0-14-3L3 9m0-5v5h5M4 15a8 8 0 0 0 14 3l3-3m0 5v-5h-5"/></symbol>
+<symbol id="i-plan" viewBox="0 0 24 24"><path d="M5 6h14M5 12h9M5 18h5M18 11v8m-3-3 3 3 3-3"/></symbol>
+<symbol id="i-memory" viewBox="0 0 24 24"><path d="M8 20H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-2l-4 3-4-3ZM7 9h10M7 13h6"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11Z"/></symbol>
+<symbol id="i-wide" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M8 5v14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L20 8a2 2 0 0 0-4-4L5 15l-1 5Z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="2"/><rect x="14" y="4" width="6" height="6" rx="2"/><rect x="4" y="14" width="6" height="6" rx="2"/><rect x="14" y="14" width="6" height="6" rx="2"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></symbol>
+</defs></svg>
+<header class="lab-bar"><a class="lab-brand" href="lifi-ai.html">DEADLINER <span>/ Lifi AI</span></a><span class="lab-tag">交互原型 · v1</span><div class="lab-actions"><button id="width-toggle" class="lab-button"><svg><use href="#i-wide"/></svg><span>宽屏</span></button><button id="theme-toggle" class="lab-button"><svg><use href="#i-moon"/></svg><span>深色</span></button></div></header>
+<main class="studio">
+<aside class="design-note"><div class="eyebrow">DESIGN EXPLORATION / 01</div><h1>想法落地，<br>从一句话开始。</h1><p class="intro">让 Lifi 从一个 AI 浮层，<br>成为有连续性的个人助手。</p><div class="rule"></div><div class="note-item"><span>01</span><div><h3>轻一点的开始</h3><p>保留三端的问候与快捷意图。输入始终是页面的重心。</p></div></div><div class="note-item"><span>02</span><div><h3>看得见的行动</h3><p>先展示操作范围和具体内容，再确认；过程收起，结果突出。</p></div></div><div class="note-item"><span>03</span><div><h3>接得上的对话</h3><p>处理中也能离开。回来后继续确认或查看结果。</p></div></div><div class="proposal"><span class="tiny-dot"></span> 历史与记忆为 Android 补齐提案<br><small>数据与 AI 回复均为本地模拟。</small></div></aside>
+<section class="device" aria-label="Lifi AI 应用原型">
+<div class="status-bar"><span>9:41</span><span class="status-icons">▂▄▆ <b>5G</b> ▰</span></div>
+<div class="app-layout"><aside class="conversation-rail"><div class="rail-brand"><span class="lifi-logo"></span><strong>Lifi AI</strong></div><button class="primary rail-new" data-action="new"><svg><use href="#i-plus"/></svg>新对话</button><div class="rail-label">当前对话</div><button class="rail-current" data-action="current"><span class="current-title">从一句话开始</span><small class="current-meta">尚未开始</small></button><div class="rail-label">历史对话</div><div id="rail-history"></div><button class="rail-memory" data-action="memory"><svg><use href="#i-memory"/></svg>记忆与偏好</button></aside>
+<div class="workspace">
+<header class="app-header"><div class="header-title"><span class="lifi-logo"></span><strong>Lifi AI</strong><span class="header-subtitle">你的行动伙伴</span></div><div class="header-actions"><button class="icon-button" data-action="history" aria-label="历史对话"><svg><use href="#i-history"/></svg></button><button class="icon-button" data-action="new" aria-label="新对话"><svg><use href="#i-plus"/></svg></button></div></header>
+<div id="run-banner" class="run-banner" hidden></div>
+<div id="content" class="content"></div>
+<div class="bottom-stack"><div id="context-bar" class="context-bar"></div><form id="composer" class="composer"><textarea id="input" aria-label="告诉 Lifi 你想做什么" placeholder="告诉我，你想做什么…" rows="1"></textarea><div class="composer-footer"><span id="composer-hint">任务、习惯，或一个还没理清的想法</span><button id="send" class="send-button" type="submit" aria-label="发送" disabled><svg><use href="#i-arrow"/></svg></button></div></form><div class="bottom-navigation"><nav class="nav-capsule" aria-label="主导航"><button data-tab="任务"><svg><use href="#i-task"/></svg><span>任务</span></button><button data-tab="习惯"><svg><use href="#i-habit"/></svg><span>习惯</span></button><button data-tab="概览"><svg><use href="#i-grid"/></svg><span>概览</span></button><button data-tab="Lifi" class="selected" aria-current="page"><span class="lifi-logo"></span><span>Lifi</span></button></nav><button class="detached-action" data-action="new" aria-label="新建对话"><svg><use href="#i-plus"/></svg></button></div></div>
+</div></div><div class="home-indicator"></div><div id="overlay" class="overlay" hidden></div><div id="toast" class="toast" role="status" hidden></div>
+</section>
+<aside class="scenario-panel"><div class="eyebrow">TRY THE FLOW</div><h2>点开，体验每一步。</h2><p>也可以直接在输入框发起对话。</p><div class="scenarios"><button data-scene="home" class="active"><span>01</span><div>初次见面<small>问候 · 快捷意图 · 输入</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="approval"><span>02</span><div>整理本周任务<small>读取范围 · 一次审批</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="task"><span>03</span><div>创建一个任务<small>内容预览 · 编辑 · 确认</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="habit"><span>04</span><div>建立运动习惯<small>频次 · 目标 · 添加</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="running"><span>05</span><div>继续处理中的对话<small>切换页面 · 保留进度</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="error"><span>06</span><div>遇到连接问题<small>保留输入 · 重试</small></div><svg><use href="#i-chevron"/></svg></button></div><div class="interaction-tip"><svg><use href="#i-memory"/></svg><p>顶部查看历史；输入框上方查看记忆。<br>宽屏会展开对话侧栏。</p></div><div class="reference-note">参考 iOS / HarmonyOS 的现有页面<br>适配 Android 现代模式的悬浮导航</div></aside>
+</main><script>
+/* Design-only simulation. No model, native task repository, or personal data access. */
+const $ = (s) => document.querySelector(s);
+const esc = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon = name => `<svg aria-hidden="true"><use href="#i-${name}"/></svg>`;
+const logo = '<span class="lifi-logo" aria-hidden="true"></span>';
+const stamp = () => '今天 · ' + new Intl.DateTimeFormat('zh-CN', {hour:'2-digit',minute:'2-digit',timeZone:'Asia/Shanghai'}).format(new Date());
+const state = {
+messages: [], running:false, waiting:false, tab:'Lifi', viewed:null, lastQuery:'', timer:null, runToken:0,
+memories:[{text:'每周安排 3 次运动，每次 40 分钟',source:'来自运动习惯对话'},{text:'复杂任务更喜欢拆成几个小步骤',source:'来自计划整理对话'}],
+history:[{id:'sample-habit',title:'给运动留一点时间',time:'昨天 · 20:18',messages:[{type:'user',text:'帮我安排每周 3 次力量训练，每次 40 分钟。'},{type:'text',text:'可以从周一、周三、周五开始，每次留出 40 分钟。循序渐进，比一次练很久更容易坚持。'},{type:'created',kind:'habit',title:'力量训练',detail:'每周 3 次 · 每次 40 分钟'}]},
+{id:'sample-task',title:'准备产品评审',time:'10 月 11 日 · 14:32',messages:[{type:'user',text:'明天下午 3 点和产品开评审会。'},{type:'text',text:'已经为你整理好这项任务。'},{type:'created',kind:'task',title:'产品评审会',detail:'10 月 12 日 · 15:00'}]}]
+};
+let toastTimer, opener;
+const input = $('#input');
+const prompts = [
+{icon:'task',title:'安排一个任务',example:'明天下午 3 点和产品开评审会'},
+{icon:'habit',title:'建立一个习惯',example:'每周 3 次力量训练，每次 40 分钟'},
+{icon:'plan',title:'帮我理清计划',example:'把这周的任务排一下优先级'}
+];
+function welcome() {
+return `<section class="welcome"><div class="hero-symbol">${logo}</div><p class="overline">你好，欢迎回来</p><h2>把想法告诉我，<br>我们一起往前走。</h2><p class="description">我是 Lifi。帮你安排任务、建立习惯，<br>也把复杂的计划，变成下一步。</p><div class="quick-label">从这里开始，也可以随意聊聊</div><div class="quick-list">${prompts.map((p,i)=>`<button class="quick-row" data-prompt="${i}"><span class="quick-icon">${icon(p.icon)}</span><span class="quick-text"><strong>${p.title}</strong><small>${p.example}</small></span>${icon('chevron')}</button>`).join('')}</div></section>`;
+}
+function assistantLabel() { return `<div class="assistant-label">${logo} Lifi</div>`; }
+function approvalCard(m, index, readonly) {
+const reading = m.kind === 'read';
+const pending = m.status === 'pending';
+const settled = m.status === 'approved' ? (reading ? '已允许一次' : '已确认创建') : m.status === 'rejected' ? '已拒绝 · 未执行' : '等待确认';
+const title = reading ? '读取本周的任务' : m.kind === 'habit' ? m.title : m.title;
+const scope = reading ? '<div><span>时间范围</span><strong>未来 7 天</strong></div><div><span>任务状态</span><strong>未完成</strong></div><div><span>使用目的</span><strong>整理优先级与安排</strong></div>' : m.kind === 'habit' ? `<div><span>重复</span><strong>${esc(m.frequency)}</strong></div><div><span>每次目标</span><strong>${esc(m.goal)}</strong></div>` : `<div><span>截止时间</span><strong>${esc(m.due.replace('T',' · '))}</strong></div><div><span>备注</span><strong>${esc(m.note || '未填写')}</strong></div>`;
+return `<article class="action-card"><div class="card-eyebrow">${icon(reading ? 'lock' : m.kind === 'habit' ? 'habit' : 'task')} ${reading ? '读取任务' : m.kind === 'habit' ? '创建习惯' : '创建任务'}<span class="badge">${settled}</span></div><h3>${esc(title)}</h3><p>${reading ? '了解已有安排后，我可以帮你找到更合适的先后顺序。' : '我整理好了这些信息，确认后添加到 Deadliner。'}</p><div class="scope-box">${scope}</div>${pending && !readonly ? `<div class="card-buttons"><button class="secondary" data-reject="${index}">拒绝</button><button class="primary" data-approve="${index}">${reading ? '允许一次' : '确认添加'}${icon(reading ? 'chevron' : 'plus')}</button></div>${!reading ? `<button class="edit-inline" data-edit="${index}">${icon('edit')}编辑内容</button>` : ''}<p class="tool-footnote">${reading ? '本次确认只用于这一次读取。' : '仅创建上面展示的内容。'}</p>` : `<div class="result-status">${icon(m.status === 'rejected' ? 'close' : 'check')}${settled}</div>`}</article>`;
+}
+function messageHTML(m,i,readonly=false) {
+if(m.type === 'user') return `<div class="user-message">${esc(m.text)}</div>`;
+if(m.type === 'text') return `${assistantLabel()}<p class="ai-text">${esc(m.text)}</p>`;
+if(m.type === 'process') return `<details class="process" ${m.open ? 'open' : ''} data-process="${i}"><summary><span class="completed-dot"></span>${esc(m.title)}${icon('chevron')}</summary><ol>${m.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></details>`;
+if(m.type === 'approval') return approvalCard(m,i,readonly);
+if(m.type === 'plan') return `<article class="action-card"><div class="card-eyebrow">${icon('plan')}安排建议<span class="badge">3 个重点</span></div><h3>先做最接近截止的事</h3><div class="plan-row"><span class="plan-time">今天<br>优先</span><div><strong>完成系统论作业</strong><small>明天 19:00 截止 · 建议预留 90 分钟</small></div></div><div class="plan-row"><span class="plan-time">明天<br>其次</span><div><strong>准备产品评审材料</strong><small>周四 15:00 评审 · 先梳理问题与方案</small></div></div><div class="plan-row"><span class="plan-time">周五<br>之后</span><div><strong>整理本周项目进展</strong><small>周五 18:00 截止 · 汇总已有记录</small></div></div></article>${!readonly ? '<div class="follow-ups"><button data-follow="把产品评审材料拆成几个小任务">拆解评审准备</button><button data-follow="记住：复杂任务我喜欢分成小步骤">记住我的偏好</button></div>' : ''}`;
+if(m.type === 'steps') return `<article class="action-card"><div class="card-eyebrow">${icon('plan')}目标拆解<span class="badge">3 个步骤</span></div><h3>准备产品评审材料</h3><div class="plan-row"><span class="plan-time">01</span><div><strong>列出需要评审的问题</strong><small>收集反馈，明确这次要做的决定。</small></div></div><div class="plan-row"><span class="plan-time">02</span><div><strong>整理方案与取舍</strong><small>把主要方案、限制与待确认项放在一起。</small></div></div><div class="plan-row"><span class="plan-time">03</span><div><strong>提前发送评审材料</strong><small>留出阅读时间，让会议聚焦讨论。</small></div></div></article>`;
+if(m.type === 'created') return `<article class="action-card"><div class="card-eyebrow">${icon(m.kind === 'habit' ? 'habit' : 'task')} ${m.kind === 'habit' ? '习惯' : '任务'}<span class="badge">已添加</span></div><h3>${esc(m.title)}</h3><div class="task-detail">${icon(m.kind === 'habit' ? 'habit' : 'history')}${esc(m.detail)}</div><div class="result-status">${icon('check')}已添加到${m.kind === 'habit' ? '习惯' : '任务'}列表</div></article>`;
+if(m.type === 'memory') return `<div class="memory-receipt">${icon('memory')}<span>记住了：${esc(m.text)}</span>${!readonly ? '<button data-action="memory">管理</button>' : ''}</div>`;
+if(m.type === 'error') return `${assistantLabel()}<article class="action-card error-card"><div class="card-eyebrow">${icon('close')}连接未完成</div><h3>刚才没能连接上</h3><p>这次请求没有完成。你的内容还在，可以稍后再试。</p>${!readonly ? '<button class="primary" data-action="retry">重试这次请求</button>' : ''}</article>`;
+return '';
+}
+function render(scroll=false) {
+const record = state.viewed ? state.history.find(h=>h.id===state.viewed) : null;
+if(!record) state.viewed=null;
+const messages = record ? record.messages : state.messages;
+const content = $('#content');
+const position=content.scrollTop;
+if(state.tab !== 'Lifi') content.innerHTML=`<section class="away-view"><div class="quick-icon">${icon(state.tab === '习惯' ? 'habit' : state.tab === '概览' ? 'grid' : 'task')}</div><h2>${esc(state.tab)}</h2><p>这里展示切换主导航后的页面占位。</p><div class="away-card"><strong>对话会一直留在 Lifi</strong><p>${state.running ? 'Lifi 正在继续处理。你可以随时回去查看进度。' : state.waiting ? 'Lifi 等待你的确认。回到对话后可以继续操作。' : '切换页面不会清空当前对话。'}</p><button class="primary" data-action="current">返回 Lifi</button></div></section>`;
+else if(!messages.length) content.innerHTML=welcome();
+else content.innerHTML=`<div class="chat-date">${record ? esc(record.time)+' · 历史对话' : '今天'}</div>${messages.map((m,i)=>messageHTML(m,i,!!record)).join('')}${state.running && !record ? '<div class="loading-message"><span class="pulsing-dot"></span>Lifi 正在整理你的请求…</div>' : ''}`;
+content.scrollTop=scroll ? content.scrollHeight : position;
+$('#composer').hidden=state.tab!=='Lifi' || !!record;
+$('#context-bar').innerHTML=record ? '<button class="memory-link" data-action="current">历史对话仅供查看 · 返回当前对话 '+icon('chevron')+'</button>' : `<button class="memory-link" data-action="memory">${icon('memory')}记忆与偏好 · ${state.memories.length} 条${icon('chevron')}</button>`;
+const banner=$('#run-banner');
+banner.hidden=!(state.running || state.waiting);
+banner.innerHTML=`${state.running ? '<span class="pulsing-dot"></span>' : icon('lock')}<span>${state.running ? '正在处理 · 离开页面也会继续' : '等待确认 · 还未执行这次操作'}</span>${state.tab !== 'Lifi' || record ? '<button data-action="current">回到对话</button>' : ''}`;
+$('.current-title').textContent=state.messages.find(m=>m.type==='user')?.text || '从一句话开始';
+$('.current-meta').textContent=state.running ? '正在处理' : state.waiting ? '等待确认' : state.messages.length ? '继续当前对话' : '尚未开始';
+$('#rail-history').innerHTML=state.history.length ? state.history.map(h=>`<button class="rail-history-item" data-history="${esc(h.id)}">${esc(h.title)}<small>${esc(h.time)}</small></button>`).join('') : '<p class="empty-note">还没有历史对话</p>';
+document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('selected',b.dataset.tab===state.tab); if(b.dataset.tab===state.tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+updateComposer();
+}
+function updateComposer() {
+const send=$('#send');
+send.disabled=state.waiting || (!state.running && !input.value.trim());
+send.innerHTML=state.running ? '<span class="stop-square"></span>' : icon('arrow');
+send.setAttribute('aria-label',state.running ? '停止处理' : '发送');
+input.disabled=state.running || state.waiting;
+input.placeholder=state.waiting ? '先确认上面的操作，再继续对话' : state.running ? '正在处理你的请求…' : '告诉我，你想做什么…';
+$('#composer-hint').textContent=state.running ? '点击方块停止本次处理' : state.waiting ? '操作范围与内容见上方卡片' : '任务、习惯，或一个还没理清的想法';
+}
+function toast(text) {clearTimeout(toastTimer);$('#toast').textContent=text;$('#toast').hidden=false;toastTimer=setTimeout(()=>$('#toast').hidden=true,2600);}
+function fill(text) {state.tab='Lifi';state.viewed=null;render();if(state.running||state.waiting){toast('先完成或停止当前请求');return;} input.value=text;input.style.height='auto';input.style.height=Math.min(input.scrollHeight,90)+'px';updateComposer();input.focus();}
+function schedule(ms,callback) {clearTimeout(state.timer);const token=++state.runToken;state.timer=setTimeout(()=>{if(token===state.runToken)callback();},ms);}
+function endRun() {clearTimeout(state.timer);state.runToken++;state.running=false;}
+function makeProposal(kind,query) {
+if(kind==='habit') return {type:'approval',kind,status:'pending',title:query.includes('跑步')?'跑步':'力量训练',frequency:'每周 3 次',goal:query.includes('30')?'30 分钟':'40 分钟'};
+return {type:'approval',kind:'task',status:'pending',title:query.includes('作业')?'完成系统论作业':query.includes('评审')?'产品评审会':query.replace(/^(创建|添加|帮我安排|帮我创建)[：:]?/,'').slice(0,50),due:'2026-10-14T15:00',note:query.includes('评审')?'和产品一起评审方案':''};
+}
+function decide(query) {
+const isMemory=/记住|偏好/.test(query);
+if(isMemory) {
+const text=query.replace(/^记住[：:]?\s*/,'');state.memories.push({text,source:'来自当前对话'});state.messages.push({type:'text',text:'好的，以后整理计划时，我会参考这个偏好。'},{type:'memory',text});
+} else if(/习惯|训练|跑步|运动/.test(query)) {
+state.messages.push({type:'text',text:'从一个容易坚持的节奏开始。我为你整理了这个习惯：'},makeProposal('habit',query));state.waiting=true;
+} else if(/优先|这周|本周|计划|拆|安排.*任务/.test(query)) {
+state.messages.push({type:'process',title:'已理解请求 · 需要任务上下文',steps:['理解你想整理本周的安排','准备读取未来 7 天的未完成任务']},{type:'text',text:'我想先看看你已有的任务，再根据截止时间帮你排一个更从容的顺序。'},{type:'approval',kind:'read',status:'pending',intent:/拆/.test(query)?'steps':'plan'});state.waiting=true;
+} else if(/明天|任务|评审|作业|创建|添加/.test(query)) {
+state.messages.push({type:'text',text:'收到，我把这件事整理成了一项任务。看看信息是否合适：'},makeProposal('task',query));state.waiting=true;
+} else {
+state.messages.push({type:'text',text:'我们可以先从一件事开始：你现在最想完成什么？告诉我大概的截止时间，我帮你把它整理成任务；也可以一起理清这周的安排。'});
+}
+state.running=false;render(state.tab==='Lifi'&&!state.viewed);
+}
+function send(query,delay=1500) {
+if(state.running||state.waiting)return;
+state.lastQuery=query;state.viewed=null;state.tab='Lifi';state.messages.push({type:'user',text:query});state.running=true;
+input.value='';input.style.height='auto';render(true);schedule(delay,()=>decide(query));
+}
+function approve(index) {
+const m=state.messages[index];if(!m || m.status!=='pending' || state.viewed)return;
+m.status='approved';state.waiting=false;state.running=true;render(true);
+schedule(1400,()=>{
+state.running=false;
+if(m.kind==='read' && m.intent==='steps')state.messages.push({type:'process',title:'已理解任务上下文 · 拆解完成',steps:['读取当前任务','识别评审准备中的主要步骤','生成拆解建议，未创建额外任务']},{type:'text',text:'把评审准备分成三个小步骤，每一步都会更容易开始。'},{type:'steps'});
+else if(m.kind==='read')state.messages.push({type:'process',title:'已读取 3 项任务 · 处理完成',steps:['读取未来 7 天内的未完成任务','按截止时间与准备工作整理','生成建议，未修改已有任务']},{type:'text',text:'这周有 3 件事值得优先关注。先给最近截止的任务留出完整时间，再准备评审材料。'}, {type:'plan'});
+else state.messages.push({type:'created',kind:m.kind,title:m.title,detail:m.kind==='habit'?`${m.frequency} · 每次 ${m.goal}`:m.due.replace('T',' · ')},{type:'text',text:m.kind==='habit'?'习惯已经添加好了。给自己留一点弹性，持续做下去。':'任务已经添加好了。接下来想做什么，继续告诉我。'});
+render(state.tab==='Lifi'&&!state.viewed);
+});
+}
+function reject(index) {
+const m=state.messages[index];if(!m || m.status!=='pending' || state.viewed)return;
+m.status='rejected';state.waiting=false;
+state.messages.push({type:'text',text:m.kind==='read'?'好的，这次不读取任务。你可以直接告诉我几件要做的事，我继续帮你整理。':'好的，这次没有添加。你可以调整想法后再告诉我。'});render(true);
+}
+function stop() {
+if(!state.running)return;endRun();state.messages.push({type:'text',text:'已停止这次处理。对话内容会保留，你可以继续补充。'});render(true);toast('已停止处理');
+}
+function newChat() {
+if(state.running||state.waiting){toast('当前请求尚未结束，请先停止或完成确认');return;}
+if(state.messages.length)state.history.unshift({id:'history-'+Date.now(),title:state.messages.find(m=>m.type==='user')?.text.slice(0,20)||'新对话',time:stamp(),messages:JSON.parse(JSON.stringify(state.messages))});
+state.messages=[];state.viewed=null;state.tab='Lifi';input.value='';input.style.height='auto';closeSheet();render();$('#content').scrollTop=0;
+}
+function current() {state.viewed=null;state.tab='Lifi';closeSheet();render(true);}
+function showSheet(title,subtitle,html) {
+opener=document.activeElement;
+$('#overlay').innerHTML=`<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"><div class="sheet-handle"></div><div class="sheet-title"><h2 id="sheet-title">${title}</h2><button class="icon-button" data-action="close" aria-label="关闭">${icon('close')}</button></div><p class="sheet-intro">${subtitle}</p>${html}</section>`;$('#overlay').hidden=false;$('.sheet [data-action="close"]').focus();
+}
+function closeSheet() {const wasOpen=!$('#overlay').hidden;$('#overlay').hidden=true;$('#overlay').innerHTML='';if(wasOpen && opener?.isConnected)opener.focus();}
+function historySheet() {
+showSheet('你的对话','从上次的想法接着走。历史记录仅供查看。',`<div class="sheet-section">当前对话</div><div class="history-item"><button class="history-open" data-action="current"><strong>${esc(state.messages.find(m=>m.type==='user')?.text || '从一句话开始')}</strong><small>${state.running?'正在处理':state.waiting?'等待确认':'点击继续当前对话'}</small></button><span class="tiny-dot"></span></div><div class="sheet-section">历史对话 · ${state.history.length}</div>${state.history.length ? state.history.map(h=>`<div class="history-item"><button class="history-open" data-history="${esc(h.id)}"><strong>${esc(h.title)}</strong><small>${esc(h.time)} · ${h.messages.length} 条</small></button><button class="delete-button" data-delete-history="${esc(h.id)}" aria-label="删除对话 ${esc(h.title)}">删除</button></div>`).join('') : '<div class="empty-note">还没有历史对话<br>开始新对话时，上一段会留在这里。</div>'}`);
+}
+function memorySheet() {
+showSheet('记忆与偏好','让之后的建议更贴近你。你可以随时删除。',`<div class="memory-note">这些信息用来理解你的偏好。<br>输入“记住：…”可以试着添加一条记忆。</div><div class="sheet-section">已记住 · ${state.memories.length} 条</div>${state.memories.length ? state.memories.map((m,i)=>`<div class="memory-item"><div>${esc(m.text)}<small>${esc(m.source)}</small></div><button class="delete-button" data-delete-memory="${i}" aria-label="删除记忆 ${esc(m.text)}">删除</button></div>`).join('') : '<div class="empty-note">还没有记忆<br>你可以在对话中告诉 Lifi 你的偏好。</div>'}`);
+}
+function editSheet(index) {
+const m=state.messages[index];if(!m || m.status!=='pending')return;
+const habit=m.kind==='habit';
+showSheet(habit?'调整习惯':'调整任务','保存后回到预览卡片，确认时再添加。',`<form class="edit-form" id="edit-form" data-index="${index}"><label for="edit-title">名称</label><input id="edit-title" name="title" value="${esc(m.title)}" required maxlength="80">${habit ? `<label for="edit-frequency">重复频次</label><input id="edit-frequency" name="frequency" value="${esc(m.frequency)}" required><label for="edit-goal">每次目标</label><input id="edit-goal" name="goal" value="${esc(m.goal)}" required>` : `<label for="edit-due">截止时间</label><input id="edit-due" name="due" type="datetime-local" value="${esc(m.due)}" required><label for="edit-note">备注</label><input id="edit-note" name="note" value="${esc(m.note)}">`}<button class="primary" type="submit">保存修改</button></form>`);
+}
+function scene(name) {
+// Lab controls reset only simulated demo state; these are outside the app UI.
+endRun();state.waiting=false;state.messages=[];state.viewed=null;state.tab='Lifi';input.value='';input.style.height='auto';closeSheet();
+document.querySelectorAll('[data-scene]').forEach(b=>b.classList.toggle('active',b.dataset.scene===name));
+if(name==='home'){render();$('#content').scrollTop=0;return;}
+const query=name==='task'?'明天下午 3 点和产品开评审会':name==='habit'?'每周 3 次力量训练，每次 40 分钟':'把这周的任务排一下优先级';state.lastQuery=query;
+if(name==='running'){send(query,18000);return;}
+state.messages.push({type:'user',text:query});
+if(name==='error')state.messages.push({type:'error'});else decide(query);
+render(true);
+}
+$('#composer').addEventListener('submit',event=>{event.preventDefault();if(state.running){stop();return;}const text=input.value.trim();if(text)send(text);});
+input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,90)+'px';updateComposer();});
+input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();$('#composer').requestSubmit();}});
+document.addEventListener('click',event=>{
+const b=event.target.closest('button');if(!b)return;
+if(b.dataset.prompt!==undefined)fill(prompts[Number(b.dataset.prompt)].example);
+else if(b.dataset.scene)scene(b.dataset.scene);
+else if(b.dataset.approve!==undefined)approve(Number(b.dataset.approve));
+else if(b.dataset.reject!==undefined)reject(Number(b.dataset.reject));
+else if(b.dataset.edit!==undefined)editSheet(Number(b.dataset.edit));
+else if(b.dataset.follow)fill(b.dataset.follow);
+else if(b.dataset.tab){state.tab=b.dataset.tab;state.viewed=null;render();}
+else if(b.dataset.history){state.viewed=b.dataset.history;state.tab='Lifi';closeSheet();render();$('#content').scrollTop=0;}
+else if(b.dataset.deleteHistory){state.history=state.history.filter(h=>h.id!==b.dataset.deleteHistory);if(state.viewed===b.dataset.deleteHistory)state.viewed=null;render();historySheet();toast('已删除这段示例对话');}
+else if(b.dataset.deleteMemory!==undefined){state.memories.splice(Number(b.dataset.deleteMemory),1);render();memorySheet();toast('已删除这条示例记忆');}
+else if(b.dataset.action){({new:newChat,current,history:historySheet,memory:memorySheet,close:closeSheet,retry:()=>{if(state.running||state.waiting)return;state.messages=state.messages.filter(m=>m.type!=='error');state.running=true;render(true);schedule(1400,()=>decide(state.lastQuery));}})[b.dataset.action]?.();}
+});
+document.addEventListener('submit',event=>{
+if(event.target.id!=='edit-form')return;event.preventDefault();const form=event.target, m=state.messages[Number(form.dataset.index)];if(!m || m.status!=='pending')return;
+const values=new FormData(form);if(!String(values.get('title')).trim()){toast('请填写名称');return;}for(const [key,value] of values)m[key]=String(value).trim();closeSheet();render();toast('已更新，确认后再添加');
+});
+document.addEventListener('toggle',event=>{const el=event.target;if(el.matches?.('[data-process]')&&!state.viewed){const m=state.messages[Number(el.dataset.process)];if(m?.type==='process')m.open=el.open;}},true);
+$('#overlay').addEventListener('click',event=>{if(event.target===$('#overlay'))closeSheet();});
+document.addEventListener('keydown',event=>{
+if($('#overlay').hidden)return;
+if(event.key==='Escape'){closeSheet();return;}
+if(event.key==='Tab'){
+const nodes=[...$('#overlay').querySelectorAll('button,input,[tabindex="0"]')].filter(el=>!el.disabled);
+const first=nodes[0],last=nodes[nodes.length-1];
+if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+}
+});
+$('#theme-toggle').addEventListener('click',()=>{const dark=document.body.classList.toggle('dark');$('#theme-toggle span').textContent=dark?'浅色':'深色';$('#theme-toggle').setAttribute('aria-pressed',dark);});
+$('#width-toggle').addEventListener('click',()=>{const wide=document.body.classList.toggle('wide');$('#width-toggle span').textContent=wide?'手机':'宽屏';$('#width-toggle').setAttribute('aria-pressed',wide);});
+render();
+</script>
+</body></html>

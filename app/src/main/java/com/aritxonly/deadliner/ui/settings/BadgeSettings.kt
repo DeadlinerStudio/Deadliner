@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -47,13 +48,13 @@ fun BadgeSettingsScreen(
     )
     val badgeRightNow = if (GlobalUtils.nearbyDetailedBadge) "number" else "dot"
     var badgeModeSelected by remember { mutableStateOf(badgeRightNow) }
-    
+
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_tasks_badge_title),
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),

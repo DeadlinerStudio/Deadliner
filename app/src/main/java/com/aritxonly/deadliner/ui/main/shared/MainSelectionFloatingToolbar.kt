@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.main.shared
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -32,21 +33,21 @@ fun MainSelectionFloatingToolbar(
         collapsedShadowElevation = 1.dp,
         modifier = modifier.padding(2.dp),
     ) {
-        IconButton(onClick = onDoneClick) {
+        IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onDoneClick) {
             Icon(iconResource(R.drawable.msr_task_alt_wght400), contentDescription = null)
         }
 
         Spacer(modifier = Modifier.width(16.dp))
 
         if (selectedPage == DeadlineType.TASK) {
-            IconButton(onClick = onArchiveClick) {
+            IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onArchiveClick) {
                 Icon(iconResource(R.drawable.msr_move_to_inbox_wght400), contentDescription = null)
             }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        IconButton(onClick = onDeleteClick) {
+        IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onDeleteClick) {
             Icon(iconResource(R.drawable.msr_delete_wght400), contentDescription = null)
         }
 

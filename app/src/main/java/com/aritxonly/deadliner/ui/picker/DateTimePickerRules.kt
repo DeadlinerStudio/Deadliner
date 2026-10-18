@@ -63,3 +63,10 @@ internal fun pickerScrolledValue(anchor: Int, offset: Float, range: IntRange, wr
         (range.first + Math.floorMod(raw - range.first, range.last.toLong() - range.first + 1)).toInt()
     } else raw.coerceIn(range.first.toLong(), range.last.toLong()).toInt()
 }
+
+/** Reopening a picker keeps the chosen value, clamped only by its current lower bound. */
+internal fun pickerInitialDateTime(initial: LocalDateTime?, minimum: LocalDateTime?,
+                                   now: LocalDateTime = LocalDateTime.now()): LocalDateTime {
+    val candidate = (initial ?: now).withSecond(0).withNano(0)
+    return if (minimum != null && candidate.isBefore(minimum)) minimum else candidate
+}

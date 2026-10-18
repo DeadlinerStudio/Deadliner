@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_enable_cloud_sync">启用云同步</string>
+    <string name="settings_sync_only_byos">仅 BYOS</string>
+    <string name="settings_sync_only_webdav">仅 WebDAV</string>
+</resources>

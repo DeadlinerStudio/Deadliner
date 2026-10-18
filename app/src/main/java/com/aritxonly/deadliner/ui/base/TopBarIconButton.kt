@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.base
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -29,7 +30,7 @@ fun TopBarIconButton(
     } else {
         IconButton(
             onClick = onClick,
-            modifier = modifier,
+            modifier = (modifier).miuixPressFeedback(enabled = enabled, shape = androidx.compose.material3.IconButtonDefaults.standardShape),
             enabled = enabled,
             content = content,
         )

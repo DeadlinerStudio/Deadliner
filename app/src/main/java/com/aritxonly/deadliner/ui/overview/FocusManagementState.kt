@@ -1,45 +1,53 @@
 package com.aritxonly.deadliner.ui.overview
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+import com.deadliner.db.repository.focus.FocusManagementRepository
 import com.deadliner.domain.focus.FocusSession
-import com.deadliner.domain.focus.MAX_ADJUSTED_DURATION_SECONDS
-import java.time.Instant
+import com.deadliner.domain.focus.management.FocusManagementEngine
+import com.deadliner.domain.focus.management.FocusManagementSnapshot
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.YearMonth
 
-internal data class FocusManagementSnapshot(
-    val sessions: List<FocusSession>,
-    val todaySeconds: Long,
-    val todayCount: Int,
-    val totalSeconds: Long,
-    val distribution: com.deadliner.domain.statistics.FocusStatisticsSnapshot? = null,
-)
-
-internal fun focusManagementSnapshot(sessions: List<FocusSession>, today: LocalDate, zone: ZoneId): FocusManagementSnapshot {
-    val saved = sessions.filterNot { it.isDeleted }.sortedByDescending { Instant.parse(it.startedAt) }
-    val todaySessions = saved.filter { Instant.parse(it.startedAt).atZone(zone).toLocalDate() == today }
-    return FocusManagementSnapshot(saved, todaySessions.sumOf { it.durationSeconds }, todaySessions.size,
-        saved.sumOf { it.durationSeconds })
+/** Legacy test adapter; all business date/duration calculation lives in commonMain. */
+internal data class FocusManagementLegacySnapshot(val sessions: List<FocusSession>, val todaySeconds: Long, val todayCount: Int, val totalSeconds: Long)
+internal fun focusManagementSnapshot(sessions: List<FocusSession>, today: LocalDate, zone: ZoneId): FocusManagementLegacySnapshot {
+    val data = FocusManagementEngine(sessions, emptyList(), emptyList(), emptyList(), kotlinx.datetime.TimeZone.of(zone.id))
+        .snapshot(kotlinx.datetime.LocalDate.parse(today.toString()))
+    return FocusManagementLegacySnapshot(data.records.map { it.session }, data.today.totalDurationSeconds, data.today.sessionCount, data.allTime.summary.totalDurationSeconds)
 }
+internal fun maximumFocusAdjustment(session: FocusSession): Long = com.deadliner.domain.focus.management.maximumFocusAdjustment(session)
 
-internal fun maximumFocusAdjustment(session: FocusSession): Long = minOf(session.durationSeconds,
-    java.time.Duration.between(Instant.parse(session.startedAt), Instant.parse(session.endedAt)).seconds,
-    MAX_ADJUSTED_DURATION_SECONDS)
-
+/** Raw SQL invalidations + local-date/zone boundaries; never re-load history on timer ticks. */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @Composable
-internal fun rememberFocusManagement(retry: Int): State<DashboardLoad<FocusManagementSnapshot>> =
-    rememberMonthlyProjection(YearMonth.now(), retry) {
-        val zone = ZoneId.systemDefault()
-        val today = LocalDate.now(zone)
-        val snapshot = focusManagementSnapshot(KmpV6Runtime.database.focusSessions.list(), today, zone)
-        if (snapshot.sessions.isEmpty()) snapshot else {
-            val start = snapshot.sessions.minOf { Instant.parse(it.startedAt).atZone(zone).toLocalDate() }
-            val end = maxOf(today, snapshot.sessions.maxOf { Instant.parse(it.startedAt).atZone(zone).toLocalDate() }).plusDays(1)
-            snapshot.copy(distribution = KmpV6Runtime.database.focusStatistics.snapshot(
-                com.deadliner.domain.statistics.FocusStatisticsQuery(
-                    com.deadliner.domain.statistics.FocusStatisticsDateRange(start.toString(), end.toString()))))
+internal fun rememberFocusManagement(retry: Int): State<DashboardLoad<FocusManagementSnapshot>> {
+    val owner = LocalLifecycleOwner.current
+    val repository = remember { FocusManagementRepository(KmpV6Runtime.database) }
+    return produceState(DashboardLoad<FocusManagementSnapshot>(), owner, retry) {
+        value = value.copy(loading = true, failed = false)
+        owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            val boundaries = flow {
+                var date = LocalDate.now(); var zone = ZoneId.systemDefault()
+                emit(Unit)
+                while (currentCoroutineContext().isActive) {
+                    delay(30_000)
+                    val nextDate = LocalDate.now(); val nextZone = ZoneId.systemDefault()
+                    if (nextDate != date || nextZone != zone) { date = nextDate; zone = nextZone; emit(Unit) }
+                }
+            }
+            merge(KmpV6Runtime.database.observeOverviewChanges(), boundaries).conflate().collectLatest {
+                try { value = DashboardLoad(data = withContext(Dispatchers.IO) { repository.snapshot() }, loading = false) }
+                catch (error: Exception) {
+                    if (error is CancellationException) throw error
+                    value = value.copy(loading = false, failed = true)
+                }
+            }
         }
     }
+}

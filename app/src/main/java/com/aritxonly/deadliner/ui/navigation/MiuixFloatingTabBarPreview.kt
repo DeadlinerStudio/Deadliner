@@ -75,8 +75,8 @@ private fun FloatingTabBarPreviewScene(darkTheme: Boolean) {
         MiuixFloatingTabItem(
             key = "list",
             label = "清单",
-            selectedIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
-            unselectedIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
+            selectedIcon = com.aritxonly.deadliner.ui.mainListHomePainter(),
+            unselectedIcon = com.aritxonly.deadliner.ui.mainListHomePainter(),
         ),
         MiuixFloatingTabItem(
             key = "overview",

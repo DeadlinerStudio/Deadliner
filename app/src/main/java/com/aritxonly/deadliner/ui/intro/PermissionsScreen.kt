@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.intro
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -205,8 +206,8 @@ private fun PermissionItemCard(
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = (Modifier
+            .fillMaxWidth()).miuixPressFeedback(enabled = true, shape = shape),
         onClick = onPrimaryAction,
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = bgColor)

@@ -19,6 +19,12 @@ class MaterialSymbolDrawable : Drawable() {
     private var symbolName = ""
     private var filled = false
     private var density = 1f
+    private var drawableAlpha = 255
+    private var sourceResources: Resources? = null
+    private var sourceTheme: Resources.Theme? = null
+    private var hybrid: Drawable? = null
+    private var hybridResource = 0
+    init { InterfaceIconPreferences.track(this) }
     private var typeface: Typeface? = null
     private var tint: ColorStateList? = null
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
@@ -34,6 +40,8 @@ class MaterialSymbolDrawable : Drawable() {
             symbolName = it.getString(R.styleable.MaterialSymbolDrawable_symbolName).orEmpty()
             filled = it.getBoolean(R.styleable.MaterialSymbolDrawable_symbolFilled, false)
         }
+        sourceResources = resources
+        sourceTheme = theme
         density = resources.displayMetrics.density
         typeface = resources.getFont(R.font.material_symbols_rounded_variable)
         tint = theme?.let(::themeColorControlNormal)
@@ -41,18 +49,38 @@ class MaterialSymbolDrawable : Drawable() {
 
     override fun draw(canvas: Canvas) {
         if (symbolName.isEmpty()) return
+        if (InterfaceIconPreferences.flow.value == InterfaceIconPack.HybridMiuix) {
+            val resource = HybridIconRegistry.resource(symbolName, filled)
+            if (resource != null && sourceResources != null) {
+                if (hybridResource != resource) {
+                    hybrid = sourceResources!!.getDrawable(resource, sourceTheme).mutate()
+                    hybridResource = resource
+                }
+                hybrid?.let {
+                    it.bounds = bounds
+                    it.layoutDirection = layoutDirection
+                    it.setTintList(tint ?: ColorStateList.valueOf(android.graphics.Color.BLACK))
+                    it.state = state
+                    it.alpha = drawableAlpha
+                    it.colorFilter = paint.colorFilter
+                    it.draw(canvas)
+                    return
+                }
+            }
+        }
         val rect = bounds
         val glyphSize = min(rect.width(), rect.height()).toFloat()
         if (glyphSize <= 0f) return
         paint.typeface = typeface
         paint.textSize = glyphSize
-        paint.alpha = alpha
         paint.colorFilter = colorFilter
-        paint.color = tint?.getColorForState(state, tint!!.defaultColor) ?: android.graphics.Color.BLACK
-        paint.fontVariationSettings = "'FILL' ${if (filled) 1 else 0}, 'wght' 400, 'GRAD' 0, 'opsz' 24"
+        val color = tint?.getColorForState(state, tint!!.defaultColor) ?: android.graphics.Color.BLACK
+        paint.color = color
+        paint.alpha = android.graphics.Color.alpha(color) * drawableAlpha / 255
+        paint.fontVariationSettings = "'FILL' ${if (filled) 1 else 0}, 'wght' ${MaterialSymbolAxisPolicy.DefaultWeight}, 'GRAD' 0, 'opsz' 24"
         val baseline = rect.top + rect.height() / 2f - (paint.fontMetrics.ascent + paint.fontMetrics.descent) / 2f
         canvas.save()
-        if (layoutDirection == android.view.View.LAYOUT_DIRECTION_RTL) {
+        if (layoutDirection == android.view.View.LAYOUT_DIRECTION_RTL && InterfaceIconDirection.mirrorsInRtl(symbolName)) {
             canvas.scale(-1f, 1f, rect.exactCenterX(), rect.exactCenterY())
         }
         canvas.drawText(symbolName, rect.exactCenterX(), baseline, paint)
@@ -60,16 +88,18 @@ class MaterialSymbolDrawable : Drawable() {
     }
 
     override fun setAlpha(alpha: Int) {
-        paint.alpha = alpha
+        drawableAlpha = alpha
         invalidateSelf()
     }
 
-    override fun getAlpha(): Int = paint.alpha
+    override fun getAlpha(): Int = drawableAlpha
 
     override fun setColorFilter(colorFilter: ColorFilter?) {
         paint.colorFilter = colorFilter
         invalidateSelf()
     }
+
+    override fun getColorFilter(): ColorFilter? = paint.colorFilter
 
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 

@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.clickable
@@ -24,7 +25,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.window.WindowSdkExtensions
 import androidx.window.embedding.SplitController
 import androidx.window.layout.WindowMetricsCalculator
@@ -39,7 +39,7 @@ import com.aritxonly.deadliner.ui.navIconPaddingModifier
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BehaviorSettingsScreen(
-    nav: NavHostController,
+    nav: SettingsNavigator,
     handleRestart: () -> Unit,
     navigateUp: () -> Unit
 ) {
@@ -81,7 +81,7 @@ fun BehaviorSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
@@ -102,12 +102,10 @@ fun BehaviorSettingsScreen(
                 SettingsRoute.behaviorThirdRoutes.forEachIndexed { index, route ->
                     SettingItem(
                         modifier = Modifier
-                            .padding(horizontal = 8.dp)
                             .fillMaxWidth()
                             .clickable { nav.navigate(route.route) },
                         headlineText = stringResource(route.titleRes),
                         supportingText = stringResource(route.supportRes!!),
-                        trailingContent = null
                     )
 
                     if (index != SettingsRoute.behaviorThirdRoutes.lastIndex) {

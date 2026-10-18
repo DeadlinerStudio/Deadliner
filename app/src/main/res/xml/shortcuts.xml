@@ -9,9 +9,9 @@
         android:shortcutLongLabel="@string/shortcut_add_task_long"
         android:shortcutDisabledMessage="@string/shortcut_disabled_message">
         <intent
-            android:action="android.intent.action.VIEW"
+            android:action="com.aritxonly.deadliner.ADD"
             android:targetPackage="com.aritxonly.deadliner"
-            android:targetClass="com.aritxonly.deadliner.AddDDLActivity" />
+            android:targetClass="com.aritxonly.deadliner.MainActivity" />
     </shortcut>
 
     <shortcut

@@ -206,12 +206,32 @@ internal object KmpV6Runtime {
     fun executeLifiTool(toolName: String, argumentsJson: String): String =
         lifiToolExecutor.execute(toolName, argumentsJson)
 
+    private var lifiRuntime: DeadlinerCore? = null
+    private var lifiConfiguration: AIConfig? = null
+
+    @Synchronized
     fun createLifiCore(config: AIConfig): DeadlinerCore {
-        val component = LifiAIComponent(
-            config = config,
-            memoryStore = KmpMemoryStoreAdapter(database.memory),
-        )
-        return DeadlinerCore(config, component.orchestrator(), component.toolExecutor())
+        lifiRuntime?.takeIf { lifiConfiguration == config }?.let { return it }
+        lifiRuntime?.close()
+        val component = LifiAIComponent(config, KmpMemoryStoreAdapter(database.memory))
+        return DeadlinerCore(config, component.orchestrator(), component.toolExecutor(), database::executeLifiTool, database::prepareLifiTool, database::readLifiReceipt)
+            .also { lifiRuntime = it; lifiConfiguration = config }
+    }
+
+    @Synchronized
+    fun isCurrentLifiCore(core: DeadlinerCore): Boolean = lifiRuntime === core
+
+    suspend fun executeApprovedLifiTool(actionId: String, argumentsJson: String): String =
+        checkNotNull(lifiRuntime) { "Lifi runtime is unavailable" }.executeApprovedTool(actionId, argumentsJson)
+
+    suspend fun cancelLifiRun() { lifiRuntime?.cancelRun() }
+
+    @Synchronized
+    fun resetLifiSession() {
+        database.memory.startNewLifiSession()
+        lifiRuntime?.close()
+        lifiRuntime = null
+        lifiConfiguration = null
     }
 
     fun exportBackup(): String = database.backups.export()

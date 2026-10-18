@@ -30,8 +30,8 @@ class AddDDLTileService : TileService() {
     override fun onClick() {
         super.onClick()
 
-        // 创建一个Intent，启动AddDDLActivity
-        val intent = Intent(this, AddDDLActivity::class.java)
+        // Open the editor in the main page Sheet host.
+        val intent = com.aritxonly.deadliner.ui.editor.DeadlineEditorIntents.launch(this)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         // 创建一个 PendingIntent，用于启动活动

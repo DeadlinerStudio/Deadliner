@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.runtime.getValue
 import android.content.Intent
 import androidx.compose.animation.core.LinearEasing
@@ -50,7 +51,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
-import androidx.navigation.NavHostController
 import com.aritxonly.deadliner.BuildConfig
 import com.aritxonly.deadliner.R
 import androidx.core.net.toUri
@@ -63,7 +63,7 @@ import com.deadliner.platform.DeadlinerCoreVersion
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AboutSettingsScreen(
-    nav: NavHostController,
+    nav: SettingsNavigator,
     navigateUp: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -79,7 +79,7 @@ fun AboutSettingsScreen(
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_about),
         navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
+            IconButton(onClick = navigateUp, modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)) {
                 Icon(
                     painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
@@ -116,7 +116,6 @@ fun AboutSettingsScreen(
                         headlineText = stringResource(R.string.settings_version_kmp),
                         supportingText = DeadlinerCoreVersion.value,
                         modifier = Modifier
-                            .padding(horizontal = 8.dp)
                             .fillMaxWidth()
                             .clickable {
                                 AdvancedMaterialFineTuningAccess.registerVersionTap()
@@ -128,7 +127,6 @@ fun AboutSettingsScreen(
                         headlineText = stringResource(R.string.settings_version),
                         supportingText = "v" + context.getAppVersion(),
                         modifier = Modifier
-                            .padding(horizontal = 8.dp)
                             .fillMaxWidth()
                             .clickable {
                                 AdvancedMaterialFineTuningAccess.registerVersionTap()
@@ -143,7 +141,6 @@ fun AboutSettingsScreen(
                     headlineText = stringResource(R.string.settings_compile_date),
                     supportingText = BuildConfig.BUILD_TIME,
                     modifier = Modifier
-                        .padding(horizontal = 8.dp)
                         .fillMaxWidth(),
                     trailingContent = null
                 )
@@ -151,6 +148,7 @@ fun AboutSettingsScreen(
 
             SettingsSection(containerAlpha = sectionAlpha) {
                 SettingsDetailTextButtonItem(
+                    navigates = true,
                     headline = R.string.settings_check_for_updates,
                     supporting = R.string.settings_support_check_for_updates,
                     iconRes = R.drawable.msr_mobile_arrow_down_wght400
@@ -164,6 +162,7 @@ fun AboutSettingsScreen(
                 containerAlpha = sectionAlpha,
             ) {
                 SettingsDetailTextButtonItem(
+                    navigates = true,
                     headline = R.string.settings_donate_author,
                     supporting = R.string.settings_support_donate
                 ) {
@@ -177,6 +176,7 @@ fun AboutSettingsScreen(
                 containerAlpha = sectionAlpha,
             ) {
                 SettingsDetailTextButtonItem(
+                    navigates = true,
                     headline = R.string.settings_license,
                     supporting = R.string.settings_license_summary,
                     iconRes = R.drawable.msr_contract_wght400
@@ -185,6 +185,7 @@ fun AboutSettingsScreen(
                 }
                 SettingsSectionDivider()
                 SettingsDetailTextButtonItem(
+                    navigates = true,
                     headline = R.string.settings_privacy_policy,
                     supporting = R.string.settings_privacy_summary,
                     iconRes = R.drawable.msr_shield_wght400
@@ -315,6 +316,7 @@ private fun AboutAppHeader(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
+                .clip(androidx.compose.foundation.shape.CircleShape)
                 .clickable(onClick = onVersionClick)
                 .padding(horizontal = 12.dp, vertical = 4.dp),
         )

@@ -1,5 +1,8 @@
 package com.aritxonly.deadliner.capture.ui
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import android.content.ClipData
@@ -32,8 +35,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.aritxonly.deadliner.ui.base.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,14 +56,12 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.AddDDLActivity
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.capture.CaptureEffect
 import com.aritxonly.deadliner.capture.CaptureViewModel
-import com.deadliner.domain.capture.CaptureItem
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.DeadlinerMiuixDefaults
@@ -77,7 +76,6 @@ import com.aritxonly.deadliner.ui.settings.RoundedTextField
 import com.aritxonly.deadliner.ui.settings.RoundedTextFieldMetrics
 import top.yukonga.miuix.kmp.basic.Button as MiuixButton
 import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
-import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.basic.TextButton as MiuixTextButton
 import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
@@ -85,11 +83,6 @@ import top.yukonga.miuix.kmp.basic.TextFieldDefaults as MiuixTextFieldDefaults
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import kotlin.math.absoluteValue
 
 private data class PendingCaptureDelete(
     val itemUid: String,
@@ -243,10 +236,15 @@ fun CaptureContent(
     onShowMergeSheetChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
+    val editorEntry = com.aritxonly.deadliner.ui.editor.LocalDeadlineEditorEntry.current
     val layoutDirection = LocalLayoutDirection.current
     val ui by vm.uiState.collectAsState()
     val selectedCount = ui.selectedUids.size
     var pendingDelete by remember { mutableStateOf<PendingCaptureDelete?>(null) }
+    var activeSwipeKey by remember(twoColumnLayout) { mutableStateOf<String?>(null) }
+    LaunchedEffect(ui.isMultiSelectMode, ui.filteredItems.map { it.uid }) {
+        if (ui.isMultiSelectMode || ui.filteredItems.none { "capture:${it.uid}" == activeSwipeKey }) activeSwipeKey = null
+    }
     val listState = rememberLazyListState()
     val gridState = rememberLazyStaggeredGridState()
     val listContentPadding = remember(contentPadding, topOverlayPadding, bottomLiftPadding, layoutDirection) {
@@ -271,7 +269,7 @@ fun CaptureContent(
                         putExtra(AddDDLActivity.EXTRA_AUTO_RUN_AI, effect.autoRunAi)
                         effect.generated?.let { putExtra("EXTRA_GENERATE_DDL", it) }
                     }
-                    context.startActivity(intent)
+                    editorEntry.open(intent)
                 }
                 is CaptureEffect.OpenHabitEditor -> {
                     copyToClipboard(context, effect.sourceText)
@@ -280,7 +278,7 @@ fun CaptureContent(
                         putExtra(AddDDLActivity.EXTRA_PREFILL_TEXT, effect.sourceText)
                         putExtra(AddDDLActivity.EXTRA_AUTO_RUN_AI, effect.autoRunAi)
                     }
-                    context.startActivity(intent)
+                    editorEntry.open(intent)
                 }
             }
         }
@@ -315,10 +313,14 @@ fun CaptureContent(
                 if (selectedCount > 1) R.string.capture_merge_sheet_title else R.string.capture_merge_sheet_title_single,
             ),
             onDismissRequest = { onShowMergeSheetChange(false) },
-        ) {
+        ) { sheetPadding ->
+            val sheetScrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .syncTopBarMaterialScroll(sheetScrollState)
+                    .verticalScroll(sheetScrollState)
+                    .padding(sheetPadding)
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -467,6 +469,8 @@ fun CaptureContent(
                     val item = ui.filteredItems[index]
                     InspirationLightCard(
                         item = item,
+                        activeSwipeKey = activeSwipeKey,
+                        onActiveSwipeChange = { activeSwipeKey = it },
                         selected = ui.selectedUids.contains(item.uid),
                         inMultiSelectMode = ui.isMultiSelectMode,
                         useHorizontalPadding = false,
@@ -539,6 +543,8 @@ fun CaptureContent(
                 items(ui.filteredItems, key = { it.uid }) { item ->
                     InspirationLightCard(
                         item = item,
+                        activeSwipeKey = activeSwipeKey,
+                        onActiveSwipeChange = { activeSwipeKey = it },
                         selected = ui.selectedUids.contains(item.uid),
                         inMultiSelectMode = ui.isMultiSelectMode,
                         onClick = {
@@ -634,138 +640,6 @@ private fun CaptureInputCard(
 }
 
 @Composable
-private fun InspirationLightCard(
-    item: CaptureItem,
-    selected: Boolean,
-    inMultiSelectMode: Boolean,
-    modifier: Modifier = Modifier,
-    useHorizontalPadding: Boolean = true,
-    onClick: () -> Unit,
-    onDelete: () -> Unit,
-    onAiTask: () -> Unit,
-    onAiHabit: () -> Unit
-) {
-    var menuExpanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val sectionShape = RoundedCornerShape(24.dp)
-    val cardColor = if (selected) {
-        MaterialTheme.colorScheme.secondaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer
-    }
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (useHorizontalPadding) Modifier.padding(horizontal = 16.dp) else Modifier)
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = cardColor),
-        shape = sectionShape,
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 15.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Icon(
-                painter = com.aritxonly.deadliner.ui.symbolPainterResource(
-                    sourceId = if (inMultiSelectMode) {
-                        if (selected) R.drawable.msr_check_circle_fill_wght400 else R.drawable.msr_check_circle_wght400
-                    } else {
-                        R.drawable.msr_format_quote_wght400
-                    }
-                ),
-                contentDescription = null,
-                tint = if (inMultiSelectMode) {
-                    if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.80f)
-                },
-                modifier = Modifier
-                    .padding(top = 2.dp)
-                    .size(if (inMultiSelectMode) 22.dp else 18.dp)
-            )
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Text(
-                        text = item.text,
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 5,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    if (!inMultiSelectMode) {
-                        Box {
-                            IconButton(onClick = { menuExpanded = true }) {
-                                Icon(
-                                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_more_vert_wght400),
-                                    contentDescription = stringResource(R.string.settings_more)
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.capture_delete)) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onDelete()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.capture_ai_task)) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onAiTask()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.capture_ai_habit)) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onAiHabit()
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = formatRelativeTime(context, item.updatedAt),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = stringResource(
-                            if (inMultiSelectMode) {
-                                R.string.capture_card_tip_selected
-                            } else {
-                                R.string.capture_card_tip
-                            }
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun CaptureSectionHeader(
     title: String,
     subtitle: String,
@@ -847,7 +721,7 @@ private fun CaptureDetailSheet(
         title = stringResource(R.string.capture_detail_title),
         onDismissRequest = onClose,
         startAction = {
-            MiuixIconButton(onClick = onClose) {
+            TopBarIconButton(onClick = onClose) {
                 Icon(
                     painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_close_wght400),
                     contentDescription = stringResource(R.string.close),
@@ -855,17 +729,21 @@ private fun CaptureDetailSheet(
             }
         },
         endAction = {
-            MiuixIconButton(onClick = onSave) {
+            TopBarIconButton(onClick = onSave) {
                 Icon(
                     painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_check_wght400),
                     contentDescription = stringResource(R.string.save),
                 )
             }
         },
-    ) {
+    ) { sheetPadding ->
+        val sheetScrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .syncTopBarMaterialScroll(sheetScrollState)
+                .verticalScroll(sheetScrollState)
+                .padding(sheetPadding)
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -877,7 +755,7 @@ private fun CaptureDetailSheet(
                     .fillMaxWidth()
                     .heightIn(min = 152.dp),
                 colors = MiuixTextFieldDefaults.textFieldColors(
-                    backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
+                    backgroundColor = com.aritxonly.deadliner.ui.base.formContainerColor(MiuixTheme.colorScheme.secondaryContainer),
                     labelColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
                 ),
                 useLabelAsPlaceholder = true,
@@ -947,26 +825,4 @@ private fun copyToClipboard(context: Context, text: String) {
     val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
     manager.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.capture_clipboard_label), text))
     Toast.makeText(context, context.getString(R.string.capture_clipboard_copied), Toast.LENGTH_SHORT).show()
-}
-
-private fun formatRelativeTime(context: Context, timestamp: String): String {
-    val timestampMillis = runCatching { java.time.Instant.parse(timestamp).toEpochMilli() }.getOrDefault(0L)
-    val nowMillis = System.currentTimeMillis()
-    val diff = Duration.ofMillis((nowMillis - timestampMillis).absoluteValue)
-    val minutes = diff.toMinutes()
-    val hours = diff.toHours()
-    val days = diff.toDays()
-    return when {
-        minutes < 1 -> context.getString(R.string.capture_relative_just_now)
-        minutes < 60 -> context.getString(R.string.capture_relative_minutes_ago, minutes)
-        hours < 24 -> context.getString(R.string.capture_relative_hours_ago, hours)
-        days < 7 -> context.getString(R.string.capture_relative_days_ago, days)
-        else -> {
-            val date = LocalDateTime.ofInstant(
-                java.time.Instant.ofEpochMilli(timestampMillis),
-                ZoneId.systemDefault()
-            )
-            date.format(DateTimeFormatter.ofPattern(context.getString(R.string.capture_date_short_pattern)))
-        }
-    }
 }

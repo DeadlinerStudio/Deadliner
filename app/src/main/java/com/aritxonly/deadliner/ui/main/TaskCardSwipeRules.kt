@@ -13,6 +13,7 @@ internal object TaskCardSwipeDefaults {
     const val FULL_SWIPE_THRESHOLD_FRACTION = 0.62f
     const val REVEAL_WIDTH_DP = 112f
     const val FOCUS_REVEAL_WIDTH_DP = 168f
+    const val SINGLE_REVEAL_WIDTH_DP = 56f
     const val REVEAL_TRIGGER_DISTANCE_DP = 84f
     const val CLOSE_DISTANCE_DP = 32f
 }
@@ -26,7 +27,9 @@ internal fun resolveTaskCardSwipeSettle(
     closeDistance: Float,
     hasTrailingActions: Boolean,
     leadingRevealWidth: Float = 0f,
+    trailingRevealWidth: Float = 0f,
 ): TaskCardSwipeSettleResult {
+    val trailingThreshold = if (trailingRevealWidth > 0f) minOf(revealThreshold, trailingRevealWidth) else revealThreshold
     val fullSwipeThreshold = cardWidth * TaskCardSwipeDefaults.FULL_SWIPE_THRESHOLD_FRACTION
 
     // A revealed three-action menu must not count as a full swipe on compact cards.
@@ -38,7 +41,7 @@ internal fun resolveTaskCardSwipeSettle(
         return TaskCardSwipeSettleResult.RUN_DELETE_ACTION
     }
 
-    if (dragStartOffset <= -revealThreshold && gestureOffset > 0f) {
+    if (dragStartOffset <= -trailingThreshold && gestureOffset > 0f) {
         return when {
             offset >= revealThreshold -> TaskCardSwipeSettleResult.LEADING_REVEALED
             gestureOffset >= closeDistance -> TaskCardSwipeSettleResult.CLOSED
@@ -48,7 +51,7 @@ internal fun resolveTaskCardSwipeSettle(
 
     if (dragStartOffset >= revealThreshold && gestureOffset < 0f) {
         return when {
-            offset <= -revealThreshold && hasTrailingActions -> {
+            offset <= -trailingThreshold && hasTrailingActions -> {
                 TaskCardSwipeSettleResult.TRAILING_REVEALED
             }
             -gestureOffset >= closeDistance -> TaskCardSwipeSettleResult.CLOSED
@@ -58,7 +61,7 @@ internal fun resolveTaskCardSwipeSettle(
 
     return when {
         offset >= revealThreshold -> TaskCardSwipeSettleResult.LEADING_REVEALED
-        offset <= -revealThreshold && hasTrailingActions -> {
+        offset <= -trailingThreshold && hasTrailingActions -> {
             TaskCardSwipeSettleResult.TRAILING_REVEALED
         }
         else -> TaskCardSwipeSettleResult.CLOSED

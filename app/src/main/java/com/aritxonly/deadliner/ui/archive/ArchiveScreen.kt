@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.archive
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
@@ -158,7 +159,7 @@ fun ArchiveScreen(
                     mode = TopAppBarStyle.CENTER,
                     titleTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
                     navigationIcon = {
-                        IconButton(onClick = onClose) {
+                        IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onClose) {
                             Icon(
                                 painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_close_wght400),
                                 contentDescription = stringResource(R.string.close),

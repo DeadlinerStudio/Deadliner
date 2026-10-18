@@ -32,7 +32,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
@@ -51,8 +50,6 @@ import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassSurface
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.basic.Sidebar
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.roundToInt
 
@@ -120,7 +117,7 @@ internal fun TabletNavSideBar(
         ) {
             Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 TabletNavSideItem(
-                    icon = rememberVectorPainter(MiuixIcons.Basic.Sidebar), label = navigationLabel,
+                    icon = com.aritxonly.deadliner.ui.materialSymbolPainter("side_navigation"), label = navigationLabel,
                     selected = false, enabled = true, progress = expandProgress, showLabel = false,
                     onClick = { onExpandedChange(!expanded) },
                 )

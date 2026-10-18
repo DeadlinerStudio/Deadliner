@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.agent
 
+import androidx.compose.ui.Modifier
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,8 +28,8 @@ fun TaskCardView(card: UiCard.TaskCard, onAdd: () -> Unit, onCopy: () -> Unit) {
             }
             // actions
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onAdd, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.add_task)) }
-                OutlinedButton(onClick = onCopy, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.copy)) }
+                Button(onClick = onAdd, modifier = (Modifier.weight(1f)).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.shape)) { Text(stringResource(R.string.add_task)) }
+                OutlinedButton(onClick = onCopy, modifier = (Modifier.weight(1f)).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.outlinedShape)) { Text(stringResource(R.string.copy)) }
             }
         }
     }
@@ -49,7 +51,7 @@ fun PlanBlockCardView(card: UiCard.PlanBlockCard, onAdd: () -> Unit) {
                 card.linkTask?.let { Pill(stringResource(R.string.linked_task, it)) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onAdd, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.save_and_add_to_calendar)) }
+                Button(onClick = onAdd, modifier = (Modifier.weight(1f)).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.shape)) { Text(stringResource(R.string.save_and_add_to_calendar)) }
             }
         }
     }
@@ -73,7 +75,7 @@ fun StepsCardView(card: UiCard.StepsCard, onCreateSubtasks: (String, List<String
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
-                OutlinedButton(onClick = { onCreateSubtasks(card.title, card.checklist) }, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = { onCreateSubtasks(card.title, card.checklist) }, modifier = (Modifier.weight(1f)).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.outlinedShape)) {
                     Text(stringResource(R.string.copy_list))
                 }
             }

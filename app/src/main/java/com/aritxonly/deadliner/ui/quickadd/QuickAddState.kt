@@ -27,6 +27,9 @@ class QuickAddState(private val scope: CoroutineScope,
     private val aiRecognizer: suspend (String, String) -> QuickAddProposal = AIUtils::extractQuickAdd) {
     var visible by mutableStateOf(false)
         private set
+    var panelBounds by mutableStateOf(Rect.Zero)
+    var expandingToEditor by mutableStateOf(false)
+        private set
     var anchor by mutableStateOf(Rect.Zero)
     var text by mutableStateOf("")
         private set
@@ -50,11 +53,13 @@ class QuickAddState(private val scope: CoroutineScope,
     private val parser = QuickAddParser()
     private var localOperation: Job? = null
     private var localRevision = 0
+    private var restoredProposal = false
     private fun cancelLocalRecognition() { localRevision++; localOperation?.cancel() }
     internal var modelAvailable: () -> Boolean = { false }
     internal var modelRecognizer: (suspend (String, String) -> QuickAddProposal?)? = null
 
     internal fun refreshWithModel() {
+        if (restoredProposal || hasManualTaskInput) return
         val recognize = modelRecognizer ?: return
         localOperation?.cancel()
         if (!visible || busy || text.isBlank() || proposal.source !in listOf("LOCAL", "MODEL")) return
@@ -84,24 +89,35 @@ class QuickAddState(private val scope: CoroutineScope,
             catch (_: Exception) { /* The immediate rule proposal remains visible. */ }
         }
     }
-    val effectiveProposal: QuickAddProposal get() = if (proposal.kind == "TASK") proposal.copy(
-        dueAt = dueAt?.toString() ?: proposal.dueAt ?: (explicitStartAt ?: defaultStart).plusHours(1).toString()) else proposal
+    private val resolvedDueAt: String get() = dueAt?.toString() ?: proposal.dueAt ?:
+        (explicitStartAt ?: defaultStart).plusHours(1).toString()
     val explicitStartAt: LocalDateTime? get() = startAt ?: recognizedStart
     val explicitDueAt: String? get() = dueAt?.toString() ?: proposal.dueAt
-    val effectiveStartAt: LocalDateTime get() = explicitStartAt ?: effectiveProposal.dueAt
-        ?.let { runCatching { LocalDateTime.parse(it.replace(' ', 'T')) }.getOrNull() }
+    val effectiveStartAt: LocalDateTime get() = explicitStartAt ?: resolvedDueAt
+        .let { runCatching { LocalDateTime.parse(it.replace(' ', 'T')) }.getOrNull() }
         ?.takeIf { it.isBefore(defaultStart) } ?: defaultStart
-    val needsAI: Boolean get() = text.isNotBlank() &&
+    private val hasManualTaskInput: Boolean get() = proposal.kind == "TASK" && dueAt != null && text.isNotBlank()
+    val effectiveProposal: QuickAddProposal get() {
+        if (proposal.kind != "TASK") return proposal
+        val timed = proposal.copy(dueAt = resolvedDueAt)
+        if (!hasManualTaskInput) return timed
+        val title = proposal.title.takeIf { proposal.ready && !proposal.needsAI && it.isNotBlank() } ?: text.trim()
+        return timed.copy(title = title, ready = !requireNotNull(dueAt).isBefore(effectiveStartAt),
+            needsAI = false, source = "MANUAL", recognitionState = "MANUAL", message = "")
+    }
+    val needsAI: Boolean get() = !hasManualTaskInput && text.isNotBlank() &&
         (proposal.needsAI || (proposal.source == "LOCAL" &&
             (!proposal.ready || !proposal.title.any(Char::isLetter))))
-    val canEditTaskTimes: Boolean get() = !busy && proposal.kind == "TASK" && proposal.ready && !needsAI
-    val canReinterpret: Boolean get() = visible && !busy && proposal.ready && !needsAI && text.isNotBlank()
+    val canEditTaskTimes: Boolean get() = !busy && proposal.kind == "TASK"
+    val canReinterpret: Boolean get() = visible && !busy && effectiveProposal.ready && !needsAI && text.isNotBlank()
     val canClose: Boolean get() = !busy || recognizingAI
     val canRecognize: Boolean get() = visible && !busy && text.isNotBlank()
     val canSubmit: Boolean get() = visible && !busy && text.isNotBlank() && !needsAI && effectiveProposal.ready
 
     fun open(kind: String) {
-        if (initialKind != kind || text.isBlank()) {
+        expandingToEditor = false
+        if ((initialKind != kind && proposal.kind != kind) || text.isBlank()) {
+            restoredProposal = false
             val result = parser.recognizeLocal(text, kind)
             proposal = result.proposal
             recognizedStart = result.startAt
@@ -110,6 +126,28 @@ class QuickAddState(private val scope: CoroutineScope,
         if (text.isBlank() && startAt == null && dueAt == null) defaultStart = LocalDateTime.now()
         visible = true
         refreshWithModel()
+    }
+    /** Seed an existing proposal without running local recognition over manual corrections. */
+    fun restoreDraft(proposal: QuickAddProposal, text: String, startAt: LocalDateTime?,
+                     categoryUid: String?, calendarEventId: Long?) {
+        dismiss()
+        restoredProposal = true
+        initialKind = proposal.kind
+        this.text = text
+        this.proposal = proposal
+        this.startAt = startAt
+        this.dueAt = null
+        recognizedStart = null
+        defaultStart = startAt ?: LocalDateTime.now()
+        this.categoryUid = categoryUid
+        this.calendarEventId = calendarEventId
+        message = ""
+        visible = true
+    }
+    fun expandToEditor() {
+        if (!canClose) return
+        dismiss()
+        expandingToEditor = true
     }
     fun dismiss() {
         if (busy && !recognizingAI) return
@@ -121,6 +159,7 @@ class QuickAddState(private val scope: CoroutineScope,
         visible = false
     }
     fun edit(value: String) {
+        restoredProposal = false
         if (calendarEventId != null) { startAt = null; dueAt = null }
         generation++
         localOperation?.cancel()
@@ -134,6 +173,22 @@ class QuickAddState(private val scope: CoroutineScope,
         calendarEventId = null
         message = ""
         refreshWithModel()
+    }
+    fun selectStartAt(time: LocalDateTime) {
+        cancelLocalRecognition()
+        startAt = time
+        message = taskTimeError().orEmpty()
+    }
+    fun selectDueAt(time: LocalDateTime) {
+        cancelLocalRecognition()
+        if (explicitStartAt == null) startAt = effectiveStartAt
+        dueAt = time
+        message = taskTimeError().orEmpty()
+    }
+    private fun taskTimeError(): String? {
+        if (proposal.kind != "TASK") return null
+        val end = runCatching { LocalDateTime.parse(resolvedDueAt.replace(' ', 'T')) }.getOrNull()
+        return "截止时间不能早于开始时间".takeIf { end != null && end.isBefore(effectiveStartAt) }
     }
     fun setReminder(time: String?) { cancelLocalRecognition(); proposal = proposal.copy(reminderTime = time) }
     fun removeStart() { cancelLocalRecognition(); startAt = null; recognizedStart = null }
@@ -184,7 +239,10 @@ class QuickAddState(private val scope: CoroutineScope,
         calendarEventId = event.id
     }
     fun submit(onSaved: () -> Unit) {
-        if (!canSubmit) return
+        if (!canSubmit) {
+            if (visible && !busy) taskTimeError()?.let { message = it }
+            return
+        }
         localOperation?.cancel()
         message = ""
         busy = true
@@ -211,7 +269,7 @@ class QuickAddState(private val scope: CoroutineScope,
         fun saver(scope: CoroutineScope) = Saver<QuickAddState, List<String>>(
             save = { listOf(it.text, it.initialKind, it.proposal.toJson(), it.visible.toString(),
                 it.startAt?.toString().orEmpty(), it.dueAt?.toString().orEmpty(),
-                it.categoryUid.orEmpty(), it.calendarEventId?.toString().orEmpty(), it.defaultStart.toString(), it.recognizedStart?.toString().orEmpty()) },
+                it.categoryUid.orEmpty(), it.calendarEventId?.toString().orEmpty(), it.defaultStart.toString(), it.recognizedStart?.toString().orEmpty(), it.restoredProposal.toString()) },
             restore = { saved -> QuickAddState(scope).apply {
                 text = saved[0]; initialKind = saved[1]
                 proposal = Json.decodeFromString<QuickAddProposal>(saved[2])
@@ -222,6 +280,7 @@ class QuickAddState(private val scope: CoroutineScope,
                 calendarEventId = saved[7].toLongOrNull()
                 saved.getOrNull(8)?.let { defaultStart = LocalDateTime.parse(it) }
                 recognizedStart = saved.getOrNull(9)?.takeIf(String::isNotEmpty)?.let(LocalDateTime::parse)
+                restoredProposal = saved.getOrNull(10)?.toBoolean() ?: false
             } })
     }
 }

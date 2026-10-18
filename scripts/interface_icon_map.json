@@ -1,0 +1,1673 @@
+{
+  "miuix_revision": "ec4c96963abf206ab2f2b0253a5efca71ba28043",
+  "icons": {
+    "account_circle": {
+      "family": "miuix-glass",
+      "icon": "ContactsCircle",
+      "review": "人物与圆圈两个识别元素均需保留。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "add": {
+      "family": "miuix-glass",
+      "icon": "Add",
+      "review": "已审图：add → Add，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "add_2": {
+      "family": "miuix-glass",
+      "icon": "Add",
+      "review": "已审图：add_2 → Add，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "add_task": {
+      "family": "phosphor-regular",
+      "icon": "check-circle",
+      "review": "已审图：保留主体及附加符号；由固定 Phosphor Fill 路径组合，补充符号不与主体合并丢失。",
+      "overlay": "plus",
+      "cutoutCircle": [
+        200,
+        200,
+        52
+      ],
+      "overlayTransform": "translate(144 144) scale(0.44 0.44)",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.08,
+      "opticalReview": "官方 Regular 线条结合等比放大，对齐 MIUIX 330 的操作图标边界与线条重量。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.164,
+        "sampleSize": 256
+      }
+    },
+    "alarm_add": {
+      "family": "phosphor-fill",
+      "icon": "alarm",
+      "review": "已审图：保留主体及附加符号；由固定 Phosphor Fill 路径组合，补充符号不与主体合并丢失。",
+      "overlay": "plus",
+      "cutoutCircle": [
+        128,
+        136,
+        52
+      ],
+      "overlayTransform": "translate(83.2 91.2) scale(0.35 0.35)",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.342,
+        "sampleSize": 256
+      }
+    },
+    "analytics": {
+      "family": "phosphor-fill",
+      "icon": "chart-bar",
+      "review": "已审图：analytics → chart-bar，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.324,
+        "sampleSize": 256
+      }
+    },
+    "android": {
+      "family": "material",
+      "icon": "android",
+      "review": "Android 平台标识保留原样，不伪装成其他图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "apartment": {
+      "family": "phosphor-fill",
+      "icon": "buildings",
+      "review": "已审图：apartment → buildings，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.92,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.439,
+        "sampleSize": 256
+      }
+    },
+    "arrow_back": {
+      "family": "miuix-glass",
+      "icon": "Back",
+      "review": "普通返回箭头与现代尖括号返回分别映射，跟随已有 modernName 策略。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "arrow_back_ios_new": {
+      "family": "miuix-glass",
+      "icon": "ChevronBackward",
+      "review": "已审图：arrow_back_ios_new → ChevronBackward，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "arrow_downward": {
+      "family": "phosphor-regular",
+      "icon": "arrow-down",
+      "review": "已审图：arrow_downward → arrow-down，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.17,
+      "opticalReview": "固定此图标全局系数，以 MIUIX 330 的线条及可见轮廓为基准；不按位置改变比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.75,
+        "inkCoverage": 0.093,
+        "sampleSize": 256
+      },
+      "opticalWeightReview": "使用官方 Regular，去掉 Fill 带来的厚重底板/实心箭头头部，保留原操作主体，与 MIUIX 330 的线条协调。"
+    },
+    "arrow_upward": {
+      "family": "phosphor-regular",
+      "icon": "arrow-up",
+      "review": "已审图：arrow_upward → arrow-up，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.17,
+      "opticalReview": "固定此图标全局系数，以 MIUIX 330 的线条及可见轮廓为基准；不按位置改变比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.75,
+        "inkCoverage": 0.093,
+        "sampleSize": 256
+      },
+      "opticalWeightReview": "使用官方 Regular，去掉 Fill 带来的厚重底板/实心箭头头部，保留原操作主体，与 MIUIX 330 的线条协调。"
+    },
+    "assignment": {
+      "family": "miuix-glass",
+      "icon": "Tasks",
+      "review": "已审图：基础 assignment 操作/对象含义与 MIUIX Glass Tasks 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "auto_awesome": {
+      "family": "phosphor-fill",
+      "icon": "sparkle",
+      "review": "已审图：auto_awesome → sparkle，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.95,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.906,
+        "inkCoverage": 0.282,
+        "sampleSize": 256
+      }
+    },
+    "autorenew": {
+      "family": "miuix-glass",
+      "icon": "Refresh",
+      "review": "已审图：autorenew → Refresh，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "book": {
+      "family": "miuix-glass",
+      "icon": "Book",
+      "review": "已审图：基础 book 操作/对象含义与 MIUIX Glass Book 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "book_2": {
+      "family": "miuix-glass",
+      "icon": "Book",
+      "review": "已审图：基础 book_2 操作/对象含义与 MIUIX Glass Book 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "bookmark": {
+      "family": "phosphor-fill",
+      "icon": "bookmark-simple",
+      "review": "严格内容匹配：保留书签折角形状，已拒绝带加号的 AddBookmark，改用填充书签。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "strict-content",
+      "opticalScale": 1.1,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.781,
+        "inkCoverage": 0.401,
+        "sampleSize": 256
+      }
+    },
+    "border_color": {
+      "family": "phosphor-fill",
+      "icon": "pencil-line",
+      "review": "已审图：border_color → pencil-line，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.1,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.781,
+        "inkCoverage": 0.248,
+        "sampleSize": 256
+      }
+    },
+    "brush": {
+      "family": "phosphor-fill",
+      "icon": "paint-brush",
+      "review": "已审图：brush → paint-brush，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.267,
+        "sampleSize": 256
+      }
+    },
+    "bug_report": {
+      "family": "phosphor-fill",
+      "icon": "bug",
+      "review": "已审图：bug_report → bug，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.92,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.354,
+        "sampleSize": 256
+      }
+    },
+    "calendar_month": {
+      "family": "miuix-glass",
+      "icon": "Months",
+      "review": "已审图：基础 calendar_month 操作/对象含义与 MIUIX Glass Months 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "camera": {
+      "family": "phosphor-fill",
+      "icon": "camera",
+      "review": "已审图：camera → camera，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.471,
+        "sampleSize": 256
+      }
+    },
+    "chart_data": {
+      "family": "phosphor-fill",
+      "icon": "chart-line-up",
+      "review": "已审图：chart_data → chart-line-up，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.424,
+        "sampleSize": 256
+      }
+    },
+    "check": {
+      "family": "miuix-glass",
+      "icon": "Ok",
+      "review": "已审图：check → Ok，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "check_circle": {
+      "family": "phosphor-regular",
+      "icon": "check-circle",
+      "review": "已审图：check_circle → check-circle，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.08,
+      "opticalReview": "官方 Regular 线条结合等比放大，对齐 MIUIX 330 的操作图标边界与线条重量。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.178,
+        "sampleSize": 256
+      }
+    },
+    "check_circle#filled": {
+      "family": "phosphor-fill",
+      "icon": "check-circle",
+      "filled": true,
+      "review": "选中完成状态保留圆形与勾选。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.488,
+        "sampleSize": 256
+      }
+    },
+    "chevron_left": {
+      "family": "miuix-glass",
+      "icon": "ChevronBackward",
+      "review": "已审图：chevron_left → ChevronBackward，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "chevron_right": {
+      "family": "miuix-glass",
+      "icon": "ChevronForward",
+      "review": "已审图：chevron_right → ChevronForward，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "close": {
+      "family": "miuix-glass",
+      "icon": "Close",
+      "review": "已审图：close → Close，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "cloud": {
+      "family": "miuix-glass",
+      "icon": "CloudFill",
+      "review": "已审图：cloud → CloudFill，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "cloud_done": {
+      "family": "phosphor-fill",
+      "icon": "cloud-check",
+      "review": "已审图：cloud_done → cloud-check，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.9,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.456,
+        "sampleSize": 256
+      }
+    },
+    "cloud_download": {
+      "family": "phosphor-fill",
+      "icon": "cloud-arrow-down",
+      "review": "原图含云与下载箭头；普通 Download 若只有箭头则拒绝。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.9,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.442,
+        "sampleSize": 256
+      }
+    },
+    "cloud_off": {
+      "family": "phosphor-fill",
+      "icon": "cloud-slash",
+      "review": "已审图：cloud_off → cloud-slash，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.9,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.473,
+        "sampleSize": 256
+      }
+    },
+    "cloud_upload": {
+      "family": "miuix-glass",
+      "icon": "UploadCloud",
+      "review": "已审图：cloud_upload → UploadCloud，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "code": {
+      "family": "phosphor-regular",
+      "icon": "code",
+      "review": "已审图：code → code，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.94,
+      "opticalReview": "固定此图标全局系数，以 MIUIX 330 的线条及可见轮廓为基准；不按位置改变比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.115,
+        "sampleSize": 256
+      },
+      "opticalWeightReview": "使用官方 Regular，去掉 Fill 带来的厚重底板/实心箭头头部，保留原操作主体，与 MIUIX 330 的线条协调。"
+    },
+    "coffee": {
+      "family": "phosphor-fill",
+      "icon": "coffee",
+      "review": "已审图：coffee → coffee，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.96,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.455,
+        "sampleSize": 256
+      }
+    },
+    "contact_support": {
+      "family": "miuix-glass",
+      "icon": "Help",
+      "review": "已审图：基础 contact_support 操作/对象含义与 MIUIX Glass Help 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "contract": {
+      "family": "miuix-glass",
+      "icon": "File",
+      "review": "已拒绝名称误配：协议是文档，不是收缩箭头；选用官方 Glass File 文档，允许基础文档轮廓变化。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "credit_card": {
+      "family": "miuix-glass",
+      "icon": "BankCards",
+      "review": "已审图：credit_card → BankCards，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "dashboard": {
+      "family": "phosphor-fill",
+      "icon": "squares-four",
+      "review": "已审图：dashboard → squares-four，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.24,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.688,
+        "inkCoverage": 0.377,
+        "sampleSize": 256
+      }
+    },
+    "database": {
+      "family": "phosphor-fill",
+      "icon": "database",
+      "review": "已审图：database → database，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.392,
+        "sampleSize": 256
+      }
+    },
+    "delete": {
+      "family": "miuix-glass",
+      "icon": "Delete",
+      "review": "已审图：delete → Delete，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "deployed_code": {
+      "family": "phosphor-fill",
+      "icon": "cube",
+      "review": "已审图：deployed_code → cube，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.33,
+        "sampleSize": 256
+      }
+    },
+    "devices": {
+      "family": "phosphor-fill",
+      "icon": "devices",
+      "review": "已审图：devices → devices，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.95,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.906,
+        "inkCoverage": 0.437,
+        "sampleSize": 256
+      }
+    },
+    "diamond_shine": {
+      "family": "phosphor-fill",
+      "icon": "diamond",
+      "review": "已审图：diamond_shine → diamond，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.426,
+        "sampleSize": 256
+      }
+    },
+    "directions_run": {
+      "family": "phosphor-fill",
+      "icon": "person-simple-run",
+      "review": "已审图：directions_run → person-simple-run，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.04,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.844,
+        "inkCoverage": 0.155,
+        "sampleSize": 256
+      }
+    },
+    "donut_large": {
+      "family": "phosphor-fill",
+      "icon": "chart-donut",
+      "review": "已审图：donut_large → chart-donut，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.05,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.816,
+        "inkCoverage": 0.373,
+        "sampleSize": 256
+      }
+    },
+    "download": {
+      "family": "miuix-glass",
+      "icon": "Download",
+      "review": "已审图：download → Download，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "draw": {
+      "family": "phosphor-fill",
+      "icon": "pencil-ruler",
+      "review": "已审图：draw → pencil-ruler，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.1,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.781,
+        "inkCoverage": 0.361,
+        "sampleSize": 256
+      }
+    },
+    "eco": {
+      "family": "phosphor-fill",
+      "icon": "leaf",
+      "review": "已审图：eco → leaf，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.15,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.75,
+        "inkCoverage": 0.372,
+        "sampleSize": 256
+      }
+    },
+    "edit": {
+      "family": "miuix-glass",
+      "icon": "Edit",
+      "review": "已审图：基础 edit 操作/对象含义与 MIUIX Glass Edit 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "error": {
+      "family": "phosphor-fill",
+      "icon": "warning-circle",
+      "review": "圆圈感叹号；不用八角停止或盾牌替代错误状态。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.495,
+        "sampleSize": 256
+      }
+    },
+    "event": {
+      "family": "miuix-glass",
+      "icon": "Months",
+      "review": "已审图：基础 event 操作/对象含义与 MIUIX Glass Months 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "event_available": {
+      "family": "phosphor-fill",
+      "icon": "calendar-check",
+      "review": "已审图：event_available → calendar-check，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.467,
+        "sampleSize": 256
+      }
+    },
+    "exercise": {
+      "family": "phosphor-fill",
+      "icon": "barbell",
+      "review": "已审图：exercise → barbell，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.92,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 1.0,
+        "inkCoverage": 0.325,
+        "sampleSize": 256
+      }
+    },
+    "expand_more": {
+      "family": "phosphor-regular",
+      "icon": "caret-down",
+      "review": "已审图：Glass ExpandMore 为四角展开标记，非下箭头；采用 caret-down。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.22,
+      "opticalReview": "官方 Regular 线条结合等比放大，对齐 MIUIX 330 的操作图标边界与线条重量。",
+      "opticalMeasurement": {
+        "inkSpan": 0.688,
+        "inkCoverage": 0.058,
+        "sampleSize": 256
+      }
+    },
+    "experiment": {
+      "family": "phosphor-fill",
+      "icon": "flask",
+      "review": "已审图：experiment → flask，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.1,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.781,
+        "inkCoverage": 0.26,
+        "sampleSize": 256
+      }
+    },
+    "family_group": {
+      "family": "phosphor-fill",
+      "icon": "users-three",
+      "review": "已审图：family_group → users-three，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.348,
+        "sampleSize": 256
+      }
+    },
+    "favorite": {
+      "family": "miuix-glass",
+      "icon": "Favorites",
+      "review": "严格内容匹配：原图为心形，审图确认 MIUIX Glass Favorites 同为心形；不与五角星互换。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "strict-content"
+    },
+    "favorite#filled": {
+      "family": "miuix-glass",
+      "icon": "FavoritesFill",
+      "filled": true,
+      "review": "严格内容匹配：MIUIX Glass FavoritesFill 是实体心形，与空心 Favorites 成对保留填充状态。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "strict-content"
+    },
+    "feedback": {
+      "family": "phosphor-fill",
+      "icon": "chat",
+      "review": "已审图：保留主体及附加符号；由固定 Phosphor Fill 路径组合，补充符号不与主体合并丢失。",
+      "overlay": "exclamation-mark",
+      "cutoutCircle": [
+        128,
+        104,
+        58
+      ],
+      "overlayTransform": "translate(76.8 52.8) scale(0.40 0.40)",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.367,
+        "sampleSize": 256
+      }
+    },
+    "flag": {
+      "family": "phosphor-regular",
+      "icon": "flag",
+      "review": "已审图：flag → flag，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.12,
+      "opticalReview": "官方 Regular 线条结合等比放大，对齐 MIUIX 330 的操作图标边界与线条重量。",
+      "opticalMeasurement": {
+        "inkSpan": 0.781,
+        "inkCoverage": 0.161,
+        "sampleSize": 256
+      }
+    },
+    "flag_2": {
+      "family": "phosphor-regular",
+      "icon": "flag",
+      "review": "已审图：flag_2 → flag，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.12,
+      "opticalReview": "官方 Regular 线条结合等比放大，对齐 MIUIX 330 的操作图标边界与线条重量。",
+      "opticalMeasurement": {
+        "inkSpan": 0.781,
+        "inkCoverage": 0.161,
+        "sampleSize": 256
+      }
+    },
+    "flight_land": {
+      "family": "phosphor-fill",
+      "icon": "airplane-landing",
+      "review": "已审图：flight_land → airplane-landing，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.906,
+        "inkCoverage": 0.331,
+        "sampleSize": 256
+      }
+    },
+    "folder": {
+      "family": "miuix-glass",
+      "icon": "FolderFill",
+      "review": "已审图：folder → FolderFill，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "format_quote": {
+      "family": "phosphor-fill",
+      "icon": "quotes",
+      "review": "已审图：format_quote → quotes，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.302,
+        "sampleSize": 256
+      }
+    },
+    "globe": {
+      "family": "phosphor-fill",
+      "icon": "globe",
+      "review": "已审图：globe → globe，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.367,
+        "sampleSize": 256
+      }
+    },
+    "group": {
+      "family": "phosphor-fill",
+      "icon": "users",
+      "review": "已审图：原图是多人群组，Community 实为对话气泡；使用实心 users 保留多人主体。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.93,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.984,
+        "inkCoverage": 0.43,
+        "sampleSize": 256
+      }
+    },
+    "handyman": {
+      "family": "phosphor-fill",
+      "icon": "wrench",
+      "review": "已审图：handyman → wrench，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.284,
+        "sampleSize": 256
+      }
+    },
+    "hardware": {
+      "family": "phosphor-fill",
+      "icon": "hammer",
+      "review": "已审图：hardware → hammer，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.95,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.906,
+        "inkCoverage": 0.253,
+        "sampleSize": 256
+      }
+    },
+    "history": {
+      "family": "phosphor-fill",
+      "icon": "clock-counter-clockwise",
+      "review": "逆时针回溯箭头包围时钟；MIUIX Recent 若为普通时钟将拒绝。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "最近对话保留原始 Fill 字重与 1.0 缩放，与相邻新建对话图标协调。",
+      "opticalMeasurement": {
+        "inkSpan": 0.781,
+        "inkCoverage": 0.164,
+        "sampleSize": 256
+      }
+    },
+    "home": {
+      "family": "phosphor-fill",
+      "icon": "house",
+      "review": "分类 home：Material 保留对应 home 符号，Hybrid 使用 Phosphor Fill house 的房屋主体；底栏 MIUIX Home 为独立入口。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.1,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.781,
+        "inkCoverage": 0.416,
+        "sampleSize": 256
+      }
+    },
+    "house": {
+      "family": "material",
+      "icon": "house",
+      "review": "分类房屋保留 Material 原始房屋图形，避免占用主页清单专用的 MIUIX Home。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "hub": {
+      "family": "phosphor-fill",
+      "icon": "graph",
+      "review": "已审图：hub → graph，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.08,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.816,
+        "inkCoverage": 0.218,
+        "sampleSize": 256
+      }
+    },
+    "inbox": {
+      "family": "phosphor-regular",
+      "icon": "tray",
+      "review": "已审图：inbox → tray，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.17,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.75,
+        "inkCoverage": 0.212,
+        "sampleSize": 256
+      }
+    },
+    "info": {
+      "family": "miuix-glass",
+      "icon": "Info",
+      "review": "已审图：info → Info，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "ios_share": {
+      "family": "miuix-glass",
+      "icon": "Share",
+      "review": "已审图：基础 ios_share 操作/对象含义与 MIUIX Glass Share 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "keep": {
+      "family": "miuix-glass",
+      "icon": "Pin",
+      "review": "严格内容匹配：保留图钉主体，MIUIX Glass Pin 为倾斜图钉，基本方向变化不改变固定/置顶含义。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "strict-content"
+    },
+    "keyboard_arrow_down": {
+      "family": "phosphor-regular",
+      "icon": "caret-down",
+      "review": "已审图：Glass ExpandMore 为四角展开标记，非下箭头；采用 caret-down。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.22,
+      "opticalReview": "官方 Regular 线条结合等比放大，对齐 MIUIX 330 的操作图标边界与线条重量。",
+      "opticalMeasurement": {
+        "inkSpan": 0.688,
+        "inkCoverage": 0.058,
+        "sampleSize": 256
+      }
+    },
+    "lightbulb": {
+      "family": "phosphor-fill",
+      "icon": "lightbulb",
+      "review": "已审图：lightbulb → lightbulb，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.405,
+        "sampleSize": 256
+      }
+    },
+    "lightbulb_2": {
+      "family": "phosphor-fill",
+      "icon": "lightbulb",
+      "review": "已审图：lightbulb_2 → lightbulb，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.405,
+        "sampleSize": 256
+      }
+    },
+    "link": {
+      "family": "miuix-glass",
+      "icon": "Link",
+      "review": "已审图：link → Link，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "maps_ugc": {
+      "family": "phosphor-fill",
+      "icon": "chat-circle",
+      "review": "已审图：保留主体及附加符号；由固定 Phosphor Fill 路径组合，补充符号不与主体合并丢失。",
+      "overlay": "plus",
+      "cutoutCircle": [
+        128,
+        116,
+        62
+      ],
+      "overlayTransform": "translate(76.8 64.8) scale(0.40 0.40)",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.365,
+        "sampleSize": 256
+      }
+    },
+    "medical_services": {
+      "family": "phosphor-fill",
+      "icon": "first-aid-kit",
+      "review": "已审图：medical_services → first-aid-kit，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.507,
+        "sampleSize": 256
+      }
+    },
+    "menu": {
+      "family": "miuix-glass",
+      "icon": "Menu",
+      "review": "已审图：menu → Menu，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "menu_book": {
+      "family": "phosphor-fill",
+      "icon": "book-open",
+      "review": "已审图：menu_book → book-open，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.96,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.52,
+        "sampleSize": 256
+      }
+    },
+    "mic": {
+      "family": "miuix-glass",
+      "icon": "Mic",
+      "review": "已审图：mic → Mic，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "mic_off": {
+      "family": "miuix-glass",
+      "icon": "MicSlash",
+      "review": "已审图：mic_off → MicSlash，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "mobile_arrow_down": {
+      "family": "miuix-regular",
+      "icon": "Update",
+      "review": "现有资源键仅用于检查更新入口；按用户指定采用 MiuixIcons.Regular.Update，保留 Material 模式原图。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "mobile_gear": {
+      "family": "phosphor-fill",
+      "icon": "device-mobile",
+      "review": "已审图：保留主体及附加符号；由固定 Phosphor Fill 路径组合，补充符号不与主体合并丢失。",
+      "overlay": "gear-six",
+      "cutoutRect": [
+        80,
+        40,
+        176,
+        208
+      ],
+      "overlayTransform": "translate(83.2 83.2) scale(0.35 0.35)",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.25,
+        "sampleSize": 256
+      }
+    },
+    "money_off": {
+      "family": "phosphor-fill",
+      "icon": "currency-dollar-simple",
+      "review": "已审图：保留主体及附加符号；由固定 Phosphor Fill 路径组合，补充符号不与主体合并丢失。",
+      "overlay": "slash",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.46,
+        "sampleSize": 256
+      }
+    },
+    "monitoring": {
+      "family": "phosphor-fill",
+      "icon": "chart-bar",
+      "review": "已审图：保留主体及附加符号；由固定 Phosphor Fill 路径组合，补充符号不与主体合并丢失。",
+      "overlay": "trend-up",
+      "overlayTransform": "translate(0 -18) scale(0.90 0.55)",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.852,
+        "inkCoverage": 0.373,
+        "sampleSize": 256
+      }
+    },
+    "more_vert": {
+      "family": "phosphor-regular",
+      "icon": "dots-three-vertical",
+      "review": "纵向三点；如果 MIUIX More 是横向三点，改用 Lucide ellipsis-vertical。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.24,
+      "opticalReview": "固定此图标全局系数，以 MIUIX 330 的线条及可见轮廓为基准；不按位置改变比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.625,
+        "inkCoverage": 0.021,
+        "sampleSize": 256
+      },
+      "opticalWeightReview": "使用官方 Regular，去掉 Fill 带来的厚重底板/实心箭头头部，保留原操作主体，与 MIUIX 330 的线条协调。"
+    },
+    "move_to_inbox": {
+      "family": "phosphor-regular",
+      "icon": "tray-arrow-down",
+      "review": "移入收件箱，必须箭头向托盘内部，不能用 archive-restore 的向外箭头。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.16,
+      "opticalReview": "官方 Regular 线条结合等比放大，对齐 MIUIX 330 的操作图标边界与线条重量。",
+      "opticalMeasurement": {
+        "inkSpan": 0.75,
+        "inkCoverage": 0.254,
+        "sampleSize": 256
+      }
+    },
+    "music_note_2": {
+      "family": "miuix-glass",
+      "icon": "Music",
+      "review": "已审图：music_note_2 → Music，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "notes": {
+      "family": "miuix-glass",
+      "icon": "Notes",
+      "review": "已审图：notes → Notes，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "notification_add": {
+      "family": "phosphor-fill",
+      "icon": "bell-simple",
+      "review": "已审图：保留主体及附加符号；由固定 Phosphor Fill 路径组合，补充符号不与主体合并丢失。",
+      "overlay": "plus",
+      "cutoutCircle": [
+        200,
+        88,
+        46
+      ],
+      "overlayTransform": "translate(148.8 36.8) scale(0.40 0.40)",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.381,
+        "sampleSize": 256
+      }
+    },
+    "notifications": {
+      "family": "miuix-glass",
+      "icon": "Notifications",
+      "review": "已审图：notifications → Notifications，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "notifications_active": {
+      "family": "phosphor-fill",
+      "icon": "bell-ringing",
+      "review": "已审图：notifications_active → bell-ringing，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.844,
+        "inkCoverage": 0.439,
+        "sampleSize": 256
+      }
+    },
+    "open_in_full": {
+      "family": "miuix-glass",
+      "icon": "ExpandMore",
+      "review": "按用户指定，快速添加展开完整编辑器使用 MIUIX Glass ExpandMore。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "orbit": {
+      "family": "phosphor-fill",
+      "icon": "planet",
+      "review": "已审图：orbit → planet，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.92,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.44,
+        "sampleSize": 256
+      }
+    },
+    "palette": {
+      "family": "phosphor-fill",
+      "icon": "palette",
+      "review": "调色盘；MIUIX Theme 的衣架不能表达色彩选择。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.43,
+        "sampleSize": 256
+      }
+    },
+    "pause": {
+      "family": "miuix-glass",
+      "icon": "Pause",
+      "review": "已审图：pause → Pause，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "payments": {
+      "family": "phosphor-fill",
+      "icon": "money",
+      "review": "已审图：payments → money，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.308,
+        "sampleSize": 256
+      }
+    },
+    "person": {
+      "family": "miuix-glass",
+      "icon": "Contacts",
+      "review": "已审图：person → Contacts，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "photo_camera": {
+      "family": "phosphor-fill",
+      "icon": "camera",
+      "review": "已审图：photo_camera → camera，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.471,
+        "sampleSize": 256
+      }
+    },
+    "pie_chart": {
+      "family": "phosphor-fill",
+      "icon": "chart-pie",
+      "review": "已审图：pie_chart → chart-pie，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.303,
+        "sampleSize": 256
+      }
+    },
+    "play_arrow": {
+      "family": "miuix-glass",
+      "icon": "Play",
+      "baseTransform": "translate(28.5725 0)",
+      "review": "已审图：play_arrow → Play；在 1142.9 viewport 内整体右移 28.5725（24dp 图标下 0.6dp），修正三角图形的视觉重心；保持字重、比例及点击范围。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "psychology": {
+      "family": "phosphor-fill",
+      "icon": "brain",
+      "review": "已审图：psychology → brain，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.95,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.906,
+        "inkCoverage": 0.42,
+        "sampleSize": 256
+      }
+    },
+    "repeat": {
+      "family": "phosphor-fill",
+      "icon": "repeat",
+      "review": "已审图：repeat → repeat，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.08,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.151,
+        "sampleSize": 256
+      }
+    },
+    "restaurant": {
+      "family": "phosphor-fill",
+      "icon": "fork-knife",
+      "review": "已审图：restaurant → fork-knife，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.1,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.785,
+        "inkCoverage": 0.256,
+        "sampleSize": 256
+      }
+    },
+    "rocket_launch": {
+      "family": "miuix-glass",
+      "icon": "Rocket",
+      "review": "已审图：rocket_launch → Rocket，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "routine": {
+      "family": "phosphor-fill",
+      "icon": "circle-half-tilt",
+      "review": "已审图：routine → circle-half-tilt，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.333,
+        "sampleSize": 256
+      }
+    },
+    "schedule": {
+      "family": "phosphor-regular",
+      "icon": "clock",
+      "review": "已审图：schedule → clock，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.08,
+      "opticalReview": "官方 Regular 线条结合等比放大，对齐 MIUIX 330 的操作图标边界与线条重量。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.177,
+        "sampleSize": 256
+      }
+    },
+    "school": {
+      "family": "phosphor-fill",
+      "icon": "graduation-cap",
+      "review": "已审图：school → graduation-cap，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.92,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 1.0,
+        "inkCoverage": 0.312,
+        "sampleSize": 256
+      }
+    },
+    "search": {
+      "family": "miuix-glass",
+      "icon": "Search",
+      "review": "已审图：search → Search，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "send": {
+      "family": "miuix-glass",
+      "icon": "Send",
+      "review": "已审图：send → Send，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "settings": {
+      "family": "miuix-glass",
+      "icon": "Settings",
+      "review": "已审图：基础 settings 操作/对象含义与 MIUIX Glass Settings 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "share": {
+      "family": "miuix-glass",
+      "icon": "Share",
+      "review": "已审图：基础 share 操作/对象含义与 MIUIX Glass Share 一致；依用户要求接受轮廓变化，优先官方图标。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "shield": {
+      "family": "phosphor-fill",
+      "icon": "shield",
+      "review": "已审图：shield → shield，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.08,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.781,
+        "inkCoverage": 0.488,
+        "sampleSize": 256
+      }
+    },
+    "shopping_cart": {
+      "family": "phosphor-fill",
+      "icon": "shopping-cart",
+      "review": "已审图：shopping_cart → shopping-cart，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.844,
+        "inkCoverage": 0.346,
+        "sampleSize": 256
+      }
+    },
+    "side_navigation": {
+      "family": "miuix-glass",
+      "icon": "Sidebar",
+      "review": "侧栏展开/收起操作，MIUIX Glass Sidebar 保留双栏面板结构。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "sort": {
+      "family": "miuix-glass",
+      "icon": "Sort",
+      "review": "已审图：sort → Sort，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "stadia_controller": {
+      "family": "phosphor-fill",
+      "icon": "game-controller",
+      "review": "已审图：stadia_controller → game-controller，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 0.92,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.938,
+        "inkCoverage": 0.43,
+        "sampleSize": 256
+      }
+    },
+    "star": {
+      "family": "miuix-glass",
+      "icon": "Starred",
+      "review": "严格内容匹配：MIUIX Glass Starred 是空心五角星，保留星形对象。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "strict-content"
+    },
+    "star#filled": {
+      "family": "phosphor-fill",
+      "icon": "star",
+      "filled": true,
+      "review": "严格内容匹配：选中态使用 Phosphor Fill 实心五角星；不用 MIUIX FavoritesFill 心形。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "strict-content",
+      "opticalScale": 1.07,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.391,
+        "sampleSize": 256
+      }
+    },
+    "star_shine": {
+      "family": "phosphor-fill",
+      "icon": "star",
+      "review": "严格内容匹配：保留五角星主体与附加光芒，不替换为单独四角闪光。",
+      "overlay": "sparkle",
+      "baseTransform": "translate(0 46) scale(0.80 0.80)",
+      "overlayTransform": "translate(154 -4) scale(0.38 0.38)",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "strict-content",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.926,
+        "inkCoverage": 0.291,
+        "sampleSize": 256
+      }
+    },
+    "stars_2": {
+      "family": "phosphor-fill",
+      "icon": "star",
+      "review": "严格内容匹配：保留一大一小两颗五角星，已拒绝 seal-check 徽章打勾候选。",
+      "baseTransform": "translate(0 52) scale(0.78 0.78)",
+      "overlay": "star",
+      "overlayTransform": "translate(156 -4) scale(0.38 0.38)",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "strict-content",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.922,
+        "inkCoverage": 0.294,
+        "sampleSize": 256
+      }
+    },
+    "stop": {
+      "family": "phosphor-fill",
+      "icon": "stop",
+      "review": "已审图：stop → stop，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.1,
+      "opticalReview": "按图形边界和墨色占比校准；实心面积较大，控制外缘而保留填充。",
+      "opticalMeasurement": {
+        "inkSpan": 0.688,
+        "inkCoverage": 0.469,
+        "sampleSize": 256
+      }
+    },
+    "task_alt": {
+      "family": "phosphor-regular",
+      "icon": "check-circle",
+      "review": "已审图：task_alt → check-circle，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalWeightReview": "使用固定上游 Regular 实际轮廓，匹配 MIUIX 330 的线条和留白；不改变操作主体。",
+      "opticalScale": 1.08,
+      "opticalReview": "官方 Regular 线条结合等比放大，对齐 MIUIX 330 的操作图标边界与线条重量。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.178,
+        "sampleSize": 256
+      }
+    },
+    "timer": {
+      "family": "miuix-glass",
+      "icon": "Stopwatch",
+      "review": "已审图：Timer 是沙漏，不能替代专注计时的秒表；采用 Glass Stopwatch。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "tune": {
+      "family": "miuix-glass",
+      "icon": "Tune",
+      "review": "已审图：tune → Tune，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "undo": {
+      "family": "miuix-glass",
+      "icon": "Undo",
+      "review": "已审图：undo → Undo，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "upload": {
+      "family": "phosphor-regular",
+      "icon": "upload",
+      "review": "已审图：upload → upload，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "固定此图标全局系数，以 MIUIX 330 的线条及可见轮廓为基准；不按位置改变比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.875,
+        "inkCoverage": 0.183,
+        "sampleSize": 256
+      },
+      "opticalWeightReview": "使用官方 Regular，去掉 Fill 带来的厚重底板/实心箭头头部，保留原操作主体，与 MIUIX 330 的线条协调。"
+    },
+    "visibility": {
+      "family": "miuix-glass",
+      "icon": "Show",
+      "review": "已审图：visibility → Show，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "visibility_off": {
+      "family": "miuix-glass",
+      "icon": "Hide",
+      "review": "已审图：visibility_off → Hide，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic"
+    },
+    "wallpaper": {
+      "family": "phosphor-fill",
+      "icon": "image",
+      "review": "已审图：wallpaper → image，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.398,
+        "sampleSize": 256
+      }
+    },
+    "wand_shine": {
+      "family": "phosphor-fill",
+      "icon": "magic-wand",
+      "review": "已审图：wand_shine → magic-wand，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.844,
+        "inkCoverage": 0.26,
+        "sampleSize": 256
+      }
+    },
+    "wand_stars": {
+      "family": "phosphor-fill",
+      "icon": "magic-wand",
+      "review": "已审图：wand_stars → magic-wand，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.0,
+      "opticalReview": "现有边界与视觉重量已接近 MIUIX，保留比例。",
+      "opticalMeasurement": {
+        "inkSpan": 0.844,
+        "inkCoverage": 0.26,
+        "sampleSize": 256
+      }
+    },
+    "widgets": {
+      "family": "phosphor-fill",
+      "icon": "squares-four",
+      "review": "已审图：widgets → squares-four，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.24,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.688,
+        "inkCoverage": 0.377,
+        "sampleSize": 256
+      }
+    },
+    "work": {
+      "family": "phosphor-fill",
+      "icon": "briefcase",
+      "review": "已审图：work → briefcase，基础操作/对象含义一致；按用户要求允许轮廓与实心比例调整。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.06,
+      "opticalReview": "按图形边界和墨色占比校准；保持线条/附加符号清晰，调整整体占比。",
+      "opticalMeasurement": {
+        "inkSpan": 0.812,
+        "inkCoverage": 0.391,
+        "sampleSize": 256
+      }
+    }
+  },
+  "phosphor_revision": "2b75f3ad12b420c9504ef05df8d2564a28f8500e"
+}

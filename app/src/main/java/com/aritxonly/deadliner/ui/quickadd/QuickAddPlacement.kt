@@ -3,7 +3,16 @@ package com.aritxonly.deadliner.ui.quickadd
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlin.math.max
+
+internal val QuickAddPanelGap = 12.dp
+internal val QuickAddMinimumControlsHeight = 64.dp
+
+/** Same panel clearance above the dock as the expanded quick-add lens. */
+internal fun quickAddPanelGapAboveControls(controlHeight: Dp): Dp =
+    (maxOf(controlHeight, QuickAddMinimumControlsHeight) - controlHeight) / 2 + QuickAddPanelGap
 
 internal data class QuickAddPlacement(
     val rightInset: Float,

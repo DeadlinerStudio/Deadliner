@@ -134,8 +134,8 @@ fun WeekRow(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 4.dp)
-                    .clickable { onSelectDate(day.date) }
-                    .clip(RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))),
+                    .clip(RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)))
+                    .clickable { onSelectDate(day.date) },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(

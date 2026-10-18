@@ -58,7 +58,7 @@ internal fun resolveSearchCollapseChange(
 internal class ModernListSearchCollapseState(initialMaximumCollapsePx: Float) {
     var maximumCollapsePx by mutableFloatStateOf(initialMaximumCollapsePx.coerceAtLeast(0f))
         private set
-    var collapsedPx by mutableFloatStateOf(0f)
+    var collapsedPx by mutableFloatStateOf(initialMaximumCollapsePx.coerceAtLeast(0f))
         private set
 
     val expandedFraction: Float
@@ -72,8 +72,9 @@ internal class ModernListSearchCollapseState(initialMaximumCollapsePx: Float) {
     val isCollapsed: Boolean get() = collapsedPx >= maximumCollapsePx - 0.5f
 
     fun updateMaximumCollapsePx(value: Float) {
+        val collapsedFraction = if (maximumCollapsePx <= 0f) 1f else collapsedPx / maximumCollapsePx
         maximumCollapsePx = value.coerceAtLeast(0f)
-        collapsedPx = collapsedPx.coerceIn(0f, maximumCollapsePx)
+        collapsedPx = maximumCollapsePx * collapsedFraction.coerceIn(0f, 1f)
     }
 
     fun dispatchScroll(availableY: Float): Float {
@@ -86,8 +87,8 @@ internal class ModernListSearchCollapseState(initialMaximumCollapsePx: Float) {
         return change.consumedY
     }
 
-    fun snapToExpanded() {
-        collapsedPx = 0f
+    fun snapToCollapsed() {
+        collapsedPx = maximumCollapsePx
     }
 
     fun snapTo(value: Float) {
@@ -106,7 +107,7 @@ internal fun rememberModernListSearchCollapseState(
 
 /**
  * Allocates vertical scroll in two stages: the search slot first on upward scroll, then the
- * MIUIX title. Downward scroll reverses that order, expanding search only after the title.
+ * MIUIX title. Search expands only from user-driven leftover pull after the list reaches its top.
  */
 @Composable
 internal fun rememberModernListChromeScrollConnection(
@@ -132,23 +133,13 @@ internal fun rememberModernListChromeScrollConnection(
                         availableY = available.y,
                     )
                     topBarScrollBehavior.state.heightOffset = titleChange.heightOffset
-                    val remainingY = available.y - titleChange.consumedY
-                    val searchConsumedY = if (
-                        remainingY > 0f &&
-                        topBarScrollBehavior.state.heightOffset >= -0.5f &&
-                        currentSearchEnabled && !searchState.isExpanded
-                    ) {
-                        searchState.dispatchScroll(remainingY)
-                    } else {
-                        0f
-                    }
                     if (
                         topBarScrollBehavior.state.heightOffset >= -0.5f &&
                         (!currentSearchEnabled || searchState.isExpanded)
                     ) {
                         topBarScrollBehavior.state.contentOffset = 0f
                     }
-                    return Offset(0f, titleChange.consumedY + searchConsumedY)
+                    return Offset(0f, titleChange.consumedY)
                 }
                 if (!currentSearchEnabled || available.y >= 0f || searchState.isCollapsed) {
                     return topBarConnection.onPreScroll(available, source)
@@ -169,7 +160,7 @@ internal fun rememberModernListChromeScrollConnection(
                 source: NestedScrollSource,
             ): Offset {
                 val topBarConsumed = topBarConnection.onPostScroll(consumed, available, source)
-                if (!currentSearchEnabled || available.y <= 0f || searchState.isExpanded) {
+                if (!currentSearchEnabled || source != NestedScrollSource.UserInput || available.y <= 0f || searchState.isExpanded) {
                     return topBarConsumed
                 }
                 val remainingY = available.y - topBarConsumed.y

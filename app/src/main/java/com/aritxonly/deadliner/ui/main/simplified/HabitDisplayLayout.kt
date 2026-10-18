@@ -92,6 +92,7 @@ fun HabitDisplayLayout(
     onActiveSwipeChange: ((String?) -> Unit)? = null,
 ) {
     val context = LocalContext.current
+    val editorEntry = com.aritxonly.deadliner.ui.editor.LocalDeadlineEditorEntry.current
     val scope = rememberCoroutineScope()
     val focusEntry = LocalHabitFocusTimerEntry.current
     val swipeColors = com.aritxonly.deadliner.ui.theme.rememberTaskSwipeActionColors()
@@ -205,7 +206,7 @@ fun HabitDisplayLayout(
                     secondaryActionIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_schedule_wght400),
                     onPrimaryAction = { requestChange(uid, false) },
                     onSecondaryAction = { focusEntry(uid, item.habit.habit.name) },
-                    onEditAction = { context.startActivity(AddDDLActivity.newEditHabitIntent(context, uid)) },
+                    onEditAction = { editorEntry.open(AddDDLActivity.newEditHabitIntent(context, uid)) },
                     onDeleteAction = { requestChange(uid, true) }, selectionMode = selectionMode, accessibilityLabel = item.habit.habit.name,
                 ) { closeOrRun ->
                 if (!isClassic) {

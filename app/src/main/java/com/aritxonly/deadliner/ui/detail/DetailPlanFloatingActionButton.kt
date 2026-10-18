@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.detail
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -24,7 +25,7 @@ internal fun DetailPlanFloatingActionButton(
     val label = stringResource(R.string.detail_plan_add)
     val resolvedModifier = modifier.semantics { contentDescription = label }
     ExtendedFloatingActionButton(
-        modifier = resolvedModifier,
+        modifier = (resolvedModifier).miuixPressFeedback(enabled = true, shape = RoundedCornerShape(20.dp)),
         shape = RoundedCornerShape(20.dp),
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,

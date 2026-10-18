@@ -4,6 +4,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentManager
+import android.view.Window
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import java.lang.ref.WeakReference
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import java.time.LocalDate
@@ -52,9 +56,18 @@ internal class DateTimePickerController {
 object DateTimePickers {
     private val hosts = WeakHashMap<FragmentManager, DateTimePickerController>()
     private val ids = AtomicLong()
-    internal fun attach(manager: FragmentManager, controller: DateTimePickerController) { hosts[manager] = controller }
+    private val windows = WeakHashMap<FragmentManager, WeakReference<Window>>()
+    internal fun attach(manager: FragmentManager, controller: DateTimePickerController, window: Window? = null) {
+        hosts[manager] = controller
+        window?.let { windows[manager] = WeakReference(it) }
+    }
+    private fun hideIme(manager: FragmentManager) {
+        val window = windows[manager]?.get() ?: return
+        WindowCompat.getInsetsController(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
+        window.currentFocus?.clearFocus()
+    }
     internal fun detach(manager: FragmentManager, controller: DateTimePickerController) {
-        if (hosts[manager] === controller) { hosts.remove(manager); controller.dismiss() }
+        if (hosts[manager] === controller) { hosts.remove(manager); windows.remove(manager); controller.dismiss() }
     }
     private fun wheelHost(manager: FragmentManager): DateTimePickerController? =
         if (GlobalUtils.appearanceFlow.value.useWheelDateTimePicker) hosts[manager] else null
@@ -64,17 +77,18 @@ object DateTimePickers {
         afterDateTime: LocalDateTime? = null,
         makeToast: (String) -> Unit = {},
         onDialogVisibilityChanged: (Boolean) -> Unit = {},
+        initialDateTime: LocalDateTime? = null,
         onDateTimeSelected: (LocalDateTime) -> Unit,
     ) {
+        hideIme(fragmentManager)
         val host = wheelHost(fragmentManager)
         if (host == null) {
             MaterialDateTimePickers.showDateTimePicker(fragmentManager, afterDateTime, makeToast,
-                onDialogVisibilityChanged, onDateTimeSelected)
+                onDialogVisibilityChanged, initialDateTime, onDateTimeSelected)
             return
         }
-        val now = LocalDateTime.now().withSecond(0).withNano(0)
         val minimum = afterDateTime?.let(::ceilToPickerMinute)
-        val initial = if (minimum != null && now.isBefore(minimum)) minimum else now
+        val initial = pickerInitialDateTime(initialDateTime, minimum)
         host.show(PickerRequest(
             id = ids.incrementAndGet(), kind = PickerKind.DateTime,
             initialDate = initial.toLocalDate(), initialTime = initial.toLocalTime(), minimum = minimum,
@@ -91,6 +105,7 @@ object DateTimePickers {
         onDialogVisibilityChanged: (Boolean) -> Unit = {},
         onTimeSelected: (LocalTime) -> Unit,
     ) {
+        hideIme(fragmentManager)
         val host = wheelHost(fragmentManager)
         if (host == null) {
             MaterialDateTimePickers.showTimePicker(fragmentManager, initialTime, onDialogVisibilityChanged, onTimeSelected)
@@ -106,6 +121,7 @@ object DateTimePickers {
     }
 
     fun showRetroactiveDatePicker(fragmentManager: FragmentManager, onDatePicked: (Long) -> Unit) {
+        hideIme(fragmentManager)
         val host = wheelHost(fragmentManager)
         if (host == null) {
             MaterialDateTimePickers.showRetroactiveDatePicker(fragmentManager, onDatePicked)

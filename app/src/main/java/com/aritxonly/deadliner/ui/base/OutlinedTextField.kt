@@ -56,7 +56,7 @@ fun OutlinedTextField(
         readOnly = readOnly,
         label = miuixLabel,
         colors = MiuixTextFieldDefaults.textFieldColors(
-            backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
+            backgroundColor = formContainerColor(MiuixTheme.colorScheme.secondaryContainer),
             labelColor = MiuixTheme.colorScheme.onSurfaceContainerVariant,
         ),
         useLabelAsPlaceholder = true,

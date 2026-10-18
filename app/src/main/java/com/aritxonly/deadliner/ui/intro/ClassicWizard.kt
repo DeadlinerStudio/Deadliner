@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.intro
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.SizeTransform
@@ -309,7 +310,7 @@ private fun ClassicWizardTopBar() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            IconButton(onClick = { /* 搜索占位，无交互 */ }) {
+            IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = { /* 搜索占位，无交互 */ }) {
                 Icon(
                     painter = iconResource(R.drawable.msr_search_wght400),
                     contentDescription = stringResource(R.string.search_hint),
@@ -317,7 +318,7 @@ private fun ClassicWizardTopBar() {
                 )
             }
 
-            IconButton(onClick = { /* 设置占位，无交互 */ }) {
+            IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = { /* 设置占位，无交互 */ }) {
                 Icon(
                     painter = iconResource(R.drawable.msr_settings_wght400),
                     contentDescription = stringResource(R.string.settings_title),
@@ -395,7 +396,7 @@ private fun ClassicWizardBottomBar(
                 modifier = Modifier.height(56.dp),
                 contentAlignment = Alignment.Center
             ) {
-                IconButton(onClick = onAiClick) {
+                IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onAiClick) {
                     Icon(
                         iconResource(aiDrawable),
                         contentDescription = "Lifi AI"
@@ -409,7 +410,7 @@ private fun ClassicWizardBottomBar(
                     )
                 }
             }
-            IconButton(onClick = { /* noop */ }) {
+            IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = { /* noop */ }) {
                 Icon(
                     painter = iconResource(R.drawable.msr_pie_chart_wght400),
                     contentDescription = null
@@ -426,7 +427,7 @@ private fun ClassicWizardBottomBar(
                         .height(80.dp)
                         .align(Alignment.Center)
                 ) {
-                    FloatingActionButton(
+                    FloatingActionButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.FloatingActionButtonDefaults.shape),
                         onClick = onFabClick,
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()

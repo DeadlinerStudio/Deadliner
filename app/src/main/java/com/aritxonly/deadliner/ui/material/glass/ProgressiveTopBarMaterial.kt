@@ -16,6 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -113,10 +117,14 @@ fun ProgressiveTopBarMaterial(
             CompositionLocalProvider(
                 LocalProgressiveTopBarMaterialHosted provides true,
             ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    content = content,
-                )
+                // Include custom and raw MIUIX headers, outside their clipping/transition layers.
+                // This foreground is drawn after the progressive backdrop, never into its recorder.
+                TopBarGlassShadowHost {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        content = content,
+                    )
+                }
             }
         }.map { measurable ->
             measurable.measure(constraints.copy(minHeight = 0))
@@ -159,6 +167,30 @@ private fun ProgressiveTopBarBackground(
     val surface = MaterialTheme.colorScheme.surface
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
+    if (advancedMaterial.useOfficialMiuixGlass && advancedMaterial.textureBlurEnabled &&
+        backdrop != null && top.yukonga.miuix.kmp.blur.isRuntimeShaderSupported()) {
+        // Keep the app's edge fade and scroll ownership, with the official action-bar body.
+        Box(modifier.graphicsLayer {
+            alpha = materialProgress
+            compositingStrategy = CompositingStrategy.Offscreen
+        }.drawWithContent {
+            drawContent()
+            drawRect(
+                brush = Brush.verticalGradient(
+                    0f to Color.White,
+                    ProgressiveTopBarBlurFadeStart to Color.White,
+                    1f to Color.Transparent,
+                ),
+                blendMode = BlendMode.DstIn,
+            )
+        }.officialMiuixGlassMaterial(
+            backdrop = backdrop,
+            shape = RectangleShape,
+            isDark = MaterialTheme.colorScheme.onSurface.luminance() > 0.5f,
+            role = GlassSurfaceRole.TopBar,
+        ))
+        return
+    }
     Box(
         modifier = modifier.graphicsLayer(alpha = materialProgress),
     ) {

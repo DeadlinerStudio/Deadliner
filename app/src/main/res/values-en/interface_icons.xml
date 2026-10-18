@@ -1,0 +1,5 @@
+<resources>
+    <string name="settings_interface_icon_pack">Interface icons</string>
+    <string name="settings_icon_pack_material_symbols">Material Symbols</string>
+    <string name="settings_icon_pack_hybrid_miuix">Hybrid MIUIX</string>
+</resources>

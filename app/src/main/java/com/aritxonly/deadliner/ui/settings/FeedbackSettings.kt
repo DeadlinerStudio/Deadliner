@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.graphics.Bitmap
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -79,7 +80,7 @@ fun FeedbackScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = navigateUp,
-                        modifier = navIconPaddingModifier
+                        modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
                     ) {
                         Icon(
                             com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
@@ -90,7 +91,7 @@ fun FeedbackScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { exportLauncher.launch("deadliner-diagnostics.zip") }) {
+                    IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = { exportLauncher.launch("deadliner-diagnostics.zip") }) {
                         Icon(
                             com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_share_wght400),
                             contentDescription = "导出诊断日志",

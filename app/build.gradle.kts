@@ -71,6 +71,8 @@ val verifyDeadlinerCoreKmpAar by tasks.registering {
 }
 
 android {
+    sourceSets.getByName("main").kotlin.srcDir(rootProject.file("third_party/miuix-glass/src/commonMain/kotlin"))
+
     namespace = "com.aritxonly.deadliner"
     compileSdk = 37
 
@@ -129,8 +131,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         aidl = true
@@ -198,6 +200,8 @@ dependencies {
     implementation("top.yukonga.miuix.kmp:miuix-ui-android:0.9.4-rc01")
     implementation("top.yukonga.miuix.kmp:miuix-icons-android:0.9.4-rc01")
     implementation("top.yukonga.miuix.kmp:miuix-blur-android:0.9.4-rc01")
+    implementation("top.yukonga.miuix.kmp:miuix-nav-android:0.9.4-rc01")
+    implementation("top.yukonga.miuix.kmp:miuix-preference-android:0.9.4-rc01")
     implementation("io.github.kyant0:shapes:1.2.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -222,6 +226,9 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("androidx.test:core:1.6.1")
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.espresso.core)
+    testImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

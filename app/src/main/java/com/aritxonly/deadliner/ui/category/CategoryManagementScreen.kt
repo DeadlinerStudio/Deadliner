@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.category
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -44,7 +45,7 @@ internal fun CategoryManagementScreen(
         title = stringResource(R.string.category_management_title),
         topBarStyle = TopAppBarStyle.LARGE,
         navigationIcon = {
-            IconButton(onClick = onBack) {
+            IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onBack) {
                 Icon(
                     painter = symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
@@ -111,7 +112,7 @@ private fun CategoryManagementRow(
     ) {
         CategoryBadge(category)
         Spacer(Modifier.weight(1f))
-        IconButton(onClick = onClick) {
+        IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onClick) {
             Icon(
                 painter = symbolPainterResource(R.drawable.msr_edit_wght400),
                 contentDescription = stringResource(R.string.category_edit),
@@ -119,7 +120,7 @@ private fun CategoryManagementRow(
                 modifier = Modifier.size(20.dp),
             )
         }
-        IconButton(onClick = onDelete) {
+        IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onDelete) {
             Icon(
                 painter = symbolPainterResource(R.drawable.msr_delete_wght400),
                 contentDescription = stringResource(R.string.category_delete),

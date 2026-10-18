@@ -51,3 +51,5 @@ QuickAddAnchor 用布局尺寸构造窗口锚点；QuickAddMorphGeometry 提供�
 
 ## 对称边距与平板入口
 QuickAddMorphGeometry负责窄/宽屏终态水平边界；QuickAddMorphHost消费边界。TabletNavigationScaffold单独摆放FAB，复用ModernHost现有QuickAddToggleButton和Overlay，保持采样隔离。
+
+手动草稿：QuickAddState 统一计算有效草稿/可提交性；QuickAddProperties 无条件显示手工时间，Overlay 与编辑页使用同一个有效草稿。DateTimePickers 两种后端共用初始值规则并保留时间约束。

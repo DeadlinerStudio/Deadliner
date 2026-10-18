@@ -1,19 +1,19 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,18 +21,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.AdvancedMaterialFineTuning
 import com.aritxonly.deadliner.model.AdvancedMaterialTuning
-import com.aritxonly.deadliner.ui.base.Slider
+import top.yukonga.miuix.kmp.basic.Slider
+import top.yukonga.miuix.kmp.basic.SliderDefaults
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +65,7 @@ fun AdvancedMaterialSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
@@ -93,18 +96,11 @@ fun AdvancedMaterialSettingsScreen(
                 )
             }
 
-            AdvancedMaterialPreviewCard(
-                blurRadius = previewBlurRadius,
-                fineTuning = previewFineTuning,
-                enabled = appearance.useAdvancedMaterial,
-                modifier = Modifier.padding(vertical = 8.dp),
-            )
-
             if (appearance.useAdvancedMaterial) {
                 SettingsSection(topLabel = stringResource(R.string.settings_advanced_material_blur_size)) {
                     AdvancedMaterialRadiusSlider(
                         value = previewBlurRadius,
-                        saturationMultiplier = previewFineTuning.saturationMultiplier,
+                        enabled = !appearance.useOfficialMiuixGlass,
                         onValueChange = { previewBlurRadius = it },
                         onValueChangeFinished = {
                             GlobalUtils.updateAppearance { appearance ->
@@ -117,6 +113,30 @@ fun AdvancedMaterialSettingsScreen(
                     )
                 }
 
+                SettingsSection {
+                    SettingsDropdownItem(
+                        title = stringResource(R.string.settings_material_pipeline),
+                        options = listOf(
+                            RadioOption(false, R.string.settings_material_pipeline_deadliner),
+                            RadioOption(true, R.string.settings_material_pipeline_miuix),
+                        ),
+                        selectedKey = appearance.useOfficialMiuixGlass,
+                        onOptionSelected = { official ->
+                            GlobalUtils.updateAppearance { it.copy(useOfficialMiuixGlass = official) }
+                        },
+                    )
+                }
+            }
+
+            AdvancedMaterialPreviewCard(
+                blurRadius = previewBlurRadius,
+                fineTuning = previewFineTuning,
+                enabled = appearance.useAdvancedMaterial,
+                useOfficialMiuixGlass = appearance.useOfficialMiuixGlass,
+                modifier = Modifier.padding(vertical = 8.dp),
+            )
+
+            if (appearance.useAdvancedMaterial && !appearance.useOfficialMiuixGlass) {
                 if (AdvancedMaterialFineTuningAccess.isUnlocked) {
                     SettingsSection(
                         topLabel = stringResource(
@@ -168,49 +188,45 @@ fun AdvancedMaterialSettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun AdvancedMaterialRadiusSlider(
     value: Float,
-    saturationMultiplier: Float,
+    enabled: Boolean,
     onValueChange: (Float) -> Unit,
     onValueChangeFinished: () -> Unit,
 ) {
-    val saturation = AdvancedMaterialTuning.saturationForBlurRadius(value) * saturationMultiplier
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth()
+            .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.settings_advanced_material_blur_radius),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = stringResource(
-                    R.string.settings_advanced_material_radius_saturation_value,
-                    value.roundToInt(),
-                    saturation,
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-
-        Spacer(Modifier.height(4.dp))
+        Text(stringResource(R.string.settings_advanced_material_blur_size),
+            style = MaterialTheme.typography.bodyMedium)
         Slider(
             value = value,
+            enabled = enabled,
             onValueChange = onValueChange,
             onValueChangeFinished = onValueChangeFinished,
             valueRange = AdvancedMaterialTuning.MinBlurRadius..AdvancedMaterialTuning.MaxBlurRadius,
-            steps = 0,
-            colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.primary,
-                activeTrackColor = MaterialTheme.colorScheme.primary,
-                inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.24f),
-            ),
+            showKeyPoints = true,
+            keyPoints = listOf(AdvancedMaterialTuning.DefaultBlurRadius),
             modifier = Modifier.fillMaxWidth(),
         )
+        if (enabled) BlurDefaultKeyPointMarker()
+        if (!enabled) Text(stringResource(R.string.settings_material_miuix_preset_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp))
+    }
+}
+
+/** The native track's point is covered by the thumb at default; keep its position visible below. */
+@Composable
+private fun BlurDefaultKeyPointMarker() {
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+    Canvas(Modifier.fillMaxWidth().height(7.dp)) {
+        val fraction = (AdvancedMaterialTuning.DefaultBlurRadius - AdvancedMaterialTuning.MinBlurRadius) /
+            (AdvancedMaterialTuning.MaxBlurRadius - AdvancedMaterialTuning.MinBlurRadius)
+        val inset = SliderDefaults.MinHeight.toPx() / 2f
+        val x = inset + (if (rtl) 1f - fraction else fraction) * (size.width - inset * 2f).coerceAtLeast(0f)
+        drawLine(color, Offset(x, 2.dp.toPx()), Offset(x, 5.dp.toPx()),
+            strokeWidth = 1.5.dp.toPx(), cap = StrokeCap.Round)
     }
 }

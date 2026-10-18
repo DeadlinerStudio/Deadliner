@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.main.simplified
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Build
@@ -84,7 +85,7 @@ fun MorePanelCard(
                 RotatingGreeting(nickname)
                 Text(stringResource(R.string.panel_greeting_deadliner), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            IconButton(onClick = onDismiss) {
+            IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onDismiss) {
                 Icon(iconResource(R.drawable.msr_close_wght400), contentDescription = stringResource(R.string.close), modifier = expressiveTypeModifier)
             }
         }

@@ -1,30 +1,29 @@
 package com.aritxonly.deadliner.ui.quickadd
 
-import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import android.app.Activity
-import androidx.compose.ui.unit.dp
-import androidx.activity.compose.BackHandler
+import com.aritxonly.deadliner.ui.base.LocalAdvancedMaterialDialogBlurHostState
+import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.deadliner.domain.quickadd.QuickAddProposal
 
-/** Compatibility entry for tile/shortcut routes that already opened AddDDLActivity. */
+/** External entries share the homepage lens and sample its registered page-only backdrop. */
 @Composable
 fun QuickAddSheet(initialKind: String, onDismiss: () -> Unit,
                   onExpand: (QuickAddProposal, String) -> Unit,
-                  onSaved: () -> Unit) {
+                  onSaved: () -> Unit,
+                  onExpandIntent: ((android.content.Intent) -> Unit)? = null) {
     val state = rememberQuickAddState()
     val context = LocalContext.current
+    val host = LocalAdvancedMaterialDialogBlurHostState.current
     LaunchedEffect(Unit) { state.open(initialKind) }
-    BackHandler(enabled = !state.busy, onBack = onDismiss)
-    Box(Modifier.fillMaxSize().navigationBarsPadding().imePadding().padding(16.dp),
-        contentAlignment = Alignment.BottomEnd) {
-        QuickAddContainer(state, onSaved, Modifier.widthIn(max = 420.dp).fillMaxWidth(),
-            onClose = onDismiss, onExpand = {
-                (context as? Activity)?.intent?.putExtras(QuickAddEditorEntry.intent(context, state))
+    CompositionLocalProvider(LocalAdvancedMaterialBackdrop provides
+        (LocalAdvancedMaterialBackdrop.current ?: host?.modalBackdrop)) {
+        QuickAddOverlay(state, onSaved, onDismissFinished = onDismiss, onExpand = { expanded ->
+            if (onExpandIntent != null) onExpandIntent(expanded) else {
+                (context as? Activity)?.intent?.putExtras(expanded)
                 onExpand(state.effectiveProposal, state.text)
-            })
+            }
+        })
     }
 }

@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.graphics.BitmapFactory
 import android.content.Context
 import android.content.pm.PackageManager
@@ -48,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.SettingsRoute
 import com.aritxonly.deadliner.localutils.GlobalUtils
@@ -61,7 +61,7 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainSettingsScreen(
-    nav: NavController,
+    nav: SettingsNavigator,
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
@@ -82,7 +82,7 @@ fun MainSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = onClose,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
@@ -110,6 +110,7 @@ fun MainSettingsScreen(
             item {
                 SettingsSection {
                     SettingItem(
+                        horizontalPadding = 16.dp,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { nav.navigate(SettingsRoute.Profile.route) },
@@ -147,6 +148,7 @@ fun MainSettingsScreen(
                             val supportText = (if (route.route == "about") "v${context.getAppVersion()} " else "") +
                                     stringResource(route.supportRes!!)
                             SettingItem(
+                                horizontalPadding = 16.dp,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { nav.navigate(route.route) },
@@ -453,6 +455,7 @@ private fun SettingsFeaturePromoCard(
         shape = RoundedCornerShape(28.dp),
         modifier = modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
             .clickable(onClick = onClick)
     ) {
         Column(

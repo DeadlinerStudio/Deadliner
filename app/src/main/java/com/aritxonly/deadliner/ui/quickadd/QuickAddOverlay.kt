@@ -1,6 +1,8 @@
 package com.aritxonly.deadliner.ui.quickadd
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.ui.draw.clip
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -42,6 +44,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.layout.positionOnScreen
+import androidx.compose.ui.layout.boundsInWindow
 import com.aritxonly.deadliner.ui.material.glass.DeadlinerGlassRecipes
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
 import com.aritxonly.deadliner.ui.materialSymbolPainter
@@ -50,11 +54,18 @@ import kotlinx.coroutines.delay
 
 /** A transient lens sharing the page backdrop. It never records itself into that backdrop. */
 @Composable
-fun QuickAddOverlay(state: QuickAddState, onSaved: () -> Unit, onExpand: (Intent) -> Unit) {
+fun QuickAddOverlay(state: QuickAddState, onSaved: () -> Unit, onExpand: (Intent) -> Unit,
+                    onDismissFinished: (() -> Unit)? = null) {
     val morph = quickAddMorphTransition(state.visible)
+    var hasShown by remember { mutableStateOf(false) }
+    val finished by rememberUpdatedState(onDismissFinished)
+    LaunchedEffect(state.visible, morph.active) {
+        if (state.visible) hasShown = true
+        else if (hasShown && !morph.active && !state.expandingToEditor) finished?.invoke()
+    }
     val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(state.visible) { if (!state.visible && morph.active) keyboard?.hide() }
-    if (!morph.active) return
+    if (!morph.active || state.expandingToEditor) return
     val context = LocalContext.current
     var origin by remember { mutableStateOf(Offset.Zero) }
     BoxWithConstraints(Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInWindow() }) {
@@ -63,7 +74,7 @@ fun QuickAddOverlay(state: QuickAddState, onSaved: () -> Unit, onExpand: (Intent
         val placement = with(density) {
             quickAddPlacement(Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat()),
                 origin, state.anchor, WindowInsets.ime.getBottom(this).toFloat(),
-                12.dp.toPx(), 58.dp.toPx(), 64.dp.toPx())
+                QuickAddPanelGap.toPx(), 58.dp.toPx(), QuickAddMinimumControlsHeight.toPx())
         }
         // Only the page area intercepts dismissal; the real dock and + action remain interactive.
         Box(Modifier.fillMaxWidth().height(with(density) { placement.dismissAreaHeight.toDp() })
@@ -75,7 +86,9 @@ fun QuickAddOverlay(state: QuickAddState, onSaved: () -> Unit, onExpand: (Intent
             Rect(right - diameter, bottom - diameter, right, bottom)
         }
         QuickAddMorphHost(state, morph.progress, source, placement, onSaved) {
-            onExpand(QuickAddEditorEntry.intent(context, state)); state.dismiss()
+            val request = QuickAddEditorEntry.intent(context, state)
+            state.expandToEditor()
+            onExpand(request)
         }
 
     }
@@ -87,7 +100,9 @@ internal fun QuickAddContainer(state: QuickAddState, onSaved: () -> Unit, modifi
     val colors = MaterialTheme.colorScheme
     val recipe = DeadlinerGlassRecipes.quickAdd(LocalAdvancedMaterialSpec.current.fineTuning)
     val shape = RoundedCornerShape(DeadlinerGlassRecipes.QuickAddCornerRadius)
-    SoftGlassSurface(modifier.softGlassShadow(shape, colors.onSurface.luminance() > 0.5f)
+    SoftGlassSurface(modifier.onGloballyPositioned {
+        state.panelBounds = it.boundsInWindow().translate(it.positionOnScreen() - it.positionInWindow())
+    }.softGlassShadow(shape, colors.onSurface.luminance() > 0.5f)
         .pointerInput(Unit) { detectTapGestures { } }.semantics { paneTitle = "快速添加" }, shape = shape, recipe = recipe) {
         QuickAddContent(state, onSaved, onClose, onExpand, showClose)
     }
@@ -95,52 +110,57 @@ internal fun QuickAddContainer(state: QuickAddState, onSaved: () -> Unit, modifi
 
 @Composable
 internal fun QuickAddContent(state: QuickAddState, onSaved: () -> Unit, onClose: () -> Unit = state::dismiss,
-                             onExpand: (() -> Unit)? = null, showClose: Boolean = true, autofocus: Boolean = state.visible) {
+                             onExpand: (() -> Unit)? = null, showClose: Boolean = true,
+                             modifier: Modifier = Modifier, autofocus: Boolean = state.visible) {
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val colors = MaterialTheme.colorScheme
     LaunchedEffect(autofocus) {
         if (autofocus) { delay(80); if (state.visible) { focus.requestFocus(); keyboard?.show() } }
     }
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).animateContentSize()
+    val scroll = rememberScrollState()
+    val confirm = { state.submit(onSaved) }
+    Column(modifier.fillMaxWidth().verticalScroll(scroll).animateContentSize()
         .padding(top = 12.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
             Text("快速添加", style = MaterialTheme.typography.titleSmall, color = colors.onSurfaceVariant)
-            if (showClose) Icon(materialSymbolPainter("close"), "关闭快速添加", Modifier.size(44.dp)
-                .clickable(enabled = !state.busy || state.recognizingAI, onClick = onClose).padding(10.dp), tint = colors.onSurfaceVariant)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (showClose) Icon(materialSymbolPainter("close"), "关闭快速添加", Modifier.size(44.dp).miuixPressFeedback(enabled = state.canClose, overlay = false).clip(androidx.compose.foundation.shape.CircleShape)
+                    .clickable(enabled = state.canClose, onClick = onClose).padding(10.dp), tint = colors.onSurfaceVariant)
+                if (onExpand != null) Icon(com.aritxonly.deadliner.ui.quickAddExpandPainter(), "展开完整编辑器", Modifier.size(44.dp).miuixPressFeedback(enabled = state.canClose, overlay = false).clip(androidx.compose.foundation.shape.CircleShape)
+                    .clickable(enabled = state.canClose, onClick = onExpand).padding(14.8.dp), tint = colors.onSurfaceVariant)
+            }
         }
         BasicTextField(state.text, state::edit, Modifier.fillMaxWidth().padding(horizontal = 16.dp).heightIn(min = 72.dp).focusRequester(focus),
             enabled = !state.busy || state.recognizingAI, textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurface),
             cursorBrush = SolidColor(colors.primary), maxLines = 5,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { state.submit(onSaved) }),
+            keyboardActions = KeyboardActions(onDone = { confirm() }),
             decorationBox = { inner -> Box {
                 if (state.text.isEmpty()) Text("明天下午3点交报告 / 每天读书", color = colors.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyLarge)
                 inner()
             } })
         QuickAddModelDownloadStatus(state)
-        AnimatedVisibility(state.proposal.title.isNotBlank()) {
+        val draft = state.effectiveProposal
+        AnimatedVisibility(draft.title.isNotBlank()) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).background(colors.surface.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
                 .padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                val recognitionSource = when (state.proposal.source) {
+                val recognitionSource = when (draft.source) {
+                    "MANUAL" -> "手动"
                     "MODEL" -> "端侧模型"
                     "AI" -> "AI"
                     "CALENDAR" -> "日历"
                     else -> "规则"
                 }
                 Text(recognitionSource + " · " + if (state.needsAI) "待确认草案" else
-                    (if (state.proposal.kind == "HABIT") "习惯草案" else "任务草案"),
+                    (if (draft.kind == "HABIT") "习惯草案" else "任务草案"),
                     style = MaterialTheme.typography.labelMedium, color = colors.primary)
-                Text(state.proposal.title, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(draft.title, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
             }
         }
         Box(Modifier.padding(horizontal = 16.dp)) { QuickAddProperties(state, onSaved) }
-        if (onExpand != null && !state.proposal.ready && !state.needsAI && state.text.isNotBlank()) {
-            Text("展开完整表单", Modifier.padding(horizontal = 16.dp).heightIn(min = 48.dp)
-                .clickable(enabled = !state.busy, onClick = onExpand).padding(vertical = 12.dp), color = colors.primary)
-        }
         val status = when {
             state.busy -> if (state.recognizingAI) "正在生成草案…" else "正在添加…"
             else -> state.message
@@ -155,6 +175,7 @@ internal fun QuickAddContent(state: QuickAddState, onSaved: () -> Unit, onClose:
 @Composable
 internal fun QuickAddPropertyButton(symbol: String, label: String, modifier: Modifier, enabled: Boolean, onClick: () -> Unit) {
     Row(modifier.heightIn(min = 48.dp)
+        .clip(RoundedCornerShape(16.dp))
         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f), RoundedCornerShape(16.dp))
         .clickable(enabled = enabled, onClick = onClick).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

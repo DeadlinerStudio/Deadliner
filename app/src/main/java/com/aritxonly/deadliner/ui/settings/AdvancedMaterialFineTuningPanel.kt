@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,7 +38,7 @@ fun AdvancedMaterialFineTuningPanel(
             text = stringResource(R.string.settings_advanced_material_advanced_summary),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 10.dp),
         )
 
         FineTuningSectionHeader(R.string.settings_advanced_material_base_parameters)
@@ -231,12 +232,12 @@ fun AdvancedMaterialFineTuningPanel(
         Row(
             modifier = Modifier
                 .align(Alignment.End)
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 4.dp),
         ) {
-            TextButton(onClick = onExport) {
+            TextButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.textShape), onClick = onExport) {
                 Text(stringResource(R.string.settings_advanced_material_export_preset))
             }
-            TextButton(onClick = onReset) {
+            TextButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.textShape), onClick = onReset) {
                 Text(stringResource(R.string.settings_advanced_material_reset_parameters))
             }
         }
@@ -267,7 +268,7 @@ private fun FineTuningSlider(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 5.dp),
+            .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 5.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -322,7 +323,7 @@ private fun FineTuningSwitch(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 9.dp),
+            .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(

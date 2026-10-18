@@ -38,3 +38,11 @@ google-services.json
 
 # Deadliner core synced binaries and bindings
 .deadliner-core/
+
+# Local source snapshots for UI feedback rollback
+.local-history/
+
+# Local Kotlin compiler sessions and Python bytecode
+.kotlin/
+__pycache__/
+*.py[cod]

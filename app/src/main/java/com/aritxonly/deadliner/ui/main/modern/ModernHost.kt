@@ -6,8 +6,6 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SizeTransform
@@ -73,11 +71,8 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
-import com.aritxonly.deadliner.ui.agent.AIAgentPage
-import com.aritxonly.deadliner.ui.agent.AIAgentPageDefaults
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Home
+import com.aritxonly.deadliner.ui.lifi.LifiAIPage
+import androidx.compose.foundation.layout.consumeWindowInsets
 import com.aritxonly.deadliner.ui.base.AdaptiveNavItem
 import com.aritxonly.deadliner.ui.base.AdaptiveNavigationSuiteScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
@@ -141,6 +136,7 @@ fun ModernHost(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val editorEntry = com.aritxonly.deadliner.ui.editor.LocalDeadlineEditorEntry.current
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
     val configuration = LocalConfiguration.current
     val isWideLayout = configuration.screenWidthDp >= WideLayoutMinWidthDp
@@ -229,13 +225,6 @@ fun ModernHost(
         )
     }
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
-        if (res.resultCode == Activity.RESULT_OK) {
-            taskVm.loadNow()
-            sharedHabitVm.loadNow()
-        }
-    }
-
     MainHostLifecycleCoordinator(
         activity = activity,
         selectedPage = hostState.selectedPage,
@@ -259,7 +248,7 @@ fun ModernHost(
             val intent = Intent(context, AddDDLActivity::class.java).apply {
                 putExtra("EXTRA_GENERATE_DDL", item)
             }
-            activity.startActivity(intent)
+            editorEntry.open(intent)
         },
     )
 
@@ -290,9 +279,9 @@ fun ModernHost(
         AdaptiveNavItem(
             "list",
             context.getString(R.string.main_section_list),
-            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_fill_wght400),
-            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_home_wght400),
-            immersiveIcon = rememberVectorPainter(MiuixIcons.Home),
+            com.aritxonly.deadliner.ui.mainListHomePainter(),
+            com.aritxonly.deadliner.ui.mainListHomePainter(),
+            immersiveIcon = com.aritxonly.deadliner.ui.mainListHomePainter(),
         ),
         AdaptiveNavItem(
             "overview",
@@ -352,10 +341,8 @@ fun ModernHost(
         chromeEnabled = canCollapseListTopBar,
         searchEnabled = showImmersiveListSearchEntry && !searchActive,
     )
-    LaunchedEffect(showImmersiveListSearchEntry) {
-        if (!showImmersiveListSearchEntry) {
-            listSearchCollapseState.snapToExpanded()
-        }
+    LaunchedEffect(showImmersiveListSearchEntry, hostState.selectedPage, hostState.selectedSection) {
+        listSearchCollapseState.snapToCollapsed()
     }
     val quickAdd = com.aritxonly.deadliner.ui.quickadd.rememberQuickAddState()
     val quickAddRoute = listOf(hostState.selectedSection, hostState.selectedPage, searchActive, hostState.selectionMode)
@@ -375,7 +362,7 @@ fun ModernHost(
             val intent = Intent(context, AddDDLActivity::class.java).apply {
                 putExtra("EXTRA_CURRENT_TYPE", if (hostState.selectedPage == DeadlineType.TASK) 0 else 1)
             }
-            launcher.launch(intent)
+            editorEntry.open(intent)
         }
     }
     val immersiveDetachedAction = if (isImmersiveCompactNavigation) {
@@ -391,6 +378,7 @@ fun ModernHost(
             modifier = quickAddAnchor,
             symbolName = "add_2",
             enabled = !quickAdd.visible || quickAdd.canClose,
+            visible = hostState.selectedSection != MainSection.LIFI,
         )
     } else {
         null
@@ -468,7 +456,7 @@ fun ModernHost(
         immersiveDetachedItemKey = "search",
         immersiveDetachedAction = immersiveDetachedAction,
         overlayContent = { com.aritxonly.deadliner.ui.quickadd.QuickAddOverlay(quickAdd, onSaved = ::celebrate,
-            onExpand = { launcher.launch(it) }) },
+            onExpand = { editorEntry.open(it) }) },
         onItemSelected = {
             when (it.key) {
                 "search" -> {
@@ -876,11 +864,9 @@ fun ModernHost(
                     }
                 }
                 MainSection.LIFI -> {
-                    AIAgentPage(
-                        onAddDDL = { launcher.launch(it) },
-                        inputBottomPadding = AIAgentPageDefaults.inputBottomPadding(
-                            navigationOverlaysContent = navigationOverlaysContent,
-                        ),
+                    LifiAIPage(
+                        navigationOverlaysContent = navigationOverlaysContent,
+                        modifier = Modifier.consumeWindowInsets(innerPadding),
                     )
                 }
             }

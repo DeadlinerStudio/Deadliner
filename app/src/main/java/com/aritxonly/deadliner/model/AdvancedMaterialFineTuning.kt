@@ -1,7 +1,7 @@
 package com.aritxonly.deadliner.model
 
 data class AdvancedMaterialFineTuning(
-    val saturationMultiplier: Float = 1.05f,
+    val saturationMultiplier: Float = 1.096648f,
     val noiseCoefficient: Float = 0.095f,
     val brightness: Float = 0f,
     val contrast: Float = 1f,
@@ -11,19 +11,19 @@ data class AdvancedMaterialFineTuning(
     val dialogBlurRadiusDp: Float = MiuixModalMaterialTuning.DialogDefaultBlurRadiusDp,
     val bottomSheetBackgroundAlpha: Float = MiuixModalMaterialTuning.BottomSheetDefaultBackgroundAlpha,
     val bottomSheetBlurRadiusDp: Float = MiuixModalMaterialTuning.BottomSheetDefaultBlurRadiusDp,
-    val glassBlurRadiusMultiplier: Float = 0.25f,
+    val glassBlurRadiusMultiplier: Float = 0.4f,
     val glassNoiseMultiplier: Float = 1f,
     val glassTintAlphaMultiplier: Float = 0.90f,
-    val glassTintLightGray: Float = 0.99f,
+    val glassTintLightGray: Float = 0.97709495f,
     val glassTintDarkGray: Float = 0.12f,
     val refractionEnabled: Boolean = true,
     val refractionHeightDp: Float = 18f,
     val refractionAmountDp: Float = 18f,
     val refractionDepthEffect: Float = 0.60f,
     val chromaticAberrationDp: Float = 1f,
-    val edgeHighlightAlpha: Float = 0.95f,
+    val edgeHighlightAlpha: Float = 0.94692737f,
     val edgeHighlightGray: Float = 1f,
-    val darkHighlightMultiplier: Float = 0.20f,
+    val darkHighlightMultiplier: Float = 0.21994415f,
     val fallbackEdgeWidthDp: Float = 0.5f,
     val fallbackLightAlpha: Float = 0.46f,
     val fallbackDarkAlpha: Float = 0.08f,
@@ -31,7 +31,7 @@ data class AdvancedMaterialFineTuning(
     val postRefractionBlurRadiusDp: Float = 0.5f,
 ) {
     fun normalized(): AdvancedMaterialFineTuning = copy(
-        saturationMultiplier = saturationMultiplier.safeCoerceIn(0.75f, 1.25f, 1.05f),
+        saturationMultiplier = saturationMultiplier.safeCoerceIn(0.75f, 1.25f, 1.096648f),
         noiseCoefficient = noiseCoefficient.safeCoerceIn(0f, 0.20f, 0.095f),
         brightness = brightness.safeCoerceIn(-0.20f, 0.20f, 0f),
         contrast = contrast.safeCoerceIn(0.75f, 1.25f, 1f),
@@ -57,18 +57,18 @@ data class AdvancedMaterialFineTuning(
             MiuixModalMaterialTuning.MaxBlurRadiusDp,
             MiuixModalMaterialTuning.BottomSheetDefaultBlurRadiusDp,
         ),
-        glassBlurRadiusMultiplier = glassBlurRadiusMultiplier.safeCoerceIn(0.10f, 1f, 0.25f),
+        glassBlurRadiusMultiplier = glassBlurRadiusMultiplier.safeCoerceIn(0.10f, 1f, 0.4f),
         glassNoiseMultiplier = glassNoiseMultiplier.safeCoerceIn(0f, 2f, 1f),
         glassTintAlphaMultiplier = glassTintAlphaMultiplier.safeCoerceIn(0.50f, 1.50f, 0.90f),
-        glassTintLightGray = glassTintLightGray.safeCoerceIn(0f, 1f, 0.99f),
+        glassTintLightGray = glassTintLightGray.safeCoerceIn(0f, 1f, 0.97709495f),
         glassTintDarkGray = glassTintDarkGray.safeCoerceIn(0f, 1f, 0.12f),
         refractionHeightDp = refractionHeightDp.safeCoerceIn(0f, 32f, 18f),
         refractionAmountDp = refractionAmountDp.safeCoerceIn(0f, 32f, 18f),
         refractionDepthEffect = refractionDepthEffect.safeCoerceIn(0f, 0.60f, 0.60f),
         chromaticAberrationDp = chromaticAberrationDp.safeCoerceIn(0f, 4f, 1f),
-        edgeHighlightAlpha = edgeHighlightAlpha.safeCoerceIn(0f, 1f, 0.95f),
+        edgeHighlightAlpha = edgeHighlightAlpha.safeCoerceIn(0f, 1f, 0.94692737f),
         edgeHighlightGray = edgeHighlightGray.safeCoerceIn(0f, 1f, 1f),
-        darkHighlightMultiplier = darkHighlightMultiplier.safeCoerceIn(0.10f, 2f, 0.20f),
+        darkHighlightMultiplier = darkHighlightMultiplier.safeCoerceIn(0.10f, 2f, 0.21994415f),
         fallbackEdgeWidthDp = fallbackEdgeWidthDp.safeCoerceIn(0f, 2f, 0.5f),
         fallbackLightAlpha = fallbackLightAlpha.safeCoerceIn(0f, 1f, 0.46f),
         fallbackDarkAlpha = fallbackDarkAlpha.safeCoerceIn(0f, 1f, 0.08f),
@@ -78,7 +78,18 @@ data class AdvancedMaterialFineTuning(
     companion object {
         val Default = AdvancedMaterialFineTuning()
 
-        internal val DefaultsV3 = AdvancedMaterialFineTuning(
+        // Freeze historical baselines: migration must not inherit future constructor defaults.
+        internal val DefaultsV5 = AdvancedMaterialFineTuning(
+            saturationMultiplier = 1.05f,
+            glassTintLightGray = 0.99f,
+            edgeHighlightAlpha = 0.95f,
+            darkHighlightMultiplier = 0.20f,
+        )
+
+        internal val DefaultsV4 = DefaultsV5.copy(glassBlurRadiusMultiplier = 0.25f)
+
+        internal val DefaultsV3 = DefaultsV4.copy(
+            glassBlurRadiusMultiplier = 0.25f,
             dialogBackgroundAlpha = 0.62f,
             dialogBlurRadiusDp = 48f,
             bottomSheetBackgroundAlpha = 0.66f,

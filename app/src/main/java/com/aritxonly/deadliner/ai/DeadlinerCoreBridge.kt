@@ -10,9 +10,14 @@ import com.deadliner.domain.habit.HabitGoalWindow
 import com.deadliner.domain.habit.HabitScheduleKind
 import com.deadliner.interfaces.DeadlinerCore
 import com.google.gson.Gson
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import java.util.UUID
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -27,6 +32,7 @@ internal data class CoreRunOutput(
 
 internal sealed class ToolDecision {
     data object Approve : ToolDecision()
+    data class ApproveWithArguments(val argumentsJson: String) : ToolDecision()
     data class Reject(val reason: String? = null) : ToolDecision()
 }
 
@@ -47,6 +53,7 @@ internal class DeadlinerCoreBridge(
         onTextStream: (suspend (String) -> Unit)? = null,
         onThinking: (suspend (agent: String, phase: String, message: String?) -> Unit)? = null,
         onLifecycle: (suspend (AgentLifecycleEvent) -> Unit)? = null,
+        onToolExecuted: (suspend (AIToolRequest, String) -> Unit)? = null,
     ): CoreRunOutput = gate.withLock {
         val runtime = KmpV6Runtime.createLifiCore(
             AIConfig(
@@ -64,6 +71,7 @@ internal class DeadlinerCoreBridge(
             onTextStream = onTextStream,
             onThinking = onThinking,
             onLifecycle = onLifecycle,
+            onToolExecuted = onToolExecuted,
         )
     }
 
@@ -74,23 +82,38 @@ internal class DeadlinerCoreBridge(
         onTextStream: (suspend (String) -> Unit)?,
         onThinking: (suspend (agent: String, phase: String, message: String?) -> Unit)?,
         onLifecycle: (suspend (AgentLifecycleEvent) -> Unit)?,
+        onToolExecuted: (suspend (AIToolRequest, String) -> Unit)?,
     ): CoreRunOutput = coroutineScope {
-        val events = Channel<CoreEvent>(Channel.UNLIMITED)
+        val consumerId = "android-" + UUID.randomUUID().toString()
+        var cursor = runtime.snapshotV2().lastSeq
+        val runId = runtime.startRunV2(text)
         val requests = mutableListOf<AIToolRequest>()
         val displayedToolCalls = mutableListOf<AIToolCall>()
         var finish: com.deadliner.domain.ai.model.MixedResult? = null
         var failure: String? = null
 
-        val collector = launch(start = CoroutineStart.UNDISPATCHED) {
-            runtime.events.collect(events::send)
-        }
-        val processor = launch { runtime.processInput(text) }
-
         try {
             while (finish == null && failure == null) {
-                when (val event = events.receive()) {
+                check(KmpV6Runtime.isCurrentLifiCore(runtime)) { "模型配置已切换，请重新发起请求。" }
+                val batch = runtime.readEventsV2(consumerId, cursor)
+                check(batch.protocolVersion == 2) { "UNSUPPORTED_PROTOCOL" }
+                LifiV2Session.update(runtime.snapshotV2())
+                val records = if (batch.resyncRequired) {
+                    val snapshot = runtime.snapshotV2()
+                    listOfNotNull(snapshot.terminal, snapshot.pending?.let { pending ->
+                        com.deadliner.domain.ai.agent.AgentV2Event(sessionId = snapshot.sessionId, runId = snapshot.runId,
+                            seq = snapshot.lastSeq, eventId = "snapshot", type = "ApprovalRequested", timestamp = "",
+                            payload = kotlinx.serialization.json.JsonObject(emptyMap()), compatibilityEvent = pending)
+                    })
+                } else batch.events
+                for (record in records) {
+                    if (record.runId != runId) continue
+                    if (!batch.resyncRequired && record.seq != cursor + 1) error("EVENT_GAP")
+                    cursor = record.seq
+                    val event = record.compatibilityEvent ?: continue
+                    when (event) {
                     is CoreEvent.OnLifecycle -> onLifecycle?.invoke(event.toAndroidLifecycle())
-                    is CoreEvent.OnThinking -> onThinking?.invoke(event.agentName, event.phase, event.message)
+                    is CoreEvent.OnThinking -> onThinking?.invoke(event.agentName, event.phase, event.message ?: if (event.phase == "retrying") "网络暂时不可用，正在重试…" else null)
                     is CoreEvent.OnTextStream -> onTextStream?.invoke(event.chunk)
                     is CoreEvent.OnMemoryCommitted -> onLifecycle?.invoke(
                         AgentLifecycleEvent(
@@ -103,9 +126,14 @@ internal class DeadlinerCoreBridge(
                         val request = event.toAndroidRequest()
                         requests += request
                         displayedToolCalls += event.tool.toAndroidToolCall()
-                        val decision = onToolRequest?.invoke(request) ?: ToolDecision.Approve
+                        val decision = withTimeout(300_000) {
+                            onToolRequest?.invoke(request) ?: if (request.tool.startsWith("read_"))
+                                ToolDecision.Approve else ToolDecision.Reject("confirmation_unavailable")
+                        }
+                        check(KmpV6Runtime.isCurrentLifiCore(runtime)) { "模型配置已切换，原确认已失效。" }
                         val payload = when (decision) {
                             ToolDecision.Approve -> executeApproved(request)
+                            is ToolDecision.ApproveWithArguments -> executeApproved(request.copy(rawArgsJson = decision.argumentsJson))
                             is ToolDecision.Reject -> gson.toJson(
                                 mapOf(
                                     "denied" to true,
@@ -113,19 +141,27 @@ internal class DeadlinerCoreBridge(
                                 ),
                             )
                         }
-                        runtime.submitToolResult(event.id, ToolResult(request.tool, payload))
+                        onToolExecuted?.invoke(request, payload)
+                        check(runtime.submitToolResultV2(event.id, ToolResult(request.tool, payload))) { "STALE_ACTION" }
                     }
-                    is CoreEvent.OnFinish -> finish = event.result
-                    is CoreEvent.OnError -> failure = event.message
+                    is CoreEvent.OnFinish -> if (record.type == "RunTerminated") finish = event.result
+                    is CoreEvent.OnError -> if (record.type == "RunTerminated") failure = event.message
+                    }
                 }
+                check(runtime.ackEventsV2(consumerId, batch.batchId, batch.lastSeq)) { "ACK_REJECTED" }
+                cursor = maxOf(cursor, batch.lastSeq)
+                if (finish == null && failure == null) delay(50)
             }
         } finally {
-            processor.cancelAndJoin()
-            collector.cancelAndJoin()
-            events.close()
+            withContext(NonCancellable) {
+                val snapshot = runtime.snapshotV2()
+                if (snapshot.runId == runId && snapshot.terminal == null) runtime.cancelRun()
+                runtime.detachV2(consumerId)
+                LifiV2Session.update(runtime.snapshotV2())
+            }
         }
 
-        failure?.let { error(it) }
+        failure?.let { error(com.deadliner.domain.ai.agent.AgentErrorMessages.describe(it)) }
         val result = checkNotNull(finish) { "KMP Lifi returned without a result" }
         CoreRunOutput(
             mixed = result.toAndroidMixed(displayedToolCalls),
@@ -142,6 +178,7 @@ internal class DeadlinerCoreBridge(
             ),
         ).resultJson
     }.getOrElse { error ->
+        if (error is CancellationException) throw error
         gson.toJson(
             mapOf(
                 "ok" to false,
@@ -175,7 +212,7 @@ internal class DeadlinerCoreBridge(
     )
 
     private fun CoreEvent.OnToolRequest.toAndroidRequest(): AIToolRequest {
-        val rawArgs = serializeToolArguments(tool, gson)
+        val rawArgs = serializeToolArguments(tool)
         val readArgs = (tool as? ToolCall.ReadTasks)?.let {
             ReadTasksArgs(it.timeRangeDays, it.status, it.keywords, it.limit, it.sort)
         } ?: ReadTasksArgs()
@@ -254,28 +291,8 @@ internal class DeadlinerCoreBridge(
     }
 }
 
-internal fun serializeToolArguments(tool: ToolCall, gson: Gson = Gson()): String = gson.toJson(
-    when (tool) {
-        is ToolCall.ReadTasks -> mapOf(
-            "timeRangeDays" to tool.timeRangeDays,
-            "status" to tool.status,
-            "keywords" to tool.keywords,
-            "limit" to tool.limit,
-            "sort" to tool.sort,
-        )
-        is ToolCall.CreateTask -> mapOf("name" to tool.name, "dueTime" to tool.dueTime, "note" to tool.note)
-        is ToolCall.UpdateDeadline -> mapOf("taskId" to tool.taskId, "newDueTime" to tool.newDueTime)
-        is ToolCall.ReadHabits -> mapOf("keywords" to tool.keywords)
-        is ToolCall.CreateHabit -> mapOf(
-            "name" to tool.name,
-            "schedule" to tool.schedule,
-            "goal" to tool.goal,
-            "tracking" to tool.tracking,
-            "reminder" to tool.reminder,
-            "compatibilityWarning" to tool.compatibilityWarning,
-        )
-    },
-)
+internal fun serializeToolArguments(tool: ToolCall): String =
+    com.deadliner.domain.ai.agent.ToolArgumentCodec.encode(tool)
 
 private fun com.deadliner.domain.habit.HabitSchedule.legacyPeriod(window: HabitGoalWindow): String = when {
     kind == HabitScheduleKind.ONCE -> "ONCE"

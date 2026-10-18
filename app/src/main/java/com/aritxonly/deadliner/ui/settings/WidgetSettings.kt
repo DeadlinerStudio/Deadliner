@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.app.Activity
 import android.app.StatusBarManager
 import android.content.ComponentName
@@ -66,7 +67,7 @@ fun WidgetSettingsScreen(
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_widget),
         navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
+            IconButton(onClick = navigateUp, modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)) {
                 Icon(
                     painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
@@ -88,11 +89,12 @@ fun WidgetSettingsScreen(
                         text = stringResource(R.string.widget_settings_no_instances),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                        modifier = Modifier.padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 16.dp),
                     )
                 } else {
                     widgetInstances.forEach { instance ->
                         SettingsDetailTextButtonItem(
+                            navigates = true,
                             headlineText = stringResource(
                                 if (instance.kind == TaskWidgetKind.SQUARE) {
                                     R.string.widget_settings_instance_square
@@ -118,7 +120,8 @@ fun WidgetSettingsScreen(
             }
 
             SettingsSection(topLabel = stringResource(R.string.settings_widget_padding)) {
-                SettingsRadioGroupItem(
+                SettingsDropdownItem(
+                    title = stringResource(R.string.settings_widget_padding),
                     options = listOf(
                         RadioOption(TaskWidgetPaddingPreset.Standard, R.string.settings_widget_padding_standard),
                         RadioOption(TaskWidgetPaddingPreset.Grid4x6, R.string.settings_widget_padding_4x6),

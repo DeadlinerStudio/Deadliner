@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import ApkDownloaderInstaller
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
@@ -79,7 +80,7 @@ fun UpdateScreen(
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_check_for_updates),
         navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
+            IconButton(onClick = navigateUp, modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)) {
                 Icon(
                     painter            = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
@@ -99,7 +100,7 @@ fun UpdateScreen(
                             Button(onClick = { ApkDownloaderInstaller(context).downloadAndInstall(s.downloadUrl) }) {
                                 Text(stringResource(R.string.update_and_install))
                             }
-                            FilledTonalButton(onClick = {
+                            FilledTonalButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.filledTonalShape), onClick = {
                                 context.startActivity(
                                     Intent(Intent.ACTION_VIEW, s.downloadUrl.toUri())
                                 )

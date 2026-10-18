@@ -15,6 +15,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.LocalMaterialSymbolStyle
 import com.aritxonly.deadliner.ui.iconResource
@@ -29,7 +30,7 @@ import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val FloatingCompactOverlayHostPadding = 92.dp
-private val FloatingNavigationBottomSpacing = 4.dp
+internal val FloatingNavigationBottomSpacing = 4.dp
 private val FloatingNavigationEdgeMaskExtraHeight = 32.dp
 private val FloatingFabNavigationGap = 20.dp
 private const val ImmersiveNavigationSymbolWeight = 340
@@ -210,18 +211,21 @@ internal fun AdaptiveNavItem.toFloatingTabItem(): MiuixFloatingTabItem {
 }
 
 @Composable
-private fun FloatingNavigationEdgeMask(
-    modifier: Modifier = Modifier,
-) {
+internal fun floatingNavigationEdgeMaskHeight(): Dp {
     val density = LocalDensity.current
     val navigationBarHeight = with(density) {
         WindowInsets.navigationBars.getBottom(this).toDp()
     }
-    val coverageHeight = MiuixFloatingTabBarDefaults.Height +
+    return MiuixFloatingTabBarDefaults.Height +
         FloatingNavigationBottomSpacing +
         FloatingNavigationEdgeMaskExtraHeight +
         navigationBarHeight + LocalFloatingNavigationBottomLift.current
 
+}
+
+@Composable
+internal fun FloatingNavigationEdgeMask(modifier: Modifier = Modifier) {
+    val coverageHeight = floatingNavigationEdgeMaskHeight()
     Box(
         modifier = modifier
             .fillMaxWidth()

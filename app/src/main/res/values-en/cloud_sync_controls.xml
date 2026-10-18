@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_enable_cloud_sync">Enable cloud sync</string>
+    <string name="settings_sync_only_byos">BYOS only</string>
+    <string name="settings_sync_only_webdav">WebDAV only</string>
+</resources>

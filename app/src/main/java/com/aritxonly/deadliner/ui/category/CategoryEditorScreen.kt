@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.category
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
@@ -72,7 +73,7 @@ internal fun CategoryEditorScreen(
         collapsible = false,
         topBarStyle = TopAppBarStyle.CENTER,
         navigationIcon = {
-            IconButton(onClick = onBack) {
+            IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onBack) {
                 Icon(
                     painter = symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),

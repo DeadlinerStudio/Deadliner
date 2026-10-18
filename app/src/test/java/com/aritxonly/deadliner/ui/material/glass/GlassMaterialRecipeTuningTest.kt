@@ -8,6 +8,30 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GlassMaterialRecipeTuningTest {
+    @Test fun thinHighlightDoesNotReduceTheRefractionOrDispersionField() {
+        val normal = DeadlinerGlassRecipes.floatingNavigation(AdvancedMaterialFineTuning.Default)
+        val strongerLens = DeadlinerGlassRecipes.floatingNavigation(AdvancedMaterialFineTuning.Default.copy(
+            refractionHeightDp = 28f, refractionAmountDp = 24f, chromaticAberrationDp = 2f))
+        assertEquals(0.6.dp, normal.edgeOptics.rimWidth)
+        assertEquals(normal.edgeOptics.rimWidth, strongerLens.edgeOptics.rimWidth)
+        assertEquals(28.dp, strongerLens.refraction.height)
+        assertEquals(24.dp, strongerLens.refraction.amount)
+        assertEquals(2.dp, strongerLens.refraction.chromaticAberration)
+    }
+
+    @Test
+    fun dropdownLensMatchesItsClipWithoutLosingModalTuning() {
+        val tuning = AdvancedMaterialFineTuning.Default.copy(refractionAmountDp = 9f,
+            glassBlurRadiusMultiplier = 0.32f, glassNoiseMultiplier = 0.5f)
+        val recipe = DeadlinerGlassRecipes.dropdown(tuning)
+        val dialog = DeadlinerGlassRecipes.dialog(tuning)
+        assertEquals(24.dp, recipe.geometry.cornerRadius)
+        assertEquals(com.aritxonly.deadliner.ui.base.GlassDropdownMotion.CornerRadius,
+            recipe.geometry.cornerRadius)
+        assertEquals(dialog.copy(geometry = recipe.geometry), recipe)
+        assertEquals(40.dp, dialog.geometry.cornerRadius)
+    }
+
     @Test
     fun quickAddLensUsesThePhysicalRectangleRadius() {
         val recipe = DeadlinerGlassRecipes.quickAdd(AdvancedMaterialFineTuning.Default)
@@ -33,13 +57,13 @@ class GlassMaterialRecipeTuningTest {
             AdvancedMaterialFineTuning.Default,
         )
 
-        assertEquals(0.25f, recipe.blur.radiusMultiplier, 0.0001f)
+        assertEquals(0.4f, recipe.blur.radiusMultiplier, 0.0001f)
         assertEquals(18.dp, recipe.refraction.height)
         assertEquals(18.dp, recipe.refraction.amount)
         assertEquals(0.60f, recipe.refraction.depthEffect, 0.0001f)
         assertEquals(1.dp, recipe.refraction.chromaticAberration)
-        assertEquals(0.95f, recipe.edgeOptics.highlightAlpha, 0.0001f)
-        assertEquals(0.20f, recipe.edgeOptics.darkHighlightMultiplier, 0.0001f)
+        assertEquals(0.94692737f, recipe.edgeOptics.highlightAlpha, 0.0001f)
+        assertEquals(0.21994415f, recipe.edgeOptics.darkHighlightMultiplier, 0.0001f)
         assertEquals(0.5.dp, recipe.layering.postRefractionBlurRadius)
     }
 

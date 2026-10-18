@@ -1,6 +1,9 @@
 package com.aritxonly.deadliner.ui.navigation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,6 +52,7 @@ data class MiuixFloatingNavigationAction(
     val modifier: Modifier = Modifier,
     val symbolName: String? = null,
     val enabled: Boolean = true,
+    val visible: Boolean = true,
     val neutralTint: Boolean = false,
     val iconRotation: Float = 0f,
 )
@@ -77,6 +83,18 @@ fun MiuixFloatingNavigationDock(
         ?: selectedKey
 
     val hasDetachedControl = detachedAction != null || detachedItem != null
+    val detachedVisible = detachedAction?.visible ?: (detachedItem != null)
+    val detachedSlotWidth = if (hasDetachedControl) {
+        MiuixFloatingTabBarDefaults.Height + FloatingNavigationDockSpacing
+    } else {
+        0.dp
+    }
+    val detachedFraction by animateFloatAsState(
+        targetValue = if (detachedVisible) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.86f, stiffness = 320f),
+        label = "detachedSlotWidth",
+    )
+    val detachedProgress = detachedFraction.coerceIn(0f, 1f)
     val maximumWidth = MiuixFloatingTabBarDefaults.maximumWidth(items.size, layout) +
         (if (hasDetachedControl) MiuixFloatingTabBarDefaults.Height + FloatingNavigationDockSpacing else 0.dp) +
         MiuixFloatingNavigationDockDefaults.HorizontalPadding * 2
@@ -88,64 +106,78 @@ fun MiuixFloatingNavigationDock(
             .fillMaxWidth()
             .height(MiuixFloatingTabBarDefaults.Height)
             .padding(horizontal = MiuixFloatingNavigationDockDefaults.HorizontalPadding),
-        horizontalArrangement = Arrangement.spacedBy(FloatingNavigationDockSpacing),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MiuixFloatingTabBar(
             items = items,
             selectedKey = primarySelectedKey,
             onItemSelected = onItemSelected,
-            modifier = Modifier.weight(1f),
+            // Width expands with the shrinking action slot, always subject to the tab cap.
+            modifier = Modifier.weight(1f, fill = false).testTag("floating-navigation-tabs"),
             layout = layout,
             selectionVisible = primarySelectionVisible,
             backdrop = backdrop,
         )
 
-        if (detachedAction != null) {
-            val rotation by animateFloatAsState(detachedAction.iconRotation, spring(dampingRatio = 0.78f, stiffness = 380f), label = "detachedIconRotation")
-            SoftGlassFloatingActionButton(
-                onClick = detachedAction.onClick,
-                modifier = detachedAction.modifier,
-                enabled = detachedAction.enabled,
-                neutralTint = detachedAction.neutralTint,
-                containerColor = detachedAction.containerColor,
-                contentColor = detachedAction.contentColor,
-                size = MiuixFloatingTabBarDefaults.Height,
-                backdrop = backdrop,
-            ) {
-                Icon(
-                    painter = detachedAction.symbolName?.let { com.aritxonly.deadliner.ui.materialSymbolPainter(it) }
-                        ?: iconResource(detachedAction.iconResource),
-                    contentDescription = detachedAction.label,
-                    modifier = Modifier
-                        .size(MiuixFloatingTabBarDefaults.DetachedIconSize)
-                        .graphicsLayer {
-                            val scale = detachedAction.iconScale.coerceIn(0.75f, 1.25f)
-                            scaleX = scale
-                            scaleY = scale
-                            rotationZ = rotation
-                        },
-                )
-            }
-        } else {
-            detachedItem?.let { item ->
-                val selected = item.key == selectedKey
-                SoftGlassIconButton(
-                    onClick = { onItemSelected(item) },
-                    enabled = item.enabled,
-                    size = MiuixFloatingTabBarDefaults.Height,
-                    recipe = DeadlinerGlassRecipes.floatingNavigation(advancedMaterial.fineTuning),
-                    backdrop = backdrop,
-                ) {
-                    Icon(
-                        painter = if (selected) item.selectedIcon else item.unselectedIcon,
-                        contentDescription = item.label,
-                        tint = when {
-                            !item.enabled -> contentColor.copy(alpha = 0.22f)
-                            else -> contentColor
-                        },
-                        modifier = Modifier.size(MiuixFloatingTabBarDefaults.DetachedIconSize),
-                    )
+        Box(
+            modifier = Modifier.width(detachedSlotWidth * detachedProgress)
+                .height(MiuixFloatingTabBarDefaults.Height)
+                .graphicsLayer { clip = detachedProgress < 1f; alpha = detachedProgress }
+                .then(if (!detachedVisible) Modifier.clearAndSetSemantics { } else Modifier),
+            contentAlignment = Alignment.CenterEnd,
+        ) {
+            if (detachedProgress > 0f) {
+                if (detachedAction != null) {
+                    val rotation by animateFloatAsState(detachedAction.iconRotation, spring(dampingRatio = 0.78f, stiffness = 380f), label = "detachedIconRotation")
+                    val isAddAction = detachedAction.symbolName in setOf("add", "add_2")
+                    val isHybridAdd = isAddAction && com.aritxonly.deadliner.ui.LocalInterfaceIconPack.current == com.aritxonly.deadliner.ui.InterfaceIconPack.HybridMiuix
+                    SoftGlassFloatingActionButton(
+                        onClick = detachedAction.onClick,
+                        modifier = detachedAction.modifier.requiredSize(MiuixFloatingTabBarDefaults.Height),
+                        enabled = detachedAction.enabled && detachedVisible,
+                        neutralTint = detachedAction.neutralTint,
+                        containerColor = detachedAction.containerColor,
+                        contentColor = detachedAction.contentColor,
+                        size = MiuixFloatingTabBarDefaults.Height,
+                        backdrop = backdrop,
+                    ) {
+                        Icon(
+                            painter = if (isHybridAdd) com.aritxonly.deadliner.ui.homeAddPainter() else detachedAction.symbolName?.let { com.aritxonly.deadliner.ui.materialSymbolPainter(it) }
+                                ?: iconResource(detachedAction.iconResource),
+                            contentDescription = detachedAction.label,
+                            modifier = Modifier
+                                .size(if (isAddAction) com.aritxonly.deadliner.ui.interfaceIconSize(
+                                    MiuixFloatingTabBarDefaults.DetachedIconSize, 28.dp) else MiuixFloatingTabBarDefaults.DetachedIconSize)
+                                .graphicsLayer {
+                                    val scale = if (isHybridAdd) 1f else detachedAction.iconScale.coerceIn(0.75f, 1.25f)
+                                    scaleX = scale
+                                    scaleY = scale
+                                    rotationZ = rotation
+                                },
+                        )
+                    }
+                } else {
+                    detachedItem?.let { item ->
+                        val selected = item.key == selectedKey
+                        SoftGlassIconButton(
+                            onClick = { onItemSelected(item) },
+                            enabled = item.enabled && detachedVisible,
+                            size = MiuixFloatingTabBarDefaults.Height,
+                            recipe = DeadlinerGlassRecipes.floatingNavigation(advancedMaterial.fineTuning),
+                            backdrop = backdrop,
+                        ) {
+                            Icon(
+                                painter = if (selected) item.selectedIcon else item.unselectedIcon,
+                                contentDescription = item.label,
+                                tint = when {
+                                    !item.enabled -> contentColor.copy(alpha = 0.22f)
+                                    else -> contentColor
+                                },
+                                modifier = Modifier.size(MiuixFloatingTabBarDefaults.DetachedIconSize),
+                            )
+                        }
+                    }
                 }
             }
         }

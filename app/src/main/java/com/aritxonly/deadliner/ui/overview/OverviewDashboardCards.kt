@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.overview
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -24,14 +25,15 @@ internal fun DashboardDataCard(title: String, value: String, supporting: String,
     modifier: Modifier = Modifier, failed: Boolean = false, onRetry: () -> Unit = {},
     supportingContent: (@Composable () -> Unit)? = null, compact: Boolean = false,
     valueContent: (@Composable () -> Unit)? = null) {
-    Card(onClick = onClick, modifier = modifier.fillMaxWidth(),
+    Card(onClick = onClick, modifier = (modifier.fillMaxWidth()).miuixPressFeedback(enabled = true, shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))),
         shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column(Modifier.fillMaxWidth().padding(if (compact) 16.dp else 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
                 Icon(com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_chevron_right_wght400),
-                    contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    contentDescription = null, modifier = Modifier.size(com.aritxonly.deadliner.ui.overviewChevronSize()),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (valueContent != null) valueContent() else if (value.isNotBlank()) Text(value, style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
             if (supporting.isNotBlank()) Text(supporting, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

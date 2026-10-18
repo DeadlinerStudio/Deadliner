@@ -1,0 +1,6 @@
+<!-- Generated from pinned Phosphor Icons MIT source; see third_party/interface-icons/NOTICE.md. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="256" android:viewportHeight="256" android:autoMirrored="false">
+    <group android:translateX="-28.160000" android:translateY="-28.160000" android:scaleX="1.22" android:scaleY="1.22">
+        <path android:pathData="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z" android:fillColor="#FF000000" android:fillType="nonZero" />
+    </group>
+</vector>

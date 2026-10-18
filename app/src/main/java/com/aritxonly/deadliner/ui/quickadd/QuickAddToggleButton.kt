@@ -22,7 +22,7 @@ internal fun QuickAddToggleButton(expanded: Boolean, onClick: () -> Unit, modifi
     val rotation by animateFloatAsState(if (expanded) 45f else 0f, spring(dampingRatio = 0.78f, stiffness = 380f), label = "quickAddToggleRotation")
     SoftGlassFloatingActionButton(onClick, modifier, enabled = enabled, size = size, neutralTint = expanded,
         contentColor = if (expanded) MaterialTheme.colorScheme.onSurface else LocalHomeFabColors.current.content) {
-        Icon(materialSymbolPainter("add"), if (expanded) "关闭快速添加" else "添加",
-            Modifier.size(30.dp).graphicsLayer { rotationZ = rotation })
+        Icon(com.aritxonly.deadliner.ui.homeAddPainter(), if (expanded) "关闭快速添加" else "添加",
+            Modifier.size(com.aritxonly.deadliner.ui.interfaceIconSize(30.dp, 28.dp)).graphicsLayer { rotationZ = rotation })
     }
 }

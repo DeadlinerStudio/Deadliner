@@ -1,5 +1,9 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +39,7 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ai.LlmPreset
 import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.ui.base.AlertDialog
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
 import java.util.UUID
 import com.aritxonly.deadliner.ui.base.TopBarIconButton
@@ -73,7 +78,7 @@ fun ModelSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
@@ -112,7 +117,7 @@ fun ModelSettingsScreen(
         ) {
             Text(
                 stringResource(R.string.settings_endpoint_description),
-                modifier = Modifier.padding(horizontal = 24.dp),
+                modifier = Modifier.padding(horizontal = SettingsItemDefaults.HorizontalPadding),
                 style = MaterialTheme.typography.bodySmall
             )
 
@@ -286,10 +291,14 @@ fun ManagePresetsSheet(
         show = true,
         title = stringResource(R.string.manage_presets),
         onDismissRequest = onClose,
-    ) {
+    ) { sheetPadding ->
+        val sheetScrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .syncTopBarMaterialScroll(sheetScrollState)
+                .verticalScroll(sheetScrollState)
+                .padding(sheetPadding)
                 .padding(horizontal = 20.dp, vertical = 8.dp),
         ) {
             presets.forEachIndexed { i, p ->
@@ -312,11 +321,11 @@ fun ManagePresetsSheet(
                         )
                     }
                 }
-                MiuixIconButton(onClick = { editTarget = p }) {
+                MiuixIconButton(modifier = Modifier.miuixPressFeedback(overlay = false), onClick = { editTarget = p }) {
                     Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_edit_wght400), contentDescription = stringResource(R.string.edit))
                 }
                 val canDelete = p.id != currentId && presets.size > 1
-                MiuixIconButton(onClick = { if (canDelete) confirmDelete = p }, enabled = canDelete) {
+                MiuixIconButton(modifier = Modifier.miuixPressFeedback(enabled = canDelete, overlay = false), onClick = { if (canDelete) confirmDelete = p }, enabled = canDelete) {
                     Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_delete_wght400), contentDescription = stringResource(R.string.delete))
                 }
             }

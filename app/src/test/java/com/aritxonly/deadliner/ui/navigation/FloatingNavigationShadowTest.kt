@@ -10,14 +10,14 @@ class FloatingNavigationShadowTest {
     fun lightModeUsesSoftSymmetricSpread() {
         val light = floatingNavigationShadowTokens(isDark = false)
 
-        assertEquals(24.dp, light.ambientRadius)
-        assertEquals((-1).dp, light.ambientSpread)
-        assertEquals(0.025f, light.ambientAlpha, 0.0001f)
-        assertEquals(12.dp, light.outerRadius)
-        assertEquals((-0.5).dp, light.outerSpread)
-        assertEquals(0.050f, light.outerAlpha, 0.0001f)
-        assertEquals(4.5.dp, light.edgeRadius)
-        assertTrue(light.edgeAlpha in 0.01f..0.02f)
+        assertEquals(20.dp, light.ambientRadius)
+        assertEquals((-2).dp, light.ambientSpread)
+        assertEquals(0.018f, light.ambientAlpha, 0.0001f)
+        assertEquals(10.dp, light.outerRadius)
+        assertEquals((-1).dp, light.outerSpread)
+        assertEquals(0.040f, light.outerAlpha, 0.0001f)
+        assertEquals(3.dp, light.edgeRadius)
+        assertTrue(light.edgeAlpha in 0.004f..0.008f)
     }
 
     @Test

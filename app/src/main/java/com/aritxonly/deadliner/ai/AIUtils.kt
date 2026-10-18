@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ai
 
+import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
+
 import android.content.Context
 import com.aritxonly.deadliner.logging.AppLog
 import com.aritxonly.deadliner.localutils.ApiKeystore
@@ -34,8 +36,13 @@ object AIUtils {
     @Suppress("UNUSED_PARAMETER")
     fun setPreset(preset0: LlmPreset, context: Context) {
         appContext = context.applicationContext
+        KmpV6Runtime.resetLifiSession()
         coreBridge = DeadlinerCoreBridge(gson)
     }
+
+    suspend fun cancelRun() { KmpV6Runtime.cancelLifiRun() }
+
+    fun newSession() { KmpV6Runtime.resetLifiSession() }
 
     suspend fun extractQuickAdd(text: String, kind: String): com.deadliner.domain.quickadd.QuickAddProposal = withContext(Dispatchers.IO) {
         val config = readCoreRuntimeConfig(appContext ?: error("AIUtils not initialized"))
@@ -136,6 +143,7 @@ object AIUtils {
         onTextStream: (suspend (String) -> Unit)? = null,
         onThinking: (suspend (agent: String, phase: String, message: String?) -> Unit)? = null,
         onLifecycle: (suspend (AgentLifecycleEvent) -> Unit)? = null,
+        onToolExecuted: (suspend (AIToolRequest, String) -> Unit)? = null,
     ): Pair<IntentGuess, String> {
         val mixed = processByCore(
             context = context,
@@ -144,6 +152,7 @@ object AIUtils {
             onTextStream = onTextStream,
             onThinking = onThinking,
             onLifecycle = onLifecycle,
+            onToolExecuted = onToolExecuted,
         )
         val intent = mixed.primaryIntent.toIntentTypeOrDefault(IntentType.ExtractTasks)
         val guess = IntentGuess(
@@ -226,6 +235,7 @@ object AIUtils {
         onTextStream: (suspend (String) -> Unit)? = null,
         onThinking: (suspend (agent: String, phase: String, message: String?) -> Unit)? = null,
         onLifecycle: (suspend (AgentLifecycleEvent) -> Unit)? = null,
+        onToolExecuted: (suspend (AIToolRequest, String) -> Unit)? = null,
     ): MixedResult {
         val bridge = coreBridge ?: DeadlinerCoreBridge(gson).also {
             coreBridge = it
@@ -241,6 +251,7 @@ object AIUtils {
             onTextStream = onTextStream,
             onThinking = onThinking,
             onLifecycle = onLifecycle,
+            onToolExecuted = onToolExecuted,
         )
         GlobalUtils.incrementLifiModelUsageCount()
         return output.mixed
@@ -270,9 +281,7 @@ object AIUtils {
         val apiKey = ApiKeystore.retrieveAndDecrypt(context).orEmpty()
         val preset = GlobalUtils.getDeadlinerAIConfig().getCurrentPreset() ?: defaultLlmPreset
         val baseUrl = normalizeCoreBaseUrl(preset.endpoint)
-        if (apiKey.isBlank()) {
-            AppLog.w("AIUtils", "core runtime api key is empty")
-        }
+        require(apiKey.isNotBlank()) { "请先在设置中填写 API Key" }
         AppLog.d(
             "AIUtils",
             "core runtime config: endpoint=${preset.endpoint}, normalizedBaseUrl=$baseUrl, model=${preset.model}"
@@ -288,9 +297,6 @@ object AIUtils {
         var e = endpoint.trim().trimEnd('/')
         // Core expects provider-compatible base URL (e.g. .../v1), not app proxy endpoints.
         if (e.contains("deadliner.aritxonly.top/api")) {
-            return "https://api.deepseek.com/v1"
-        }
-        if (e.endsWith("/api")) {
             return "https://api.deepseek.com/v1"
         }
         if (e.endsWith("/chat/completions")) {

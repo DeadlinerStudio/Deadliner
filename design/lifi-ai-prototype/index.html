@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>Lifi AI · 页面设计原型</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="conversation.css"><link rel="stylesheet" href="adaptive.css"></head>
+<body>
+<svg class="svg-defs" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 5v14"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2 7M3 5v6h6M12 7v5l3 2"/></symbol>
+<symbol id="i-task" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"/><path d="m8 12 3 3 5-6"/></symbol>
+<symbol id="i-habit" viewBox="0 0 24 24"><path d="M20 9a8 8 0 0 0-14-3L3 9m0-5v5h5M4 15a8 8 0 0 0 14 3l3-3m0 5v-5h-5"/></symbol>
+<symbol id="i-plan" viewBox="0 0 24 24"><path d="M5 6h14M5 12h9M5 18h5M18 11v8m-3-3 3 3 3-3"/></symbol>
+<symbol id="i-memory" viewBox="0 0 24 24"><path d="M8 20H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-2l-4 3-4-3ZM7 9h10M7 13h6"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11Z"/></symbol>
+<symbol id="i-wide" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M8 5v14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L20 8a2 2 0 0 0-4-4L5 15l-1 5Z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="2"/><rect x="14" y="4" width="6" height="6" rx="2"/><rect x="4" y="14" width="6" height="6" rx="2"/><rect x="14" y="14" width="6" height="6" rx="2"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></symbol>
+</defs></svg>
+<header class="lab-bar"><a class="lab-brand" href="./">DEADLINER <span>/ Lifi AI</span></a><span class="lab-tag">交互原型 · v1</span><div class="lab-actions"><button id="width-toggle" class="lab-button"><svg><use href="#i-wide"/></svg><span>宽屏</span></button><button id="theme-toggle" class="lab-button"><svg><use href="#i-moon"/></svg><span>深色</span></button></div></header>
+<main class="studio">
+<aside class="design-note"><div class="eyebrow">DESIGN EXPLORATION / 01</div><h1>想法落地，<br>从一句话开始。</h1><p class="intro">让 Lifi 从一个 AI 浮层，<br>成为有连续性的个人助手。</p><div class="rule"></div><div class="note-item"><span>01</span><div><h3>轻一点的开始</h3><p>保留三端的问候与快捷意图。输入始终是页面的重心。</p></div></div><div class="note-item"><span>02</span><div><h3>看得见的行动</h3><p>先展示操作范围和具体内容，再确认；过程收起，结果突出。</p></div></div><div class="note-item"><span>03</span><div><h3>接得上的对话</h3><p>处理中也能离开。回来后继续确认或查看结果。</p></div></div><div class="proposal"><span class="tiny-dot"></span> 历史与记忆为 Android 补齐提案<br><small>数据与 AI 回复均为本地模拟。</small></div></aside>
+<section class="device" aria-label="Lifi AI 应用原型">
+<div class="status-bar"><span>9:41</span><span class="status-icons">▂▄▆ <b>5G</b> ▰</span></div>
+<div class="app-layout"><aside class="conversation-rail"><div class="rail-brand"><span class="lifi-logo"></span><strong>Lifi AI</strong></div><button class="primary rail-new" data-action="new"><svg><use href="#i-plus"/></svg>新对话</button><div class="rail-label">当前对话</div><button class="rail-current" data-action="current"><span class="current-title">从一句话开始</span><small class="current-meta">尚未开始</small></button><div class="rail-label">历史对话</div><div id="rail-history"></div><button class="rail-memory" data-action="memory"><svg><use href="#i-memory"/></svg>记忆与偏好</button></aside>
+<div class="workspace">
+<header class="app-header"><div class="header-title"><span class="lifi-logo"></span><strong>Lifi AI</strong><span class="header-subtitle">你的行动伙伴</span></div><div class="header-actions"><button class="icon-button" data-action="history" aria-label="历史对话"><svg><use href="#i-history"/></svg></button><button class="icon-button" data-action="new" aria-label="新对话"><svg><use href="#i-plus"/></svg></button></div></header>
+<div id="run-banner" class="run-banner" hidden></div>
+<div id="content" class="content"></div>
+<div class="bottom-stack"><div id="context-bar" class="context-bar"></div><form id="composer" class="composer"><textarea id="input" aria-label="告诉 Lifi 你想做什么" placeholder="告诉我，你想做什么…" rows="1"></textarea><div class="composer-footer"><span id="composer-hint">任务、习惯，或一个还没理清的想法</span><button id="send" class="send-button" type="submit" aria-label="发送" disabled><svg><use href="#i-arrow"/></svg></button></div></form><div class="bottom-navigation"><nav class="nav-capsule" aria-label="主导航"><button data-tab="任务"><svg><use href="#i-task"/></svg><span>任务</span></button><button data-tab="习惯"><svg><use href="#i-habit"/></svg><span>习惯</span></button><button data-tab="概览"><svg><use href="#i-grid"/></svg><span>概览</span></button><button data-tab="Lifi" class="selected" aria-current="page"><span class="lifi-logo"></span><span>Lifi</span></button></nav><button class="detached-action" data-action="new" aria-label="新建对话"><svg><use href="#i-plus"/></svg></button></div></div>
+</div></div><div class="home-indicator"></div><div id="overlay" class="overlay" hidden></div><div id="toast" class="toast" role="status" hidden></div>
+</section>
+<aside class="scenario-panel"><div class="eyebrow">TRY THE FLOW</div><h2>点开，体验每一步。</h2><p>也可以直接在输入框发起对话。</p><div class="scenarios"><button data-scene="home" class="active"><span>01</span><div>初次见面<small>问候 · 快捷意图 · 输入</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="approval"><span>02</span><div>整理本周任务<small>读取范围 · 一次审批</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="task"><span>03</span><div>创建一个任务<small>内容预览 · 编辑 · 确认</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="habit"><span>04</span><div>建立运动习惯<small>频次 · 目标 · 添加</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="running"><span>05</span><div>继续处理中的对话<small>切换页面 · 保留进度</small></div><svg><use href="#i-chevron"/></svg></button><button data-scene="error"><span>06</span><div>遇到连接问题<small>保留输入 · 重试</small></div><svg><use href="#i-chevron"/></svg></button></div><div class="interaction-tip"><svg><use href="#i-memory"/></svg><p>顶部查看历史；输入框上方查看记忆。<br>宽屏会展开对话侧栏。</p></div><div class="reference-note">参考 iOS / HarmonyOS 的现有页面<br>适配 Android 现代模式的悬浮导航</div></aside>
+</main><script src="app.js"></script>
+</body></html>

@@ -11,16 +11,16 @@ class AdvancedMaterialFineTuningTest {
             AdvancedMaterialFineTuning.Default,
             AdvancedMaterialFineTuning.Default.normalized(),
         )
-        assertEquals(1.05f, AdvancedMaterialFineTuning.Default.saturationMultiplier, 0.0001f)
+        assertEquals(1.096648f, AdvancedMaterialFineTuning.Default.saturationMultiplier, 0.0001f)
         assertEquals(0.095f, AdvancedMaterialFineTuning.Default.noiseCoefficient, 0.0001f)
         assertEquals(0.65f, AdvancedMaterialFineTuning.Default.dialogBackgroundAlpha, 0.0001f)
         assertEquals(80f, AdvancedMaterialFineTuning.Default.dialogBlurRadiusDp, 0.0001f)
         assertEquals(0.70f, AdvancedMaterialFineTuning.Default.bottomSheetBackgroundAlpha, 0.0001f)
         assertEquals(80f, AdvancedMaterialFineTuning.Default.bottomSheetBlurRadiusDp, 0.0001f)
-        assertEquals(0.25f, AdvancedMaterialFineTuning.Default.glassBlurRadiusMultiplier, 0.0001f)
+        assertEquals(0.4f, AdvancedMaterialFineTuning.Default.glassBlurRadiusMultiplier, 0.0001f)
         assertEquals(0.60f, AdvancedMaterialFineTuning.Default.refractionDepthEffect, 0.0001f)
-        assertEquals(0.95f, AdvancedMaterialFineTuning.Default.edgeHighlightAlpha, 0.0001f)
-        assertEquals(0.20f, AdvancedMaterialFineTuning.Default.darkHighlightMultiplier, 0.0001f)
+        assertEquals(0.94692737f, AdvancedMaterialFineTuning.Default.edgeHighlightAlpha, 0.0001f)
+        assertEquals(0.21994415f, AdvancedMaterialFineTuning.Default.darkHighlightMultiplier, 0.0001f)
         assertEquals(0.46f, AdvancedMaterialFineTuning.Default.fallbackLightAlpha, 0.0001f)
         assertEquals(0.08f, AdvancedMaterialFineTuning.Default.fallbackDarkAlpha, 0.0001f)
     }
@@ -49,7 +49,7 @@ class AdvancedMaterialFineTuningTest {
             postRefractionBlurRadiusDp = Float.POSITIVE_INFINITY,
         ).normalized()
 
-        assertEquals(1.05f, normalized.saturationMultiplier, 0.0001f)
+        assertEquals(1.096648f, normalized.saturationMultiplier, 0.0001f)
         assertEquals(0.20f, normalized.noiseCoefficient, 0.0001f)
         assertEquals(-0.20f, normalized.brightness, 0.0001f)
         assertEquals(1.25f, normalized.contrast, 0.0001f)

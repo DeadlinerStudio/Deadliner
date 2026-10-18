@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
@@ -68,6 +69,7 @@ fun DesignColorSettingsScreen(
     navigateUp: () -> Unit,
 ) {
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
+    val iconPack by com.aritxonly.deadliner.ui.InterfaceIconPreferences.flow.collectAsState()
     var selectedSeed by remember { mutableStateOf(GlobalUtils.seedColor) }
     var colorfulIndicatorEnabled by remember { mutableStateOf(GlobalUtils.presetIndicatorColor) }
     var colorfulIndicatorStyle by remember { mutableStateOf(GlobalUtils.colorfulIndicatorStyle) }
@@ -78,7 +80,7 @@ fun DesignColorSettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
@@ -99,8 +101,23 @@ fun DesignColorSettingsScreen(
                 modifier = Modifier.padding(vertical = 8.dp),
             )
 
+            SettingsSection(topLabel = stringResource(R.string.settings_interface_icon_pack)) {
+                SettingsDropdownItem(
+                    title = stringResource(R.string.settings_interface_icon_pack),
+                    options = listOf(
+                        RadioOption(com.aritxonly.deadliner.ui.InterfaceIconPack.MaterialSymbols,
+                            R.string.settings_icon_pack_material_symbols),
+                        RadioOption(com.aritxonly.deadliner.ui.InterfaceIconPack.HybridMiuix,
+                            R.string.settings_icon_pack_hybrid_miuix),
+                    ),
+                    selectedKey = iconPack,
+                    onOptionSelected = com.aritxonly.deadliner.ui.InterfaceIconPreferences::select,
+                )
+            }
+
             SettingsSection(topLabel = stringResource(R.string.settings_background_strategy_title)) {
-                SettingsRadioGroupItem(
+                SettingsDropdownItem(
+                    title = stringResource(R.string.settings_background_strategy_title),
                     options = listOf(
                         RadioOption(BackgroundColorStrategy.MiuixHyperOs, R.string.settings_background_strategy_miuix),
                         RadioOption(BackgroundColorStrategy.MaterialMonet, R.string.settings_background_strategy_material_monet),
@@ -270,7 +287,7 @@ private fun FloatingNavigationLiftSlider(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+            .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -341,6 +358,7 @@ fun ColorfulIndicatorStylePicker(
                     }
                 ),
                 modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
                     .clickable { onStyleSelected(style) }
                     .widthIn(min = 160.dp)
             ) {
@@ -759,7 +777,7 @@ private fun StaticSettingStrategyRow(
     androidx.compose.foundation.layout.Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp)
+            .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp)
     ) {
         Text(
             text = headline,
@@ -827,7 +845,7 @@ private fun ModernColorPaletteCard(
         shape = RoundedCornerShape(20.dp),
         border = androidx.compose.foundation.BorderStroke(2.dp, borderColor),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),
     ) {
         androidx.compose.foundation.layout.Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -923,6 +941,7 @@ fun DynamicPaletteStylePicker(
                     }
                 ),
                 modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
                     .clickable { onStyleSelected(style) }
                     .widthIn(min = 124.dp)
             ) {

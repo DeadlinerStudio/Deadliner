@@ -20,6 +20,10 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.positionOnScreen
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.paneTitle
@@ -69,6 +73,9 @@ internal fun QuickAddMorphHost(state: QuickAddState, progress: Float, source: Re
             .roundToInt().coerceAtLeast(1)
         val content = subcompose("content") {
             QuickAddContent(state, onSaved, showClose = false, onExpand = onExpand,
+                modifier = Modifier.onGloballyPositioned {
+                    state.panelBounds = it.boundsInWindow().translate(it.positionOnScreen() - it.positionInWindow())
+                },
                 autofocus = state.visible && progress >= 0.98f)
         }.single().measure(Constraints(minWidth = width, maxWidth = width, maxHeight = availableHeight))
         val bottom = constraints.maxHeight - panelBottom

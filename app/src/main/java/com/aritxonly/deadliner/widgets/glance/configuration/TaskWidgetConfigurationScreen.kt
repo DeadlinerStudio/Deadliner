@@ -1,5 +1,9 @@
 package com.aritxonly.deadliner.widgets.glance.configuration
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,8 +46,8 @@ import androidx.compose.ui.unit.sp
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ui.base.Slider
 import com.aritxonly.deadliner.ui.settings.CollapsingTopBarScaffold
-import com.aritxonly.deadliner.ui.settings.RadioOptionText
-import com.aritxonly.deadliner.ui.settings.SettingsRadioGroupItem
+import com.aritxonly.deadliner.ui.settings.RadioOption
+import com.aritxonly.deadliner.ui.settings.SettingsDropdownItem
 import com.aritxonly.deadliner.ui.settings.SettingsScrollColumn
 import com.aritxonly.deadliner.ui.settings.SettingsSection
 import com.aritxonly.deadliner.ui.settings.SettingsSwitchItem
@@ -85,7 +89,7 @@ internal fun TaskWidgetConfigurationScreen(
         collapsible = false,
         topBarStyle = TopAppBarStyle.CENTER,
         navigationIcon = {
-            IconButton(onClick = onCancel) {
+            IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onCancel) {
                 Icon(
                     painter = symbolPainterResource(R.drawable.msr_close_wght400),
                     contentDescription = stringResource(R.string.cancel),
@@ -104,11 +108,12 @@ internal fun TaskWidgetConfigurationScreen(
             TaskWidgetConfigurationPreview(kind, configuration)
 
             SettingsSection(topLabel = stringResource(R.string.widget_configuration_theme_mode)) {
-                SettingsRadioGroupItem(
+                SettingsDropdownItem(
+                    title = stringResource(R.string.widget_configuration_theme_mode),
                     options = listOf(
-                        RadioOptionText(TaskWidgetThemeMode.FOLLOW_APP, stringResource(R.string.widget_theme_follow_app)),
-                        RadioOptionText(TaskWidgetThemeMode.LIGHT, stringResource(R.string.widget_theme_light)),
-                        RadioOptionText(TaskWidgetThemeMode.DARK, stringResource(R.string.widget_theme_dark)),
+                        RadioOption(TaskWidgetThemeMode.FOLLOW_APP, R.string.widget_theme_follow_app),
+                        RadioOption(TaskWidgetThemeMode.LIGHT, R.string.widget_theme_light),
+                        RadioOption(TaskWidgetThemeMode.DARK, R.string.widget_theme_dark),
                     ),
                     selectedKey = configuration.themeMode,
                     onOptionSelected = { configuration = configuration.copy(themeMode = it) },
@@ -154,12 +159,13 @@ internal fun TaskWidgetConfigurationScreen(
 
             if (kind == TaskWidgetKind.SQUARE) {
                 SettingsSection(topLabel = stringResource(R.string.widget_configuration_margin_preset)) {
-                    SettingsRadioGroupItem(
+                    SettingsDropdownItem(
+                        title = stringResource(R.string.widget_configuration_margin_preset),
                         options = listOf(
-                            RadioOptionText(TaskWidgetPaddingPreset.Standard, stringResource(R.string.settings_widget_padding_standard)),
-                            RadioOptionText(TaskWidgetPaddingPreset.Grid4x6, stringResource(R.string.settings_widget_padding_4x6)),
-                            RadioOptionText(TaskWidgetPaddingPreset.Grid4x7, stringResource(R.string.settings_widget_padding_4x7)),
-                            RadioOptionText(TaskWidgetPaddingPreset.Custom, stringResource(R.string.widget_configuration_custom_margin)),
+                            RadioOption(TaskWidgetPaddingPreset.Standard, R.string.settings_widget_padding_standard),
+                            RadioOption(TaskWidgetPaddingPreset.Grid4x6, R.string.settings_widget_padding_4x6),
+                            RadioOption(TaskWidgetPaddingPreset.Grid4x7, R.string.settings_widget_padding_4x7),
+                            RadioOption(TaskWidgetPaddingPreset.Custom, R.string.widget_configuration_custom_margin),
                         ),
                         selectedKey = configuration.marginPreset,
                         onOptionSelected = {
@@ -254,15 +260,17 @@ private fun TaskWidgetColorSchemeSelector(
             val pair = TaskWidgetColorSchemePalette.resolve(scheme, dark)
             val background = pair?.let { Color(it.background) } ?: Color(colors.backgroundBase)
             val accent = pair?.let { Color(it.accent) } ?: Color(colors.brand)
+            val interactions = remember { MutableInteractionSource() }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { onSelected(scheme) },
+                modifier = Modifier.clickable(interactionSource = interactions, indication = null) { onSelected(scheme) },
             ) {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(Brush.linearGradient(listOf(background, accent)))
+                        .indication(interactions, LocalIndication.current)
                         .then(
                             if (selected == scheme) {
                                 Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)

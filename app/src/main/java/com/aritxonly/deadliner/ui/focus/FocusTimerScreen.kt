@@ -1,6 +1,8 @@
 package com.aritxonly.deadliner.ui.focus
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.*
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -33,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.ui.base.floatingNavigationEdgeMaskHeight
 import com.aritxonly.deadliner.ui.base.AdaptiveMaterialScaffold
 import com.aritxonly.deadliner.ui.base.AlertDialog
 import com.aritxonly.deadliner.ui.base.OutlinedTextField
@@ -82,6 +85,7 @@ fun FocusTimerScreen(
             recordSessionUid = uid
         } else onFinishAndRecordHabit(uid, null, context.habitUpdatedAt)
     }
+    var selectedRecentUid by rememberSaveable { mutableStateOf<String?>(null) }
     val timer = state.timer
     val listState = rememberLazyListState()
 
@@ -90,7 +94,7 @@ fun FocusTimerScreen(
 
     AdaptiveMaterialScaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = MiuixTheme.colorScheme.background,
+        containerColor = MiuixTheme.colorScheme.surface,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
@@ -114,109 +118,111 @@ fun FocusTimerScreen(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().syncTopBarMaterialScroll(listState),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                top = innerPadding.calculateTopPadding() + 12.dp,
-                end = 16.dp,
-                bottom = innerPadding.calculateBottomPadding() + 24.dp +
-                    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
-            ),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
-        ) {
-            state.error?.let { message ->
-                item { InlineMessage(message, isError = true) }
-            }
-            if (state.selectedTarget?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT && state.lastOutcome in listOf(com.deadliner.domain.focus.FocusTimerOutcome.HABIT_NOT_FOUND,
-                com.deadliner.domain.focus.FocusTimerOutcome.HABIT_NOT_ACTIVE, com.deadliner.domain.focus.FocusTimerOutcome.HABIT_NOT_DUE,
-                com.deadliner.domain.focus.FocusTimerOutcome.HABIT_INVALID_AMOUNT, com.deadliner.domain.focus.FocusTimerOutcome.INVALID_STATE)) {
-                item { InlineMessage(stringResource(R.string.habit_focus_record_failed), isError = true) }
-            }
-            state.warning?.let { warning ->
-                item {
-                    InlineMessage(
-                        stringResource(focusWarningResource(warning)),
-                        isError = false,
-                    )
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize().syncTopBarMaterialScroll(listState),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    top = innerPadding.calculateTopPadding() + 12.dp,
+                    end = 16.dp,
+                    bottom = maxOf(innerPadding.calculateBottomPadding(), floatingNavigationEdgeMaskHeight()) + 24.dp,
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                state.error?.let { message ->
+                    item { InlineMessage(message, isError = true) }
                 }
-            }
-
-            item {
-                if (timer != null) {
-                    ActiveTimerContent(
-                        timer = timer,
-                        busy = state.isBusy,
-                        onPause = onPause,
-                        onResume = onResume,
-                        onFinish = onFinish,
-                        onFinishAndComplete = {
-                            if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) recordHabit(timer.sessionUid)
-                            else onFinishAndComplete()
-                        },
-                    )
-                } else {
-                    Column(Modifier.fillMaxWidth().padding(vertical = 48.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text(stringResource(if (state.isLoading) R.string.focus_loading_task else R.string.focus_session_finished),
-                            style = MiuixTheme.textStyles.title3.copy(fontWeight = FontWeight.Medium))
-                        state.lastCompletedSession?.let {
-                            Text(formatDuration(it.durationSeconds),
-                                style = MiuixTheme.textStyles.title1.copy(fontWeight = FontWeight.SemiBold))
-                        }
-                        val saved = state.lastCompletedSession
-                        if (saved != null && state.canCompleteLastTask) {
-                            TextButton(text = stringResource(R.string.focus_complete_saved_task), enabled = !state.isBusy,
-                                onClick = { onCompleteSavedTask(saved.uid) })
-                        } else if (state.lastCompletedTaskState == com.deadliner.domain.task.TaskState.COMPLETED ||
-                            state.lastCompletedTaskState == com.deadliner.domain.task.TaskState.ARCHIVED) {
-                            Text(stringResource(R.string.focus_saved_task_completed), color = MiuixTheme.colorScheme.onSurfaceVariantSummary)
-                        }
-                        if (saved?.boundTarget?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT &&
-                            saved.habitRecordedAmount == null && recordSessionUid == null && recordContext?.canRecord == true) {
-                            TextButton(text = stringResource(R.string.habit_focus_record), enabled = !state.isBusy,
-                                onClick = { recordHabit(saved.uid) })
-                        }
-                        FocusRoundAction(icon = R.drawable.msr_close_wght400,
-                            label = stringResource(R.string.close), enabled = true, onClick = onClose)
+                if (state.selectedTarget?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT && state.lastOutcome in listOf(com.deadliner.domain.focus.FocusTimerOutcome.HABIT_NOT_FOUND,
+                    com.deadliner.domain.focus.FocusTimerOutcome.HABIT_NOT_ACTIVE, com.deadliner.domain.focus.FocusTimerOutcome.HABIT_NOT_DUE,
+                    com.deadliner.domain.focus.FocusTimerOutcome.HABIT_INVALID_AMOUNT, com.deadliner.domain.focus.FocusTimerOutcome.INVALID_STATE)) {
+                    item { InlineMessage(stringResource(R.string.habit_focus_record_failed), isError = true) }
+                }
+                state.warning?.let { warning ->
+                    item {
+                        InlineMessage(
+                            stringResource(focusWarningResource(warning)),
+                            isError = false,
+                        )
                     }
                 }
-            }
 
-            if (state.selectedTarget != null || state.selectedTaskUid != null) {
                 item {
-                    FocusSummaryCard(
-                        taskTitle = state.selectedTaskTitle.orEmpty(),
-                        todaySeconds = state.selectedTaskTodayDurationSeconds,
-                        totalSeconds = state.selectedTaskTotalDurationSeconds,
-                    )
-                }
-            }
-
-            item {
-                SettingsSection(topLabel = stringResource(R.string.focus_recent_sessions)) {
-                    val sessions = state.selectedTaskRecentSessions.take(5)
-                    if (sessions.isEmpty()) {
-                        Text(stringResource(R.string.focus_no_sessions), modifier = Modifier.padding(18.dp),
-                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary)
+                    AnimatedContent(targetState = timer != null, transitionSpec = {
+                        fadeIn(FocusVisuals.motion()) togetherWith fadeOut(FocusVisuals.motion())
+                    }, label = "focus-session-phase") { active ->
+                    if (active && timer != null) {
+                        ActiveTimerContent(
+                            timer = timer,
+                            busy = state.isBusy,
+                            onPause = onPause,
+                            onResume = onResume,
+                            onFinish = onFinish,
+                            onFinishAndComplete = {
+                                if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) recordHabit(timer.sessionUid)
+                                else onFinishAndComplete()
+                            },
+                        )
                     } else {
-                        sessions.forEach { session ->
-                            SessionRow(
-                                session = session,
-                                onAdjust = {
-                                    adjustedSeconds = session.durationSeconds.toString()
-                                    editingSession = session
-                                },
-                                onDelete = { deletingSession = session },
-                            )
+                        Column(Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Text(stringResource(if (state.isLoading) R.string.focus_loading_task else R.string.focus_session_finished),
+                                style = MiuixTheme.textStyles.title3.copy(fontWeight = FontWeight.Medium))
+                            state.lastCompletedSession?.let {
+                                Text(formatDuration(it.durationSeconds),
+                                    style = MiuixTheme.textStyles.title1.copy(fontWeight = FontWeight.SemiBold))
+                            }
+                            val saved = state.lastCompletedSession
+                            if (saved != null && state.canCompleteLastTask) {
+                                TextButton(text = stringResource(R.string.focus_complete_saved_task), enabled = !state.isBusy,
+                                    onClick = { onCompleteSavedTask(saved.uid) })
+                            } else if (state.lastCompletedTaskState == com.deadliner.domain.task.TaskState.COMPLETED ||
+                                state.lastCompletedTaskState == com.deadliner.domain.task.TaskState.ARCHIVED) {
+                                Text(stringResource(R.string.focus_saved_task_completed), color = MiuixTheme.colorScheme.onSurfaceVariantSummary)
+                            }
+                            if (saved?.boundTarget?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT &&
+                                saved.habitRecordedAmount == null && recordSessionUid == null && recordContext?.canRecord == true) {
+                                TextButton(text = stringResource(R.string.habit_focus_record), enabled = !state.isBusy,
+                                    onClick = { recordHabit(saved.uid) })
+                            }
+                            FocusRoundAction(icon = R.drawable.msr_close_wght400,
+                                label = stringResource(R.string.close), enabled = true, onClick = onClose)
                         }
                     }
+                    }
+                }
+
+                if (state.selectedTarget != null || state.selectedTaskUid != null) {
+                    item {
+                        FocusSummaryCard(
+                            todaySeconds = state.selectedTaskTodayDurationSeconds,
+                            totalSeconds = state.selectedTaskTotalDurationSeconds,
+                        )
+                    }
+                }
+
+                item {
+                    FocusRecentSessions(
+                        sessions = state.selectedTaskRecentSessions.take(5),
+                        onSelect = { selectedRecentUid = it.uid },
+                    )
                 }
             }
+            FocusBottomChrome(Modifier.align(Alignment.BottomCenter))
         }
     }
+
+    FocusRecentSessionDetail(
+        session = state.selectedTaskRecentSessions.firstOrNull { it.uid == selectedRecentUid },
+        onDismiss = { selectedRecentUid = null },
+        onAdjust = { session ->
+            adjustedSeconds = session.durationSeconds.toString()
+            editingSession = session
+        },
+        onDelete = { deletingSession = it },
+    )
 
     val resolutionLabel = stringResource(when {
         resolutionDelete -> R.string.focus_resolve_delete
@@ -286,7 +292,7 @@ fun FocusTimerScreen(
         miuixSummary = stringResource(R.string.focus_delete_session_message),
         confirmButton = {
             Button(onClick = {
-                sessionToDelete?.let { onDeleteSession(it.uid) }
+                sessionToDelete?.let { onDeleteSession(it.uid); selectedRecentUid = null }
                 deletingSession = null
             }) { Text(stringResource(R.string.accept)) }
         },
@@ -297,16 +303,8 @@ fun FocusTimerScreen(
 }
 
 @Composable
-private fun FocusSummaryCard(taskTitle: String, todaySeconds: Long, totalSeconds: Long) {
-    FocusSection(
-        modifier = Modifier.fillMaxWidth(),
-        insideMargin = PaddingValues(18.dp),
-    ) {
-        Text(
-            text = taskTitle.ifBlank { stringResource(R.string.focus_loading_task) },
-            style = MiuixTheme.textStyles.title3.copy(fontWeight = FontWeight.Medium),
-        )
-        Spacer(Modifier.height(14.dp))
+private fun FocusSummaryCard(todaySeconds: Long, totalSeconds: Long) {
+    Column(Modifier.widthIn(max = FocusVisuals.MaximumWidth).fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Metric(stringResource(R.string.focus_today), todaySeconds)
             Metric(stringResource(R.string.focus_total), totalSeconds)
@@ -316,7 +314,7 @@ private fun FocusSummaryCard(taskTitle: String, todaySeconds: Long, totalSeconds
 
 @Composable
 private fun Metric(label: String, seconds: Long) {
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = label,
             style = MiuixTheme.textStyles.footnote1.copy(fontWeight = FontWeight.Normal),
@@ -329,67 +327,48 @@ private fun Metric(label: String, seconds: Long) {
 
 @Composable
 private fun ActiveTimerContent(
-    timer: FocusTimerSnapshot,
-    busy: Boolean,
-    onPause: () -> Unit,
-    onResume: () -> Unit,
-    onFinish: () -> Unit,
-    onFinishAndComplete: () -> Unit,
+    timer: FocusTimerSnapshot, busy: Boolean, onPause: () -> Unit, onResume: () -> Unit,
+    onFinish: () -> Unit, onFinishAndComplete: () -> Unit,
 ) {
     val running = timer.state == FocusTimerState.RUNNING
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
+    Column(Modifier.widthIn(max = FocusVisuals.MaximumWidth).fillMaxWidth().padding(horizontal = 4.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(timer.taskTitle, style = MiuixTheme.textStyles.title3.copy(fontWeight = FontWeight.Medium),
             textAlign = TextAlign.Center)
+        Text(listOf(
+            stringResource(if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) R.string.habit else R.string.task),
+            stringResource(if (timer.mode == com.deadliner.domain.focus.FocusTimerMode.STOPWATCH) R.string.focus_stopwatch_mode else R.string.focus_countdown_mode),
+        ).joinToString(" · "), style = MiuixTheme.textStyles.footnote1, color = MiuixTheme.colorScheme.onSurfaceVariantSummary)
         timer.habitOccurredOn?.let { Text(stringResource(R.string.habit_focus_record_date, it),
-            style = MiuixTheme.textStyles.footnote1, color = MiuixTheme.colorScheme.onSurfaceVariantSummary) }
-        FocusTimerDial(timer)
-        Row(Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            FocusRoundAction(icon = R.drawable.msr_stop_wght400,
-                label = stringResource(R.string.focus_finish_short),
-                contentDescription = stringResource(R.string.focus_finish),
-                enabled = !busy && timer.canFinish, onClick = onFinish,
-                modifier = Modifier.weight(1f))
-            FocusRoundAction(
-                icon = if (running) R.drawable.msr_pause_wght400 else R.drawable.msr_play_arrow_wght400,
-                label = stringResource(if (running) R.string.focus_pause else R.string.focus_resume),
-                enabled = !busy && if (running) timer.canPause else timer.canResume,
-                onClick = if (running) onPause else onResume,
-                primary = true, size = 80.dp, modifier = Modifier.weight(1f))
-            FocusRoundAction(icon = R.drawable.msr_check_wght400,
-                label = stringResource(if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) R.string.habit_focus_record else R.string.focus_complete_task_short),
-                contentDescription = stringResource(if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) R.string.habit_focus_finish_record else R.string.focus_finish_and_complete),
-                enabled = !busy && (timer.canFinishAndComplete || timer.canFinishAndRecord), onClick = onFinishAndComplete,
-                modifier = Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun SessionRow(session: FocusSession, onAdjust: () -> Unit, onDelete: () -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = session.startedAt.take(10),
-                style = MiuixTheme.textStyles.body2.copy(fontWeight = FontWeight.Normal),
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-            )
-            Text(text = formatDuration(session.durationSeconds),
-                style = MiuixTheme.textStyles.main.copy(fontWeight = FontWeight.Medium))
-        }
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(text = stringResource(R.string.focus_adjust), onClick = onAdjust)
-            TextButton(text = stringResource(R.string.delete), onClick = onDelete)
+            style = MiuixTheme.textStyles.footnote2, color = MiuixTheme.colorScheme.onSurfaceVariantSummary) }
+        BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 16.dp)) {
+            val wide = focusLayout(maxWidth.value, androidx.compose.ui.platform.LocalDensity.current.fontScale).sessionWide
+            val controls: @Composable () -> Unit = {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(stringResource(if (running) R.string.focus_hub_running_hint else R.string.focus_hub_paused_hint),
+                        style = MiuixTheme.textStyles.footnote1, color = MiuixTheme.colorScheme.onSurfaceVariantSummary)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        FocusRoundAction(icon = R.drawable.msr_stop_wght400, label = stringResource(R.string.focus_finish_short),
+                            contentDescription = stringResource(R.string.focus_finish), enabled = !busy && timer.canFinish,
+                            onClick = onFinish, modifier = Modifier.weight(1f))
+                        FocusRoundAction(icon = if (running) R.drawable.msr_pause_wght400 else R.drawable.msr_play_arrow_wght400,
+                            label = stringResource(if (running) R.string.focus_pause else R.string.focus_resume),
+                            enabled = !busy && if (running) timer.canPause else timer.canResume,
+                            onClick = if (running) onPause else onResume, primary = true, size = 64.dp, modifier = Modifier.weight(1f))
+                        FocusRoundAction(icon = R.drawable.msr_check_wght400,
+                            label = stringResource(if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) R.string.habit_focus_record else R.string.focus_complete_task_short),
+                            contentDescription = stringResource(if (timer.target?.kind == com.deadliner.domain.focus.FocusTargetKind.HABIT) R.string.habit_focus_finish_record else R.string.focus_finish_and_complete),
+                            enabled = !busy && (timer.canFinishAndComplete || timer.canFinishAndRecord),
+                            onClick = onFinishAndComplete, modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+            if (wide) Row(horizontalArrangement = Arrangement.spacedBy(32.dp), verticalAlignment = Alignment.CenterVertically) {
+                FocusTimerDial(timer, Modifier.weight(1f))
+                Box(Modifier.weight(1f)) { controls() }
+            } else Column(verticalArrangement = Arrangement.spacedBy(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                FocusTimerDial(timer); controls()
+            }
         }
     }
 }
@@ -397,7 +376,7 @@ private fun SessionRow(session: FocusSession, onAdjust: () -> Unit, onDelete: ()
 @Composable
 private fun InlineMessage(message: String, isError: Boolean) {
     FocusSection(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.widthIn(max = FocusVisuals.MaximumWidth).fillMaxWidth(),
         insideMargin = PaddingValues(horizontal = 18.dp, vertical = 14.dp),
     ) {
         Text(
@@ -430,7 +409,7 @@ private fun FocusSection(
     insideMargin: PaddingValues = PaddingValues(18.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    SettingsSection(modifier = modifier) {
+    FocusPanel(modifier.widthIn(max = FocusVisuals.MaximumWidth), padding = 0.dp) {
         Column(Modifier.fillMaxWidth().padding(insideMargin), content = content)
     }
 }

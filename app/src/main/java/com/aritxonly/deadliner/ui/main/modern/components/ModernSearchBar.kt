@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.main.modern.components
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -53,7 +54,7 @@ fun ModernSearchBar(
                 placeholder = { Text(stringResource(R.string.search_hint)) },
                 leadingIcon = {
                     if (expanded) {
-                        IconButton(onClick = clearQueryAndCollapse) {
+                        IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = clearQueryAndCollapse) {
                             M3Icon(
                                 com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_arrow_back_wght400),
                                 contentDescription = stringResource(R.string.back),
@@ -68,7 +69,7 @@ fun ModernSearchBar(
                 },
                 trailingIcon = {
                     if (expanded && query.isNotEmpty()) {
-                        IconButton(onClick = { textFieldState.edit { replace(0, length, "") } }) {
+                        IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = { textFieldState.edit { replace(0, length, "") } }) {
                             M3Icon(
                                 com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_close_wght400),
                                 contentDescription = stringResource(R.string.close),

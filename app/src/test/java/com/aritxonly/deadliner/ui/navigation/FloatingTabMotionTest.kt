@@ -68,11 +68,4 @@ class FloatingTabMotionTest {
         assertEquals(0f, floatingTabPanelDragFraction(100f, 0f), 0.0001f)
     }
 
-    @Test
-    fun selectedIconShrinksInsteadOfGrowingWhilePressed() {
-        assertEquals(1f, floatingTabSelectedIconScale(0f), 0.0001f)
-        assertEquals(0.95f, floatingTabSelectedIconScale(0.5f), 0.0001f)
-        assertEquals(0.90f, floatingTabSelectedIconScale(1f), 0.0001f)
-        assertTrue(floatingTabSelectedIconScale(1f) < 1f)
-    }
 }

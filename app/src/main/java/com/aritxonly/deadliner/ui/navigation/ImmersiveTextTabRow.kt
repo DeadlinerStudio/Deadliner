@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.navigation
 
+import com.aritxonly.deadliner.ui.base.feedback.DefaultClickFeedback
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -184,7 +185,7 @@ fun ImmersiveTextTabRow(
                                         selected = selected,
                                         role = Role.Tab,
                                         interactionSource = interactionSource,
-                                        indication = null,
+                                        indication = DefaultClickFeedback,
                                         onClick = { onTabSelected(index) },
                                     ),
                                 contentAlignment = Alignment.Center,

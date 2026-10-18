@@ -56,3 +56,13 @@
 # ONNX JNI uses Java constructors/members by name; required for minified Release.
 # https://onnxruntime.ai/docs/build/android.html
 -keep class ai.onnxruntime.** { *; }
+
+# Legacy MixedResult/proposal and saved UI payloads still use Gson for these nested models.
+# The primary tool boundary uses KMP generated serializers (ToolArgumentCodec).
+-keep class com.deadliner.domain.habit.HabitSchedule { *; }
+-keep class com.deadliner.domain.habit.HabitGoal { *; }
+-keep class com.deadliner.domain.habit.HabitTracking { *; }
+-keep class com.deadliner.domain.habit.HabitReminder { *; }
+-keep enum com.deadliner.domain.habit.HabitScheduleKind { *; }
+-keep enum com.deadliner.domain.habit.HabitGoalWindow { *; }
+-keep enum com.deadliner.domain.habit.HabitTrackingMode { *; }

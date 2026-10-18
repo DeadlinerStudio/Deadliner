@@ -73,7 +73,7 @@
             android:name=".DeadlineDetailActivity"
             android:exported="false"
             android:label="@string/title_activity_deadline_detail"
-            android:theme="@style/Theme.Deadliner"
+            android:theme="@style/Theme.Deadliner.TaskDetail"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
         <activity
@@ -245,6 +245,7 @@
 
         <activity
             android:name=".SettingsActivity"
+            android:enableOnBackInvokedCallback="false"
             android:exported="false"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
@@ -361,6 +362,7 @@
         </activity>
         <activity
             android:name=".AddDDLActivity"
+            android:theme="@android:style/Theme.NoDisplay"
             android:exported="true"
             android:launchMode="singleTask"
             android:resizeableActivity="true"

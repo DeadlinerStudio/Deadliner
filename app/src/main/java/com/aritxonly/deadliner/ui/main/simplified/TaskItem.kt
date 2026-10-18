@@ -87,8 +87,10 @@ fun TaskItem(
     onAbandonDialogVisibilityChange: (Boolean) -> Unit = {},
     category: CategoryPresentation? = null,
 ) {
+    val detailAnchor = com.aritxonly.deadliner.ui.detail.rememberTaskDetailAnchor()
     val focusEntry = com.aritxonly.deadliner.ui.focus.LocalFocusTimerEntry.current
     val context = LocalContext.current
+    val editorEntry = com.aritxonly.deadliner.ui.editor.LocalDeadlineEditorEntry.current
     val swipeActionColors = rememberTaskSwipeActionColors()
     var showGiveUpDialog by rememberSaveable(item.uid) { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable(item.uid) { mutableStateOf(false) }
@@ -144,14 +146,15 @@ fun TaskItem(
         else -> ""
     }
     val openDetails = {
-        val intent = DeadlineDetailActivity.newIntent(context, item.uid)
-        activity.startActivity(intent)
+        detailAnchor.open(activity, item.uid)
     }
     val openEditor = {
-        activity.startActivity(AddDDLActivity.newEditIntent(context, item.uid))
+        editorEntry.open(AddDDLActivity.newEditIntent(context, item.uid))
     }
 
     DDLItemCardSwipeable(
+        modifier = detailAnchor.modifier,
+        detailAnchor = detailAnchor,
         title = item.title,
         remainingTimeAlt = remainingTimeText,
         note = item.note,

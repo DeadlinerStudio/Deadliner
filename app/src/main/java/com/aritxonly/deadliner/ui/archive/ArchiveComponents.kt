@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.archive
 
+import androidx.compose.ui.draw.clip
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -296,6 +297,7 @@ private fun ArchiveActionButton(
     Box(
         modifier = Modifier
             .size(32.dp)
+            .clip(CircleShape)
             .background(containerColor, CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,

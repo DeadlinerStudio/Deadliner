@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.widget.Toast
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +23,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.ai.AIUtils
 import com.aritxonly.deadliner.ai.LlmPreset
@@ -39,7 +39,7 @@ private const val CUSTOM_BYOK_PRESET_ID = "custom_byok"
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AISettingsScreen(
-    nav: NavHostController,
+    nav: SettingsNavigator,
     navigateUp: () -> Unit
 ) {
     val context = LocalContext.current
@@ -65,7 +65,7 @@ fun AISettingsScreen(
         navigationIcon = {
             IconButton(
                 onClick = navigateUp,
-                modifier = navIconPaddingModifier
+                modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)
             ) {
                 Icon(
                     com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
@@ -102,7 +102,7 @@ fun AISettingsScreen(
 
             Text(
                 stringResource(R.string.settings_ai_description),
-                modifier = Modifier.padding(horizontal = 24.dp),
+                modifier = Modifier.padding(horizontal = SettingsItemDefaults.HorizontalPadding),
                 style = MaterialTheme.typography.bodySmall
             )
 

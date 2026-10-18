@@ -14,7 +14,7 @@ enum class AppearanceColorSource(val key: String) {
 }
 
 data class AppearancePreferences(
-    val uiStyle: UiStyle = UiStyle.Simplified,
+    val uiStyle: UiStyle = UiStyle.Miuix,
     val backgroundColorStrategy: BackgroundColorStrategy = BackgroundColorStrategy.MiuixHyperOs,
     val colorSource: AppearanceColorSource = AppearanceColorSource.SystemDynamic,
     val seedColorHex: String? = null,
@@ -30,6 +30,7 @@ data class AppearancePreferences(
     val useMyHyperModifierNavigationLift: Boolean = false,
     val useContrastingHomeFab: Boolean = true,
     val useAdvancedMaterial: Boolean = false,
+    val useOfficialMiuixGlass: Boolean = false,
     val advancedMaterialLevel: AdvancedMaterialLevel = AdvancedMaterialLevel.Light,
     val advancedMaterialBlurRadius: Float = AdvancedMaterialTuning.DefaultBlurRadius,
     val advancedMaterialFineTuning: AdvancedMaterialFineTuning = AdvancedMaterialFineTuning.Default,

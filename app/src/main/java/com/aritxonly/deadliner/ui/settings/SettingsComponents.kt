@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.annotation.DrawableRes
@@ -78,7 +79,6 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
@@ -114,51 +114,6 @@ import com.aritxonly.deadliner.ui.base.RadioButton
 import com.aritxonly.deadliner.ui.base.OutlinedTextField
 
 // region: These codes are referenced from https://github.com/YangDai2003/OpenNote-Compose/
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun SettingItem(
-    headlineText: String,
-    supportingText: String,
-    modifier: Modifier = Modifier,
-    expressiveTypeModifier: Modifier = Modifier
-        .size(24.dp)
-        .clip(CircleShape)
-        .let { baseModifier -> baseModifier },
-    leadingContent: @Composable (() -> Unit)? = null,
-    trailingContent: @Composable (() -> Unit)? = {
-        Icon(
-            painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_chevron_right_wght400),
-            modifier = expressiveTypeModifier
-                .padding(start = 2.dp),
-            contentDescription = null
-        )
-    },
-    colors: ListItemColors = ListItemDefaults.colors(containerColor = Color.Transparent),
-    tonalElevation: Dp = ListItemDefaults.Elevation,
-    shadowElevation: Dp = ListItemDefaults.Elevation
-) = ListItem(
-    modifier = modifier,
-    headlineContent = {
-        Text(
-            text = headlineText,
-            maxLines = 1,
-            style = MaterialTheme.typography.titleMediumEmphasized
-        )
-    },
-    supportingContent = {
-        Text(
-            text = supportingText,
-            maxLines = 1,
-            modifier = Modifier.basicMarquee()
-        )
-    },
-    leadingContent = leadingContent,
-    trailingContent = trailingContent,
-    colors = colors,
-    tonalElevation = tonalElevation,
-    shadowElevation = shadowElevation
-)
-
 @Composable
 fun SettingsSection(
     modifier: Modifier = Modifier,
@@ -189,7 +144,7 @@ fun SettingsSection(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                modifier = modifier.padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 8.dp)
             )
         }
         if (clipContent) {
@@ -395,7 +350,7 @@ fun SettingsSwitchItem(
                     GlobalUtils.triggerVibration(context, 10L)
                     onCheckedChange(!checked)
                 }
-                .padding(horizontal = 24.dp, vertical = 12.dp),
+                .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -459,7 +414,7 @@ fun SettingsDetailSwitchItem(
                         onLongPress(!checked)
                     }
                 )
-                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -525,7 +480,7 @@ fun SettingsDetailSwitchItem(
                         onLongPress(!checked)
                     }
                 )
-                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -591,7 +546,7 @@ fun SettingsSliderItemWithLabel(
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -680,7 +635,7 @@ fun SettingsTextButtonItem(
             Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
-                .padding(horizontal = 24.dp, vertical = 12.dp),
+                .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -688,96 +643,6 @@ fun SettingsTextButtonItem(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
-            if (iconRes != null) {
-                Icon(
-                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SettingsDetailTextButtonItem(
-    modifier: Modifier = Modifier,
-    @StringRes headline: Int,
-    @StringRes supporting: Int,
-    @DrawableRes iconRes: Int? = null,
-    onClick: () -> Unit,
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(headline),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = stringResource(supporting),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (iconRes != null) {
-                Icon(
-                    painter = com.aritxonly.deadliner.ui.symbolPainterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SettingsDetailTextButtonItem(
-    modifier: Modifier = Modifier,
-    headlineText: String,
-    supportingText: String,
-    @DrawableRes iconRes: Int? = null,
-    onClick: () -> Unit,
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = headlineText,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = supportingText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
             if (iconRes != null) {
                 Icon(
                     painter = com.aritxonly.deadliner.ui.symbolPainterResource(iconRes),
@@ -852,7 +717,7 @@ fun RoundedTextField(
                     com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_visibility_off_wght400)
                 val description = if (passwordVisible) "Hide password" else "Show password"
 
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = { passwordVisible = !passwordVisible }) {
                     Icon(painter = image, contentDescription = description)
                 }
             }
@@ -894,7 +759,7 @@ fun <T> SettingsRadioGroupItem(
                             GlobalUtils.triggerVibration(context, 10L)
                             onOptionSelected(option.key)
                         }
-                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                        .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -955,7 +820,7 @@ fun <T> SettingsRadioGroupItem(
                             GlobalUtils.triggerVibration(context, 10L)
                             onOptionSelected(option.key)
                         }
-                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                        .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -1016,7 +881,7 @@ fun InfoCardCentered(
             modifier = Modifier
                 .fillMaxWidth()
                 .defaultMinSize(minHeight = 72.dp) // 常见两行 ListItem 高度
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
@@ -1053,7 +918,7 @@ fun IconPickerRow(
     modifier: Modifier = Modifier,
     itemSize: Dp = 64.dp,
     itemPadding: Dp = 12.dp,
-    contentPadding: Dp = 16.dp,
+    contentPadding: Dp = SettingsItemDefaults.HorizontalPadding,
     snapToItems: Boolean = true,
 ) {
     val context = LocalContext.current
@@ -1132,7 +997,7 @@ fun IconPickerRow(
                             selected = selected,
                             role = Role.RadioButton,
                             interactionSource = interactionSource,
-                            indication = ripple(bounded = true),
+                            indication = null, // This picker already animates its own press scale.
                             onClick = {
                                 GlobalUtils.triggerVibration(context, 10L)
                                 onSelect(resId)

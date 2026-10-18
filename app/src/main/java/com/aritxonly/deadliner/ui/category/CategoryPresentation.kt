@@ -39,7 +39,7 @@ object CategoryPresentationRegistry {
         "book" to R.drawable.msr_book_2_wght400,
         "education" to R.drawable.msr_school_wght400,
         "edit" to R.drawable.msr_border_color_wght400,
-        "home" to R.drawable.msr_house_wght400,
+        "home" to R.drawable.msr_home_wght400,
         "shopping" to R.drawable.msr_shopping_cart_wght400,
         "dining" to R.drawable.msr_restaurant_wght400,
         "coffee" to R.drawable.msr_coffee_wght400,

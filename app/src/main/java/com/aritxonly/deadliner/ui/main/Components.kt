@@ -1,6 +1,10 @@
 package com.aritxonly.deadliner.ui.main
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.content.Intent
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.compositeOver
+import com.aritxonly.deadliner.ui.detail.TaskDetailAnchor
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -87,7 +91,6 @@ import com.aritxonly.deadliner.model.DDLStatus
 import com.aritxonly.deadliner.model.DeadlineType
 import com.aritxonly.deadliner.model.PartyPresets
 import com.aritxonly.deadliner.ui.iconResource
-import com.aritxonly.deadliner.ui.main.simplified.detectSwipeUp
 import com.aritxonly.deadliner.ui.theme.rememberTaskIndicatorColors
 import nl.dionsegijn.konfetti.xml.KonfettiView
 
@@ -146,10 +149,10 @@ fun TextPageIndicator(
     val indicatorButton: @Composable () -> Unit = {
         Button(
             onClick = onClick,
-            modifier = Modifier.graphicsLayer {
+            modifier = (Modifier.graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-            },
+            }).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.shape),
             colors = ButtonDefaults.textButtonColors(
                 containerColor = containerColor,
                 contentColor = contentColor,
@@ -207,6 +210,7 @@ fun DDLItemCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .clip(shape)
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         shape = shape
     ) {
@@ -302,6 +306,7 @@ fun DDLItemCardSimplified(
     status: DDLStatus = DDLStatus.UNDERGO,
     useDisabledCompletedStyle: Boolean = false,
     categoryContent: (@Composable () -> Unit)? = null,
+    detailAnchor: TaskDetailAnchor? = null,
 ) {
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
     val progressClamped = progress.coerceIn(0f, 1f)
@@ -313,6 +318,9 @@ fun DDLItemCardSimplified(
     val indicatorColor = indicatorColors.indicatorColor
     val baseBgColor = indicatorColors.baseBackgroundColor
     val overlayBgColor = indicatorColors.overlayBackgroundColor
+    SideEffect {
+        detailAnchor?.updateAppearance(overlayBgColor.compositeOver(baseBgColor), indicatorColor, progressClamped)
+    }
 
     Card(
         modifier = modifier
@@ -356,6 +364,7 @@ fun DDLItemCardSimplified(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .then(detailAnchor?.foregroundModifier ?: Modifier)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
@@ -696,8 +705,8 @@ private fun PreviewPageIndicator() {
             }
         ) {
             FilledIconButton(
-                modifier = Modifier
-                    .width(56.dp),
+                modifier = (Modifier
+                    .width(56.dp)).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.filledShape),
                 onClick = {},
             ) {
                 Icon(com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_add_wght400), "")

@@ -1,0 +1,5 @@
+<resources>
+    <string name="settings_official_glass_experiment">MIUIX 官方玻璃（实验性）</string>
+    <string name="settings_official_glass_experiment_summary">启用高级材质后，使用 MIUIX PR #423 的官方材质替换现有柔光玻璃。采用官方预设，原有模糊与光学调参暂不生效；关闭即可恢复。</string>
+    <string name="settings_official_glass_preset">MIUIX 官方预设</string>
+</resources>

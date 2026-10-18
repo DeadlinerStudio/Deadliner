@@ -27,9 +27,12 @@ import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 fun DeadlinerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    editorLaunchRequest: android.content.Intent? = null,
+    onEditorLaunchRequestConsumed: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val appearance by GlobalUtils.appearanceFlow.collectAsState()
+    val iconPack by com.aritxonly.deadliner.ui.InterfaceIconPreferences.flow.collectAsState()
     val usesMaterialMonetBackground =
         appearance.backgroundColorStrategy == BackgroundColorStrategy.MaterialMonet
     val modernColorPalette = if (appearance.modernUseDevicePaletteStrategy) {
@@ -59,6 +62,7 @@ fun DeadlinerTheme(
         enabled = appearance.useAdvancedMaterial,
         blurRadius = appearance.advancedMaterialBlurRadius,
         fineTuning = appearance.advancedMaterialFineTuning,
+        useOfficialMiuixGlass = appearance.useOfficialMiuixGlass,
     )
     val sharedNavigationLift = rememberMyHyperModifierNavigationLift(
         appearance.useMyHyperModifierNavigationLift,
@@ -78,7 +82,14 @@ fun DeadlinerTheme(
             useContrastingPresetFab = appearance.useContrastingHomeFab,
         ),
         LocalAdvancedMaterialSpec provides advancedMaterialSpec,
+        LocalTextFieldContainerColors provides textFieldContainerColors(
+            material = materialColorScheme,
+            strategy = appearance.backgroundColorStrategy,
+            colorSource = appearance.effectiveColorSource,
+            darkTheme = darkTheme,
+        ),
         LocalFloatingNavigationBottomLift provides floatingNavigationLift,
+        com.aritxonly.deadliner.ui.LocalInterfaceIconPack provides iconPack,
         LocalMaterialSymbolStyle provides MaterialSymbolStyle(
             weight = MaterialSymbolAxisPolicy.ImmersiveModernWeight,
             grade = MaterialSymbolAxisPolicy.ImmersiveModernGrade,
@@ -90,13 +101,21 @@ fun DeadlinerTheme(
                 colorScheme = materialColorScheme,
                 typography = Typography,
             ) {
-                MiuixScaffold(
-                    containerColor = Color.Transparent,
-                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                ) {
+                com.aritxonly.deadliner.ui.base.feedback.ProvideMiuixPressFeedback {
+                    // Own the recorder and retained dialogs above Scaffold's popup host,
+                    // so Sheet callers inherit the same whole-window sampling source.
                     ProvideAdvancedMaterialDialogBlurHost {
-                        content()
-                        DateTimePickerHost()
+                        MiuixScaffold(
+                            containerColor = Color.Transparent,
+                            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                        ) {
+                            com.aritxonly.deadliner.ui.editor.DeadlineEditorEntryHost(
+                                editorLaunchRequest, onEditorLaunchRequestConsumed,
+                            ) {
+                                content()
+                                DateTimePickerHost()
+                            }
+                        }
                     }
                 }
             }

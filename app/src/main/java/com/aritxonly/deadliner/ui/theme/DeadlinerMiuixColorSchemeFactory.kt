@@ -69,8 +69,8 @@ object DeadlinerMiuixColorSchemeFactory {
             outline = tokens.outline,
             dividerLine = tokens.outlineVariant,
             windowDimming = windowDimming,
-            sliderKeyPoint = tokens.outlineVariant.copy(alpha = 0.35f),
-            sliderKeyPointForeground = tokens.primary,
+            sliderKeyPoint = tokens.onSurfaceVariant.copy(alpha = 0.55f),
+            sliderKeyPointForeground = tokens.onPrimary.copy(alpha = 0.85f),
             sliderBackground = sliderBackground,
         )
     } else {
@@ -125,8 +125,8 @@ object DeadlinerMiuixColorSchemeFactory {
             outline = tokens.outline,
             dividerLine = tokens.outlineVariant,
             windowDimming = windowDimming,
-            sliderKeyPoint = tokens.outlineVariant.copy(alpha = 0.35f),
-            sliderKeyPointForeground = tokens.primary,
+            sliderKeyPoint = tokens.onSurfaceVariant.copy(alpha = 0.55f),
+            sliderKeyPointForeground = tokens.onPrimary.copy(alpha = 0.85f),
             sliderBackground = sliderBackground,
         )
     }

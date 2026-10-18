@@ -25,10 +25,6 @@ sealed interface IntroPageType {
         override val stableId: Long = 5L
     }
 
-    data object UiStyleChoice : IntroPageType {
-        override val stableId: Long = 6L
-    }
-
     data class GuideScene(val sceneId: String) : IntroPageType {
         override val stableId: Long = 1_000L + sceneId.hashCode().toLong()
     }
@@ -44,7 +40,6 @@ sealed interface IntroPageType {
             add(Design)
             add(Color)
             add(AdvancedMaterial)
-            add(UiStyleChoice)
             addAll(
                 IntroGuideScenes.forStyle(style).map { scene ->
                     GuideScene(scene.id)

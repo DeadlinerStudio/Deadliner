@@ -1,5 +1,8 @@
 package com.aritxonly.deadliner.ui.settings
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +29,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.model.AdvancedMaterialFineTuning
 import com.aritxonly.deadliner.model.MiuixModalMaterialTuning
 import com.aritxonly.deadliner.ui.base.Button
+import com.aritxonly.deadliner.ui.base.syncTopBarMaterialScroll
 import com.aritxonly.deadliner.ui.base.MiuixBottomSheet
 import com.aritxonly.deadliner.ui.base.MiuixDialog
 import com.aritxonly.deadliner.ui.base.Slider
@@ -72,7 +75,7 @@ fun MiuixModalMaterialLab(
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                    modifier = Modifier.padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 12.dp),
                 )
 
                 DialogMaterialControls(
@@ -94,7 +97,7 @@ fun MiuixModalMaterialLab(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Button(
@@ -127,7 +130,7 @@ fun MiuixModalMaterialLab(
                         onValueChangeFinished(resetValue)
                     },
                     enabled = enabled,
-                    modifier = Modifier.align(Alignment.End).padding(horizontal = 16.dp),
+                    modifier = Modifier.align(Alignment.End).padding(horizontal = SettingsItemDefaults.HorizontalPadding),
                 ) {
                     Text(stringResource(R.string.settings_miuix_modal_reset))
                 }
@@ -171,12 +174,15 @@ fun MiuixModalMaterialLab(
             show = showSheetPreview,
             title = stringResource(R.string.settings_miuix_preview_sheet_title),
             onDismissRequest = { showSheetPreview = false },
-        ) {
+        ) { sheetPadding ->
+            val sheetScrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
-                    .navigationBarsPadding(),
+                    .syncTopBarMaterialScroll(sheetScrollState)
+                    .verticalScroll(sheetScrollState)
+                    .padding(sheetPadding)
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
             ) {
                 Text(
                     text = stringResource(R.string.settings_miuix_preview_sheet_summary),
@@ -282,7 +288,7 @@ private fun ModalMaterialSlider(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 8.dp),
+            .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 8.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

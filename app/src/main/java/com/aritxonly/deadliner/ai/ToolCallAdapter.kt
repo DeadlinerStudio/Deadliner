@@ -27,7 +27,7 @@ internal class AndroidToolCallAdapter(
             )
         }
         val result = sharedExecute?.invoke(call.toolName, call.argsJson)
-            ?: KmpV6Runtime.executeLifiTool(call.toolName, call.argsJson)
+            ?: KmpV6Runtime.executeApprovedLifiTool(call.id, call.argsJson)
         return ToolExecutionResult(result)
     }
 }

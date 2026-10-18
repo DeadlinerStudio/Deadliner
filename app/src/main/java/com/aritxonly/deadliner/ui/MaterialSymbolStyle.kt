@@ -19,10 +19,10 @@ import kotlin.math.min
 
 /** Central Material Symbols axis tuning point. */
 internal object MaterialSymbolAxisPolicy {
-    const val DefaultWeight = 400
+    const val DefaultWeight = 330
     const val DefaultGrade = 0
-    const val ImmersiveModernWeight = 400
-    const val ImmersiveModernGrade = -80
+    const val ImmersiveModernWeight = 330
+    const val ImmersiveModernGrade = 0
     const val OpticalSize = 24
 }
 
@@ -43,26 +43,30 @@ internal val LocalMaterialSymbolStyle = staticCompositionLocalOf { MaterialSymbo
 @Composable
 fun symbolPainterResource(@DrawableRes sourceId: Int): Painter {
     val definition = MaterialSymbolRegistry.definitionFor(sourceId) ?: return painterResource(sourceId)
-    val context = androidx.compose.ui.platform.LocalContext.current
     val style = LocalMaterialSymbolStyle.current
-    val symbolName = if (style.usesModernBackIcon) definition.modernName ?: definition.name else definition.name
-    return remember(symbolName, definition.filled, style) {
-        MaterialSymbolFontPainter(
-            context = context.applicationContext,
-            symbolName = symbolName,
-            filled = definition.filled,
-            style = style,
-        )
-    }
+    val name = if (style.usesModernBackIcon) definition.modernName ?: definition.name else definition.name
+    return interfaceSymbolPainter(name, definition.filled)
 }
 
-/** Named symbols for transient actions, rendered through the same project font and axes. */
+/** Dynamic semantic keys use the same icon pack as resource-backed symbols. */
 @Composable
-fun materialSymbolPainter(name: String): Painter {
+fun materialSymbolPainter(name: String): Painter = interfaceSymbolPainter(name, false)
+
+@Composable
+private fun interfaceSymbolPainter(name: String, filled: Boolean): Painter {
+    if (LocalInterfaceIconPack.current == InterfaceIconPack.HybridMiuix) {
+        HybridIconRegistry.resource(name, filled)?.let { return painterResource(it) }
+    }
+    return originalMaterialSymbolPainter(name, filled)
+}
+
+/** Deliberate Material glyph, independent of the selected interface pack. */
+@Composable
+fun originalMaterialSymbolPainter(name: String, filled: Boolean = false): Painter {
     val context = androidx.compose.ui.platform.LocalContext.current
     val style = LocalMaterialSymbolStyle.current
-    return remember(name, style) {
-        MaterialSymbolFontPainter(context.applicationContext, name, false, style)
+    return remember(name, filled, style) {
+        MaterialSymbolFontPainter(context.applicationContext, name, filled, style)
     }
 }
 
@@ -92,7 +96,7 @@ private class MaterialSymbolFontPainter(
         drawIntoCanvas { canvas ->
             val nativeCanvas = canvas.nativeCanvas
             nativeCanvas.save()
-            if (layoutDirection == LayoutDirection.Rtl) {
+            if (layoutDirection == LayoutDirection.Rtl && InterfaceIconDirection.mirrorsInRtl(symbolName)) {
                 nativeCanvas.scale(-1f, 1f, size.width / 2f, size.height / 2f)
             }
             if (symbolName == "arrow_back_ios_new") {

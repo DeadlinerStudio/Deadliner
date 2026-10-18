@@ -57,6 +57,13 @@ class FocusTimerActivity : DeadlinerAppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdgeForAllDevices()
         super.onCreate(savedInstanceState)
+        if (android.os.Build.VERSION.SDK_INT >= 34) {
+            overrideActivityTransition(android.app.Activity.OVERRIDE_TRANSITION_OPEN, R.anim.focus_page_enter, R.anim.focus_page_reveal)
+            overrideActivityTransition(android.app.Activity.OVERRIDE_TRANSITION_CLOSE, R.anim.focus_page_reveal, R.anim.focus_page_exit)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(R.anim.focus_page_enter, R.anim.focus_page_reveal)
+        }
         val requestedTaskUid = intent.getStringExtra(EXTRA_TASK_UID).orEmpty()
         val viewModel = KmpV6Runtime.focusTimerViewModel
 
@@ -167,4 +174,12 @@ class FocusTimerActivity : DeadlinerAppCompatActivity() {
         super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
         enableEdgeToEdgeForAllDevices()
     }
+    override fun finishAfterTransition() {
+        super.finishAfterTransition()
+        if (android.os.Build.VERSION.SDK_INT < 34) {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(R.anim.focus_page_reveal, R.anim.focus_page_exit)
+        }
+    }
+
 }

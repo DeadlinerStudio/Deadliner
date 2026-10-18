@@ -23,7 +23,7 @@ fun DateTimePickerHost() {
     val manager = activity.supportFragmentManager
     val controller = remember(manager) { DateTimePickerController() }
     DisposableEffect(manager, controller) {
-        DateTimePickers.attach(manager, controller)
+        DateTimePickers.attach(manager, controller, activity.window)
         onDispose { DateTimePickers.detach(manager, controller) }
     }
     controller.request?.let { request ->

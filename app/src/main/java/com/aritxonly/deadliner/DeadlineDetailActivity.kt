@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,6 +27,30 @@ import com.deadliner.domain.task.TaskActionOutcome
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
+    private var closing by androidx.compose.runtime.mutableStateOf(false)
+    private var sourceBounds by androidx.compose.runtime.mutableStateOf<FloatArray?>(null)
+    private var sourceSnapshot by androidx.compose.runtime.mutableStateOf<com.aritxonly.deadliner.ui.detail.TaskDetailSnapshot?>(null)
+    private var sourceCornerRadiusPx = 0f
+    private var animateEntrance = true
+    private var motionMounted = false
+
+    override fun finish() {
+        if (motionMounted) closing = true else super.finish()
+    }
+
+    override fun finishAfterTransition() = finish()
+
+    private fun invalidateSource() {
+        sourceBounds = null
+        sourceSnapshot = null
+    }
+
+    private fun completeClose() {
+        super.finish()
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
+    }
+
     companion object {
         private const val EXTRA_TASK_UID = "task_uid"
 
@@ -36,12 +61,25 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdgeForAllDevices()
         super.onCreate(savedInstanceState)
+        animateEntrance = savedInstanceState == null
+        sourceBounds = if (animateEntrance) intent.getFloatArrayExtra(
+            com.aritxonly.deadliner.ui.detail.TaskDetailSourceExtra) else null
+        sourceSnapshot = com.aritxonly.deadliner.ui.detail.TaskDetailSnapshotStore.take(
+            intent.getStringExtra(com.aritxonly.deadliner.ui.detail.TaskDetailSnapshotExtra),
+        ).takeIf { animateEntrance && sourceBounds != null }
+        sourceCornerRadiusPx = intent.getFloatExtra(
+            com.aritxonly.deadliner.ui.detail.TaskDetailCornerExtra,
+            resources.getDimension(R.dimen.item_corner_radius),
+        )
         val taskUid = intent.getStringExtra(EXTRA_TASK_UID)
             ?: throw IllegalArgumentException("Missing task UID")
         val viewModel = KmpV6Runtime.createTaskDetailViewModel(taskUid)
         viewModel.initialize()
         val focusLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) finishAfterTransition() else viewModel.initialize()
+            if (result.resultCode == RESULT_OK) {
+                invalidateSource()
+                finishAfterTransition()
+            } else viewModel.initialize()
         }
 
         fun showActionResult(action: TaskAction) {
@@ -57,6 +95,8 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
                     }
                     val text = if (action == TaskAction.MARK_ARCHIVE) getString(message, 1) else getString(message)
                     Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+                    // This action removes/reorders the source row; fade out rather than target it.
+                    invalidateSource()
                     finishAfterTransition()
                 }
 
@@ -74,6 +114,8 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
             when (result.outcome) {
                 TaskActionOutcome.APPLIED -> {
                     Toast.makeText(this, R.string.toast_deletion, Toast.LENGTH_SHORT).show()
+                    // This action removes/reorders the source row; fade out rather than target it.
+                    invalidateSource()
                     finishAfterTransition()
                 }
 
@@ -91,26 +133,39 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 val task = state.task
                 val categories = rememberActiveCategories(state)
+                val editorEntry = com.aritxonly.deadliner.ui.editor.LocalDeadlineEditorEntry.current
                 FocusTimerEntryHost(onOpenTimer = {
                     focusLauncher.launch(FocusTimerActivity.newIntent(this@DeadlineDetailActivity, "", ""))
                 }) {
                     val focusEntry = com.aritxonly.deadliner.ui.focus.LocalFocusTimerEntry.current
                     ProvideAdvancedMaterialDialogBlurHost {
-                        Box(Modifier.fillMaxSize()) {
+                        com.aritxonly.deadliner.ui.detail.TaskDetailMotion(
+                            source = sourceBounds,
+                            sourceSnapshot = sourceSnapshot,
+                            sourceCornerRadiusPx = sourceCornerRadiusPx,
+                            closing = closing,
+                            ready = task != null,
+                            animateEntrance = animateEntrance,
+                            onClose = { finish() },
+                            onClosed = ::completeClose,
+                        ) {
                             if (task != null) {
                                 DeadlineDetailScreen(
+                                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
                                     applicationContext = applicationContext,
                                     activityContext = this@DeadlineDetailActivity,
                                     deadline = task,
                                     onClose = { finish() },
-                                    onToggleStar = viewModel::setStarred,
-                                    categories = categories,
-                                    onSetCategory = { categoryUid ->
-                                        KmpV6Runtime.updateTaskCategory(task, categoryUid)
-                                        viewModel.initialize()
+                                    onToggleStar = { starred ->
+                                        invalidateSource()
+                                        viewModel.setStarred(starred)
                                     },
-                                    onManageCategories = {
-                                        startActivity(CategoryManagementActivity.newIntent(this@DeadlineDetailActivity))
+                                    categories = categories,
+                                    onEdit = {
+                                        editorEntry.open(AddDDLActivity.newEditIntent(this@DeadlineDetailActivity, task.uid)) {
+                                            invalidateSource()
+                                            viewModel.initialize()
+                                        }
                                     },
                                     onOpenFocusTimer = {
                                         focusEntry(task.uid, task.title)
@@ -129,15 +184,20 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
                 }
             }
         }
+        motionMounted = true
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        sourceBounds = null // The source card no longer has valid window coordinates after resizing.
+        sourceSnapshot = null
         enableEdgeToEdgeForAllDevices()
     }
 
     override fun onMultiWindowModeChanged(isInMultiWindowMode: Boolean, newConfig: Configuration) {
         super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
+        sourceBounds = null
+        sourceSnapshot = null
         enableEdgeToEdgeForAllDevices()
     }
 }

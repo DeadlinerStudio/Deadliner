@@ -1,16 +1,10 @@
 package com.aritxonly.deadliner.ui.base
 
-import androidx.compose.runtime.setValue
+import com.aritxonly.deadliner.ui.base.feedback.miuixControlFeedback
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,26 +16,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.ui.material.glass.LocalProgressiveTopBarMaterialHosted
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarButtonMaterialProgress
 import com.aritxonly.deadliner.ui.material.glass.LocalTopBarScrollProgress
 import com.aritxonly.deadliner.ui.material.glass.ProgressiveTopBarMaterial
+import com.aritxonly.deadliner.ui.material.glass.SoftGlassShadowProfile
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassDefaults
+import com.aritxonly.deadliner.ui.material.glass.TopBarGlassShadowHost
 import com.aritxonly.deadliner.ui.material.glass.SoftGlassSurface
 import com.aritxonly.deadliner.ui.material.glass.softGlassShadow
-import com.aritxonly.deadliner.ui.material.glass.softGlassPressHighlightAlpha
-import com.aritxonly.deadliner.ui.material.glass.softGlassPressMaterialInteraction
-import com.aritxonly.deadliner.ui.material.glass.softGlassPressScale
 import top.yukonga.miuix.kmp.basic.ScrollBehavior as MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
@@ -92,21 +81,23 @@ fun TopAppBar(
     }
 
     val platformTopBar = @Composable {
-        when (mode) {
-            TopAppBarStyle.LARGE -> MiuixTopAppBar(
-                title = title, largeTitle = title, color = Color.Transparent,
-                navigationIcon = resolvedNavigationIcon, actions = actions,
-                titleColor = MaterialTheme.colorScheme.onSurface,
-                largeTitleColor = MaterialTheme.colorScheme.onSurface,
-                subtitle = subtitle.orEmpty(), subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                scrollBehavior = miuixScrollBehavior,
-            )
-            else -> SmallTopAppBar(
-                subtitle = subtitle.orEmpty(), subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                title = title, color = Color.Transparent,
-                navigationIcon = resolvedNavigationIcon, actions = actions,
-                titleColor = MaterialTheme.colorScheme.onSurface,
-            )
+        TopBarGlassShadowHost {
+            when (mode) {
+                TopAppBarStyle.LARGE -> MiuixTopAppBar(
+                    title = title, largeTitle = title, color = Color.Transparent,
+                    navigationIcon = resolvedNavigationIcon, actions = actions,
+                    titleColor = MaterialTheme.colorScheme.onSurface,
+                    largeTitleColor = MaterialTheme.colorScheme.onSurface,
+                    subtitle = subtitle.orEmpty(), subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    scrollBehavior = miuixScrollBehavior,
+                )
+                else -> SmallTopAppBar(
+                    subtitle = subtitle.orEmpty(), subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    title = title, color = Color.Transparent,
+                    navigationIcon = resolvedNavigationIcon, actions = actions,
+                    titleColor = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
     }
 
@@ -127,73 +118,28 @@ fun TopAppBar(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun ImmersiveNavigationIcon(
+internal fun ImmersiveNavigationIcon(
     materialAlpha: Float,
     content: @Composable () -> Unit,
 ) {
-    var pressed by remember { mutableStateOf(false) }
-    val pressProgress by animateFloatAsState(
-        targetValue = if (pressed) 1f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium,
-        ),
-        label = "immersive-navigation-press",
-    )
     val isDark = MaterialTheme.colorScheme.onSurface.luminance() > 0.5f
-    val highlightColor = MaterialTheme.colorScheme.onSurface.copy(
-        alpha = softGlassPressHighlightAlpha(pressProgress, isDark),
-    )
-
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
-                    pressed = true
-                    try {
-                        waitForUpOrCancellation()
-                    } finally {
-                        pressed = false
-                    }
-                }
-            },
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
         Box(
-            modifier = Modifier
-                .size(44.dp)
-                .graphicsLayer {
-                    val scale = softGlassPressScale(pressProgress)
-                    scaleX = scale
-                    scaleY = scale
-                },
+            modifier = Modifier.size(44.dp)
+                // Keep elevation outside the press/state-layer clip.
+                .softGlassShadow(SoftGlassDefaults.Shape, isDark, alpha = materialAlpha,
+                    profile = SoftGlassShadowProfile.TopBarControl)
+                .miuixControlFeedback(shape = SoftGlassDefaults.Shape),
             contentAlignment = Alignment.Center,
         ) {
             SoftGlassSurface(
-                modifier = Modifier
-                    .matchParentSize()
-                    .softGlassShadow(
-                        shape = SoftGlassDefaults.Shape,
-                        isDark = isDark,
-                        alpha = materialAlpha,
-                    ),
+                modifier = Modifier.matchParentSize(),
                 materialAlpha = materialAlpha,
-                interaction = softGlassPressMaterialInteraction(pressProgress),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(highlightColor),
-                )
-            }
+            ) {}
             CompositionLocalProvider(
                 LocalRippleConfiguration provides null,
                 LocalTopBarButtonMaterialHosted provides true,
-            ) {
-                content()
-            }
+            ) { content() }
         }
     }
 }

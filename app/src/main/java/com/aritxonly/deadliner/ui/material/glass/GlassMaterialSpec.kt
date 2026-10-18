@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.model.AdvancedMaterialFineTuning
+import kotlin.math.roundToInt
 
 @Immutable
 data class GlassBlurSpec(
@@ -26,6 +27,8 @@ data class GlassRefractionSpec(
 
 @Immutable
 data class GlassEdgeOpticsSpec(
+    /** Thin luminous rim, independent of the much wider refraction field. */
+    val rimWidth: Dp = 0.6.dp,
     val highlightAlpha: Float = 0.95f,
     val highlightGray: Float = 1f,
     val darkHighlightMultiplier: Float = 0.20f,
@@ -48,6 +51,7 @@ data class GlassLayeringSpec(
 
 @Immutable
 data class GlassMaterialRecipe(
+    val surfaceRole: GlassSurfaceRole = GlassSurfaceRole.Control,
     val blur: GlassBlurSpec = GlassBlurSpec(),
     val refraction: GlassRefractionSpec = GlassRefractionSpec(),
     val edgeOptics: GlassEdgeOpticsSpec = GlassEdgeOpticsSpec(),
@@ -76,16 +80,18 @@ enum class GlassTintStyle {
 
 object DeadlinerGlassRecipes {
     val FloatingNavigation = GlassMaterialRecipe(
+        surfaceRole = GlassSurfaceRole.FloatingBar,
         blur = GlassBlurSpec(
-            radiusMultiplier = 0.25f,
+            radiusMultiplier = 0.4f,
             tintAlphaMultiplier = 0.90f,
         ),
     )
 
     /** A wider, denser lens so transient sheets read as frosted glass above their page. */
     val BottomSheet = GlassMaterialRecipe(
+        surfaceRole = GlassSurfaceRole.Panel,
         blur = GlassBlurSpec(
-            // Resolves to 2x the global radius at the default 0.25 soft-glass tuning while still
+            // Resolves to 3.2x the global radius at the default 0.4 soft-glass tuning while still
             // preserving the user's custom tuning in bottomSheet(fineTuning).
             radiusMultiplier = 8f,
             maxRadius = 720f,
@@ -97,8 +103,9 @@ object DeadlinerGlassRecipes {
 
     /** A compact frosted lens for dialogs, with less distortion than a bottom sheet. */
     val Dialog = GlassMaterialRecipe(
+        surfaceRole = GlassSurfaceRole.Panel,
         blur = GlassBlurSpec(
-            // Resolves to 1x the global radius at the default 0.25 soft-glass tuning; see
+            // Resolves to 1.6x the global radius at the default 0.4 soft-glass tuning; see
             // dialog(fineTuning).
             radiusMultiplier = 4f,
             maxRadius = 560f,
@@ -145,6 +152,7 @@ object DeadlinerGlassRecipes {
     /** The input lens uses its physical rounded-rectangle geometry, never a height-sized capsule. */
     fun quickAdd(fineTuning: AdvancedMaterialFineTuning): GlassMaterialRecipe =
         floatingNavigation(fineTuning).copy(
+            surfaceRole = GlassSurfaceRole.Panel,
             blur = dialog(fineTuning).blur,
             geometry = GlassGeometrySpec(cornerRadius = QuickAddCornerRadius),
         )
@@ -219,6 +227,12 @@ object DeadlinerGlassRecipes {
         )
     }
 
+    /** The optical lens and the popup clip must describe the same rounded rectangle. */
+    val DropdownCornerRadius = 24.dp
+
+    fun dropdown(fineTuning: AdvancedMaterialFineTuning): GlassMaterialRecipe =
+        dialog(fineTuning).copy(geometry = GlassGeometrySpec(cornerRadius = DropdownCornerRadius))
+
     /** Uses pure Miuix advanced material for the dialog body plus a restrained gradient border. */
     fun immersiveDialogAdvancedHighlight(
         fineTuning: AdvancedMaterialFineTuning,
@@ -238,6 +252,8 @@ object DeadlinerGlassRecipes {
 
 fun AdvancedMaterialFineTuning.softGlassTintColor(isDark: Boolean): Color {
     val tuning = normalized()
-    val gray = if (isDark) tuning.glassTintDarkGray else tuning.glassTintLightGray
+    // Resolve the neutral light tint in 8-bit gray: the default preset is exactly #F9F9F9.
+    val gray = if (isDark) tuning.glassTintDarkGray
+        else (tuning.glassTintLightGray * 255f).roundToInt() / 255f
     return Color(red = gray, green = gray, blue = gray, alpha = 1f)
 }

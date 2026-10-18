@@ -2,6 +2,7 @@
 
 package com.aritxonly.deadliner.ui.overview
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -55,16 +56,16 @@ fun OverviewDashboardTopBar(
                     stringResource(R.string.close))
             } } },
             actions = {
-                androidx.compose.material3.IconButton(
+                androidx.compose.material3.IconButton(modifier = Modifier.miuixPressFeedback(enabled = month.year > 1900, shape = androidx.compose.material3.IconButtonDefaults.standardShape),
                     onClick = { onMonthChange(month.minusMonths(1)) }, enabled = month.year > 1900) {
-                    androidx.compose.material3.Icon(com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_chevron_left_wght400),
-                        stringResource(R.string.dashboard_previous_month))
+                    androidx.compose.material3.Icon(com.aritxonly.deadliner.ui.overviewMonthChevronPainter(previous = true),
+                        stringResource(R.string.dashboard_previous_month), Modifier.size(com.aritxonly.deadliner.ui.overviewChevronSize()))
                 }
                 Spacer(Modifier.width(4.dp))
-                androidx.compose.material3.IconButton(
+                androidx.compose.material3.IconButton(modifier = Modifier.miuixPressFeedback(enabled = month < java.time.YearMonth.now(), shape = androidx.compose.material3.IconButtonDefaults.standardShape),
                     onClick = { onMonthChange(month.plusMonths(1)) }, enabled = month < java.time.YearMonth.now()) {
-                    androidx.compose.material3.Icon(com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_chevron_right_wght400),
-                        stringResource(R.string.dashboard_next_month))
+                    androidx.compose.material3.Icon(com.aritxonly.deadliner.ui.overviewMonthChevronPainter(previous = false),
+                        stringResource(R.string.dashboard_next_month), Modifier.size(com.aritxonly.deadliner.ui.overviewChevronSize()))
                 }
             })
 

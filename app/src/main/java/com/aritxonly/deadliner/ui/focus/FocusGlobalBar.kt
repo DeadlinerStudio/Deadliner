@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.focus
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -100,7 +101,7 @@ fun FocusGlobalBar(
             IconButton(
                 onClick = if (running) onPause else onResume,
                 enabled = !state.isBusy && if (running) timer.canPause else timer.canResume,
-                modifier = Modifier.size(48.dp),
+                modifier = (Modifier.size(48.dp)).miuixPressFeedback(enabled = !state.isBusy && if (running) timer.canPause else timer.canResume, shape = androidx.compose.material3.IconButtonDefaults.standardShape),
             ) {
                 Icon(iconResource(if (running) R.drawable.msr_pause_wght400 else R.drawable.msr_play_arrow_wght400),
                     contentDescription = stringResource(if (running) R.string.focus_pause else R.string.focus_resume),
@@ -109,7 +110,7 @@ fun FocusGlobalBar(
                     modifier = Modifier.size(24.dp))
             }
             IconButton(onClick = onFinish, enabled = !state.isBusy && timer.canFinish,
-                modifier = Modifier.size(48.dp)) {
+                modifier = (Modifier.size(48.dp)).miuixPressFeedback(enabled = !state.isBusy && timer.canFinish, shape = androidx.compose.material3.IconButtonDefaults.standardShape)) {
                 Icon(iconResource(R.drawable.msr_stop_wght400),
                     contentDescription = stringResource(R.string.focus_finish),
                     tint = MiuixTheme.colorScheme.onSurfaceVariantSummary, modifier = Modifier.size(24.dp))

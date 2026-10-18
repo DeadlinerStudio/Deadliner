@@ -30,13 +30,6 @@ object IntroGuideScenes {
             detail = "Lifi AI 能帮你提炼任务意图、补齐结构，再决定是否加入清单。"
         ),
         IntroGuideSceneConfig(
-            id = "guide_scene_3",
-            fileName = "Scene-3.json",
-            title = "上滑 + 号展开 Lifi AI",
-            subtitle = "在简洁模式里，沿着底部的 + 号向上滑动，就能直接展开智能体入口。",
-            detail = "想到什么就先记什么，让 Lifi AI 帮你整理，再决定要不要补充成正式任务。"
-        ),
-        IntroGuideSceneConfig(
             id = "guide_scene_4",
             fileName = "Scene-4-Harmony.json",
             title = "长按任务，进入多选",
@@ -61,13 +54,6 @@ object IntroGuideScenes {
 
     fun forStyle(style: UiStyle): List<IntroGuideSceneConfig> {
         val ids = when (style) {
-            UiStyle.Simplified -> listOf(
-                "guide_scene_1",
-                "guide_scene_3",
-                "guide_scene_4",
-                "guide_scene_5"
-            )
-
             UiStyle.Miuix -> listOf(
                 "guide_scene_1",
                 "guide_scene_2",

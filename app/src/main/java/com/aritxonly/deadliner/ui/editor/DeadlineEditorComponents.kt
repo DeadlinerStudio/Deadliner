@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.editor
 
+import com.aritxonly.deadliner.ui.base.feedback.MaterialShapeFeedback
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +43,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aritxonly.deadliner.R
+import com.aritxonly.deadliner.ui.base.formContainerBackground
+import androidx.compose.ui.graphics.Color
 import com.aritxonly.deadliner.ui.base.Button
 import com.aritxonly.deadliner.ui.base.OutlinedTextField
 import com.aritxonly.deadliner.ui.base.Switch
@@ -75,52 +79,6 @@ data class HabitEditorDraft(
     val reminderTime: LocalTime = LocalTime.of(20, 0),
     val categoryUid: String? = null,
 )
-
-@Composable
-fun DeadlineAiQuickAddCard(
-    value: String,
-    onValueChange: (String) -> Unit,
-    isLoading: Boolean,
-    onSubmit: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val textFieldShape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(R.string.ai_quick_add),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = { Text(stringResource(R.string.ai_quick_add_placeholder)) },
-            miuixLabel = stringResource(R.string.ai_quick_add_placeholder),
-            miuixFormStyle = true,
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 1,
-            maxLines = 3,
-            shape = textFieldShape,
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            Button(
-                onClick = onSubmit,
-                enabled = !isLoading && value.trim().isNotEmpty(),
-                forceMaterial3 = true,
-            ) {
-                Text(
-                    if (isLoading) stringResource(R.string.ai_parsing)
-                    else stringResource(R.string.ai_parse),
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun DeadlineNameField(
@@ -368,17 +326,19 @@ private fun HabitWeekdayRow(
             horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
         ) {
             presets.forEachIndexed { index, (mask, label) ->
-                ToggleButton(
-                    checked = selectedMask == mask,
-                    onCheckedChange = { if (it) onSelectMask(mask) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .semantics { role = Role.RadioButton },
-                    shapes = connectedButtonShapes(index, presets.lastIndex),
-                    colors = editorConnectedToggleButtonColors(),
-                    contentPadding = editorConnectedToggleContentPadding(),
-                ) {
-                    Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                MaterialShapeFeedback {
+                    ToggleButton(
+                        checked = selectedMask == mask,
+                        onCheckedChange = { if (it) onSelectMask(mask) },
+                        modifier = (Modifier
+                            .weight(1f)
+                            .semantics { role = Role.RadioButton }),
+                        shapes = connectedButtonShapes(index, presets.lastIndex),
+                        colors = editorConnectedToggleButtonColors(),
+                        contentPadding = editorConnectedToggleContentPadding(),
+                    ) {
+                        Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                 }
             }
         }
@@ -390,20 +350,22 @@ private fun HabitWeekdayRow(
             weekdays.forEachIndexed { index, (shortLabel, fullLabel) ->
                 val bit = 1 shl index
                 val selected = selectedMask and bit != 0
-                ToggleButton(
-                    checked = selected,
-                    onCheckedChange = {
-                        val updated = selectedMask xor bit
-                        if (updated != 0) onSelectMask(updated)
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .semantics { contentDescription = fullLabel },
-                    shapes = connectedButtonShapes(index, weekdays.lastIndex),
-                    colors = editorConnectedToggleButtonColors(),
-                    contentPadding = PaddingValues(horizontal = 2.dp),
-                ) {
-                    Text(shortLabel, maxLines = 1)
+                MaterialShapeFeedback {
+                    ToggleButton(
+                        checked = selected,
+                        onCheckedChange = {
+                            val updated = selectedMask xor bit
+                            if (updated != 0) onSelectMask(updated)
+                        },
+                        modifier = (Modifier
+                            .weight(1f)
+                            .semantics { contentDescription = fullLabel }),
+                        shapes = connectedButtonShapes(index, weekdays.lastIndex),
+                        colors = editorConnectedToggleButtonColors(),
+                        contentPadding = PaddingValues(horizontal = 2.dp),
+                    ) {
+                        Text(shortLabel, maxLines = 1)
+                    }
                 }
             }
         }
@@ -416,11 +378,12 @@ fun DeadlineBottomActions(
     onSave: () -> Unit,
     onSaveToCalendar: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val advancedMaterial = LocalAdvancedMaterialSpec.current
     val backdrop = LocalAdvancedMaterialBackdrop.current
-    val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.navigationTintAlpha * 0.55f)
-    val materialColors = advancedMaterial.rememberBlurColors(listOf(BlendColorEntry(surfaceTint)))
+    val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = advancedMaterial.navigationTintAlpha)
+    val materialColors = advancedMaterial.rememberBlurColors()
 
     Box(
         modifier = modifier
@@ -432,7 +395,7 @@ fun DeadlineBottomActions(
                         backdrop = backdrop,
                         shape = RectangleShape,
                         colors = materialColors,
-                    )
+                    ).background(surfaceTint)
                 } else {
                     Modifier.background(
                         color = MaterialTheme.colorScheme.surface,
@@ -456,6 +419,7 @@ fun DeadlineBottomActions(
             if (showSaveToCalendar) {
                 Button(
                     onClick = onSaveToCalendar,
+                    enabled = enabled,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -468,6 +432,7 @@ fun DeadlineBottomActions(
 
             Button(
                 onClick = onSave,
+                enabled = enabled,
                 modifier = Modifier.weight(1f),
             ) {
                 Text(text = stringResource(R.string.save))
@@ -482,9 +447,9 @@ private fun EditorSectionCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().formContainerBackground(dimensionResource(R.dimen.item_corner_radius)),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = Color.Transparent,
         ),
         shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)),
     ) {
@@ -504,9 +469,10 @@ private fun EditorDateTimeCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .formContainerBackground(dimensionResource(R.dimen.item_corner_radius))
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = Color.Transparent,
         ),
         shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius)),
     ) {
@@ -555,7 +521,7 @@ private fun HabitReminderSection(
             }
             Spacer(modifier = Modifier.weight(1f))
             if (enabled) {
-                TextButton(onClick = onClearReminder) {
+                TextButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.textShape), onClick = onClearReminder) {
                     Text(stringResource(R.string.editor_habit_clear_reminder))
                 }
             } else {
@@ -588,22 +554,24 @@ private fun HabitPeriodRow(
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
     ) {
         options.forEachIndexed { index, (type, label) ->
-            ToggleButton(
-                checked = selected == type,
-                onCheckedChange = { onSelect(type) },
-                modifier = Modifier
-                    .weight(1f)
-                    .semantics { role = Role.RadioButton },
-                shapes = connectedButtonShapes(index, options.lastIndex),
-                colors = editorConnectedToggleButtonColors(),
-                contentPadding = editorConnectedToggleContentPadding(),
-            ) {
-                Text(
-                    text = label,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelMedium,
-                )
+            MaterialShapeFeedback {
+                    ToggleButton(
+                    checked = selected == type,
+                    onCheckedChange = { onSelect(type) },
+                    modifier = (Modifier
+                        .weight(1f)
+                        .semantics { role = Role.RadioButton }),
+                    shapes = connectedButtonShapes(index, options.lastIndex),
+                    colors = editorConnectedToggleButtonColors(),
+                    contentPadding = editorConnectedToggleContentPadding(),
+                ) {
+                    Text(
+                        text = label,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
             }
         }
     }
@@ -625,22 +593,24 @@ private fun HabitGoalTypeRow(
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
     ) {
         options.forEachIndexed { index, (type, label) ->
-            ToggleButton(
-                checked = selected == type,
-                onCheckedChange = { onSelect(type) },
-                modifier = Modifier
-                    .weight(1f)
-                    .semantics { role = Role.RadioButton },
-                shapes = connectedButtonShapes(index, options.lastIndex),
-                colors = editorConnectedToggleButtonColors(),
-                contentPadding = editorConnectedToggleContentPadding(),
-            ) {
-                Text(
-                    text = label,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelMedium,
-                )
+            MaterialShapeFeedback {
+                    ToggleButton(
+                    checked = selected == type,
+                    onCheckedChange = { onSelect(type) },
+                    modifier = (Modifier
+                        .weight(1f)
+                        .semantics { role = Role.RadioButton }),
+                    shapes = connectedButtonShapes(index, options.lastIndex),
+                    colors = editorConnectedToggleButtonColors(),
+                    contentPadding = editorConnectedToggleContentPadding(),
+                ) {
+                    Text(
+                        text = label,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
             }
         }
     }

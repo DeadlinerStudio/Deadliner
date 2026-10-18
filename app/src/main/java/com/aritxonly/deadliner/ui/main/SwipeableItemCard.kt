@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.main
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.combinedClickable
@@ -87,6 +88,7 @@ internal fun SwipeableItemCard(
     selectionMode: Boolean = false,
     onFocusAction: (() -> Unit)? = null,
     accessibilityLabel: String? = null,
+    fullSwipePrimaryActionEnabled: Boolean = true,
     content: @Composable ((() -> Unit) -> Unit) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -96,7 +98,11 @@ internal fun SwipeableItemCard(
         (if (onFocusAction != null) TaskCardSwipeDefaults.FOCUS_REVEAL_WIDTH_DP
         else TaskCardSwipeDefaults.REVEAL_WIDTH_DP).dp.toPx()
     }
-    val trailingRevealWidthPx = with(density) { TaskCardSwipeDefaults.REVEAL_WIDTH_DP.dp.toPx() }
+    val trailingActionCount = listOfNotNull(onEditAction, onDeleteAction).size
+    val trailingRevealWidthPx = with(density) {
+        (if (trailingActionCount == 1) TaskCardSwipeDefaults.SINGLE_REVEAL_WIDTH_DP
+        else TaskCardSwipeDefaults.REVEAL_WIDTH_DP).dp.toPx()
+    }
     val revealThresholdPx = with(density) {
         TaskCardSwipeDefaults.REVEAL_TRIGGER_DISTANCE_DP.dp.toPx()
     }
@@ -113,9 +119,10 @@ internal fun SwipeableItemCard(
     val deleteActionIcon = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_delete_wght400)
     val editActionColor = actionColors.edit
     val deleteActionColor = actionColors.delete
+    val actionIconColor = actionContentColor(deleteActionColor)
     val editActionLabel = androidx.compose.ui.res.stringResource(R.string.edit)
     val deleteActionLabel = androidx.compose.ui.res.stringResource(R.string.delete)
-    val hasTrailingActions = onEditAction != null && onDeleteAction != null
+    val hasTrailingActions = trailingActionCount > 0
 
     val latestOnPrimaryAction by rememberUpdatedState(onPrimaryAction)
     val latestOnSecondaryAction by rememberUpdatedState(onSecondaryAction)
@@ -189,6 +196,7 @@ internal fun SwipeableItemCard(
                 closeDistance = closeDistancePx,
                 hasTrailingActions = hasTrailingActions,
                 leadingRevealWidth = leadingRevealWidthPx,
+                trailingRevealWidth = trailingRevealWidthPx,
             )
         ) {
             TaskCardSwipeSettleResult.CLOSED -> animateTo(0f)
@@ -198,7 +206,10 @@ internal fun SwipeableItemCard(
             TaskCardSwipeSettleResult.TRAILING_REVEALED -> {
                 animateTo(-trailingRevealWidthPx, clearActiveWhenClosed = false)
             }
-            TaskCardSwipeSettleResult.RUN_PRIMARY_ACTION -> runAction(latestOnPrimaryAction)
+            TaskCardSwipeSettleResult.RUN_PRIMARY_ACTION -> {
+                if (fullSwipePrimaryActionEnabled) runAction(latestOnPrimaryAction)
+                else animateTo(leadingRevealWidthPx, clearActiveWhenClosed = false)
+            }
             TaskCardSwipeSettleResult.RUN_DELETE_ACTION -> {
                 latestOnDeleteAction?.let(::runAction) ?: animateTo(0f)
             }
@@ -227,31 +238,37 @@ internal fun SwipeableItemCard(
                     offsetPx = offsetPx,
                     density = density,
                     primaryAction = SwipeActionUi(
+                        iconColor = actionIconColor,
                         label = primaryActionLabel,
                         icon = resolvedPrimaryActionIcon,
                         color = resolvedPrimaryActionColor,
                         onClick = { runAction(latestOnPrimaryAction) },
                     ),
                     secondaryAction = SwipeActionUi(
+                        iconColor = actionIconColor,
                         label = secondaryActionLabel,
                         icon = resolvedSecondaryActionIcon,
                         color = resolvedSecondaryActionColor,
                         onClick = { runAction(latestOnSecondaryAction) },
                     ),
-                    editAction = SwipeActionUi(
+                    editAction = if (onEditAction != null) SwipeActionUi(
+                        iconColor = actionIconColor,
                         label = editActionLabel,
                         icon = editActionIcon,
                         color = editActionColor,
                         onClick = { latestOnEditAction?.let(::runAction) },
-                    ),
-                    deleteAction = SwipeActionUi(
+                    ) else null,
+                    deleteAction = if (onDeleteAction != null) SwipeActionUi(
+                        iconColor = actionIconColor,
                         label = deleteActionLabel,
                         icon = deleteActionIcon,
                         color = deleteActionColor,
                         onClick = { latestOnDeleteAction?.let(::runAction) },
-                    ),
+                    ) else null,
                     showTrailingActions = hasTrailingActions,
+                    trailingRevealWidthPx = trailingRevealWidthPx,
                     focusAction = if (onFocusAction != null) SwipeActionUi(
+                        iconColor = actionIconColor,
                         label = focusActionLabel,
                         icon = focusActionIcon,
                         color = focusActionColor,
@@ -285,6 +302,7 @@ internal fun SwipeableItemCard(
 }
 
 private data class SwipeActionUi(
+    val iconColor: Color,
     val label: String,
     val icon: Painter,
     val color: Color,
@@ -297,15 +315,16 @@ private fun SwipeActionBackground(
     density: androidx.compose.ui.unit.Density,
     primaryAction: SwipeActionUi,
     secondaryAction: SwipeActionUi,
-    editAction: SwipeActionUi,
-    deleteAction: SwipeActionUi,
+    editAction: SwipeActionUi?,
+    deleteAction: SwipeActionUi?,
+    trailingRevealWidthPx: Float,
     showTrailingActions: Boolean,
     focusAction: SwipeActionUi?,
     modifier: Modifier,
 ) {
     val revealedDistancePx = abs(offsetPx)
-    val revealWidthPx = with(density) {
-        (if (offsetPx > 0f && focusAction != null) TaskCardSwipeDefaults.FOCUS_REVEAL_WIDTH_DP
+    val revealWidthPx = if (offsetPx < 0f) trailingRevealWidthPx else with(density) {
+        (if (focusAction != null) TaskCardSwipeDefaults.FOCUS_REVEAL_WIDTH_DP
         else TaskCardSwipeDefaults.REVEAL_WIDTH_DP).dp.toPx()
     }
     val baseGapPx = with(density) { ACTION_BASE_GAP_DP.dp.toPx() }
@@ -348,12 +367,12 @@ private fun SwipeActionBackground(
                 horizontalArrangement = Arrangement.spacedBy(gap, Alignment.End),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                SwipeActionButton(editAction, Modifier.width(ACTION_BUTTON_SIZE_DP.dp))
-                SwipeActionButton(
-                    action = deleteAction,
+                editAction?.let { SwipeActionButton(it, Modifier.width(ACTION_BUTTON_SIZE_DP.dp)) }
+                deleteAction?.let { SwipeActionButton(
+                    action = it,
                     modifier = Modifier.width(fullActionWidth),
                     alignment = Alignment.CenterEnd,
-                )
+                ) }
             }
         }
     }
@@ -379,7 +398,7 @@ private fun SwipeActionButton(
         ) {
             Surface(
                 onClick = action.onClick,
-                modifier = Modifier.size(ACTION_BUTTON_SIZE_DP.dp),
+                modifier = (Modifier.size(ACTION_BUTTON_SIZE_DP.dp)).miuixPressFeedback(enabled = true, shape = CircleShape),
                 shape = CircleShape,
                 color = action.color,
                 contentColor = contentColor,
@@ -388,6 +407,7 @@ private fun SwipeActionButton(
                     Icon(
                         painter = action.icon,
                         contentDescription = action.label,
+                        tint = action.iconColor,
                         modifier = Modifier.size(21.dp),
                     )
                 }

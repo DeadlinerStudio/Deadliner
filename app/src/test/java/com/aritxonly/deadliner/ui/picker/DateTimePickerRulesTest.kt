@@ -11,6 +11,14 @@ import org.junit.Test
 class DateTimePickerRulesTest {
     private val bounds = PickerDateBounds(LocalDate.of(1900, 1, 1), LocalDate.of(2100, 12, 31))
 
+    @Test fun reopenedPickerUsesChosenDateAndTimeRatherThanNow() {
+        val chosen = java.time.LocalDateTime.parse("2027-02-05T17:45")
+        val now = java.time.LocalDateTime.parse("2026-10-17T10:00")
+        org.junit.Assert.assertEquals(chosen, pickerInitialDateTime(chosen, now, now))
+        org.junit.Assert.assertEquals(chosen.plusHours(1), pickerInitialDateTime(chosen, chosen.plusHours(1), now))
+        org.junit.Assert.assertEquals(now, pickerInitialDateTime(null, null, now))
+    }
+
     @Test fun monthAndYearChangesClampInvalidDays() {
         assertEquals(LocalDate.of(2024, 2, 29), bounds.clamp(2024, 2, 31))
         assertEquals(LocalDate.of(2025, 2, 28), bounds.clamp(2025, 2, 29))

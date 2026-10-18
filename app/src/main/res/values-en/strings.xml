@@ -880,7 +880,7 @@
     <string name="capture_input_desc">This space is for inspirations, plan drafts, and things you may do later. No need to make it too formal yet; keep the raw version first.</string>
     <string name="capture_input_placeholder">For example: maybe start a weekly reflection ritual…</string>
     <string name="capture_save">Save inspiration</string>
-    <string name="capture_card_tip">Open to keep editing, or organize into tasks and habits</string>
+    <string name="capture_card_tip">Tap to edit, swipe left to delete, or right for AI actions</string>
     <string name="capture_card_tip_selected">Once selected, you can delete or merge-organize in batch.</string>
     <string name="capture_detail_title">Inspiration detail</string>
     <string name="capture_detail_placeholder">Keep its raw form first, then organize when it becomes clearer.</string>
@@ -913,7 +913,13 @@
     <string name="detail_note_empty">No note yet</string>
     <string name="detail_plan_title">Detailed plan</string>
     <string name="detail_plan_progress">%1$d/%2$d done</string>
-    <string name="detail_plan_empty">No subtasks yet. Tap the bottom-right button to add one.</string>
+    <string name="detail_plan_empty">No subtasks yet. Add a small step to get started.</string>
+    <string name="detail_plan_completed_count">Completed · %1$d</string>
+    <string name="detail_plan_expanded">Expanded</string>
+    <string name="detail_plan_collapsed">Collapsed</string>
+    <string name="detail_plan_edit">Edit subtask</string>
+    <string name="detail_plan_content">Subtask content</string>
+    <string name="detail_plan_edit_item">Edit subtask: %1$s</string>
     <string name="detail_plan_add">Add subtask</string>
     <string name="detail_plan_add_hint">Type a subtask and press Enter to keep adding</string>
     <string name="state_active">Active</string>
@@ -1141,4 +1147,14 @@
     <string name="widget_theme_follow_app">Follow app</string>
     <string name="widget_theme_light">Force light</string>
     <string name="widget_theme_dark">Force dark</string>
+    <string name="capture_swipe_ai_task">AI task</string>
+    <string name="capture_swipe_ai_habit">AI habit</string>
+    <string name="settings_material_pipeline">Rendering pipeline</string>
+    <string name="settings_material_pipeline_deadliner">Deadliner</string>
+    <string name="settings_material_pipeline_miuix">MIUIX Glass</string>
+    <string name="settings_material_miuix_preset_hint">Uses the official MIUIX material preset</string>
+    <string name="settings_material_deadliner_preview_hint">Live preview of blur and edge highlights</string>
+    <string name="detail_more_actions">More actions</string>
+    <string name="detail_focus">Focus</string>
+    <string name="detail_plan_compose_hint">Next step?</string>
 </resources>

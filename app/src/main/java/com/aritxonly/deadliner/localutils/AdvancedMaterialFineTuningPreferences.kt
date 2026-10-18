@@ -7,8 +7,7 @@ import com.aritxonly.deadliner.model.AdvancedMaterialTuning
 
 object AdvancedMaterialFineTuningPreferences {
     private const val Prefix = "advanced_material_fine_"
-    private const val CurrentDefaultsVersion = 4
-    private const val PreviousBlurRadiusDefault = 128f
+    private const val CurrentDefaultsVersion = 6
     private const val BlurRadiusKey = "advanced_material_blur_radius"
     private const val LegacyLevelKey = "advanced_material_level"
 
@@ -23,14 +22,14 @@ object AdvancedMaterialFineTuningPreferences {
                 AdvancedMaterialTuning.DefaultBlurRadius
             }
         }
-        val stored = AdvancedMaterialTuning.normalizeBlurRadius(
-            preferences.getFloat(BlurRadiusKey, AdvancedMaterialTuning.DefaultBlurRadius),
-        )
+        val stored = preferences.getFloat(BlurRadiusKey, AdvancedMaterialTuning.DefaultBlurRadius)
         val defaultsVersion = preferences.getInt(key("defaults_version"), 1)
-        return if (defaultsVersion < CurrentDefaultsVersion && stored == PreviousBlurRadiusDefault) {
+        // Compare raw historical defaults before clamping to the new range.
+        return if ((defaultsVersion < 4 && stored == 128f) ||
+            (defaultsVersion < 5 && stored == 92f)) {
             AdvancedMaterialTuning.DefaultBlurRadius
         } else {
-            stored
+            AdvancedMaterialTuning.normalizeBlurRadius(stored)
         }
     }
 
@@ -40,7 +39,9 @@ object AdvancedMaterialFineTuningPreferences {
         val previousDefaults = when {
             defaultsVersion < 2 -> AdvancedMaterialFineTuning.DefaultsV1
             defaultsVersion < 3 -> AdvancedMaterialFineTuning.DefaultsV2
-            else -> AdvancedMaterialFineTuning.DefaultsV3
+            defaultsVersion < 4 -> AdvancedMaterialFineTuning.DefaultsV3
+            defaultsVersion < 5 -> AdvancedMaterialFineTuning.DefaultsV4
+            else -> AdvancedMaterialFineTuning.DefaultsV5
         }
         val migrateDefaults = defaultsVersion < CurrentDefaultsVersion
         return AdvancedMaterialFineTuning(

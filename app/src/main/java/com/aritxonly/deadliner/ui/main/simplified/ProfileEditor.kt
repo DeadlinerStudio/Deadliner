@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.main.simplified
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
+import com.aritxonly.deadliner.ui.base.formContainerBackground
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.content.Context
@@ -154,9 +156,9 @@ fun ProfileEditor(
             FilledIconButton(
                 onClick = { picker.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) },
                 shape = CircleShape,
-                modifier = Modifier
+                modifier = (Modifier
                     .offset(x = 6.dp, y = 6.dp)
-                    .size(32.dp)
+                    .size(32.dp)).miuixPressFeedback(enabled = true)
             ) {
                 Icon(
                     painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_camera_wght400),
@@ -173,8 +175,9 @@ fun ProfileEditor(
             Text(stringResource(R.string.nickname), style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(
                 value = nickname,
+                colors = com.aritxonly.deadliner.ui.base.standardMaterialTextFieldColors(),
                 onValueChange = { nickname = it },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().formContainerBackground(12.dp),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 placeholder = { Text(stringResource(R.string.enter_nickname)) }
@@ -305,7 +308,7 @@ private fun AvatarCropperDialogContent(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = onCancel) {
+            IconButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape), onClick = onCancel) {
                 Icon(
                     painter = com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_close_wght400),
                     contentDescription = stringResource(R.string.close),

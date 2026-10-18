@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.settings
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.widget.Toast
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,7 +26,6 @@ import com.aritxonly.deadliner.localutils.CloudSyncProvider
 import com.aritxonly.deadliner.localutils.CloudSyncPreferences
 import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.platform.kmp.KmpV6Runtime
-import com.aritxonly.deadliner.sync.SyncScheduler
 import com.aritxonly.deadliner.ui.base.Button
 import com.aritxonly.deadliner.ui.expressiveTypeModifier
 import com.aritxonly.deadliner.ui.navIconPaddingModifier
@@ -35,25 +35,11 @@ import kotlinx.coroutines.launch
 fun ByosSettingsScreen(navigateUp: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var enabled by remember {
-        mutableStateOf(GlobalUtils.cloudSyncEnable && CloudSyncPreferences.provider == CloudSyncProvider.BYOS)
-    }
+    val enabled = GlobalUtils.cloudSyncEnable && CloudSyncPreferences.provider == CloudSyncProvider.BYOS
     var baseUrl by remember { mutableStateOf(CloudSyncPreferences.byosBaseUrl) }
     var accessToken by remember { mutableStateOf(CloudSyncPreferences.byosAccessToken) }
     val invalidUrlHint = stringResource(R.string.settings_byos_invalid_url)
     val incompleteHint = stringResource(R.string.settings_byos_incomplete)
-
-    fun applyEnabled(value: Boolean) {
-        CloudSyncPreferences.provider = CloudSyncProvider.BYOS
-        GlobalUtils.cloudSyncEnable = value
-        enabled = value
-        KmpV6Runtime.updateAutomaticSync()
-        if (value) {
-            SyncScheduler.enqueuePeriodic(context)
-        } else {
-            SyncScheduler.cancelAll(context)
-        }
-    }
 
     fun saveConfiguration(): Boolean {
         val normalizedUrl = baseUrl.trim()
@@ -70,7 +56,6 @@ fun ByosSettingsScreen(navigateUp: () -> Unit) {
         }
         CloudSyncPreferences.byosBaseUrl = normalizedUrl
         CloudSyncPreferences.byosAccessToken = accessToken
-        CloudSyncPreferences.provider = CloudSyncProvider.BYOS
         KmpV6Runtime.updateAutomaticSync()
         Toast.makeText(context, R.string.settings_byos_saved, Toast.LENGTH_SHORT).show()
         return true
@@ -79,7 +64,7 @@ fun ByosSettingsScreen(navigateUp: () -> Unit) {
     CollapsingTopBarScaffold(
         title = stringResource(R.string.settings_byos),
         navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = navIconPaddingModifier) {
+            IconButton(onClick = navigateUp, modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)) {
                 Icon(
                     painter = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
                     contentDescription = stringResource(R.string.back),
@@ -91,19 +76,9 @@ fun ByosSettingsScreen(navigateUp: () -> Unit) {
     ) { innerPadding ->
         SettingsLazyColumn(contentPadding = innerPadding) {
             item {
-                SettingsSection(mainContent = true, enabled = enabled) {
-                    SettingsSwitchItem(
-                        label = R.string.settings_enable_byos,
-                        checked = enabled,
-                        onCheckedChange = ::applyEnabled,
-                        mainSwitch = true,
-                    )
-                }
-            }
-            item {
                 Text(
                     text = stringResource(R.string.settings_byos_description),
-                    modifier = Modifier.padding(horizontal = 24.dp),
+                    modifier = Modifier.padding(horizontal = SettingsItemDefaults.HorizontalPadding),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

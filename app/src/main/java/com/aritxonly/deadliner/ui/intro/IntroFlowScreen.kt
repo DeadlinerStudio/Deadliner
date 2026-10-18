@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.intro
 
+import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
 import android.animation.ValueAnimator
 import androidx.annotation.RawRes
 import androidx.compose.animation.AnimatedVisibility
@@ -133,7 +134,6 @@ fun IntroFlowScreen(
                 IntroPageType.Design -> DesignIntroScreen()
                 IntroPageType.Color -> ColorIntroScreen()
                 IntroPageType.AdvancedMaterial -> AdvancedMaterialIntroScreen()
-                IntroPageType.UiStyleChoice -> UiModeScreen()
                 is IntroPageType.GuideScene -> {
                     IntroGuideScenePage(
                         scene = requireNotNull(IntroGuideScenes.findById(pageType.sceneId))
@@ -174,7 +174,7 @@ fun IntroFlowScreen(
                 .navigationBarsPadding()
                 .padding(24.dp)
         ) {
-            FilledTonalButton(
+            FilledTonalButton(modifier = Modifier.miuixPressFeedback(enabled = nextButtonEnabled && celebrationTick == 0, shape = androidx.compose.material3.ButtonDefaults.filledTonalShape),
                 onClick = {
                     scope.launch {
                         val nextPage = (pagerState.currentPage + 1).coerceAtMost(pages.lastIndex)
@@ -373,9 +373,9 @@ private fun IntroFinalPage(
             Button(
                 onClick = onFinish,
                 enabled = !finishing,
-                modifier = Modifier
+                modifier = (Modifier
                     .padding(top = 36.dp)
-                    .size(width = 180.dp, height = 56.dp)
+                    .size(width = 180.dp, height = 56.dp)).miuixPressFeedback(enabled = !finishing, shape = androidx.compose.material3.ButtonDefaults.shape)
             ) {
                 Text(text = stringResource(R.string.intro_get_started))
             }
