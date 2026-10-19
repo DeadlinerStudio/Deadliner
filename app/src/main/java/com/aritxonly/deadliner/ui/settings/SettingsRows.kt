@@ -27,6 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.constrainWidth
+import androidx.compose.ui.unit.offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -50,9 +53,18 @@ fun SettingItem(
     tonalElevation: Dp = ListItemDefaults.Elevation,
     shadowElevation: Dp = ListItemDefaults.Elevation,
     horizontalPadding: Dp = SettingsItemDefaults.HorizontalPadding,
+    startPadding: Dp = horizontalPadding,
 ) = ListItem(
-    // Material ListItem has a fixed 16dp content inset; supplement it to our shared inset.
-    modifier = modifier.padding(horizontal = (horizontalPadding - 16.dp).coerceAtLeast(0.dp)),
+    // ListItem has fixed 16dp insets. Adjust its measured content area in both directions,
+    // allowing an independent home leading inset while retaining 20dp at the trailing end.
+    modifier = modifier.layout { measurable, constraints ->
+        val start = (startPadding - 16.dp).roundToPx()
+        val end = (horizontalPadding - 16.dp).roundToPx()
+        val child = measurable.measure(constraints.offset(horizontal = -start - end))
+        layout(constraints.constrainWidth(child.width + start + end), child.height) {
+            child.placeRelative(start, 0)
+        }
+    },
     headlineContent = {
         Text(
             text = headlineText,

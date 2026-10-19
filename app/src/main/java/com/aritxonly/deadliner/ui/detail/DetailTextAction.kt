@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritxonly.deadliner.ui.symbolPainterResource
@@ -27,6 +29,8 @@ internal fun DetailTextAction(
     alignStart: Boolean = false,
     color: Color = MiuixTheme.colorScheme.primary,
     iconRotation: Float = 0f,
+    iconSize: Dp = 16.dp,
+    textStyle: TextStyle = MiuixTheme.textStyles.footnote1.copy(fontSize = 13.sp, lineHeight = 18.sp),
 ) {
     Button(
         onClick = onClick,
@@ -35,9 +39,9 @@ internal fun DetailTextAction(
         insideMargin = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
         colors = ButtonDefaults.buttonColors(color = Color.Transparent, contentColor = color),
     ) {
-        Icon(symbolPainterResource(iconRes), contentDescription = null, modifier = Modifier.size(16.dp).rotate(iconRotation))
+        Icon(symbolPainterResource(iconRes), contentDescription = null, modifier = Modifier.size(iconSize).rotate(iconRotation))
         Spacer(Modifier.width(6.dp))
-        Text(label, style = MiuixTheme.textStyles.footnote1.copy(fontSize = 13.sp, lineHeight = 18.sp))
+        Text(label, style = textStyle)
         if (alignStart) Spacer(Modifier.weight(1f))
     }
 }

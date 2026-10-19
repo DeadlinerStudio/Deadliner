@@ -86,9 +86,11 @@ fun DeadlineDetailScreen(
     onUpdateSubtask: (String, String) -> Unit,
     onCalendarEventCreated: (Long) -> Unit,
     containerColor: Color = MaterialTheme.colorScheme.surface,
+    onPostpone: (com.deadliner.domain.task.TaskDeadlineDelay) -> Unit = {},
 ) {
     var isStarred by remember(deadline.uid) { mutableStateOf(deadline.isStarred) }
     var showGiveUpDialog by rememberSaveable(deadline.uid) { mutableStateOf(false) }
+    var showPostponeDialog by rememberSaveable(deadline.uid) { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable(deadline.uid) { mutableStateOf(false) }
 
     LaunchedEffect(deadline.isStarred) {
@@ -104,6 +106,7 @@ fun DeadlineDetailScreen(
             }
 
             DetailAction.FOCUS -> onOpenFocusTimer()
+            DetailAction.POSTPONE -> { showPostponeDialog = true }
 
             DetailAction.GIVE_UP -> {
                 showGiveUpDialog = true
@@ -224,6 +227,17 @@ fun DeadlineDetailScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
+    }
+
+    if (showPostponeDialog) {
+        DetailPostponeDialog(
+            task = deadline,
+            onDismiss = { showPostponeDialog = false },
+            onConfirm = { delay ->
+                showPostponeDialog = false
+                onPostpone(delay)
+            },
+        )
     }
 
     if (showGiveUpDialog) {

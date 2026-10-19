@@ -91,6 +91,8 @@ fun DDLItemCardSwipeable(
     categoryContent: (@Composable () -> Unit)? = null,
     onFocusAction: (() -> Unit)? = null,
     detailAnchor: com.aritxonly.deadliner.ui.detail.TaskDetailAnchor? = null,
+    completedSubtasks: Int = 0,
+    totalSubtasks: Int = 0,
 ) {
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
     SwipeableItemCard(swipeKey = swipeKey, activeSwipeKey = activeSwipeKey,
@@ -108,7 +110,8 @@ fun DDLItemCardSwipeable(
             DDLItemCardSimplified(title = title, remainingTimeAlt = remainingTimeAlt, note = note,
                 progress = progress, isStarred = isStarred, modifier = Modifier.fillMaxSize(),
                 onClick = null, status = status, useDisabledCompletedStyle = useDisabledCompletedStyle,
-                categoryContent = categoryContent, detailAnchor = detailAnchor)
+                categoryContent = categoryContent, detailAnchor = detailAnchor,
+                completedSubtasks = completedSubtasks, totalSubtasks = totalSubtasks)
             if (selectionMode && selected) SelectionOverlay(shape)
         }
     }

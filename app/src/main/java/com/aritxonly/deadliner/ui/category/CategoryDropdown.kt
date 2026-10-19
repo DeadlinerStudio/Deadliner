@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
@@ -119,7 +120,7 @@ internal fun CategoryDropdownField(
             modifier = modifier.fillMaxWidth()
                 .formContainerBackground(dimensionResource(R.dimen.item_corner_radius))
                 .semantics { stateDescription = value },
-            insideMargin = SettingsItemDefaults.InsideMargin,
+            insideMargin = SettingsItemDefaults.insideMargin(16.dp),
             role = Role.DropdownList,
             holdDownState = active,
             onClick = open,

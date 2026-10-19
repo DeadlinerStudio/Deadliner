@@ -1,0 +1,37 @@
+<resources>
+    <string name="update_page_title">Software update</string>
+    <string name="update_available_label">Update available</string>
+    <string name="update_latest_label">You’re up to date</string>
+    <string name="update_error_label">Unable to check for updates</string>
+    <string name="update_checking_label">Checking for updates</string>
+    <string name="update_checking_button">Checking…</string>
+    <string name="update_retry">Check again</string>
+    <string name="update_release_notes">What’s new</string>
+    <string name="update_latest_summary">When a new version is available, you can review the changes and install it here.</string>
+    <string name="update_info_unavailable">Version information unavailable</string>
+    <string name="update_error_summary">Check your connection and try again, or view releases in your browser. You can keep using the current version.</string>
+    <string name="update_no_release_notes">No release notes were provided for this version.</string>
+    <string name="update_no_download">No installable package is available. Visit the release page for details.</string>
+    <string name="update_open_releases">View releases in browser</string>
+    <string name="update_release_history">View release history</string>
+    <string name="update_log_language">Language</string>
+    <string name="update_follow_system">Follow system</string>
+    <string name="update_all_languages">All languages</string>
+    <string name="update_log_section">Section</string>
+    <string name="update_all_sections">All sections</string>
+    <string name="update_original_notes">View original</string>
+    <string name="update_formatted_notes">Show cards</string>
+    <string name="update_log_filters">Release note filters</string>
+    <string name="update_filters_done">Done</string>
+    <string name="update_no_filters">This release has no language or section filters.</string>
+    <string name="update_download_summary">The system installer will open when the download finishes.</string>
+    <string name="update_download_connecting">Downloading…</string>
+    <string name="update_download_failed_title">Download incomplete</string>
+    <string name="update_download_failed_summary">The download failed. Check your connection and try again.</string>
+    <string name="update_download_retry">Retry</string>
+    <string name="update_download_ready_title">Update ready</string>
+    <string name="update_download_ready_summary">Tap Install to continue updating Deadliner.</string>
+    <string name="update_install_permission_title">Allow update installation</string>
+    <string name="update_install_permission_summary">Allow Deadliner to install apps, then return here and tap Install.</string>
+    <string name="update_install_failed_summary">Could not open the system installer. Please try again.</string>
+</resources>

@@ -39,9 +39,12 @@ class CategoryDropdownTest {
     @Test fun selectedValueAndMenuRetainCategoryGlyphsAndColors() {
         compose.setContent {
             MiuixTheme { MaterialTheme {
-                CategoryDropdownField("study", categories, {}, {})
+                CategoryDropdownField("study", categories, {}, {}, Modifier.testTag("editor-dropdown"))
             } }
         }
+        val field = compose.onNodeWithTag("editor-dropdown").getUnclippedBoundsInRoot()
+        val title = compose.onNodeWithText(select, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        assertEquals(16f, (title.left - field.left).value, .5f)
         compose.onNodeWithTag("category-icon-study", useUnmergedTree = true).assertExists()
         assertLabelColor("Study", CategoryPresentationRegistry.color("#FF8800"))
         compose.onNodeWithText(select).performClick()

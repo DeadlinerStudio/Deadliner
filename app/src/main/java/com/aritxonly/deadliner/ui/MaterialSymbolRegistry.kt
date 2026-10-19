@@ -103,6 +103,7 @@ internal object MaterialSymbolRegistry {
         R.drawable.msr_mobile_gear_wght400 to MaterialSymbolDefinition("mobile_gear"),
         R.drawable.msr_money_off_wght400 to MaterialSymbolDefinition("money_off"),
         R.drawable.msr_monitoring_wght400 to MaterialSymbolDefinition("monitoring"),
+        R.drawable.msr_more_time_wght400 to MaterialSymbolDefinition("more_time"),
         R.drawable.msr_more_vert_wght400 to MaterialSymbolDefinition("more_vert"),
         R.drawable.msr_move_to_inbox_wght400 to MaterialSymbolDefinition("move_to_inbox"),
         R.drawable.msr_music_note_2_wght400 to MaterialSymbolDefinition("music_note_2"),

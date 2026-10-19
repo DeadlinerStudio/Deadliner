@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="task_card_subtask_progress">子任务：%1$d/%2$d 已完成</string>
+</resources>

@@ -1,170 +1,95 @@
-import android.annotation.SuppressLint
-import android.app.AlertDialog
+package com.aritxonly.deadliner.web
+
 import android.app.DownloadManager
-import android.content.*
-import android.database.Cursor
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
-import android.os.*
-import com.aritxonly.deadliner.logging.AppLog
-import android.view.LayoutInflater
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.res.stringResource
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
 import androidx.core.content.FileProvider
 import com.aritxonly.deadliner.R
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.progressindicator.LinearProgressIndicator
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
+import java.io.IOException
 
-class ApkDownloaderInstaller(private val context: Context) {
+/** Android transport/installer only. All progress and recovery UI belongs to Compose. */
+class ApkDownloaderInstaller(context: Context, private val io: CoroutineDispatcher = Dispatchers.IO) {
+    private companion object { val downloads = Mutex() }
+    private val context = context.applicationContext
+    private val manager = this.context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
 
-    private var downloadId: Long = -1
-    private val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-
-    private var progressDialog: androidx.appcompat.app.AlertDialog? = null
-    private lateinit var progressBar: LinearProgressIndicator
-    private lateinit var progressText: TextView
-    private var isDownloading = true
-    private var downloaded = false
-
-    /**
-     * 下载并安装 APK
-     */
-    fun downloadAndInstall(apkUrl: String, apkName: String = "update.apk") {
-        val apkFile = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), apkName)
-
-        // 删除旧的 APK
-        if (apkFile.exists()) apkFile.delete()
-
-        registerDownloadReceiver(apkFile)
-
-        val request = DownloadManager.Request(Uri.parse(apkUrl)).apply {
-            setTitle(context.getString(R.string.downloading_update))
-            setDescription(context.getString(R.string.please_wait))
-            // 使用 setDestinationInExternalFilesDir() 替代 setDestinationUri(Uri.fromFile(apkFile))
-            setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, apkName)
-            setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            setMimeType("application/vnd.android.package-archive")
-            setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-        }
-
-        downloadId = downloadManager.enqueue(request)
-        showProgressDialog(apkFile)
-        monitorDownloadProgress(apkFile)
-    }
-
-    /**
-     * 显示下载进度条对话框
-     */
-    private fun showProgressDialog(apkFile: File) {
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_progress, null)
-        progressBar = dialogView.findViewById(R.id.downloadProgressBar)
-        progressText = dialogView.findViewById(R.id.downloadProgressText)
-
-        progressDialog = MaterialAlertDialogBuilder(context)
-            .setTitle(context.getString(R.string.download_update))
-            .setView(dialogView)
-            .setCancelable(false)
-            .setPositiveButton(context.getString(R.string.install)) { _, _ ->
-                if (downloaded) {
-                    installApk(apkFile)
-                }
-            }
-            .setNegativeButton(context.getString(R.string.cancel)) { _, _ ->
-                downloadManager.remove(downloadId)
-                isDownloading = false
-            }
-            .show()
-
-        val installButton = progressDialog?.getButton(AlertDialog.BUTTON_POSITIVE)
-        installButton?.isClickable = false
-    }
-
-    /**
-     * 监听下载进度
-     */
-    private fun monitorDownloadProgress(apkFile: File) {
-        Thread {
-            while (isDownloading) {
-                val query = DownloadManager.Query().setFilterById(downloadId)
-                val cursor: Cursor = downloadManager.query(query)
-                if (cursor.moveToFirst()) {
-                    val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
-                    val bytesDownloaded = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
-                    val totalBytes = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
-                    if (totalBytes > 0) {
-                        val progress = (bytesDownloaded * 100L / totalBytes).toInt()
-                        Handler(Looper.getMainLooper()).post {
-                            progressBar.progress = progress
-                            progressText.text = context.getString(R.string.download_progress, progress)
+    suspend fun download(apkUrl: String, onProgress: suspend (Long, Long) -> Unit): File = withContext(io) {
+        downloads.withLock {
+            val uri = Uri.parse(apkUrl)
+            require(uri.scheme in listOf("http", "https") && !uri.host.isNullOrBlank())
+            val directory = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                ?: throw IOException("Download directory unavailable")
+            val apk = File(directory, "update.apk")
+            if (apk.exists() && !apk.delete()) throw IOException("Cannot replace old update")
+            var id = -1L
+            var completed = false
+            try {
+                currentCoroutineContext().ensureActive()
+                id = manager.enqueue(DownloadManager.Request(uri).apply {
+                    setTitle(context.getString(R.string.downloading_update))
+                    setDescription(context.getString(R.string.please_wait))
+                    setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, apk.name)
+                    setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    setMimeType("application/vnd.android.package-archive")
+                    setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+                })
+                while (true) {
+                    currentCoroutineContext().ensureActive()
+                    val status = manager.query(DownloadManager.Query().setFilterById(id))?.use { cursor ->
+                        if (!cursor.moveToFirst()) throw IOException("Download no longer exists")
+                        val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                        val bytes = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                        val total = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                        onProgress(bytes.coerceAtLeast(0), total)
+                        status
+                    } ?: throw IOException("Download unavailable")
+                    when (status) {
+                        DownloadManager.STATUS_FAILED -> throw IOException("Download failed")
+                        DownloadManager.STATUS_SUCCESSFUL -> {
+                            if (!apk.isFile || apk.length() == 0L) throw IOException("Downloaded package is missing or empty")
+                            currentCoroutineContext().ensureActive()
+                            completed = true
+                            return@withContext apk
                         }
                     }
-                    // 当状态为成功时调用安装逻辑
-                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        isDownloading = false
-                        Handler(Looper.getMainLooper()).post {
-                            val installButton = progressDialog?.getButton(AlertDialog.BUTTON_POSITIVE)
-                            installButton?.isClickable = true
-                            downloaded = true
-                            // 如果广播未触发，则直接调用安装
-                            installApk(apkFile)
-                        }
-                    }
+                    delay(500)
                 }
-                cursor.close()
-                Thread.sleep(500)
-            }
-        }.start()
-    }
-
-    /**
-     * 监听 APK 下载完成事件
-     */
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
-    private fun registerDownloadReceiver(apkFile: File) {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                AppLog.d("Downloader", "Received broadcast, id: $id, downloadId: $downloadId")
-                if (id == downloadId) {
-                    isDownloading = false
-                    progressDialog?.dismiss()
-                    // 使用 applicationContext 取消注册 receiver
-                    context.unregisterReceiver(this)
-                    installApk(apkFile)
+                @Suppress("UNREACHABLE_CODE") apk
+            } finally {
+                if (!completed) withContext(NonCancellable + io) {
+                    try { if (id >= 0) manager.remove(id) } finally { apk.delete() }
                 }
             }
         }
-
-        val intentFilter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.applicationContext.registerReceiver(receiver, intentFilter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            context.applicationContext.registerReceiver(receiver, intentFilter)
-        }
     }
 
-    /**
-     * 安装 APK
-     */
-    private fun installApk(apkFile: File) {
-        AppLog.d("ApkDownloaderInstaller", "开始安装 APK: ${apkFile.absolutePath}")
-
-        val apkUri: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apkFile)
-        } else {
-            Uri.fromFile(apkFile)
-        }
-
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(apkUri, "application/vnd.android.package-archive")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-        }
-
+    /** False means the app-specific installation permission page was opened. */
+    fun install(apk: File): Boolean {
+        require(apk.isFile && apk.length() > 0) { "Update package is missing" }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.packageManager.canRequestPackageInstalls()) {
-            context.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES))
-        } else {
-            context.startActivity(intent)
+            context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return false
         }
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apk)
+        context.startActivity(Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+        })
+        return true
     }
 }

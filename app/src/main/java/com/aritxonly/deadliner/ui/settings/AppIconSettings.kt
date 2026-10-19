@@ -74,7 +74,7 @@ fun AppIconSettingsScreen(
                     text = stringResource(R.string.settings_app_icon_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 8.dp),
                 )
             }
 
@@ -117,7 +117,7 @@ private fun AppIconOptionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+            .padding(horizontal = SettingsItemDefaults.HorizontalPadding, vertical = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

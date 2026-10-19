@@ -1102,6 +1102,15 @@
         "sampleSize": 256
       }
     },
+    "more_time": {
+      "family": "phosphor-regular",
+      "icon": "clock-countdown",
+      "review": "用户指定延后一天：clock-countdown 对应 Material More Time。",
+      "reviewStatus": "reviewed",
+      "matchPolicy": "semantic",
+      "opticalScale": 1.08,
+      "opticalReview": "Regular 时钟主体沿用 schedule 的 1.08 系数；保留倒计时圆点与指针，栅格核对外轮廓未触及视口边缘。"
+    },
     "more_vert": {
       "family": "phosphor-regular",
       "icon": "dots-three-vertical",

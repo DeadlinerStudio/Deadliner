@@ -128,6 +128,21 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
             }
         }
 
+        fun postpone(delay: com.deadliner.domain.task.TaskDeadlineDelay) {
+            val result = runCatching { KmpV6Runtime.postponeTask(taskUid, delay) }.getOrNull()
+            val message = when (result?.outcome) {
+                com.deadliner.domain.task.TaskDeadlineOutcome.APPLIED -> {
+                    invalidateSource()
+                    viewModel.initialize()
+                    R.string.detail_postponed
+                }
+                com.deadliner.domain.task.TaskDeadlineOutcome.INVALID_DEADLINE -> R.string.detail_postpone_invalid_deadline
+                com.deadliner.domain.task.TaskDeadlineOutcome.INVALID_DELAY -> R.string.detail_postpone_limit
+                else -> R.string.detail_postpone_failed
+            }
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+
         setContent {
             DeadlinerTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -177,6 +192,7 @@ class DeadlineDetailActivity : DeadlinerAppCompatActivity() {
                                     onDeleteSubtask = viewModel::deleteSubtask,
                                     onUpdateSubtask = viewModel::updateSubtaskContent,
                                     onCalendarEventCreated = viewModel::setCalendarEventId,
+                                    onPostpone = ::postpone,
                                 )
                             }
                         }

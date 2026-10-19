@@ -307,6 +307,8 @@ fun DDLItemCardSimplified(
     useDisabledCompletedStyle: Boolean = false,
     categoryContent: (@Composable () -> Unit)? = null,
     detailAnchor: TaskDetailAnchor? = null,
+    completedSubtasks: Int = 0,
+    totalSubtasks: Int = 0,
 ) {
     val shape = RoundedCornerShape(dimensionResource(R.dimen.item_corner_radius))
     val progressClamped = progress.coerceIn(0f, 1f)
@@ -368,51 +370,8 @@ fun DDLItemCardSimplified(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // 第一行：标题 + 截止时间 + 星标
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 4.dp)
-                    )
-
-                    Text(
-                        text = remainingTimeAlt,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-
-                    if (isStarred) {
-                        Icon(
-                            com.aritxonly.deadliner.ui.iconResource(R.drawable.msr_star_fill_wght400),
-                            contentDescription = null,
-                            tint = indicatorColor.copy(alpha = 1f) // 星标颜色自动同步莫兰迪色
-                        )
-                    }
-                }
-
-                // 第二行：分类徽标与备注（可空）
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    categoryContent?.invoke()
-                    if (categoryContent != null && note.isNotEmpty()) Spacer(Modifier.width(6.dp))
-                    if (note.isNotEmpty()) {
-                        Text(text = note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    } else {
-                        Spacer(modifier = Modifier.height(0.dp))
-                    }
-                }
+                TaskCardTitleRow(title, remainingTimeAlt, isStarred, indicatorColor.copy(alpha = 1f))
+                TaskCardMetadataRow(note, categoryContent, completedSubtasks, totalSubtasks)
             }
         }
     }

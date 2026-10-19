@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritxonly.deadliner.ui.settings.SettingsItemDefaults
 import top.yukonga.miuix.kmp.basic.DropdownDefaults
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
@@ -58,7 +59,8 @@ internal fun SoftGlassDropdownOptions(
                         selected = index == selectedIndex, enabled = enabled,
                         interactionSource = interactions, indication = null,
                         role = itemRole, onClick = { onSelect(index) }))
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = SettingsItemDefaults.HorizontalPadding - GlassDropdownMotion.ItemInset,
+                        vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     itemLeading?.let { leading ->
                         leading(index)

@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.aritxonly.deadliner.ui.base.GlassDropdownMotion
+import com.aritxonly.deadliner.ui.base.DeadlinerMiuixDefaults
 import com.aritxonly.deadliner.ui.base.SoftGlassDropdownPopup
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialBackdrop
 import com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec
@@ -55,6 +56,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 internal enum class DetailAction(val iconRes: Int, val labelRes: Int) {
     MARK_COMPLETE(R.drawable.msr_task_alt_wght400, R.string.mark_complete),
     FOCUS(R.drawable.msr_schedule_wght400, R.string.focus_open),
+    POSTPONE(R.drawable.msr_more_time_wght400, R.string.detail_postpone),
     GIVE_UP(R.drawable.msr_flag_wght400, R.string.give_up_task),
     RESTORE_ACTIVE(R.drawable.msr_undo_wght400, R.string.restore_active),
     ARCHIVE(R.drawable.msr_move_to_inbox_wght400, R.string.archive),
@@ -71,7 +73,7 @@ internal fun DetailBottomActions(state: TaskState, onActionClick: (DetailAction)
         TaskState.ARCHIVED, TaskState.ABANDONED_ARCHIVED -> DetailAction.UNARCHIVE
     }
     val more = when (state) {
-        TaskState.ACTIVE -> listOf(DetailAction.GIVE_UP)
+        TaskState.ACTIVE -> listOf(DetailAction.POSTPONE, DetailAction.GIVE_UP)
         TaskState.COMPLETED, TaskState.ABANDONED -> listOf(DetailAction.ARCHIVE)
         else -> emptyList()
     } + listOf(DetailAction.DELETE, DetailAction.SAVE_TO_CALENDAR)
@@ -101,7 +103,7 @@ internal fun DetailBottomActions(state: TaskState, onActionClick: (DetailAction)
     )) {
         Row(
             modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Button(
@@ -110,9 +112,9 @@ internal fun DetailBottomActions(state: TaskState, onActionClick: (DetailAction)
                 colors = ButtonDefaults.buttonColorsPrimary(),
                 minHeight = 48.dp,
                 insideMargin = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
-                cornerRadius = 17.dp,
+                cornerRadius = DeadlinerMiuixDefaults.ButtonCornerRadius,
             ) {
-                Icon(symbolPainterResource(primary.iconRes), contentDescription = null, modifier = Modifier.size(20.dp))
+                Icon(symbolPainterResource(primary.iconRes), contentDescription = null, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(6.dp))
                 Text(stringResource(primary.labelRes), style = MiuixTheme.textStyles.button.copy(fontSize = 14.sp, lineHeight = 20.sp))
             }
@@ -121,6 +123,8 @@ internal fun DetailBottomActions(state: TaskState, onActionClick: (DetailAction)
                     stringResource(R.string.detail_focus), DetailAction.FOCUS.iconRes,
                     onClick = { onActionClick(DetailAction.FOCUS) },
                     color = MiuixTheme.colorScheme.onSurface,
+                    iconSize = 22.dp,
+                    textStyle = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp, lineHeight = 20.sp),
                 )
             }
             IconButton(onClick = {
@@ -134,7 +138,7 @@ internal fun DetailBottomActions(state: TaskState, onActionClick: (DetailAction)
             }.graphicsLayer { alpha = GlassDropdownMotion.sourceAlpha(menuProgress.value) }
                 .then(if (sourceHidden) Modifier.clearAndSetSemantics {} else Modifier)) {
                 Icon(symbolPainterResource(R.drawable.msr_more_vert_wght400),
-                    contentDescription = stringResource(R.string.detail_more_actions), modifier = Modifier.size(22.dp).rotate(90f))
+                    contentDescription = stringResource(R.string.detail_more_actions), modifier = Modifier.size(26.dp).rotate(90f))
             }
         }
     }

@@ -8,9 +8,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.*
@@ -21,6 +24,13 @@ import com.aritxonly.deadliner.localutils.GlobalUtils
 import com.aritxonly.deadliner.ui.category.CategoryPresentation
 import com.deadliner.domain.task.Task
 import com.deadliner.domain.task.TaskSubtask
+import com.deadliner.domain.task.TaskDeadlineShift
+import com.deadliner.domain.task.TaskDeadlineDelay
+import com.deadliner.domain.task.TaskDeadlineUnit
+import com.aritxonly.deadliner.ui.HybridIconRegistry
+import com.aritxonly.deadliner.ui.MaterialSymbolRegistry
+import com.aritxonly.deadliner.ui.InterfaceIconPack
+import com.aritxonly.deadliner.ui.LocalInterfaceIconPack
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -65,6 +75,9 @@ class DeadlineDetailLayoutTest {
         val ink = compose.onNodeWithText(label(R.string.edit), useUnmergedTree = true).getUnclippedBoundsInRoot()
         val heading = compose.onNodeWithText(label(R.string.detail_task_info_title), useUnmergedTree = true)
             .getUnclippedBoundsInRoot()
+        assertEquals("The edit target must not add space above the heading", 18f, heading.top.value, .5f)
+        val editTarget = edit.getUnclippedBoundsInRoot()
+        org.junit.Assert.assertTrue((editTarget.bottom - editTarget.top).value >= 48f)
         assertEquals(((heading.top + heading.bottom) / 2).value, ((ink.top + ink.bottom) / 2).value, .5f)
         val start = compose.onNodeWithText(app.getString(R.string.label_start_time,
             java.time.LocalDateTime.parse(task.startAt).format(java.time.format.DateTimeFormatter
@@ -102,6 +115,30 @@ class DeadlineDetailLayoutTest {
         compose.onNodeWithText(label(R.string.detail_plan_add)).assertExists()
     }
 
+    @Test fun subtaskEditDialogDeletesSelectedItemAndDismisses() {
+        val tasks = mutableStateListOf(
+            TaskSubtask("remove", "detail", "待删除", createdAt = "", updatedAt = ""),
+            TaskSubtask("keep", "detail", "保留", createdAt = "", updatedAt = ""),
+        )
+        val deleted = mutableListOf<String>()
+        compose.setContent { TestTheme {
+            com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost {
+                DetailPlanCard("detail", tasks, onAdd = {}, onToggle = {}, onDelete = { uid ->
+                    deleted.add(uid)
+                    tasks.removeAll { it.uid == uid }
+                }, onUpdate = { _, _ -> })
+            }
+        } }
+        compose.onNodeWithContentDescription(app.getString(R.string.detail_plan_edit_item, "待删除"))
+            .performClick()
+        compose.onNodeWithText(label(R.string.delete)).assertIsDisplayed().performClick()
+        compose.waitForIdle()
+        assertEquals(listOf("remove"), deleted)
+        compose.onNodeWithText("待删除").assertDoesNotExist()
+        compose.onNodeWithText("保留").assertIsDisplayed()
+        compose.onNodeWithText(label(R.string.detail_plan_edit)).assertDoesNotExist()
+    }
+
     @Test fun detailShowsPrototypeBarAndMovesSecondaryActionsIntoMore() {
         compose.setContent { TestTheme {
             DeadlineDetailScreen(app, app, task, {}, {}, listOf(category), {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, {})
@@ -115,6 +152,7 @@ class DeadlineDetailLayoutTest {
         assertEquals((note.bottom - note.top).value, (plan.bottom - plan.top).value, .5f)
         capture("detail")
         compose.onNodeWithContentDescription(label(R.string.detail_more_actions)).performClick()
+        compose.onNodeWithText(label(R.string.detail_postpone)).assertIsDisplayed()
         compose.onNodeWithText(label(R.string.give_up_task)).assertIsDisplayed()
         compose.onNodeWithText(label(R.string.delete)).assertIsDisplayed()
         compose.onNodeWithText(label(R.string.save_and_add_to_calendar)).assertIsDisplayed()
@@ -128,6 +166,66 @@ class DeadlineDetailLayoutTest {
         }
         compose.onNodeWithText(label(R.string.give_up_task)).performClick()
         compose.onNodeWithText(label(R.string.confirm_give_up_title)).assertIsDisplayed()
+    }
+
+    @Test fun postponeDropdownCommandChangesOnlyDeadlineAndCanBeRepeated() {
+        val current = mutableStateOf(task)
+        compose.setContent { TestTheme {
+            CompositionLocalProvider(LocalInterfaceIconPack provides InterfaceIconPack.HybridMiuix) {
+                DeadlineDetailScreen(app, app, current.value, {}, {}, listOf(category), {}, {}, {}, {}, {}, {}, {}, { _, _ -> }, {},
+                    onPostpone = { delay -> current.value = current.value.copy(
+                        dueAt = TaskDeadlineShift.postponed(current.value.dueAt, delay)) })
+            }
+        } }
+        assertEquals("more_time", MaterialSymbolRegistry.definitionFor(R.drawable.msr_more_time_wght400)?.name)
+        org.junit.Assert.assertNotNull(HybridIconRegistry.resource("more_time"))
+        repeat(2) { index ->
+            compose.onNodeWithContentDescription(label(R.string.detail_more_actions)).performClick()
+            compose.onNodeWithText(label(R.string.detail_postpone)).assertIsDisplayed().performClick()
+            setWheel("postpone-unit", if (index == 0) 0 else 1)
+            setWheel("postpone-amount", if (index == 0) 3 else 7)
+            compose.onNodeWithText(label(R.string.detail_postpone_confirm)).performClick()
+            compose.waitForIdle()
+            compose.onNodeWithText(label(R.string.detail_task_info_title)).assertIsDisplayed()
+        }
+        assertEquals(java.time.LocalDateTime.parse("2026-10-26T12:00"),
+            java.time.LocalDateTime.parse(current.value.dueAt))
+        assertEquals(task, current.value.copy(dueAt = task.dueAt))
+    }
+
+    @Test fun customDelayWheelsRespectWeekLimitPreserveUnitDraftsAndCancelWithoutWriting() {
+        val confirmed = mutableListOf<TaskDeadlineDelay>()
+        val open = mutableStateOf(true)
+        compose.setContent { TestTheme {
+            com.aritxonly.deadliner.ui.base.ProvideAdvancedMaterialDialogBlurHost {
+                if (open.value) DetailPostponeDialog(task, onDismiss = { open.value = false }, onConfirm = { confirmed += it })
+            }
+        } }
+        compose.onNodeWithTag("postpone-amount").assert(SemanticsMatcher.expectValue(
+            SemanticsProperties.ProgressBarRangeInfo, androidx.compose.ui.semantics.ProgressBarRangeInfo(1f, 1f..7f, 5)))
+        setWheel("postpone-unit", 0)
+        setWheel("postpone-amount", 168)
+        compose.onNodeWithTag("postpone-amount").assert(SemanticsMatcher.expectValue(
+            SemanticsProperties.ProgressBarRangeInfo, androidx.compose.ui.semantics.ProgressBarRangeInfo(168f, 1f..168f, 166)))
+        setWheel("postpone-unit", 1)
+        compose.onNodeWithTag("postpone-amount").assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "1"))
+        setWheel("postpone-amount", 7)
+        setWheel("postpone-unit", 0)
+        compose.onNodeWithTag("postpone-amount").assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "168"))
+        val image = compose.onNodeWithTag("postpone-dialog")
+            .captureToImage().asAndroidBitmap()
+        File("build/outputs/detail-review/postpone-picker.png").apply { parentFile!!.mkdirs() }.outputStream().use {
+            image.compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+        compose.onNodeWithText(label(R.string.cancel)).performClick()
+        compose.waitForIdle()
+        assertEquals(emptyList<TaskDeadlineDelay>(), confirmed)
+        assertEquals(false, open.value)
+    }
+
+    private fun setWheel(tag: String, value: Int) {
+        compose.onNodeWithTag(tag).performSemanticsAction(SemanticsActions.SetProgress) { it(value.toFloat()) }
+        compose.waitForIdle()
     }
 
     private fun capture(name: String) {

@@ -424,6 +424,8 @@ private fun SearchTaskCard(task: Task, activity: MainActivity) {
         note = task.note,
         progress = computeProgress(start, end, now),
         isStarred = task.isStarred,
+        completedSubtasks = task.subtasks.count { it.isCompleted },
+        totalSubtasks = task.subtasks.size,
         status = status,
         useDisabledCompletedStyle = semanticStatus == DeadlineSemanticStatus.ABANDONED,
         onClick = { detailAnchor.open(activity, task.uid) },

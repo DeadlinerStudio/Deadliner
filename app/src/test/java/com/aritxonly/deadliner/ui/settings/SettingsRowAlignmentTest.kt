@@ -33,24 +33,39 @@ class SettingsRowAlignmentTest {
     @Test fun settingContentMatchesDropdownInsets() = assertAligned(LayoutDirection.Ltr)
     @Test fun settingContentMatchesDropdownInsetsInRtl() = assertAligned(LayoutDirection.Rtl)
 
-    @Test fun homeKeeps16dpAndOnlyNavigationDetailRowsShowChevron() {
+    @Test fun homeUses16dpLeadingAnd20dpTrailingWhileChildRowsKeep20dp() = assertHomeAligned(LayoutDirection.Ltr)
+    @Test fun homeInsetsAlsoMirrorInRtl() = assertHomeAligned(LayoutDirection.Rtl)
+
+    private fun assertHomeAligned(direction: LayoutDirection) {
         compose.setContent {
-            MaterialTheme { MiuixTheme {
-                Column(Modifier.width(360.dp)) {
-                    SettingItem("Home", "Home summary", horizontalPadding = 16.dp)
-                    SettingItem("Child", "Child summary")
-                    SettingsDetailTextButtonItem(headlineText = "Next page", supportingText = "Navigation",
-                        navigates = true, onClick = {})
-                    SettingsDetailTextButtonItem(headlineText = "Run action", supportingText = "Action",
-                        onClick = {})
-                }
-            } }
+            CompositionLocalProvider(LocalLayoutDirection provides direction) {
+                MaterialTheme { MiuixTheme {
+                    Column(Modifier.width(360.dp)) {
+                        SettingItem("Home", "Home summary", startPadding = 16.dp,
+                            leadingContent = { Box(Modifier.size(40.dp).testTag("home-icon")) },
+                            trailingContent = { Box(Modifier.size(20.dp).testTag("home-end")) })
+                        SettingItem("Child", "Child summary")
+                        SettingsDetailTextButtonItem(headlineText = "Next page", supportingText = "Navigation",
+                            navigates = true, onClick = {})
+                        SettingsDetailTextButtonItem(headlineText = "Run action", supportingText = "Action",
+                            onClick = {})
+                    }
+                } }
+            }
         }
-        assertEquals(16f, compose.onNodeWithText("Home", useUnmergedTree = true)
-            .getUnclippedBoundsInRoot().left.value, .5f)
-        assertEquals(20f, compose.onNodeWithText("Child", useUnmergedTree = true)
-            .getUnclippedBoundsInRoot().left.value, .5f)
-        compose.onAllNodesWithTag("settings-navigation-chevron", useUnmergedTree = true).assertCountEquals(3)
+        val icon = compose.onNodeWithTag("home-icon", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val end = compose.onNodeWithTag("home-end", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val child = compose.onNodeWithText("Child", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        if (direction == LayoutDirection.Ltr) {
+            assertEquals(16f, icon.left.value, .5f)
+            assertEquals(340f, end.right.value, .5f)
+            assertEquals(20f, child.left.value, .5f)
+        } else {
+            assertEquals(344f, icon.right.value, .5f)
+            assertEquals(20f, end.left.value, .5f)
+            assertEquals(340f, child.right.value, .5f)
+        }
+        compose.onAllNodesWithTag("settings-navigation-chevron", useUnmergedTree = true).assertCountEquals(2)
     }
 
     private fun assertAligned(direction: LayoutDirection) {

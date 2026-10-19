@@ -22,6 +22,7 @@
     "ic_backup_settings": { "symbol": "database" },
     "ic_bug": { "symbol": "bug_report" },
     "ic_calendar": { "symbol": "calendar_month" },
+    "detail_postpone_one_day": { "symbol": "more_time" },
     "category_analytics": { "symbol": "chart_data" },
     "category_book": { "symbol": "book_2" },
     "category_briefcase": { "symbol": "work" },

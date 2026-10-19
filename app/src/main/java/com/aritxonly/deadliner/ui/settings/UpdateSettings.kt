@@ -1,189 +1,69 @@
 package com.aritxonly.deadliner.ui.settings
 
-import com.aritxonly.deadliner.ui.base.feedback.miuixPressFeedback
-import ApkDownloaderInstaller
+import com.aritxonly.deadliner.web.ApkDownloaderInstaller
 import android.content.Intent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import com.aritxonly.deadliner.ui.base.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LoadingIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import com.aritxonly.deadliner.R
-import com.aritxonly.deadliner.ui.SvgCard
 import androidx.core.net.toUri
-import com.aritxonly.deadliner.ui.expressiveTypeModifier
-import com.aritxonly.deadliner.ui.navIconPaddingModifier
+import com.aritxonly.deadliner.BuildConfig
+import com.aritxonly.deadliner.web.UpdateInfo
 import com.aritxonly.deadliner.web.UpdateManager
-import dev.jeziellago.compose.markdowntext.MarkdownText
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-// UI 状态枚举
 sealed class UpdateState {
     object Loading : UpdateState()
     data class UpToDate(val current: String) : UpdateState()
-    data class Available(
-        val current: String,
-        val latest: String,
-        val notes: String,
-        val downloadUrl: String,
-    ) : UpdateState()
+    data class Available(val current: String, val latest: String, val notes: String, val downloadUrl: String) : UpdateState()
     data class Error(val message: String) : UpdateState()
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+internal const val DeadlinerReleasesUrl = "https://github.com/AritxOnly/Deadliner/releases"
+
 @Composable
-fun UpdateScreen(
-    navigateUp: () -> Unit,
-) {
+fun UpdateScreen(navigateUp: () -> Unit) {
     val context = LocalContext.current
+    val current = remember(context) {
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
+            .getOrNull() ?: BuildConfig.VERSION_NAME
+    }
+    val scope = rememberCoroutineScope()
+    val installer = remember(context) { ApkDownloaderInstaller(context) }
+    val download = remember(scope, installer) { UpdateDownloadController(scope, installer::download, installer::install) }
+    UpdateRoute(current, navigateUp,
+        fetchUpdate = { withContext(Dispatchers.IO) { UpdateManager.fetchUpdateInfo(context) } },
+        onInstall = download::start,
+        onOpenBrowser = { context.startActivity(Intent(Intent.ACTION_VIEW, it.toUri())) },
+        overlay = { UpdateDownloadDialog(download.state, download::cancel, download::retry, download::install) })
+}
 
-    val updateState by produceState<UpdateState>(initialValue = UpdateState.Loading) {
-        withContext(Dispatchers.IO) {
-            value = try {
-                val info = UpdateManager.fetchUpdateInfo(context)
-                if (UpdateManager.isNewer(info.currentVersion, info.latestVersion)) {
-                    UpdateState.Available(info.currentVersion, info.latestVersion, info.releaseNotes, info.downloadUrl)
-                } else {
-                    UpdateState.UpToDate(info.currentVersion)
-                }
-            } catch (e: Exception) {
-                UpdateState.Error(e.localizedMessage ?: "Unknown error")
-            }
+/** Own the request in the page lifecycle; a new check cancels the old producer, never its successor. */
+@Composable
+internal fun UpdateRoute(
+    currentVersion: String,
+    navigateUp: () -> Unit,
+    fetchUpdate: suspend () -> UpdateInfo,
+    onInstall: (String) -> Unit,
+    onOpenBrowser: (String) -> Unit,
+    overlay: @Composable () -> Unit = {},
+) {
+    var request by rememberSaveable { mutableIntStateOf(0) }
+    val fetch by rememberUpdatedState(fetchUpdate)
+    val state by produceState<UpdateState>(UpdateState.Loading, request) {
+        value = UpdateState.Loading
+        value = try {
+            val info = fetch()
+            if (UpdateManager.isNewer(info.currentVersion, info.latestVersion)) {
+                UpdateState.Available(info.currentVersion, info.latestVersion, info.releaseNotes, info.downloadUrl)
+            } else UpdateState.UpToDate(info.currentVersion)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            UpdateState.Error(error.localizedMessage.orEmpty())
         }
     }
-
-    CollapsingTopBarScaffold(
-        title = stringResource(R.string.settings_check_for_updates),
-        navigationIcon = {
-            IconButton(onClick = navigateUp, modifier = (navIconPaddingModifier).miuixPressFeedback(enabled = true, shape = androidx.compose.material3.IconButtonDefaults.standardShape)) {
-                Icon(
-                    painter            = com.aritxonly.deadliner.ui.symbolPainterResource(R.drawable.msr_arrow_back_wght400),
-                    contentDescription = stringResource(R.string.back),
-                    tint               = MaterialTheme.colorScheme.onSurface,
-                    modifier           = expressiveTypeModifier
-                )
-            }
-        },
-        bottomBar = {
-            when (val s = updateState) {
-                is UpdateState.Available -> {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Button(onClick = { ApkDownloaderInstaller(context).downloadAndInstall(s.downloadUrl) }) {
-                                Text(stringResource(R.string.update_and_install))
-                            }
-                            FilledTonalButton(modifier = Modifier.miuixPressFeedback(enabled = true, shape = androidx.compose.material3.ButtonDefaults.filledTonalShape), onClick = {
-                                context.startActivity(
-                                    Intent(Intent.ACTION_VIEW, s.downloadUrl.toUri())
-                                )
-                            }) {
-                                Text(stringResource(R.string.download_from_browser))
-                            }
-                        }
-                        Spacer(modifier = Modifier.navigationBarsPadding())
-                    }
-                }
-                else -> {}
-            }
-        }
-    ) { innerPadding ->
-        SettingsScrollColumn(
-            contentPadding = innerPadding,
-            modifier = Modifier,
-        ) {
-            SvgCard(R.drawable.svg_update, modifier = Modifier.padding(vertical = 8.dp))
-
-            Box(
-                Modifier.fillMaxSize()
-            ) {
-                when (val state = updateState) {
-                    is UpdateState.Loading -> {
-                        LoadingIndicator(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .size(64.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    is UpdateState.Error -> {
-                        Text(
-                            text = stringResource(R.string.check_for_updates_failed, state.message),
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(16.dp)
-                        )
-                    }
-
-                    is UpdateState.UpToDate -> {
-                        Column(
-                            Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                stringResource(R.string.check_for_updates_new, state.current),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
-
-                    is UpdateState.Available -> {
-                        // 展示更新信息
-                        Column(
-                            Modifier
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                stringResource(R.string.check_for_updates_found, state.latest),
-                                style = MaterialTheme.typography.headlineSmall
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                stringResource(R.string.check_for_updates_current, state.current),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Spacer(Modifier.height(16.dp))
-
-                            // Markdown 文本
-                            MarkdownText(
-                                markdown = state.notes
-                            )
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-            }
-        }
-    }
+    UpdatePage(currentVersion, state, navigateUp, onCheck = { if (state != UpdateState.Loading) request++ },
+        onInstall = onInstall, onOpenBrowser = onOpenBrowser, overlay = overlay)
 }

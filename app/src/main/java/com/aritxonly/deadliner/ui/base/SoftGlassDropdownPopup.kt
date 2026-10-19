@@ -8,15 +8,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -89,7 +86,7 @@ internal fun SoftGlassDropdownPopup(
         val density = LocalDensity.current
         val direction = LocalLayoutDirection.current
         val insets = WindowInsets.safeDrawing
-        val fraction = progress.value
+        val settled by remember(progress) { derivedStateOf { progress.value == 1f } }
         // Keep the optical clip full-size; the outer surface alone owns the morph.
         val materialShape = remember { RoundedCornerShape(GlassDropdownMotion.CornerRadius) }
         val container = MiuixTheme.colorScheme.surfaceContainer
@@ -129,7 +126,6 @@ internal fun SoftGlassDropdownPopup(
                 anchor.translate(-(it + Offset(position.x.toFloat(), position.y.toFloat())))
             } ?: Rect.Zero
             SideEffect { if (opening && layoutReady) positioned = true }
-            val shape = remember(source, fraction) { DropdownMorphShape(source, fraction) }
             Box(Modifier.absoluteOffset { position }
                 .widthIn(min = with(density) { minimumWidth.toDp() }, max = with(density) { widthLimit.toDp() })
                 .heightIn(max = with(density) { safe.height.toDp() }), propagateMinConstraints = true) {
@@ -138,9 +134,7 @@ internal fun SoftGlassDropdownPopup(
                     .graphicsLayer {
                         alpha = if (layoutReady) GlassDropdownMotion.surfaceAlpha(progress.value) else 0f
                     }
-                    .dropShadow(shape, Shadow(radius = 20.dp, offset = DpOffset(0.dp, 4.dp),
-                        color = Color.Black, alpha = (if (dark) 0.28f else 0.12f) * fraction))
-                    .clip(shape).then(material).semantics { paneTitle = title }, propagateMinConstraints = true) {
+                    .dropdownMorphDrawing(source, progress, dark).then(material).semantics { paneTitle = title }, propagateMinConstraints = true) {
                     Box(Modifier.graphicsLayer {
                         val bounds = GlassDropdownMotion.bounds(source, size, progress.value)
                         val scale = if (size.width > 0f) bounds.width / size.width else 1f
@@ -152,7 +146,7 @@ internal fun SoftGlassDropdownPopup(
                         alpha = GlassDropdownMotion.contentAlpha(progress.value)
                     }, propagateMinConstraints = true) {
                         SoftGlassDropdownOptions(items, selectedIndex, onSelect,
-                            enabled = show && fraction == 1f,
+                            enabled = show && settled,
                             itemLeading = itemLeading, itemTextColor = itemTextColor, itemRole = itemRole)
                     }
                 }

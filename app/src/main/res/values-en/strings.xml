@@ -1157,4 +1157,18 @@
     <string name="detail_more_actions">More actions</string>
     <string name="detail_focus">Focus</string>
     <string name="detail_plan_compose_hint">Next step?</string>
+    <string name="detail_postpone_one_day">Postpone one day</string>
+    <string name="detail_postponed_one_day">Deadline postponed by one day</string>
+    <string name="detail_postpone_invalid_deadline">This task has no valid deadline</string>
+    <string name="detail_postpone_failed">Could not postpone. Please try again.</string>
+    <string name="detail_postpone">Postpone…</string>
+    <string name="detail_postpone_title">Postpone deadline</string>
+    <string name="detail_postpone_limit">Up to 7 days (168 hours)</string>
+    <string name="detail_postpone_amount">Duration</string>
+    <string name="detail_postpone_unit">Unit</string>
+    <string name="detail_postpone_hours">Hours</string>
+    <string name="detail_postpone_days">Days</string>
+    <string name="detail_postpone_until">New deadline: %1$s</string>
+    <string name="detail_postpone_confirm">Postpone</string>
+    <string name="detail_postponed">Deadline postponed</string>
 </resources>

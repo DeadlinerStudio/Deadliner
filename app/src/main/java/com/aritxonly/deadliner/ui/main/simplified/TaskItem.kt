@@ -160,6 +160,8 @@ fun TaskItem(
         note = item.note,
         progress = progress,
         isStarred = item.isStarred,
+        completedSubtasks = item.subtasks.count { it.isCompleted },
+        totalSubtasks = item.subtasks.size,
         status = status,
         useDisabledCompletedStyle = semanticStatus == DeadlineSemanticStatus.ABANDONED,
         swipeKey = "task:${item.uid}",

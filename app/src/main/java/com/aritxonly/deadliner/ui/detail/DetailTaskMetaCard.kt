@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,7 +59,9 @@ internal fun DetailTaskMetaCard(deadline: Task, categories: List<CategoryPresent
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.detail_task_info_title), style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f))
-                DetailTextAction(stringResource(R.string.edit), R.drawable.msr_edit_wght400, onEdit)
+                // Keep the 48dp hit target without making the heading row taller than its text.
+                DetailTextAction(stringResource(R.string.edit), R.drawable.msr_edit_wght400, onEdit,
+                    modifier = Modifier.height(24.dp).wrapContentHeight(unbounded = true))
             }
             Text(stringResource(R.string.label_start_time, startTime.format(formatter)),
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

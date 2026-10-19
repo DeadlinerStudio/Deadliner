@@ -1,0 +1,4 @@
+<resources>
+    <string name="settings_web_load_failed">Unable to load this page. Check your connection and try again.</string>
+    <string name="settings_web_retry">Retry</string>
+</resources>

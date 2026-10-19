@@ -110,7 +110,7 @@ fun MainSettingsScreen(
             item {
                 SettingsSection {
                     SettingItem(
-                        horizontalPadding = 16.dp,
+                        startPadding = 16.dp,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { nav.navigate(SettingsRoute.Profile.route) },
@@ -148,7 +148,7 @@ fun MainSettingsScreen(
                             val supportText = (if (route.route == "about") "v${context.getAppVersion()} " else "") +
                                     stringResource(route.supportRes!!)
                             SettingItem(
-                                horizontalPadding = 16.dp,
+                                startPadding = 16.dp,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { nav.navigate(route.route) },

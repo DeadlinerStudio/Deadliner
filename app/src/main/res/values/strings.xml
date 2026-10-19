@@ -1233,4 +1233,18 @@
     <string name="detail_more_actions">更多操作</string>
     <string name="detail_focus">专注</string>
     <string name="detail_plan_compose_hint">接下来要做什么？</string>
+    <string name="detail_postpone_one_day">延后一天</string>
+    <string name="detail_postponed_one_day">截止时间已延后一天</string>
+    <string name="detail_postpone_invalid_deadline">任务没有有效的截止时间</string>
+    <string name="detail_postpone_failed">延后失败，请重试</string>
+    <string name="detail_postpone">延后…</string>
+    <string name="detail_postpone_title">延后截止时间</string>
+    <string name="detail_postpone_limit">最多延后 7 天（168 小时）</string>
+    <string name="detail_postpone_amount">延后时长</string>
+    <string name="detail_postpone_unit">单位</string>
+    <string name="detail_postpone_hours">小时</string>
+    <string name="detail_postpone_days">天</string>
+    <string name="detail_postpone_until">延后至：%1$s</string>
+    <string name="detail_postpone_confirm">确认延后</string>
+    <string name="detail_postponed">截止时间已延后</string>
 </resources>

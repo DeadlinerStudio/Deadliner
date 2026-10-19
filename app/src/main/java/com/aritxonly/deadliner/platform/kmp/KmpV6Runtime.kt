@@ -164,6 +164,19 @@ internal object KmpV6Runtime {
         return result
     }
 
+    fun postponeTaskOneDay(taskUid: String): com.deadliner.domain.task.TaskDeadlineResult {
+        return postponeTask(taskUid, com.deadliner.domain.task.TaskDeadlineDelay(1, com.deadliner.domain.task.TaskDeadlineUnit.DAYS))
+    }
+
+    fun postponeTask(taskUid: String, delay: com.deadliner.domain.task.TaskDeadlineDelay): com.deadliner.domain.task.TaskDeadlineResult {
+        val commands: com.deadliner.domain.task.TaskDeadlineAdjustmentCommands = database.tasks
+        val result = commands.postpone(taskUid, delay, Clock.System.now().toString())
+        if (result.outcome == com.deadliner.domain.task.TaskDeadlineOutcome.APPLIED) {
+            result.task?.let(notificationOrchestrator::onTaskUpdated)
+        }
+        return result
+    }
+
     fun triggerNotificationInfoUpdate(force: Boolean = false) {
         com.aritxonly.deadliner.notification.NotificationDiagnostics.event("update.requested", "force" to force)
         notificationOrchestrator.triggerNotificationInfoUpdate(force)

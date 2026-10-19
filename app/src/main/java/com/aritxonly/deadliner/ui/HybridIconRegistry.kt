@@ -97,6 +97,7 @@ internal object HybridIconRegistry {
         "mobile_gear" to R.drawable.hmi_mobile_gear,
         "money_off" to R.drawable.hmi_money_off,
         "monitoring" to R.drawable.hmi_monitoring,
+        "more_time" to R.drawable.hmi_more_time,
         "more_vert" to R.drawable.hmi_more_vert,
         "move_to_inbox" to R.drawable.hmi_move_to_inbox,
         "music_note_2" to R.drawable.hmi_music_note_2,
