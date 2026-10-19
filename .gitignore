@@ -46,3 +46,9 @@ google-services.json
 .kotlin/
 __pycache__/
 *.py[cod]
+
+# Local spec links; canonical specifications live in ProjectDeadliner/Features
+/specs/
+
+# Generated APK release metadata and packaged baseline profiles
+/app/release/
