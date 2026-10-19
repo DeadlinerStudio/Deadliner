@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.widgets.glance.ui
 
+import android.appwidget.AppWidgetHostView
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
@@ -7,8 +8,8 @@ import android.graphics.Color
 import android.os.Parcel
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.ListView
+import android.widget.TextView
 import android.widget.ImageView
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -21,6 +22,10 @@ import androidx.glance.appwidget.compose
 import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
+import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetItem
+import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetSnapshot
+import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetStatus
+import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfiguration
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
 import com.aritxonly.deadliner.widgets.glance.interaction.TaskWidgetActions
@@ -42,7 +47,45 @@ import kotlin.math.roundToInt
 @Config(sdk = [35], application = Application::class)
 class TaskWidgetCollectionPayloadTest {
     @Test
-    fun `service backed scrollable list keeps card payload bounded`() = runBlocking {
+    fun `scrollable list binds an adapter in the widget host`() = runBlocking {
+        val context: Context = RuntimeEnvironment.getApplication()
+        val remoteViews = ScrollableListTestWidget().compose(
+            context = context,
+            size = DpSize(160.dp, 160.dp),
+        )
+        val root = remoteViews.apply(context, AppWidgetHostView(context))
+        val list = root.findListView()!!
+        assertNotNull("Task list adapter was rejected inside nested RemoteViews", list.adapter)
+        assertEquals(TEST_SNAPSHOT.items.size, list.adapter.count)
+        assertEquals(TEST_SNAPSHOT.items.last().stableId, list.adapter.getItemId(list.adapter.count - 1))
+    }
+
+    @Test
+    fun `host reapply updates task rows without losing the adapter`() = runBlocking {
+        val context: Context = RuntimeEnvironment.getApplication()
+        val host = AppWidgetHostView(context)
+        val original = ScrollableListTestWidget().compose(context = context, size = DpSize(160.dp, 160.dp))
+        val root = original.apply(context, host)
+        host.addView(root)
+        val updatedSnapshot = TEST_SNAPSHOT.copy(
+            totalCount = 1,
+            items = listOf(TaskWidgetItem(999L, "Updated task", "2h", TaskWidgetStatus.NEAR)),
+        )
+        val updated = ScrollableListTestWidget(snapshot = updatedSnapshot)
+            .compose(context = context, size = DpSize(160.dp, 160.dp))
+        updated.reapply(context, root)
+
+        val list = root.findListView()!!
+        assertNotNull(list.adapter)
+        assertEquals(1, list.adapter.count)
+        assertEquals(999L, list.adapter.getItemId(0))
+        val row = list.adapter.getView(0, null, list)
+        assertEquals("Updated task", row.findViewById<TextView>(R.id.widget_task_collection_row_title).text)
+        assertEquals("2h", row.findViewById<TextView>(R.id.widget_task_collection_row_time).text)
+    }
+
+    @Test
+    fun `scrollable list keeps card payload bounded`() = runBlocking {
         val context: Context = RuntimeEnvironment.getApplication()
         val remoteViews = ScrollableListTestWidget().compose(
             context = context,
@@ -59,7 +102,7 @@ class TaskWidgetCollectionPayloadTest {
             parcel.recycle()
         }
 
-        val root = remoteViews.apply(context, FrameLayout(context))
+        val root = remoteViews.apply(context, AppWidgetHostView(context))
         val list = root.findListView()
         assertNotNull("Scrollable task RemoteViews did not contain a ListView", list)
         val backgroundImage = root.findImageViewWithAlpha(
@@ -91,7 +134,7 @@ class TaskWidgetCollectionPayloadTest {
                     context = context,
                     size = DpSize(160.dp, 160.dp),
                 )
-                val root = remoteViews.apply(context, FrameLayout(context))
+                val root = remoteViews.apply(context, AppWidgetHostView(context))
                 val background = root.findImageViewWithAlpha(configuration.backgroundAlpha())
                 assertNotNull("Missing background for $kind at $percent%", background)
                 assertTrue(background!!.hasClickableAncestor())
@@ -155,6 +198,7 @@ class TaskWidgetCollectionPayloadTest {
 
     private class ScrollableListTestWidget(
         private val configuration: TaskWidgetConfiguration = TaskWidgetConfiguration.defaultFor(TaskWidgetKind.SQUARE),
+        private val snapshot: TaskWidgetSnapshot = TEST_SNAPSHOT,
     ) : GlanceAppWidget(errorUiLayout = 0) {
         override val sizeMode: SizeMode = SizeMode.Exact
 
@@ -173,6 +217,7 @@ class TaskWidgetCollectionPayloadTest {
                 ) {
                     Column(modifier = GlanceModifier.fillMaxSize()) {
                         ScrollableCompactTaskList(
+                            snapshot = snapshot,
                             colors = TEST_COLORS,
                             appWidgetId = TEST_APP_WIDGET_ID,
                         )
@@ -183,6 +228,12 @@ class TaskWidgetCollectionPayloadTest {
     }
 
     private companion object {
+        val TEST_SNAPSHOT = TaskWidgetSnapshot(
+            totalCount = 100, nearCount = 0, overdueCount = 0, summary = "100 tasks",
+            items = List(100) { index ->
+                TaskWidgetItem(index.toLong() + 10, "Task $index", "1h", TaskWidgetStatus.NORMAL)
+            },
+        )
         const val MAX_REMOTE_VIEWS_BYTES = 1024 * 1024
         const val TEST_APP_WIDGET_ID = 42
         val TEST_ROW = TaskWidgetRowColors(
