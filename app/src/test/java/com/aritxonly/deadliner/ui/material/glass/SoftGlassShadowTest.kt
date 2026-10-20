@@ -26,11 +26,11 @@ class SoftGlassShadowTest {
         assertTrue(dark.ambientSpread < dark.outerSpread)
     }
 
-    @Test fun selfLightGlassUsesLessShadowWithoutChangingDarkOrOfficialGlass() {
+    @Test fun selfLightGlassSeparatesFromWhiteWithoutChangingDarkOrOfficialGlass() {
         val self = softGlassShadowTokens(isDark = false)
         val official = softGlassShadowTokens(isDark = false, useOfficialMiuixGlass = true)
-        assertTrue(self.outerAlpha < official.outerAlpha)
-        assertTrue(self.ambientAlpha < official.ambientAlpha)
+        assertTrue(self.outerAlpha > official.outerAlpha)
+        assertTrue(self.ambientAlpha > official.ambientAlpha)
         assertTrue(self.edgeAlpha < self.outerAlpha * 0.25f)
         assertEquals(softGlassShadowTokens(true, false), softGlassShadowTokens(true, true))
         assertEquals(0.025f, official.ambientAlpha, 0.0001f)

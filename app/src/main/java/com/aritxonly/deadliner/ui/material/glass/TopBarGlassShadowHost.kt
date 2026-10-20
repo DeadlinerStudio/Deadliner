@@ -1,5 +1,6 @@
 package com.aritxonly.deadliner.ui.material.glass
 
+import com.aritxonly.deadliner.model.GlassShadowPreset
 import android.view.View
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.absoluteOffset
@@ -23,6 +24,7 @@ internal data class TopBarGlassShadow(
     val alpha: Float,
     val official: Boolean,
     val profile: SoftGlassShadowProfile,
+    val preset: GlassShadowPreset,
 )
 
 @Stable
@@ -54,7 +56,7 @@ internal fun TopBarGlassShadowHost(content: @Composable () -> Unit) {
                     Box(Modifier
                         .absoluteOffset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
                         .size(with(density) { shadow.bounds.width.toDp() }, with(density) { shadow.bounds.height.toDp() })
-                        .drawSoftGlassShadow(shadow.shape, shadow.isDark, shadow.alpha, shadow.official, shadow.profile))
+                        .drawSoftGlassShadow(shadow.shape, shadow.isDark, shadow.alpha, shadow.official, shadow.profile, shadow.preset))
                 }
             }
         }
@@ -70,12 +72,13 @@ internal fun Modifier.registerTopBarGlassShadow(
     alpha: Float,
     official: Boolean,
     profile: SoftGlassShadowProfile,
+    preset: GlassShadowPreset,
 ): Modifier {
     val id = remember(host) { Any() }
     var bounds by remember(host) { mutableStateOf<Rect?>(null) }
     val measuredBounds = bounds
     SideEffect {
-        measuredBounds?.let { host.shadows[id] = TopBarGlassShadow(it, shape, isDark, alpha.coerceIn(0f, 1f), official, profile) }
+        measuredBounds?.let { host.shadows[id] = TopBarGlassShadow(it, shape, isDark, alpha.coerceIn(0f, 1f), official, profile, preset) }
     }
     DisposableEffect(host, id) { onDispose { host.shadows.remove(id) } }
     return onGloballyPositioned { coordinates ->

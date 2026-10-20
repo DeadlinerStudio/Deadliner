@@ -1171,4 +1171,34 @@
     <string name="detail_postpone_until">New deadline: %1$s</string>
     <string name="detail_postpone_confirm">Postpone</string>
     <string name="detail_postponed">Deadline postponed</string>
+
+    <!-- Light custom glass shadow experiments -->
+    <string name="settings_glass_shadow_lab">Soft-glass shadows</string>
+    <string name="settings_glass_shadow_preset">Shadow preset</string>
+    <string name="settings_glass_shadow_hint">White-background preview. Applied immediately to all light custom glass and saved; dark shadows stay unchanged.</string>
+    <string name="settings_glass_shadow_inactive_hint">Preview shows light custom shadows. Enable Advanced Material, select the custom pipeline and use light mode to compare on actual pages.</string>
+    <string name="settings_glass_shadow_sample_tasks">Tasks</string>
+    <string name="settings_glass_shadow_sample_overview">Overview</string>
+    <string name="glass_shadow_balanced_diffuse">00 · Balanced diffuse</string>
+    <string name="glass_shadow_balanced_diffuse_description">Broad, soft diffusion with restrained middle and contact shadows, balancing lightness and separation.</string>
+    <string name="glass_shadow_clean">01 · Clean and light</string>
+    <string name="glass_shadow_clean_description">Narrower middle shadow and less distant haze, with a clear outline.</string>
+    <string name="glass_shadow_original">02 · Original soft</string>
+    <string name="glass_shadow_original_description">The light shadow before enhancement, for comparison.</string>
+    <string name="glass_shadow_diffuse">03 · Enhanced diffuse</string>
+    <string name="glass_shadow_diffuse_description">The previous enhanced diffuse shadow, for comparing the stronger haze.</string>
+    <string name="glass_shadow_compact">04 · Compact</string>
+    <string name="glass_shadow_compact_description">Shadow stays close to the component and fades quickly.</string>
+    <string name="glass_shadow_crisp">05 · Crisp outline</string>
+    <string name="glass_shadow_crisp_description">Less distant diffusion; a narrow middle shadow and fine edge define the shape.</string>
+    <string name="glass_shadow_airy">06 · Airy</string>
+    <string name="glass_shadow_airy_description">Wider, lower-density shadows for an airy appearance.</string>
+    <string name="glass_shadow_close_float">07 · Close floating</string>
+    <string name="glass_shadow_close_float_description">A compact shadow shifted down 1dp for a slight floating effect.</string>
+    <string name="glass_shadow_elevated">08 · Soft elevated</string>
+    <string name="glass_shadow_elevated_description">Medium diffusion shifted down 2dp for more apparent elevation.</string>
+    <string name="glass_shadow_soft_contact">09 · Soft contact</string>
+    <string name="glass_shadow_soft_contact_description">Faint distant diffusion, with separation concentrated close to the outline.</string>
+    <string name="glass_shadow_minimal">10 · Minimal</string>
+    <string name="glass_shadow_minimal_description">Greatly reduced diffusion and density for a minimal shadow.</string>
 </resources>

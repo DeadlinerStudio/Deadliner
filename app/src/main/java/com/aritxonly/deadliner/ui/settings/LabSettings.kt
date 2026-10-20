@@ -56,6 +56,14 @@ fun LabSettingsScreen(
                 ) { onClickCustomDisplayScale() }
             }
 
+            GlassShadowLab(
+                selected = appearance.glassShadowPreset,
+                applicable = appearance.useAdvancedMaterial && !appearance.useOfficialMiuixGlass,
+                onSelected = { preset ->
+                    GlobalUtils.updateAppearance { it.copy(glassShadowPreset = preset) }
+                },
+            )
+
             MiuixModalMaterialLab(
                 value = appearance.advancedMaterialFineTuning,
                 enabled = appearance.usesMiuixTheme && appearance.useAdvancedMaterial,

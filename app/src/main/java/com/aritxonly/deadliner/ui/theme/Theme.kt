@@ -63,6 +63,7 @@ fun DeadlinerTheme(
         blurRadius = appearance.advancedMaterialBlurRadius,
         fineTuning = appearance.advancedMaterialFineTuning,
         useOfficialMiuixGlass = appearance.useOfficialMiuixGlass,
+        shadowPreset = appearance.glassShadowPreset,
     )
     val sharedNavigationLift = rememberMyHyperModifierNavigationLift(
         appearance.useMyHyperModifierNavigationLift,

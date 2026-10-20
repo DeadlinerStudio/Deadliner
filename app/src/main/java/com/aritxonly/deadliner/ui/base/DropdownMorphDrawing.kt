@@ -19,6 +19,7 @@ internal fun Modifier.dropdownMorphDrawing(
     source: Rect,
     progress: Animatable<Float, AnimationVector1D>,
     dark: Boolean,
+    shadowAlpha: () -> Float,
 ): Modifier {
     val graphics = LocalGraphicsContext.current
     return drawWithCache {
@@ -27,7 +28,7 @@ internal fun Modifier.dropdownMorphDrawing(
             Shadow(radius = 20.dp, offset = DpOffset(0.dp, 4.dp), color = Color.Black,
                 alpha = if (dark) 0.28f else 0.12f))
         onDrawWithContent {
-            with(painter) { draw(size, alpha = progress.value.coerceIn(0f, 1f)) }
+            with(painter) { draw(size, alpha = shadowAlpha().coerceIn(0f, 1f)) }
             drawContent()
         }
     }.graphicsLayer {

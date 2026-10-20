@@ -20,6 +20,8 @@ internal object GlassDropdownMotion {
     const val HoverAlpha = 0.06f
     const val EnterDuration = 320
     const val ExitDuration = 220
+    const val ShadowEnterDuration = 100
+    const val ShadowExitDuration = 80
     val Easing = CubicBezierEasing(0.2f, 0f, 0.2f, 1f)
 
     fun bounds(source: Rect, size: Size, fraction: Float): Rect =

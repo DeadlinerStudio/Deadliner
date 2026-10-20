@@ -35,6 +35,27 @@ import kotlin.math.abs
 class DropdownMorphDrawingTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun shadowDoesNotAppearAtTheStartButIsVisibleOnceExpanded() {
+        val progress = Animatable(0f)
+        val source = Rect(40f, 80f, 130f, 104f)
+        compose.setContent {
+            Box(Modifier.testTag("fixture").size(260.dp, 320.dp).background(Color.White).padding(40.dp)) {
+                Box(Modifier.size(180.dp, 240.dp)
+                    .dropdownMorphDrawing(source, progress, dark = false) { if (progress.value == 1f) 1f else 0f }.background(Color(0xFFF4F4F4)))
+            }
+        }
+        for (fraction in listOf(0f, 0.15f, 0.25f, 1f, 0.15f, 0f)) {
+            compose.runOnIdle { runBlocking { progress.snapTo(fraction) } }
+            val pixels = compose.onNodeWithTag("fixture").captureToImage().toPixelMap()
+            val bounds = GlassDropdownMotion.bounds(source, androidx.compose.ui.geometry.Size(180f, 240f), fraction)
+            val red = (-4..4).map { dx ->
+                pixels[(40f + bounds.center.x).toInt() + dx, (40f + bounds.bottom).toInt() + 5].red
+            }.average()
+            if (fraction <= 0.25f) assertTrue("No early/late shadow at $fraction: $red", red > 0.996)
+            else assertTrue("Expanded menu must retain elevation: $red", red < 0.99)
+        }
+    }
+
     @Test fun drawingPhaseMorphMatchesTheOriginalClipAndShadowThroughBothDirections() {
         val progress = Animatable(0f)
         val reference = mutableStateOf(false)
@@ -45,7 +66,7 @@ class DropdownMorphDrawingTest {
                     val shape = DropdownMorphShape(source, progress.value)
                     Modifier.dropShadow(shape, Shadow(20.dp, Color.Black,
                         offset = DpOffset(0.dp, 4.dp), alpha = 0.12f * progress.value)).clip(shape)
-                } else Modifier.dropdownMorphDrawing(source, progress, dark = false)
+                } else Modifier.dropdownMorphDrawing(source, progress, dark = false) { progress.value }
                 Box(Modifier.size(180.dp, 240.dp).then(morph).background(Color(0xFFF4F4F4)))
             }
         }

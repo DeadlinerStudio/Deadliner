@@ -31,6 +31,7 @@ data class AppearancePreferences(
     val useContrastingHomeFab: Boolean = true,
     val useAdvancedMaterial: Boolean = false,
     val useOfficialMiuixGlass: Boolean = false,
+    val glassShadowPreset: GlassShadowPreset = GlassShadowPreset.Default,
     val advancedMaterialLevel: AdvancedMaterialLevel = AdvancedMaterialLevel.Light,
     val advancedMaterialBlurRadius: Float = AdvancedMaterialTuning.DefaultBlurRadius,
     val advancedMaterialFineTuning: AdvancedMaterialFineTuning = AdvancedMaterialFineTuning.Default,

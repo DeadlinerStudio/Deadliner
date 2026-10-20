@@ -33,11 +33,11 @@ class MiuixModalMaterialTuningTest {
         )
 
         assertEquals(
-            MiuixModalMaterialTuning(0.65f, 80f),
+            MiuixModalMaterialTuning(0.70237434f, 80f),
             tuning.miuixModalMaterial(MiuixModalKind.Dialog),
         )
         assertEquals(
-            MiuixModalMaterialTuning(0.70f, 80f),
+            MiuixModalMaterialTuning(0.69986033f, 80f),
             tuning.miuixModalMaterial(MiuixModalKind.BottomSheet),
         )
     }

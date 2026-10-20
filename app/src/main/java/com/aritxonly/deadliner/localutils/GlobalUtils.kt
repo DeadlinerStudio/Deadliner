@@ -349,6 +349,9 @@ object GlobalUtils {
             useContrastingHomeFab = useContrastingHomeFab,
             useAdvancedMaterial = advancedMaterial,
             useOfficialMiuixGlass = sharedPreferences.getBoolean("advanced_material_official_glass", false),
+            glassShadowPreset = com.aritxonly.deadliner.model.GlassShadowPreset.fromKey(
+                sharedPreferences.getString("glass_shadow_preset", null),
+            ),
             advancedMaterialLevel = advancedMaterialLevel,
             advancedMaterialBlurRadius = advancedMaterialBlurRadius,
             advancedMaterialFineTuning = advancedMaterialFineTuning,
@@ -386,6 +389,7 @@ object GlobalUtils {
             putBoolean("advanced_material", appearance.useAdvancedMaterial)
             remove("official_miuix_glass_experiment")
             putBoolean("advanced_material_official_glass", appearance.useOfficialMiuixGlass)
+            putString("glass_shadow_preset", appearance.glassShadowPreset.key)
             putString("advanced_material_level", appearance.advancedMaterialLevel.key)
             putFloat(
                 "advanced_material_blur_radius",

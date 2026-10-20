@@ -50,6 +50,7 @@ fun AdvancedMaterialPreviewCard(
         blurRadius = blurRadius,
         fineTuning = fineTuning,
         useOfficialMiuixGlass = useOfficialMiuixGlass,
+        shadowPreset = com.aritxonly.deadliner.ui.theme.LocalAdvancedMaterialSpec.current.shadowPreset,
     )
     val glassRecipe = DeadlinerGlassRecipes.floatingNavigation(material.fineTuning)
     val topTint = MaterialTheme.colorScheme.surface.copy(

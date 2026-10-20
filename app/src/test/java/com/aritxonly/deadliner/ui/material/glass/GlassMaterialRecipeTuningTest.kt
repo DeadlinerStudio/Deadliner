@@ -62,7 +62,7 @@ class GlassMaterialRecipeTuningTest {
         assertEquals(18.dp, recipe.refraction.amount)
         assertEquals(0.60f, recipe.refraction.depthEffect, 0.0001f)
         assertEquals(1.dp, recipe.refraction.chromaticAberration)
-        assertEquals(0.94692737f, recipe.edgeOptics.highlightAlpha, 0.0001f)
+        assertEquals(0.9f, recipe.edgeOptics.highlightAlpha, 0.0001f)
         assertEquals(0.21994415f, recipe.edgeOptics.darkHighlightMultiplier, 0.0001f)
         assertEquals(0.5.dp, recipe.layering.postRefractionBlurRadius)
     }

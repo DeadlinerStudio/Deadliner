@@ -15,9 +15,9 @@ data class MiuixModalMaterialTuning(
         const val MinBlurRadiusDp = 0f
         const val MaxBlurRadiusDp = 150f
 
-        const val DialogDefaultBackgroundAlpha = 0.65f
+        const val DialogDefaultBackgroundAlpha = 0.70237434f
         const val DialogDefaultBlurRadiusDp = 80f
-        const val BottomSheetDefaultBackgroundAlpha = 0.70f
+        const val BottomSheetDefaultBackgroundAlpha = 0.69986033f
         const val BottomSheetDefaultBlurRadiusDp = 80f
     }
 }

@@ -17,9 +17,9 @@ class AdvancedMaterialTuningTest {
 
     @Test
     fun defaultRadiusMatchesPinnedPreset() {
-        assertEquals(52f, AdvancedMaterialTuning.DefaultBlurRadius, 0.0001f)
+        assertEquals(84f, AdvancedMaterialTuning.DefaultBlurRadius, 0.0001f)
         assertEquals(
-            1.00f,
+            0.962f,
             AdvancedMaterialTuning.saturationForBlurRadius(AdvancedMaterialTuning.DefaultBlurRadius),
             0.0001f,
         )
@@ -32,9 +32,16 @@ class AdvancedMaterialTuningTest {
     }
 
     @Test
+    fun extendedRangeDoesNotJumpBackToClearGlassSaturation() {
+        for (radius in listOf(92f, 93f, 150f, 168f)) {
+            assertEquals(0.95f, AdvancedMaterialTuning.saturationForBlurRadius(radius), 0.0001f)
+        }
+    }
+
+    @Test
     fun radiusIsNormalizedBeforeInterpolation() {
         assertEquals(16f, AdvancedMaterialTuning.normalizeBlurRadius(-10f), 0.0001f)
-        assertEquals(92f, AdvancedMaterialTuning.normalizeBlurRadius(400f), 0.0001f)
-        assertEquals(52f, AdvancedMaterialTuning.normalizeBlurRadius(Float.NaN), 0.0001f)
+        assertEquals(168f, AdvancedMaterialTuning.normalizeBlurRadius(400f), 0.0001f)
+        assertEquals(84f, AdvancedMaterialTuning.normalizeBlurRadius(Float.NaN), 0.0001f)
     }
 }

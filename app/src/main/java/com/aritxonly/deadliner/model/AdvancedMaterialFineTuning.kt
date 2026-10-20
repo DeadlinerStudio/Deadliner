@@ -21,8 +21,8 @@ data class AdvancedMaterialFineTuning(
     val refractionAmountDp: Float = 18f,
     val refractionDepthEffect: Float = 0.60f,
     val chromaticAberrationDp: Float = 1f,
-    val edgeHighlightAlpha: Float = 0.94692737f,
-    val edgeHighlightGray: Float = 1f,
+    val edgeHighlightAlpha: Float = 0.9f,
+    val edgeHighlightGray: Float = 0.98826814f,
     val darkHighlightMultiplier: Float = 0.21994415f,
     val fallbackEdgeWidthDp: Float = 0.5f,
     val fallbackLightAlpha: Float = 0.46f,
@@ -66,8 +66,8 @@ data class AdvancedMaterialFineTuning(
         refractionAmountDp = refractionAmountDp.safeCoerceIn(0f, 32f, 18f),
         refractionDepthEffect = refractionDepthEffect.safeCoerceIn(0f, 0.60f, 0.60f),
         chromaticAberrationDp = chromaticAberrationDp.safeCoerceIn(0f, 4f, 1f),
-        edgeHighlightAlpha = edgeHighlightAlpha.safeCoerceIn(0f, 1f, 0.94692737f),
-        edgeHighlightGray = edgeHighlightGray.safeCoerceIn(0f, 1f, 1f),
+        edgeHighlightAlpha = edgeHighlightAlpha.safeCoerceIn(0f, 1f, 0.9f),
+        edgeHighlightGray = edgeHighlightGray.safeCoerceIn(0f, 1f, 0.98826814f),
         darkHighlightMultiplier = darkHighlightMultiplier.safeCoerceIn(0.10f, 2f, 0.21994415f),
         fallbackEdgeWidthDp = fallbackEdgeWidthDp.safeCoerceIn(0f, 2f, 0.5f),
         fallbackLightAlpha = fallbackLightAlpha.safeCoerceIn(0f, 1f, 0.46f),
@@ -79,7 +79,14 @@ data class AdvancedMaterialFineTuning(
         val Default = AdvancedMaterialFineTuning()
 
         // Freeze historical baselines: migration must not inherit future constructor defaults.
-        internal val DefaultsV5 = AdvancedMaterialFineTuning(
+        internal val DefaultsV6 = AdvancedMaterialFineTuning(
+            dialogBackgroundAlpha = 0.65f,
+            bottomSheetBackgroundAlpha = 0.70f,
+            edgeHighlightAlpha = 0.94692737f,
+            edgeHighlightGray = 1f,
+        )
+
+        internal val DefaultsV5 = DefaultsV6.copy(
             saturationMultiplier = 1.05f,
             glassTintLightGray = 0.99f,
             edgeHighlightAlpha = 0.95f,
@@ -96,7 +103,7 @@ data class AdvancedMaterialFineTuning(
             bottomSheetBlurRadiusDp = 64f,
         )
 
-        internal val DefaultsV2 = AdvancedMaterialFineTuning(
+        internal val DefaultsV2 = DefaultsV6.copy(
             saturationMultiplier = 1f,
             noiseCoefficient = 0.09f,
             topBarTintAlpha = 0.68f,

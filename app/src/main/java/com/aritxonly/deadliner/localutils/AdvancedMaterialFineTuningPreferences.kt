@@ -7,7 +7,7 @@ import com.aritxonly.deadliner.model.AdvancedMaterialTuning
 
 object AdvancedMaterialFineTuningPreferences {
     private const val Prefix = "advanced_material_fine_"
-    private const val CurrentDefaultsVersion = 6
+    private const val CurrentDefaultsVersion = 7
     private const val BlurRadiusKey = "advanced_material_blur_radius"
     private const val LegacyLevelKey = "advanced_material_level"
 
@@ -26,7 +26,8 @@ object AdvancedMaterialFineTuningPreferences {
         val defaultsVersion = preferences.getInt(key("defaults_version"), 1)
         // Compare raw historical defaults before clamping to the new range.
         return if ((defaultsVersion < 4 && stored == 128f) ||
-            (defaultsVersion < 5 && stored == 92f)) {
+            (defaultsVersion < 5 && stored == 92f) ||
+            (defaultsVersion < 7 && stored == 52f)) {
             AdvancedMaterialTuning.DefaultBlurRadius
         } else {
             AdvancedMaterialTuning.normalizeBlurRadius(stored)
@@ -41,7 +42,8 @@ object AdvancedMaterialFineTuningPreferences {
             defaultsVersion < 3 -> AdvancedMaterialFineTuning.DefaultsV2
             defaultsVersion < 4 -> AdvancedMaterialFineTuning.DefaultsV3
             defaultsVersion < 5 -> AdvancedMaterialFineTuning.DefaultsV4
-            else -> AdvancedMaterialFineTuning.DefaultsV5
+            defaultsVersion < 6 -> AdvancedMaterialFineTuning.DefaultsV5
+            else -> AdvancedMaterialFineTuning.DefaultsV6
         }
         val migrateDefaults = defaultsVersion < CurrentDefaultsVersion
         return AdvancedMaterialFineTuning(

@@ -29,6 +29,49 @@ class DropdownAnimationPerformanceTest {
 
     @Test fun windowBackdropIntermediateFramesDoNotRecomposeOrRemeasure() = assertFrames(glass = true)
 
+    @Test fun popupShadowWaitsForTheWholeEntranceThenFadesAndDisposesOnClose() {
+        val show = mutableStateOf(true)
+        val progress = Animatable(0f)
+        val shadow = Animatable(0f)
+        var closed = 0
+        compose.mainClock.autoAdvance = false
+        compose.setContent {
+            MiuixTheme {
+                SoftGlassDropdownPopup(show.value, "Menu", Rect(220f, 500f, 360f, 524f),
+                    listOf("Small", "Medium", "Large"), 1, { show.value = false },
+                    { closed++ }, {}, progress = progress, shadowProgress = shadow)
+            }
+        }
+        var sawMorph = false
+        var sawShadowFade = false
+        repeat(45) {
+            compose.mainClock.advanceTimeByFrame()
+            compose.waitForIdle()
+            compose.runOnIdle {
+                if (progress.value > 0f && progress.value < 1f) {
+                    sawMorph = true
+                    assertEquals("No shadow during any entrance frame", 0f, shadow.value, 0f)
+                }
+                if (shadow.value > 0f && shadow.value < 1f) {
+                    sawShadowFade = true
+                    assertEquals("Shadow fade starts only after geometry settles", 1f, progress.value, 0f)
+                }
+            }
+        }
+        assertTrue(sawMorph)
+        assertTrue(sawShadowFade)
+        assertEquals(1f, shadow.value, 0f)
+        compose.runOnIdle { show.value = false }
+        repeat(8) {
+            compose.mainClock.advanceTimeByFrame()
+            compose.waitForIdle()
+        }
+        assertEquals("Shadow disappears before the collapsing menu is removed", 0f, shadow.value, 0f)
+        compose.mainClock.autoAdvance = true
+        compose.waitForIdle()
+        assertEquals(1, closed)
+    }
+
     private fun assertFrames(glass: Boolean) {
         var measurements = 0
         var compositions = 0

@@ -8,7 +8,7 @@ import org.junit.Test
 
 class AdvancedMaterialPresetJsonTest {
     @Test fun defaultsMatchEveryFieldOfTheUserProvidedPreset() {
-        val expected = javaClass.getResourceAsStream("/material/default-preset-v6.json")!!.bufferedReader().use {
+        val expected = javaClass.getResourceAsStream("/material/default-preset-v7.json")!!.bufferedReader().use {
             JsonParser.parseString(it.readText()).asJsonObject
         }
         val actual = JsonParser.parseString(AdvancedMaterialPresetJson.encode(

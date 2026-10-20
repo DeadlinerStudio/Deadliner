@@ -1,5 +1,7 @@
 package com.aritxonly.deadliner.ui.base
 
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -48,6 +50,7 @@ internal fun SoftGlassDropdownPopup(
     itemLeading: (@Composable (Int) -> Unit)? = null,
     itemTextColor: ((Int) -> Color?)? = null,
     itemRole: Role = Role.RadioButton,
+    shadowProgress: Animatable<Float, androidx.compose.animation.core.AnimationVector1D> = remember { Animatable(0f) },
 ) {
     var mounted by remember { mutableStateOf(false) }
     var positioned by remember { mutableStateOf(false) }
@@ -59,11 +62,22 @@ internal fun SoftGlassDropdownPopup(
             mounted = true
             if (!positioned) return@LaunchedEffect
         }
-        progress.animateTo(if (opening) 1f else 0f, tween(
-            if (opening) GlassDropdownMotion.EnterDuration else GlassDropdownMotion.ExitDuration,
-            easing = GlassDropdownMotion.Easing,
-        ))
-        if (!opening) {
+        if (opening) {
+            // Shadow has its own clock: eased geometry can reach even a late threshold early.
+            // On a reversed close, remove any remaining shadow while completing the entrance.
+            coroutineScope {
+                launch { shadowProgress.animateTo(0f, tween(GlassDropdownMotion.ShadowExitDuration)) }
+                launch { progress.animateTo(1f,
+                    tween(GlassDropdownMotion.EnterDuration, easing = GlassDropdownMotion.Easing)) }
+            }
+            shadowProgress.animateTo(1f,
+                tween(GlassDropdownMotion.ShadowEnterDuration, easing = GlassDropdownMotion.Easing))
+        } else {
+            coroutineScope {
+                launch { shadowProgress.animateTo(0f, tween(GlassDropdownMotion.ShadowExitDuration)) }
+                launch { progress.animateTo(0f,
+                    tween(GlassDropdownMotion.ExitDuration, easing = GlassDropdownMotion.Easing)) }
+            }
             mounted = false
             positioned = false
             currentFinished()
@@ -134,7 +148,7 @@ internal fun SoftGlassDropdownPopup(
                     .graphicsLayer {
                         alpha = if (layoutReady) GlassDropdownMotion.surfaceAlpha(progress.value) else 0f
                     }
-                    .dropdownMorphDrawing(source, progress, dark).then(material).semantics { paneTitle = title }, propagateMinConstraints = true) {
+                    .dropdownMorphDrawing(source, progress, dark) { shadowProgress.value }.then(material).semantics { paneTitle = title }, propagateMinConstraints = true) {
                     Box(Modifier.graphicsLayer {
                         val bounds = GlassDropdownMotion.bounds(source, size, progress.value)
                         val scale = if (size.width > 0f) bounds.width / size.width else 1f

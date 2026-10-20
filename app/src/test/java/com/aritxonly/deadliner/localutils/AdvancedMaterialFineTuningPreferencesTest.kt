@@ -68,14 +68,14 @@ class AdvancedMaterialFineTuningPreferencesTest {
             .commit()
 
         val tuning = AdvancedMaterialFineTuningPreferences.read(preferences)
-        assertEquals(52f, AdvancedMaterialFineTuningPreferences.readBlurRadius(
+        assertEquals(84f, AdvancedMaterialFineTuningPreferences.readBlurRadius(
             preferences,
             AdvancedMaterialLevel.Soft,
         ), 0.0001f)
         assertEquals(1.096648f, tuning.saturationMultiplier, 0.0001f)
-        assertEquals(0.94692737f, tuning.edgeHighlightAlpha, 0.0001f)
+        assertEquals(0.9f, tuning.edgeHighlightAlpha, 0.0001f)
         assertEquals(0.87f, tuning.contrast, 0.0001f)
-        assertEquals(0.65f, tuning.dialogBackgroundAlpha, 0.0001f)
+        assertEquals(0.70237434f, tuning.dialogBackgroundAlpha, 0.0001f)
         assertEquals(80f, tuning.bottomSheetBlurRadiusDp, 0.0001f)
     }
 
@@ -91,7 +91,7 @@ class AdvancedMaterialFineTuningPreferencesTest {
 
         val tuning = AdvancedMaterialFineTuningPreferences.read(preferences)
 
-        assertEquals(0.65f, tuning.dialogBackgroundAlpha, 0.0001f)
+        assertEquals(0.70237434f, tuning.dialogBackgroundAlpha, 0.0001f)
         assertEquals(80f, tuning.dialogBlurRadiusDp, 0.0001f)
         assertEquals(0.68f, tuning.bottomSheetBackgroundAlpha, 0.0001f)
         assertEquals(80f, tuning.bottomSheetBlurRadiusDp, 0.0001f)
@@ -121,7 +121,7 @@ class AdvancedMaterialFineTuningPreferencesTest {
             .putInt("advanced_material_fine_defaults_version", 4)
             .putFloat("advanced_material_blur_radius", 92f)
             .putFloat("advanced_material_fine_glass_blur_radius_multiplier", 0.25f).commit()
-        assertEquals(52f, AdvancedMaterialFineTuningPreferences.readBlurRadius(
+        assertEquals(84f, AdvancedMaterialFineTuningPreferences.readBlurRadius(
             preferences, AdvancedMaterialLevel.Soft), 0.0001f)
         assertEquals(0.4f, AdvancedMaterialFineTuningPreferences.read(preferences).glassBlurRadiusMultiplier, 0.0001f)
         preferences.edit().putFloat("advanced_material_blur_radius", 72f)
@@ -130,7 +130,7 @@ class AdvancedMaterialFineTuningPreferencesTest {
             preferences, AdvancedMaterialLevel.Soft), 0.0001f)
         assertEquals(0.32f, AdvancedMaterialFineTuningPreferences.read(preferences).glassBlurRadiusMultiplier, 0.0001f)
         preferences.edit().putFloat("advanced_material_blur_radius", 240f).commit()
-        assertEquals(92f, AdvancedMaterialFineTuningPreferences.readBlurRadius(
+        assertEquals(168f, AdvancedMaterialFineTuningPreferences.readBlurRadius(
             preferences, AdvancedMaterialLevel.Deep), 0.0001f)
     }
 
@@ -158,7 +158,7 @@ class AdvancedMaterialFineTuningPreferencesTest {
         assertEquals(0.71f, customized.edgeHighlightAlpha, 0f)
         assertEquals(0.37f, customized.darkHighlightMultiplier, 0f)
         AdvancedMaterialFineTuningPreferences.write(preferences.edit(), customized).commit()
-        assertEquals(6, preferences.getInt("advanced_material_fine_defaults_version", 0))
+        assertEquals(7, preferences.getInt("advanced_material_fine_defaults_version", 0))
         assertEquals(customized, AdvancedMaterialFineTuningPreferences.read(preferences))
     }
 
@@ -167,6 +167,31 @@ class AdvancedMaterialFineTuningPreferencesTest {
             glassTintLightGray = 0.99f, edgeHighlightAlpha = 0.95f, darkHighlightMultiplier = 0.20f)
         AdvancedMaterialFineTuningPreferences.write(preferences.edit(), custom).commit()
         assertEquals(custom, AdvancedMaterialFineTuningPreferences.read(preferences))
+    }
+
+    @Test fun versionSixDefaultsMigrateAndCustomOpticsAndRadiusSurvive() {
+        AdvancedMaterialFineTuningPreferences.write(preferences.edit(), AdvancedMaterialFineTuning.DefaultsV6)
+            .putInt("advanced_material_fine_defaults_version", 6)
+            .putFloat("advanced_material_blur_radius", 52f).commit()
+        assertEquals(AdvancedMaterialFineTuning.Default, AdvancedMaterialFineTuningPreferences.read(preferences))
+        assertEquals(84f, AdvancedMaterialFineTuningPreferences.readBlurRadius(
+            preferences, AdvancedMaterialLevel.Soft), 0f)
+
+        preferences.edit().putFloat("advanced_material_blur_radius", 75.22905f)
+            .putFloat("advanced_material_fine_edge_highlight_alpha", 0.83f)
+            .putFloat("advanced_material_fine_edge_highlight_gray", 0.97f)
+            .putFloat("advanced_material_fine_dialog_background_alpha", 0.6f).commit()
+        val custom = AdvancedMaterialFineTuningPreferences.read(preferences)
+        assertEquals(75.22905f, AdvancedMaterialFineTuningPreferences.readBlurRadius(
+            preferences, AdvancedMaterialLevel.Soft), 0f)
+        assertEquals(0.83f, custom.edgeHighlightAlpha, 0f)
+        assertEquals(0.97f, custom.edgeHighlightGray, 0f)
+        assertEquals(0.6f, custom.dialogBackgroundAlpha, 0f)
+
+        AdvancedMaterialFineTuningPreferences.write(preferences.edit(), custom)
+            .putFloat("advanced_material_blur_radius", 52f).commit()
+        assertEquals(52f, AdvancedMaterialFineTuningPreferences.readBlurRadius(
+            preferences, AdvancedMaterialLevel.Soft), 0f)
     }
 
     private companion object {

@@ -1247,4 +1247,34 @@
     <string name="detail_postpone_until">延后至：%1$s</string>
     <string name="detail_postpone_confirm">确认延后</string>
     <string name="detail_postponed">截止时间已延后</string>
+
+    <!-- Light custom glass shadow experiments -->
+    <string name="settings_glass_shadow_lab">柔光玻璃投影</string>
+    <string name="settings_glass_shadow_preset">投影预设</string>
+    <string name="settings_glass_shadow_hint">纯白背景预览。选择后立即应用到全局浅色自研玻璃并保存；深色投影保持原样。</string>
+    <string name="settings_glass_shadow_inactive_hint">预览展示浅色自研投影。启用高级材质、选择自研管线并使用浅色模式后，可在实际页面比较。</string>
+    <string name="settings_glass_shadow_sample_tasks">清单</string>
+    <string name="settings_glass_shadow_sample_overview">总览</string>
+    <string name="glass_shadow_balanced_diffuse">00 · 均衡弥散</string>
+    <string name="glass_shadow_balanced_diffuse_description">扩大柔和弥散范围，降低中层与贴边阴影密度，在轻盈感与层级之间取得平衡。</string>
+    <string name="glass_shadow_clean">01 · 清晰轻盈</string>
+    <string name="glass_shadow_clean_description">收窄中层投影，减少远端灰雾，保持轮廓清楚。</string>
+    <string name="glass_shadow_original">02 · 原始轻柔</string>
+    <string name="glass_shadow_original_description">加强前的轻投影，用于对照原先的轻盈感。</string>
+    <string name="glass_shadow_diffuse">03 · 弥散加强</string>
+    <string name="glass_shadow_diffuse_description">上一版加强的弥散投影，用于对照较强的灰雾。</string>
+    <string name="glass_shadow_compact">04 · 紧凑清楚</string>
+    <string name="glass_shadow_compact_description">投影更贴近组件，向外更快消失。</string>
+    <string name="glass_shadow_crisp">05 · 清晰轮廓</string>
+    <string name="glass_shadow_crisp_description">减少远端弥散，以较窄的中层和细边明确轮廓。</string>
+    <string name="glass_shadow_airy">06 · 空气弥散</string>
+    <string name="glass_shadow_airy_description">范围更宽、密度更低，比较大范围轻弥散。</string>
+    <string name="glass_shadow_close_float">07 · 贴近悬浮</string>
+    <string name="glass_shadow_close_float_description">较紧凑的投影向下偏移 1dp，强化轻微悬浮感。</string>
+    <string name="glass_shadow_elevated">08 · 柔和悬浮</string>
+    <string name="glass_shadow_elevated_description">中等弥散向下偏移 2dp，比较更明显的高度感。</string>
+    <string name="glass_shadow_soft_contact">09 · 柔和接触</string>
+    <string name="glass_shadow_soft_contact_description">远端很淡，主要依靠靠近轮廓的接触阴影。</string>
+    <string name="glass_shadow_minimal">10 · 极简微影</string>
+    <string name="glass_shadow_minimal_description">大幅减少弥散与密度，保留最轻微的投影。</string>
 </resources>

@@ -204,6 +204,7 @@ private fun AdvancedMaterialRadiusSlider(
             onValueChange = onValueChange,
             onValueChangeFinished = onValueChangeFinished,
             valueRange = AdvancedMaterialTuning.MinBlurRadius..AdvancedMaterialTuning.MaxBlurRadius,
+            hapticEffect = SliderDefaults.SliderHapticEffect.Step,
             showKeyPoints = true,
             keyPoints = listOf(AdvancedMaterialTuning.DefaultBlurRadius),
             modifier = Modifier.fillMaxWidth(),
