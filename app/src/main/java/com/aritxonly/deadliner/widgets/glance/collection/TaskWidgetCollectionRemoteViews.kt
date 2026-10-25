@@ -10,6 +10,7 @@ import com.aritxonly.deadliner.R
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetItem
 import com.aritxonly.deadliner.widgets.glance.theme.TaskWidgetColors
 import com.aritxonly.deadliner.widgets.glance.interaction.TaskWidgetActions
+import com.aritxonly.deadliner.widgets.glance.ui.TaskWidgetLayoutMetrics
 
 internal object TaskWidgetCollectionRemoteViews {
     const val EXTRA_TASK_STABLE_ID = "task_widget_stable_id"
@@ -48,7 +49,10 @@ internal object TaskWidgetCollectionRemoteViews {
             "setColorFilter",
             item.indicatorColorArgb(rowColors.indicator),
         )
-        setTextViewText(R.id.widget_task_collection_row_title, item.title)
+        setTextViewText(
+            R.id.widget_task_collection_row_title,
+            TaskWidgetLayoutMetrics.boundedRowTitle(item.title),
+        )
         setTextColor(R.id.widget_task_collection_row_title, colors.textPrimary)
         setTextViewText(R.id.widget_task_collection_row_time, item.timeDescription)
         setTextColor(R.id.widget_task_collection_row_time, rowColors.timeText)

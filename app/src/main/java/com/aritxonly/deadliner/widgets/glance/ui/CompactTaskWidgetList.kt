@@ -63,10 +63,15 @@ internal fun ColumnScope.ScrollableCompactTaskList(
             TaskWidgetBackgroundRenderer.renderRow(colors, status)
         }
     }
+    // LazyColumn inlines every row into one update, so bound the rows to stay under the
+    // Binder limit. The header still shows the full task count.
+    val visibleItems = snapshot.items.take(
+        TaskWidgetLayoutMetrics.scrollableVisibleTaskCount(snapshot.items.size),
+    )
     // Glance must attach the adapter to its outer widget RemoteViews. An adapter inside
     // AndroidRemoteViews can be rejected on host reapply, leaving a nonempty list blank.
     LazyColumn(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
-        items(snapshot.items, itemId = { it.stableId }) { item ->
+        items(visibleItems, itemId = { it.stableId }) { item ->
             val row = remember(item, colors, backgrounds) {
                 TaskWidgetCollectionRemoteViews.createRow(
                     context = context,

@@ -56,8 +56,14 @@ class TaskWidgetCollectionPayloadTest {
         val root = remoteViews.apply(context, AppWidgetHostView(context))
         val list = root.findListView()!!
         assertNotNull("Task list adapter was rejected inside nested RemoteViews", list.adapter)
-        assertEquals(TEST_SNAPSHOT.items.size, list.adapter.count)
-        assertEquals(TEST_SNAPSHOT.items.last().stableId, list.adapter.getItemId(list.adapter.count - 1))
+        assertEquals(
+            TaskWidgetLayoutMetrics.scrollableVisibleTaskCount(TEST_SNAPSHOT.items.size),
+            list.adapter.count,
+        )
+        assertEquals(
+            TEST_SNAPSHOT.items[list.adapter.count - 1].stableId,
+            list.adapter.getItemId(list.adapter.count - 1),
+        )
     }
 
     @Test
@@ -121,6 +127,64 @@ class TaskWidgetCollectionPayloadTest {
             1,
             root.countViewsWithOnClickListeners(),
         )
+    }
+
+    @Test
+    fun `thousand short titled tasks keep widget payload bounded`() = runBlocking<Unit> {
+        assertLargeListPayloadBounded(title = { index -> "Task $index" })
+    }
+
+    @Test
+    fun `thousand long titled tasks keep widget payload bounded`() = runBlocking<Unit> {
+        val longTitle = "Long task title with many words 长标题任务 ".repeat(40)
+        val root = assertLargeListPayloadBounded(title = { index -> "$index $longTitle" })
+        val list = root.findListView()!!
+        val title = list.adapter.getView(0, null, list)
+            .findViewById<TextView>(R.id.widget_task_collection_row_title).text.toString()
+        assertEquals(TaskWidgetLayoutMetrics.boundedRowTitle("0 $longTitle"), title)
+        assertTrue(title.length <= TaskWidgetLayoutMetrics.ROW_TITLE_CHAR_LIMIT + 1)
+    }
+
+    private suspend fun assertLargeListPayloadBounded(title: (Int) -> String): View {
+        val context: Context = RuntimeEnvironment.getApplication()
+        val snapshot = TaskWidgetSnapshot(
+            totalCount = LARGE_TASK_COUNT, nearCount = 0, overdueCount = 0, summary = "1000 tasks",
+            items = List(LARGE_TASK_COUNT) { index ->
+                TaskWidgetItem(
+                    stableId = index.toLong() + 10,
+                    title = title(index),
+                    timeDescription = "12d",
+                    status = TaskWidgetStatus.entries[index % TaskWidgetStatus.entries.size],
+                    categoryColorArgb = 0xFF000000.toInt() or index,
+                )
+            },
+        )
+        val remoteViews = ScrollableListTestWidget(snapshot = snapshot).compose(
+            context = context,
+            size = DpSize(160.dp, 160.dp),
+        )
+        val parcel = Parcel.obtain()
+        try {
+            remoteViews.writeToParcel(parcel, 0)
+            println("Large scrollable task RemoteViews: ${parcel.dataSize()} bytes")
+            assertTrue(
+                "Scrollable task RemoteViews was ${parcel.dataSize()} bytes",
+                parcel.dataSize() < SAFE_UPDATE_BYTES,
+            )
+        } finally {
+            parcel.recycle()
+        }
+
+        val root = remoteViews.apply(context, AppWidgetHostView(context))
+        val list = root.findListView()!!
+        assertNotNull(list.adapter)
+        assertEquals(TaskWidgetLayoutMetrics.SCROLLABLE_TASK_LIMIT, list.adapter.count)
+        assertEquals(10L, list.adapter.getItemId(0))
+        assertEquals(
+            TaskWidgetLayoutMetrics.SCROLLABLE_TASK_LIMIT + 9L,
+            list.adapter.getItemId(list.adapter.count - 1),
+        )
+        return root
     }
 
     @Test
@@ -235,6 +299,9 @@ class TaskWidgetCollectionPayloadTest {
             },
         )
         const val MAX_REMOTE_VIEWS_BYTES = 1024 * 1024
+        // The 1 MiB Binder buffer is shared by the whole process, so one update keeps a wide margin.
+        const val SAFE_UPDATE_BYTES = 256 * 1024
+        const val LARGE_TASK_COUNT = 1_000
         const val TEST_APP_WIDGET_ID = 42
         val TEST_ROW = TaskWidgetRowColors(
             base = 0xFFFFFFFF.toInt(),
