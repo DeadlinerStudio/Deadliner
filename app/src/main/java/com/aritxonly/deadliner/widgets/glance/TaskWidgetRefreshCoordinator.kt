@@ -1,21 +1,16 @@
 package com.aritxonly.deadliner.widgets.glance
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.updateAll
 import com.deadliner.platform.AndroidWidgetUpdateBridge
-import com.aritxonly.deadliner.widgets.glance.collection.TaskWidgetCollectionRemoteViews
 import com.aritxonly.deadliner.widgets.glance.data.TaskWidgetSnapshotLoader
 import com.aritxonly.deadliner.widgets.glance.model.TaskWidgetRenderStateSource
 import com.aritxonly.deadliner.widgets.glance.ui.CapsuleTaskGlanceWidget
 import com.aritxonly.deadliner.widgets.glance.ui.CompactTaskGlanceWidget
-import com.aritxonly.deadliner.widgets.glance.ui.CompactTaskGlanceWidgetReceiver
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetPreferences
-import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetConfigurationStore
 import com.aritxonly.deadliner.widgets.glance.preferences.TaskWidgetKind
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,7 +74,6 @@ object TaskWidgetRefreshCoordinator {
             }
             if (publishLatestSnapshot(appContext, forceRefresh)) {
                 updateAllWidgets(appContext)
-                notifyScrollableCollections(appContext)
                 synchronized(this@TaskWidgetRefreshCoordinator) {
                     if (refreshRequestId == requestId) pendingForceRefresh = false
                 }
@@ -97,9 +91,6 @@ object TaskWidgetRefreshCoordinator {
         scope.launch {
             val glanceId = AppWidgetId(appWidgetId)
             updateInstance(appContext, glanceId, kind)
-            if (kind == TaskWidgetKind.SQUARE) {
-                TaskWidgetCollectionRemoteViews.notifyDataChanged(appContext, appWidgetId)
-            }
         }
     }
 
@@ -129,18 +120,6 @@ object TaskWidgetRefreshCoordinator {
                 TaskWidgetKind.CAPSULE -> CapsuleTaskGlanceWidget().update(context, glanceId)
             }
         }.onFailure { error -> Log.w(TAG, "Unable to refresh widget instance", error) }
-    }
-
-    private fun notifyScrollableCollections(context: Context) {
-        val manager = AppWidgetManager.getInstance(context)
-        val store = TaskWidgetConfigurationStore.from(context)
-        manager.getAppWidgetIds(ComponentName(context, CompactTaskGlanceWidgetReceiver::class.java))
-            .filter { appWidgetId ->
-                store.read(appWidgetId, TaskWidgetKind.SQUARE).isScrollable
-            }
-            .forEach { appWidgetId ->
-                TaskWidgetCollectionRemoteViews.notifyDataChanged(context, appWidgetId)
-            }
     }
 
 }

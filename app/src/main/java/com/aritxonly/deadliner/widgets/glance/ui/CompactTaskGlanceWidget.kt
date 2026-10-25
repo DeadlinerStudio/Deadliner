@@ -102,6 +102,7 @@ private fun CompactTaskWidgetContent(
                     )
                 } else if (configuration.isScrollable) {
                     ScrollableCompactTaskList(
+                        snapshot = currentSnapshot,
                         colors = colors,
                         appWidgetId = appWidgetId,
                     )
