@@ -24,7 +24,7 @@ val deadlinerCoreDirectory = providers.gradleProperty("deadlinerCoreDir")
     .orElse(providers.environmentVariable("DEADLINER_CORE_DIR"))
     .orNull
     ?.let(::File)
-    ?: rootProject.file("../../ProjectDeadliner/DeadlinerCore")
+    ?: rootProject.file("../DeadlinerCore")
 val deadlinerCoreDeployScript = deadlinerCoreDirectory.resolve("runscript/buildAndDeploy.sh")
 
 val syncDeadlinerCoreKmp by tasks.registering(Exec::class) {
