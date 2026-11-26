@@ -1,6 +1,7 @@
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,55 +20,60 @@ val quickAddInferenceAbis = providers.gradleProperty("quickAddInferenceAbis").or
         }
     }
 
-val deadlinerCoreKmpAar = rootProject.file(".deadliner-core/kmp/deadliner-core.aar")
-val deadlinerCoreDirectory = providers.gradleProperty("deadlinerCoreDir")
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.isFile) file.inputStream().use { load(it) }
+}
+val deadlinerCorePath = providers.gradleProperty("deadlinerCoreDir")
     .orElse(providers.environmentVariable("DEADLINER_CORE_DIR"))
-    .orNull
-    ?.let(::File)
-    ?: rootProject.file("../DeadlinerCore")
+    .orNull ?: localProperties.getProperty("deadlinerCoreDir", "../DeadlinerCore")
+val deadlinerCoreDirectory = rootProject.file(deadlinerCorePath)
 val deadlinerCoreDeployScript = deadlinerCoreDirectory.resolve("runscript/buildAndDeploy.sh")
-
-val syncDeadlinerCoreKmp by tasks.registering(Exec::class) {
-    group = "deadliner"
-    description = "Build and deploy the current Deadliner Core KMP AAR before compiling Android."
-    workingDir = deadlinerCoreDirectory
-    commandLine(
-        deadlinerCoreDeployScript.absolutePath,
-        "--skip-ios",
-        "--skip-harmony",
-        "--android-repo",
-        rootProject.projectDir.absolutePath,
-    )
-    inputs.files(
-        fileTree(deadlinerCoreDirectory) {
-            include("shared/src/**")
-            include("shared/build.gradle.kts")
-            include("build.gradle.kts")
-            include("settings.gradle.kts")
-            include("gradle/**")
-            include("runscript/**")
-        },
-    )
-    outputs.file(deadlinerCoreKmpAar)
-    doFirst {
-        check(deadlinerCoreDeployScript.isFile) {
-            "Deadliner Core was not found at ${deadlinerCoreDirectory.absolutePath}. " +
-                "Set DEADLINER_CORE_DIR or -PdeadlinerCoreDir to its checkout."
+val deadlinerLifiMode = providers.gradleProperty("deadlinerLifiMode")
+    .orElse(providers.environmentVariable("DEADLINER_LIFI_MODE")).orElse("private")
+val deadlinerCoreSource = providers.gradleProperty("deadlinerCoreSource")
+    .orElse(providers.environmentVariable("DEADLINER_CORE_SOURCE"))
+    .getOrElse(localProperties.getProperty("deadlinerCoreSource", "package"))
+val deadlinerCoreArtifacts = listOf("debug", "release").associateWith { configuration ->
+    val suffix = configuration.replaceFirstChar { it.uppercase() }
+    val aar = rootProject.file(".deadliner-core/kmp/$configuration/deadliner-core.aar")
+    val syncCore = tasks.register<Exec>("syncDeadlinerCoreKmp$suffix") {
+        group = "deadliner"
+        description = "Install the $configuration Core AAR before Android compilation."
+        outputs.file(aar)
+        inputs.property("coreSource", deadlinerCoreSource)
+        when (deadlinerCoreSource) {
+            "package" -> {
+                val installer = rootProject.file("scripts/core_package.py")
+                val lock = rootProject.file("core-package.lock.json")
+                inputs.files(installer, lock)
+                val python = if (System.getProperty("os.name").startsWith("Windows")) "python" else "python3"
+                commandLine(python, installer, "android", aar, "--lock", lock)
+            }
+            "local" -> {
+                inputs.property("lifiMode", deadlinerLifiMode)
+                inputs.files(fileTree(deadlinerCoreDirectory) {
+                    include("shared/src/**", ".private/lifi/src/**", ".private/lifi/resources/**",
+                        ".private/lifi/lifi-api-version", "lifi.revision", "shared/build.gradle.kts",
+                        "build.gradle.kts", "settings.gradle.kts", "gradle.properties", "gradle/**", "runscript/**")
+                    exclude("**/build/**", "**/__pycache__/**", "**/.DS_Store")
+                })
+                commandLine(deadlinerCoreDeployScript, "--configuration", configuration,
+                    "--lifi-mode", deadlinerLifiMode.get(), "--skip-ios", "--skip-harmony",
+                    "--android-repo", rootProject.projectDir)
+            }
+            else -> error("deadlinerCoreSource must be package or local")
         }
     }
+    tasks.matching { it.name == "pre${suffix}Build" }.configureEach { dependsOn(syncCore) }
+    files(aar).builtBy(syncCore)
 }
 
-val verifyDeadlinerCoreKmpAar by tasks.registering {
-    group = "deadliner"
-    description = "Verify that the locally deployed Deadliner KMP AAR is available."
-    dependsOn(syncDeadlinerCoreKmp)
-    inputs.file(deadlinerCoreKmpAar)
-    doLast {
-        check(deadlinerCoreKmpAar.isFile) {
-            "Missing ${deadlinerCoreKmpAar.absolutePath}. " +
-                "Run DeadlinerCore/runscript/buildAndDeploy.sh --skip-ios --skip-harmony first."
-        }
-    }
+// Keep the original manual entry points for release AAR consumers.
+tasks.register("syncDeadlinerCoreKmp") { dependsOn("syncDeadlinerCoreKmpRelease") }
+tasks.register("verifyDeadlinerCoreKmpAar") {
+    dependsOn("syncDeadlinerCoreKmpRelease")
+    doLast { check(deadlinerCoreArtifacts.getValue("release").singleFile.isFile) }
 }
 
 android {
@@ -155,16 +161,12 @@ android {
     ndkVersion = "26.1.10909125"
 }
 
-tasks.named("preBuild") {
-    dependsOn(syncDeadlinerCoreKmp)
-    dependsOn(verifyDeadlinerCoreKmpAar)
-}
-
 dependencies {
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
     implementation("com.github.topjohnwu.libsu:service:6.0.0")
-    implementation(files(deadlinerCoreKmpAar))
+    debugImplementation(deadlinerCoreArtifacts.getValue("debug"))
+    releaseImplementation(deadlinerCoreArtifacts.getValue("release"))
     // File-based KMP AARs do not carry transitive runtime dependencies.
     if (quickAddInferenceRuntime) {
         implementation("com.microsoft.onnxruntime:onnxruntime-android:1.31.0")

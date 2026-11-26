@@ -80,3 +80,13 @@ Deadliner，一款简洁高效的Deadline记录管理软件，灵感来自于作
 ## 许可证
 
 本项目基于 MIT 许可证，详情请参见 [LICENSE](LICENSE)。
+
+## Android 开发构建
+
+Android Studio 和 `./gradlew :app:assembleDebug` 会用 Python 3 下载锁定的 Core AAR。
+开发机首次构建前运行 `gh auth login -h github.com -s read:packages`。已登录时运行
+`gh auth refresh -h github.com -s read:packages`。账号需有组织 Core 包的 Read 权限。
+IDE 会读取 GitHub CLI 已保存的登录。也可通过环境变量 `GHCR_USERNAME` 和
+`GHCR_TOKEN` 提供本人具有 `read:packages` 的 classic PAT。
+版本和 OCI SHA-256 在 `core-package.lock.json` 中，首次下载后支持离线复用。
+本地开发 Core 时可传入 `-PdeadlinerCoreSource=local -PdeadlinerCoreDir=/path/to/DeadlinerCore`。
