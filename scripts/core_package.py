@@ -54,12 +54,18 @@ def github_credentials():
                    if p.is_file()), None)
     if not gh:
         raise ValueError("Install GitHub CLI and log in with read:packages, or set GHCR_USERNAME and GHCR_TOKEN.")
+    # Xcode exports Swift build settings that cause the macOS keychain helper to
+    # print runtime warnings into gh's credential output.
+    cli_env = os.environ.copy()
+    cli_env.pop("SWIFT_DEBUG_INFORMATION_FORMAT", None)
+    cli_env.pop("SWIFT_DEBUG_INFORMATION_VERSION", None)
+
     def query(*args):
-        result = subprocess.run([gh, *args], capture_output=True, text=True, check=False)
+        result = subprocess.run([gh, *args], capture_output=True, text=True, check=False, env=cli_env)
         if result.returncode or not result.stdout.strip():
             raise ValueError("Log in with gh auth login --hostname github.com --scopes read:packages.")
         return result.stdout.strip()
-    user = query("api", "--hostname", "github.com", "user", "--jq", ".login")
+    user = query("config", "get", "user", "--host", "github.com")
     return user, query("auth", "token", "--hostname", "github.com")
 
 
